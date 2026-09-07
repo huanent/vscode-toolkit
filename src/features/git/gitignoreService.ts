@@ -2,8 +2,10 @@ import * as os from 'node:os';
 import * as vscode from 'vscode';
 
 const fileName = '.gitignore';
-const userRulesMarker = "Custom rules (everything added below won't be overridden when using Update)";
-const legacyUserRulesMarker = "Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)";
+const userRulesMarker =
+	"Custom rules (everything added below won't be overridden when using Update)";
+const legacyUserRulesMarker =
+	"Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)";
 const banner = 'File created using Toolkit';
 
 interface GitignoreItem extends vscode.QuickPickItem {
@@ -60,7 +62,11 @@ export async function generateGitignore(extensionUri: vscode.Uri): Promise<void>
 					return;
 				}
 
-				const content = buildFile(selectedTemplates, generated, shouldOverride ? undefined : currentContent);
+				const content = buildFile(
+					selectedTemplates,
+					generated,
+					shouldOverride ? undefined : currentContent,
+				);
 				if (fileUri) {
 					await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf8'));
 					const document = await vscode.workspace.openTextDocument(fileUri);
@@ -97,7 +103,11 @@ async function selectWorkspaceFolder(): Promise<vscode.WorkspaceFolder | undefin
 async function selectWriteMode(): Promise<boolean | undefined> {
 	const selected = await vscode.window.showQuickPick(
 		[
-			{ label: 'Update', description: 'Keep custom rules and update generated rules', override: false },
+			{
+				label: 'Update',
+				description: 'Keep custom rules and update generated rules',
+				override: false,
+			},
 			{ label: 'Override', description: 'Replace the entire .gitignore file', override: true },
 		],
 		{ placeHolder: `${fileName} exists. How should it be changed?` },
@@ -130,13 +140,23 @@ function selectTemplates(items: GitignoreItem[]): Promise<readonly GitignoreItem
 	});
 }
 
-async function loadTemplateItems(extensionUri: vscode.Uri, currentContent: string | undefined, keepCurrent: boolean): Promise<GitignoreItem[] | undefined> {
-	const list = await readFile(vscode.Uri.joinPath(extensionUri, 'resources', 'gitignore', 'templates.json'));
+async function loadTemplateItems(
+	extensionUri: vscode.Uri,
+	currentContent: string | undefined,
+	keepCurrent: boolean,
+): Promise<GitignoreItem[] | undefined> {
+	const list = await readFile(
+		vscode.Uri.joinPath(extensionUri, 'resources', 'gitignore', 'templates.json'),
+	);
 	if (list === undefined) {
 		return undefined;
 	}
 
-	const selected = new Set(keepCurrent ? getCurrentItems(currentContent) : ['visualstudiocode', getOperatingSystem()].filter(Boolean));
+	const selected = new Set(
+		keepCurrent
+			? getCurrentItems(currentContent)
+			: ['visualstudiocode', getOperatingSystem()].filter(Boolean),
+	);
 	const templates = parseTemplateList(list);
 	return templates
 		.map(label => ({ label, picked: selected.has(label) }))
@@ -146,7 +166,9 @@ async function loadTemplateItems(extensionUri: vscode.Uri, currentContent: strin
 function parseTemplateList(list: string): string[] {
 	try {
 		const templates: unknown = JSON.parse(list);
-		return Array.isArray(templates) ? templates.filter((item): item is string => typeof item === 'string') : [];
+		return Array.isArray(templates)
+			? templates.filter((item): item is string => typeof item === 'string')
+			: [];
 	} catch {
 		return [];
 	}
@@ -166,7 +188,11 @@ function getOperatingSystem(): string {
 	return systems[os.platform()] ?? '';
 }
 
-function buildFile(selectedTemplates: readonly string[], generated: string, currentContent: string | undefined): string {
+function buildFile(
+	selectedTemplates: readonly string[],
+	generated: string,
+	currentContent: string | undefined,
+): string {
 	const customRules = getCustomRules(currentContent);
 	const output = [
 		`# ${banner}`,
@@ -181,22 +207,27 @@ function buildFile(selectedTemplates: readonly string[], generated: string, curr
 	return `${output.join('\n')}\n`;
 }
 
-async function generateFromTemplates(extensionUri: vscode.Uri, templates: readonly string[]): Promise<string | undefined> {
+async function generateFromTemplates(
+	extensionUri: vscode.Uri,
+	templates: readonly string[],
+): Promise<string | undefined> {
 	try {
-		const contents = await Promise.all(templates.map(async template => {
-			const uri = vscode.Uri.joinPath(
-				extensionUri,
-				'resources',
-				'gitignore',
-				'templates',
-				`${template}.gitignore`,
-			);
-			const content = await readFile(uri);
-			if (content === undefined) {
-				throw new Error(`Missing template: ${template}`);
-			}
-			return stripTemplateMetadata(content);
-		}));
+		const contents = await Promise.all(
+			templates.map(async template => {
+				const uri = vscode.Uri.joinPath(
+					extensionUri,
+					'resources',
+					'gitignore',
+					'templates',
+					`${template}.gitignore`,
+				);
+				const content = await readFile(uri);
+				if (content === undefined) {
+					throw new Error(`Missing template: ${template}`);
+				}
+				return stripTemplateMetadata(content);
+			}),
+		);
 		return contents.join('\n\n');
 	} catch {
 		return undefined;

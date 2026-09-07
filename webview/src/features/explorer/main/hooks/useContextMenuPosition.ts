@@ -11,8 +11,14 @@ export function useContextMenuPosition(x: number, y: number) {
 			const menu = menuRef.current;
 			if (!menu) return;
 			setPosition({
-				left: Math.max(viewportPadding, Math.min(x, window.innerWidth - menu.offsetWidth - viewportPadding)),
-				top: Math.max(viewportPadding, Math.min(y, window.innerHeight - menu.offsetHeight - viewportPadding))
+				left: Math.max(
+					viewportPadding,
+					Math.min(x, window.innerWidth - menu.offsetWidth - viewportPadding),
+				),
+				top: Math.max(
+					viewportPadding,
+					Math.min(y, window.innerHeight - menu.offsetHeight - viewportPadding),
+				),
 			});
 		};
 

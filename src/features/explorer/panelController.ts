@@ -1,11 +1,23 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import * as path from 'path';
-import { ArchiveOperation, compressEntries, extractArchive, OperationCancelledError } from './archive/service';
+import {
+	ArchiveOperation,
+	compressEntries,
+	extractArchive,
+	OperationCancelledError,
+} from './archive/service';
 import type { ExplorerRequest } from './types';
 import { calculateDirectorySize, readDirectory } from './filesystem/directoryService';
 import { getDisplayName } from './shared/fileEntry';
-import { createDirectory, createFile, deleteEntries, pasteEntries, PasteCancelledError, renameEntry } from './filesystem/operations';
+import {
+	createDirectory,
+	createFile,
+	deleteEntries,
+	pasteEntries,
+	PasteCancelledError,
+	renameEntry,
+} from './filesystem/operations';
 import { getExplorerWebviewHtml } from './webviewHtml';
 import { ExplorerDocument } from './document';
 import { webviewFocusContextKey, type ExplorerManager } from './manager';
@@ -21,7 +33,7 @@ export class ExplorerPanelController implements vscode.Disposable {
 		context: vscode.ExtensionContext,
 		private readonly manager: ExplorerManager,
 		private readonly panel: vscode.WebviewPanel,
-		private readonly document: ExplorerDocument
+		private readonly document: ExplorerDocument,
 	) {
 		const rootUri = document.rootUri;
 		const currentUri = getSafeUri(rootUri, document.latestViewState.currentUri);
@@ -29,23 +41,25 @@ export class ExplorerPanelController implements vscode.Disposable {
 		panel.title = folderName;
 		panel.webview.options = {
 			enableScripts: true,
-			localResourceRoots: [
-				vscode.Uri.joinPath(context.extensionUri, 'media')
-			]
+			localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 		};
 		panel.iconPath = new vscode.ThemeIcon('folder');
-		this.disposables.push(panel.webview.onDidReceiveMessage(message => this.handleMessage(message)));
-		this.disposables.push(panel.onDidChangeViewState(event => {
-			if (!event.webviewPanel.active) {
-				void this.setWebviewFocus(false);
-			}
-		}));
+		this.disposables.push(
+			panel.webview.onDidReceiveMessage(message => this.handleMessage(message)),
+		);
+		this.disposables.push(
+			panel.onDidChangeViewState(event => {
+				if (!event.webviewPanel.active) {
+					void this.setWebviewFocus(false);
+				}
+			}),
+		);
 		void this.initializeWebview(context.extensionUri, rootUri, currentUri, folderName);
 	}
 
 	dispose(): void {
 		void this.setWebviewFocus(false);
-		this.archiveOperations.forEach(operation => operation.cancelled = true);
+		this.archiveOperations.forEach(operation => (operation.cancelled = true));
 		this.pasteOperations.forEach(operation => operation.cancel());
 		this.cancelDirectorySizeOperations();
 		this.disposables.forEach(disposable => disposable.dispose());
@@ -57,18 +71,24 @@ export class ExplorerPanelController implements vscode.Disposable {
 		} catch (error) {
 			const messageText = error instanceof Error ? error.message : String(error);
 			if (error instanceof OperationCancelledError && 'operationId' in message) {
-				await this.panel.webview.postMessage({ type: 'archiveCancelled', operationId: message.operationId });
+				await this.panel.webview.postMessage({
+					type: 'archiveCancelled',
+					operationId: message.operationId,
+				});
 				return;
 			}
 			if (error instanceof PasteCancelledError && 'operationId' in message) {
-				await this.panel.webview.postMessage({ type: 'pasteCancelled', operationId: message.operationId });
+				await this.panel.webview.postMessage({
+					type: 'pasteCancelled',
+					operationId: message.operationId,
+				});
 				return;
 			}
 			void vscode.window.showErrorMessage(messageText);
 			await this.panel.webview.postMessage({
 				type: 'error',
 				message: messageText,
-				operationId: 'operationId' in message ? message.operationId : undefined
+				operationId: 'operationId' in message ? message.operationId : undefined,
 			});
 		}
 	}
@@ -77,11 +97,18 @@ export class ExplorerPanelController implements vscode.Disposable {
 		extensionUri: vscode.Uri,
 		rootUri: vscode.Uri,
 		currentUri: vscode.Uri,
-		folderName: string
+		folderName: string,
 	): Promise<void> {
 		try {
 			const initialEntries = await readDirectory(currentUri);
-			this.panel.webview.html = getExplorerWebviewHtml(this.panel.webview, extensionUri, rootUri, folderName, this.document.latestViewState, initialEntries);
+			this.panel.webview.html = getExplorerWebviewHtml(
+				this.panel.webview,
+				extensionUri,
+				rootUri,
+				folderName,
+				this.document.latestViewState,
+				initialEntries,
+			);
 		} catch (error) {
 			if (currentUri.toString() === rootUri.toString() || !isFileNotFound(error)) {
 				throw error;
@@ -89,7 +116,14 @@ export class ExplorerPanelController implements vscode.Disposable {
 			const initialEntries = await readDirectory(rootUri);
 			this.document.latestViewState = { currentUri: rootUri.toString(), history: [] };
 			this.panel.title = getDisplayName(rootUri);
-			this.panel.webview.html = getExplorerWebviewHtml(this.panel.webview, extensionUri, rootUri, getDisplayName(rootUri), this.document.latestViewState, initialEntries);
+			this.panel.webview.html = getExplorerWebviewHtml(
+				this.panel.webview,
+				extensionUri,
+				rootUri,
+				getDisplayName(rootUri),
+				this.document.latestViewState,
+				initialEntries,
+			);
 		}
 	}
 
@@ -106,7 +140,7 @@ export class ExplorerPanelController implements vscode.Disposable {
 			case 'stateChanged':
 				this.document.latestViewState = {
 					currentUri: getSafeUri(rootUri, message.currentUri).toString(),
-					history: message.history.map(uri => getSafeUri(rootUri, uri).toString())
+					history: message.history.map(uri => getSafeUri(rootUri, uri).toString()),
 				};
 				return;
 			case 'ready':
@@ -122,7 +156,9 @@ export class ExplorerPanelController implements vscode.Disposable {
 				return;
 			case 'navigatePath':
 				this.cancelDirectorySizeOperations();
-				await this.sendDirectory(resolveNavigationUri(rootUri, getSafeUri(rootUri, message.currentUri), message.path));
+				await this.sendDirectory(
+					resolveNavigationUri(rootUri, getSafeUri(rootUri, message.currentUri), message.path),
+				);
 				return;
 			case 'openFile':
 				await vscode.commands.executeCommand('vscode.open', getSafeUri(rootUri, message.uri));
@@ -151,7 +187,7 @@ export class ExplorerPanelController implements vscode.Disposable {
 			case 'setClipboard':
 				await this.manager.setClipboardState({
 					uris: message.uris.map(uri => getSafeUri(rootUri, uri)),
-					operation: message.operation
+					operation: message.operation,
 				});
 				return;
 			case 'paste':
@@ -169,7 +205,9 @@ export class ExplorerPanelController implements vscode.Disposable {
 				}
 				return;
 			case 'copyPath':
-				await vscode.env.clipboard.writeText(message.uris.map(uri => getSafeUri(rootUri, uri).fsPath).join('\n'));
+				await vscode.env.clipboard.writeText(
+					message.uris.map(uri => getSafeUri(rootUri, uri).fsPath).join('\n'),
+				);
 				return;
 			case 'setFavorite':
 				await this.setFavorite(message.uri, message.favorite);
@@ -178,21 +216,17 @@ export class ExplorerPanelController implements vscode.Disposable {
 				await this.openDirectory(
 					message.uri,
 					'Only folders can be opened in the current window.',
-					uri => vscode.commands.executeCommand('vscode.openFolder', uri, false)
+					uri => vscode.commands.executeCommand('vscode.openFolder', uri, false),
 				);
 				return;
 			case 'openInNewTab':
-				await this.openDirectory(
-					message.uri,
-					'Only folders can be opened in a new tab.',
-					uri => this.manager.openExplorer(uri)
+				await this.openDirectory(message.uri, 'Only folders can be opened in a new tab.', uri =>
+					this.manager.openExplorer(uri),
 				);
 				return;
 			case 'openInNewWindow':
-				await this.openDirectory(
-					message.uri,
-					'Only folders can be opened in a new window.',
-					uri => vscode.commands.executeCommand('vscode.openFolder', uri, true)
+				await this.openDirectory(message.uri, 'Only folders can be opened in a new window.', uri =>
+					vscode.commands.executeCommand('vscode.openFolder', uri, true),
 				);
 				return;
 			case 'openInTerminal':
@@ -226,7 +260,11 @@ export class ExplorerPanelController implements vscode.Disposable {
 	}
 
 	private setWebviewFocus(focused: boolean): Thenable<unknown> {
-		return vscode.commands.executeCommand('setContext', webviewFocusContextKey, focused && this.panel.active);
+		return vscode.commands.executeCommand(
+			'setContext',
+			webviewFocusContextKey,
+			focused && this.panel.active,
+		);
 	}
 
 	private async createDirectory(parentValue: string): Promise<void> {
@@ -234,7 +272,11 @@ export class ExplorerPanelController implements vscode.Disposable {
 		await assertDirectory(parentUri, 'Subfolders can only be created inside a folder.');
 		const directoryUri = await createDirectory(parentUri);
 		if (directoryUri) {
-			await this.panel.webview.postMessage({ type: 'createdDirectory', uri: directoryUri.toString(), parentUri: parentUri.toString() });
+			await this.panel.webview.postMessage({
+				type: 'createdDirectory',
+				uri: directoryUri.toString(),
+				parentUri: parentUri.toString(),
+			});
 		}
 	}
 
@@ -243,7 +285,11 @@ export class ExplorerPanelController implements vscode.Disposable {
 		await assertDirectory(parentUri, 'Files can only be created inside a folder.');
 		const fileUri = await createFile(parentUri);
 		if (fileUri) {
-			await this.panel.webview.postMessage({ type: 'createdFile', uri: fileUri.toString(), parentUri: parentUri.toString() });
+			await this.panel.webview.postMessage({
+				type: 'createdFile',
+				uri: fileUri.toString(),
+				parentUri: parentUri.toString(),
+			});
 		}
 	}
 
@@ -269,7 +315,7 @@ export class ExplorerPanelController implements vscode.Disposable {
 			type: 'directory',
 			rootUri: this.document.rootUri.toString(),
 			currentUri: directoryUri.toString(),
-			entries: await readDirectory(directoryUri)
+			entries: await readDirectory(directoryUri),
 		});
 	}
 
@@ -277,14 +323,17 @@ export class ExplorerPanelController implements vscode.Disposable {
 		const operation = new vscode.CancellationTokenSource();
 		this.directorySizeOperations.add(operation);
 		try {
-			const size = await calculateDirectorySize(getSafeUri(this.document.rootUri, uriValue), operation.token);
+			const size = await calculateDirectorySize(
+				getSafeUri(this.document.rootUri, uriValue),
+				operation.token,
+			);
 			await this.panel.webview.postMessage({ type: 'directorySize', uri: uriValue, size });
 		} catch (error) {
 			if (!operation.token.isCancellationRequested) {
 				await this.panel.webview.postMessage({
 					type: 'directorySizeError',
 					uri: uriValue,
-					message: error instanceof Error ? error.message : String(error)
+					message: error instanceof Error ? error.message : String(error),
 				});
 			}
 		} finally {
@@ -301,16 +350,26 @@ export class ExplorerPanelController implements vscode.Disposable {
 		const operation = new vscode.CancellationTokenSource();
 		this.pasteOperations.set(operationId, operation);
 		try {
-			const result = await pasteEntries(clipboardState, getSafeUri(this.document.rootUri, destinationValue), {
-				token: operation.token,
-				onProgress: progress => void this.panel.webview.postMessage({ type: 'pasteProgress', operationId, operation: clipboardState.operation, ...progress })
-			});
+			const result = await pasteEntries(
+				clipboardState,
+				getSafeUri(this.document.rootUri, destinationValue),
+				{
+					token: operation.token,
+					onProgress: progress =>
+						void this.panel.webview.postMessage({
+							type: 'pasteProgress',
+							operationId,
+							operation: clipboardState.operation,
+							...progress,
+						}),
+				},
+			);
 			await this.manager.removeCompletedCutEntries(result.completedUris);
 			await this.panel.webview.postMessage({
 				type: 'pasted',
 				operationId,
 				uris: result.pastedUris.map(uri => uri.toString()),
-				destinationUri: getSafeUri(this.document.rootUri, destinationValue).toString()
+				destinationUri: getSafeUri(this.document.rootUri, destinationValue).toString(),
 			});
 		} finally {
 			this.pasteOperations.delete(operationId);
@@ -329,7 +388,7 @@ export class ExplorerPanelController implements vscode.Disposable {
 	private async openDirectory(
 		uriValue: string,
 		errorMessage: string,
-		open: (uri: vscode.Uri) => PromiseLike<unknown> | unknown
+		open: (uri: vscode.Uri) => PromiseLike<unknown> | unknown,
 	): Promise<void> {
 		const directoryUri = getSafeUri(this.document.rootUri, uriValue);
 		await assertDirectory(directoryUri, errorMessage);
@@ -339,11 +398,16 @@ export class ExplorerPanelController implements vscode.Disposable {
 	private async openInTerminal(uriValue: string): Promise<void> {
 		const targetUri = getSafeUri(this.document.rootUri, uriValue);
 		const stat = await vscode.workspace.fs.stat(targetUri);
-		const directoryUri = stat.type & vscode.FileType.Directory ? targetUri : vscode.Uri.joinPath(targetUri, '..');
+		const directoryUri =
+			stat.type & vscode.FileType.Directory ? targetUri : vscode.Uri.joinPath(targetUri, '..');
 		vscode.window.createTerminal({ cwd: directoryUri, name: getDisplayName(directoryUri) }).show();
 	}
 
-	private async compress(operationId: string, uriValues: string[], destinationValue: string): Promise<void> {
+	private async compress(
+		operationId: string,
+		uriValues: string[],
+		destinationValue: string,
+	): Promise<void> {
 		const operation = { cancelled: false };
 		this.archiveOperations.set(operationId, operation);
 		try {
@@ -351,7 +415,12 @@ export class ExplorerPanelController implements vscode.Disposable {
 				uriValues.map(uri => getSafeUri(this.document.rootUri, uri)),
 				getSafeUri(this.document.rootUri, destinationValue),
 				operation,
-				progress => void this.panel.webview.postMessage({ type: 'archiveProgress', operationId, ...progress })
+				progress =>
+					void this.panel.webview.postMessage({
+						type: 'archiveProgress',
+						operationId,
+						...progress,
+					}),
 			);
 			await this.panel.webview.postMessage({ type: 'compressed', operationId });
 		} finally {
@@ -366,9 +435,17 @@ export class ExplorerPanelController implements vscode.Disposable {
 			const extracted = await extractArchive(
 				getSafeUri(this.document.rootUri, uriValue),
 				operation,
-				progress => void this.panel.webview.postMessage({ type: 'archiveProgress', operationId, ...progress })
+				progress =>
+					void this.panel.webview.postMessage({
+						type: 'archiveProgress',
+						operationId,
+						...progress,
+					}),
 			);
-			await this.panel.webview.postMessage({ type: extracted ? 'extracted' : 'archiveDismissed', operationId });
+			await this.panel.webview.postMessage({
+				type: extracted ? 'extracted' : 'archiveDismissed',
+				operationId,
+			});
 		} finally {
 			this.archiveOperations.delete(operationId);
 		}
@@ -392,24 +469,32 @@ export class ExplorerPanelController implements vscode.Disposable {
 
 function resolveQuickLocationUri(
 	rootUri: vscode.Uri,
-	location: 'desktop' | 'downloads' | 'documents' | 'tmp'
+	location: 'desktop' | 'downloads' | 'documents' | 'tmp',
 ): vscode.Uri {
 	if (location === 'tmp') {
-		const sharedTempDirectory = process.platform === 'win32'
-			? path.join(process.env.SystemRoot ?? 'C:\\Windows', 'Temp')
-			: '/tmp';
+		const sharedTempDirectory =
+			process.platform === 'win32'
+				? path.join(process.env.SystemRoot ?? 'C:\\Windows', 'Temp')
+				: '/tmp';
 		return getSafeUri(rootUri, vscode.Uri.file(sharedTempDirectory).toString());
 	}
 	const homeDirectory = os.homedir();
 	const directoryNames = {
 		desktop: 'Desktop',
 		downloads: 'Downloads',
-		documents: 'Documents'
+		documents: 'Documents',
 	};
-	return getSafeUri(rootUri, vscode.Uri.file(path.join(homeDirectory, directoryNames[location])).toString());
+	return getSafeUri(
+		rootUri,
+		vscode.Uri.file(path.join(homeDirectory, directoryNames[location])).toString(),
+	);
 }
 
-function resolveNavigationUri(rootUri: vscode.Uri, currentUri: vscode.Uri, value: string): vscode.Uri {
+function resolveNavigationUri(
+	rootUri: vscode.Uri,
+	currentUri: vscode.Uri,
+	value: string,
+): vscode.Uri {
 	const target = value.trim();
 	if (!target) {
 		throw new Error('Enter a path to navigate to.');
@@ -420,9 +505,10 @@ function resolveNavigationUri(rootUri: vscode.Uri, currentUri: vscode.Uri, value
 		candidate = vscode.Uri.parse(target, true);
 	} else if (rootUri.scheme === 'file') {
 		const filePath = /^\/[a-z]:[\\/]/i.test(target) ? target.slice(1) : target;
-		candidate = path.isAbsolute(filePath) || /^[a-z]:[\\/]/i.test(filePath) || filePath.startsWith('\\\\')
-			? vscode.Uri.file(filePath)
-			: vscode.Uri.joinPath(currentUri, filePath.replaceAll('\\', '/'));
+		candidate =
+			path.isAbsolute(filePath) || /^[a-z]:[\\/]/i.test(filePath) || filePath.startsWith('\\\\')
+				? vscode.Uri.file(filePath)
+				: vscode.Uri.joinPath(currentUri, filePath.replaceAll('\\', '/'));
 	} else if (target.startsWith('/')) {
 		candidate = currentUri.with({ path: path.posix.normalize(target) });
 	} else {

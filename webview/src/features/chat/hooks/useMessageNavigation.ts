@@ -19,22 +19,25 @@ export function useMessageNavigation(messages: StoredMessage[]) {
 		const remainingScroll = container.scrollHeight - container.clientHeight - container.scrollTop;
 		const top = container.scrollTop > 1;
 		const bottom = remainingScroll > 1;
-		setScrollOverflow(current => current.top === top && current.bottom === bottom ? current : { top, bottom });
+		setScrollOverflow(current =>
+			current.top === top && current.bottom === bottom ? current : { top, bottom },
+		);
 
 		if (!bottom && anchorIndexes.length > 0) {
 			const lastAnchorIndex = anchorIndexes.at(-1)!;
-			setActiveAnchorIndex(current => current === lastAnchorIndex ? current : lastAnchorIndex);
+			setActiveAnchorIndex(current => (current === lastAnchorIndex ? current : lastAnchorIndex));
 			return;
 		}
 
-		const activationLine = container.getBoundingClientRect().top + Math.min(container.clientHeight * .3, 160);
+		const activationLine =
+			container.getBoundingClientRect().top + Math.min(container.clientHeight * 0.3, 160);
 		let nextAnchorIndex = anchorIndexes[0] ?? 0;
 		for (const index of anchorIndexes) {
 			const messageTop = messageRefs.current[index]?.getBoundingClientRect().top;
 			if (messageTop === undefined || messageTop > activationLine) break;
 			nextAnchorIndex = index;
 		}
-		setActiveAnchorIndex(current => current === nextAnchorIndex ? current : nextAnchorIndex);
+		setActiveAnchorIndex(current => (current === nextAnchorIndex ? current : nextAnchorIndex));
 	};
 	const updateNavigationEvent = useEffectEvent(updateNavigation);
 
@@ -50,7 +53,11 @@ export function useMessageNavigation(messages: StoredMessage[]) {
 		const container = containerRef.current;
 		const message = messageRefs.current[index];
 		if (!container || !message) return;
-		const top = container.scrollTop + message.getBoundingClientRect().top - container.getBoundingClientRect().top - 16;
+		const top =
+			container.scrollTop +
+			message.getBoundingClientRect().top -
+			container.getBoundingClientRect().top -
+			16;
 		container.scrollTo({ top, behavior: 'smooth' });
 		setActiveAnchorIndex(index);
 	};

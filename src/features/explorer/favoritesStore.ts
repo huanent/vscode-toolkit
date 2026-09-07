@@ -24,7 +24,7 @@ export class FavoritesStore {
 				throw error;
 			}
 			this.data = {
-				favorites: this.context.globalState.get<string[]>(favoritesStorageKey, [])
+				favorites: this.context.globalState.get<string[]>(favoritesStorageKey, []),
 			};
 			await this.save();
 			await this.context.globalState.update(favoritesStorageKey, undefined);
@@ -44,7 +44,7 @@ export class FavoritesStore {
 		await vscode.workspace.fs.createDirectory(this.context.globalStorageUri);
 		await vscode.workspace.fs.writeFile(
 			this.storageUri,
-			new TextEncoder().encode(JSON.stringify(this.data, undefined, 2))
+			new TextEncoder().encode(JSON.stringify(this.data, undefined, 2)),
 		);
 	}
 }

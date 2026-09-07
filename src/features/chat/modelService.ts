@@ -104,8 +104,10 @@ function isModelItem(value: unknown): value is ModelItem {
 		return false;
 	}
 	const model = value as Partial<ModelItem>;
-	return typeof model.id === 'string'
-		&& typeof model.name === 'string'
-		&& typeof model.providerName === 'string'
-		&& typeof model.family === 'string';
+	return (
+		typeof model.id === 'string' &&
+		typeof model.name === 'string' &&
+		typeof model.providerName === 'string' &&
+		typeof model.family === 'string'
+	);
 }

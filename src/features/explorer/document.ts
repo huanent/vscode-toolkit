@@ -4,12 +4,15 @@ import type { ExplorerViewState } from './types';
 export class ExplorerDocument implements vscode.CustomDocument {
 	latestViewState: ExplorerViewState;
 
-	constructor(readonly uri: vscode.Uri, readonly rootUri: vscode.Uri) {
+	constructor(
+		readonly uri: vscode.Uri,
+		readonly rootUri: vscode.Uri,
+	) {
 		this.latestViewState = {
 			currentUri: rootUri.toString(),
-			history: []
+			history: [],
 		};
 	}
 
-	dispose(): void { }
+	dispose(): void {}
 }

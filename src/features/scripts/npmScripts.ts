@@ -57,7 +57,9 @@ export function registerNpmScriptWatcher(context: vscode.ExtensionContext): void
 
 async function getScripts(folderUri: vscode.Uri): Promise<Array<[string, string]>> {
 	try {
-		const content = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(folderUri, 'package.json'));
+		const content = await vscode.workspace.fs.readFile(
+			vscode.Uri.joinPath(folderUri, 'package.json'),
+		);
 		const packageJson = JSON.parse(Buffer.from(content).toString('utf8')) as PackageJson;
 		if (!packageJson.scripts || typeof packageJson.scripts !== 'object') {
 			return [];
@@ -76,13 +78,15 @@ async function refreshNpmScriptFolders(): Promise<void> {
 	const npmFolders: Record<string, boolean> = {};
 	const bunFolders: Record<string, boolean> = {};
 
-	await Promise.all(packageJsonUris.map(async packageJsonUri => {
-		const folderUri = vscode.Uri.joinPath(packageJsonUri, '..');
-		if ((await getScripts(folderUri)).length > 0) {
-			const folders = await getScriptRuntime(folderUri) === 'bun' ? bunFolders : npmFolders;
-			folders[folderUri.fsPath] = true;
-		}
-	}));
+	await Promise.all(
+		packageJsonUris.map(async packageJsonUri => {
+			const folderUri = vscode.Uri.joinPath(packageJsonUri, '..');
+			if ((await getScripts(folderUri)).length > 0) {
+				const folders = (await getScriptRuntime(folderUri)) === 'bun' ? bunFolders : npmFolders;
+				folders[folderUri.fsPath] = true;
+			}
+		}),
+	);
 
 	await Promise.all([
 		vscode.commands.executeCommand('setContext', npmScriptFoldersContext, npmFolders),

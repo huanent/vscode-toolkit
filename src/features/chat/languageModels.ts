@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 
-export async function getLanguageModelProviderNames(context: vscode.ExtensionContext, models: readonly vscode.LanguageModelChat[]) {
+export async function getLanguageModelProviderNames(
+	context: vscode.ExtensionContext,
+	models: readonly vscode.LanguageModelChat[],
+) {
 	const namesByVendor = new Map<string, string>();
 	for (const extension of vscode.extensions.all) {
 		const providers = extension.packageJSON?.contributes?.languageModelChatProviders;
@@ -11,9 +14,12 @@ export async function getLanguageModelProviderNames(context: vscode.ExtensionCon
 			if (typeof provider?.vendor !== 'string') {
 				continue;
 			}
-			const name = typeof provider.displayName === 'string'
-				? provider.displayName
-				: typeof provider.name === 'string' ? provider.name : undefined;
+			const name =
+				typeof provider.displayName === 'string'
+					? provider.displayName
+					: typeof provider.name === 'string'
+						? provider.name
+						: undefined;
 			if (name) {
 				namesByVendor.set(provider.vendor, name);
 			}
@@ -26,7 +32,12 @@ export async function getLanguageModelProviderNames(context: vscode.ExtensionCon
 		models?: Array<{ id?: string; name?: string }>;
 	}> = [];
 	try {
-		const configurationUri = vscode.Uri.joinPath(context.globalStorageUri, '..', '..', 'chatLanguageModels.json');
+		const configurationUri = vscode.Uri.joinPath(
+			context.globalStorageUri,
+			'..',
+			'..',
+			'chatLanguageModels.json',
+		);
 		const content = await vscode.workspace.fs.readFile(configurationUri);
 		const parsed = JSON.parse(new TextDecoder().decode(content));
 		if (Array.isArray(parsed)) {
@@ -38,13 +49,15 @@ export async function getLanguageModelProviderNames(context: vscode.ExtensionCon
 
 	const providerNames = new Map<string, string>();
 	for (const model of models) {
-		const configuredProvider = configuredProviders.find(provider =>
-			provider.vendor === model.vendor
-			&& provider.models?.some(candidate =>
-				candidate.id === model.id
-				|| candidate.id === model.family
-				|| candidate.name === model.name,
-			),
+		const configuredProvider = configuredProviders.find(
+			provider =>
+				provider.vendor === model.vendor &&
+				provider.models?.some(
+					candidate =>
+						candidate.id === model.id ||
+						candidate.id === model.family ||
+						candidate.name === model.name,
+				),
 		);
 		providerNames.set(
 			model.id,

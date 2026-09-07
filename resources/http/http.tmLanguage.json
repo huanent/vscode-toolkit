@@ -61,10 +61,7 @@
         "2": { "name": "punctuation.separator.key-value.http" },
         "3": {
           "name": "string.unquoted.header-value.http",
-          "patterns": [
-            { "include": "#template-variable" },
-            { "include": "#authorization" }
-          ]
+          "patterns": [{ "include": "#template-variable" }, { "include": "#authorization" }]
         }
       }
     },
@@ -97,7 +94,10 @@
             "0": { "name": "punctuation.definition.string.end.json.http" }
           },
           "patterns": [
-            { "name": "constant.character.escape.json.http", "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})" },
+            {
+              "name": "constant.character.escape.json.http",
+              "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4})"
+            },
             { "include": "#template-variable" }
           ]
         },

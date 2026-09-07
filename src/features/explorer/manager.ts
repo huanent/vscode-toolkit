@@ -36,14 +36,14 @@ export class ExplorerManager implements vscode.Disposable {
 	register(): void {
 		const editorProvider: vscode.CustomReadonlyEditorProvider<ExplorerDocument> = {
 			openCustomDocument: uri => this.openCustomDocument(uri),
-			resolveCustomEditor: (document, panel) => this.configurePanel(document, panel)
+			resolveCustomEditor: (document, panel) => this.configurePanel(document, panel),
 		};
 
 		this.disposables.push(
 			vscode.window.registerCustomEditorProvider(explorerViewType, editorProvider, {
 				supportsMultipleEditorsPerDocument: true,
-				webviewOptions: { retainContextWhenHidden: true }
-			})
+				webviewOptions: { retainContextWhenHidden: true },
+			}),
 		);
 	}
 
@@ -65,7 +65,9 @@ export class ExplorerManager implements vscode.Disposable {
 			return;
 		}
 		const completed = new Set(completedUris.map(uri => uri.toString()));
-		this.clipboardState.uris = this.clipboardState.uris.filter(uri => !completed.has(uri.toString()));
+		this.clipboardState.uris = this.clipboardState.uris.filter(
+			uri => !completed.has(uri.toString()),
+		);
 		await this.broadcastClipboardState();
 	}
 
@@ -95,7 +97,7 @@ export class ExplorerManager implements vscode.Disposable {
 	async openExplorer(
 		rootUri: vscode.Uri,
 		viewColumn: vscode.ViewColumn = vscode.ViewColumn.Active,
-		initialViewState?: ExplorerDocument['latestViewState']
+		initialViewState?: ExplorerDocument['latestViewState'],
 	): Promise<void> {
 		const folderName = getDisplayName(rootUri);
 		const resourceName = folderName === '/' ? 'root' : folderName;
@@ -107,11 +109,11 @@ export class ExplorerManager implements vscode.Disposable {
 		const resourceUri = vscode.Uri.from({
 			scheme: 'vscode-toolkit-explorer',
 			path: `/${resourceName}`,
-			query: query.toString()
+			query: query.toString(),
 		});
 		await vscode.commands.executeCommand('vscode.openWith', resourceUri, explorerViewType, {
 			preview: false,
-			viewColumn
+			viewColumn,
 		});
 	}
 
@@ -122,7 +124,7 @@ export class ExplorerManager implements vscode.Disposable {
 			title: name,
 			icon: 'table',
 			entryPoint: 'spreadsheet',
-			load: () => readSpreadsheet(uri)
+			load: () => readSpreadsheet(uri),
 		});
 	}
 
@@ -133,7 +135,7 @@ export class ExplorerManager implements vscode.Disposable {
 			title: name,
 			icon: 'file-zip',
 			entryPoint: 'archive',
-			load: () => readArchiveTree(uri)
+			load: () => readArchiveTree(uri),
 		});
 	}
 
@@ -151,14 +153,16 @@ export class ExplorerManager implements vscode.Disposable {
 		if (currentValue) {
 			document.latestViewState = {
 				currentUri: currentValue,
-				history: parseHistory(uri)
+				history: parseHistory(uri),
 			};
 		}
 		return document;
 	}
 
 	private configurePanel(document: ExplorerDocument, panel: vscode.WebviewPanel): void {
-		const isSplitCopy = [...this.panels.values()].some(entry => entry.documentUri.toString() === document.uri.toString());
+		const isSplitCopy = [...this.panels.values()].some(
+			entry => entry.documentUri.toString() === document.uri.toString(),
+		);
 		if (isSplitCopy) {
 			void this.replaceSplitCopy(document, panel);
 			return;
@@ -172,12 +176,15 @@ export class ExplorerManager implements vscode.Disposable {
 		});
 	}
 
-	private async replaceSplitCopy(document: ExplorerDocument, panel: vscode.WebviewPanel): Promise<void> {
+	private async replaceSplitCopy(
+		document: ExplorerDocument,
+		panel: vscode.WebviewPanel,
+	): Promise<void> {
 		try {
 			await this.openExplorer(
 				document.rootUri,
 				panel.viewColumn ?? vscode.ViewColumn.Active,
-				document.latestViewState
+				document.latestViewState,
 			);
 		} finally {
 			panel.dispose();
@@ -199,22 +206,26 @@ export class ExplorerManager implements vscode.Disposable {
 			type: 'clipboardChanged',
 			hasEntry: this.clipboardState.uris.length > 0,
 			operation: this.clipboardState.operation,
-			uris: this.clipboardState.uris.map(uri => uri.toString())
+			uris: this.clipboardState.uris.map(uri => uri.toString()),
 		});
 	}
 
 	async sendFavorites(webview: vscode.Webview, rootUri: vscode.Uri): Promise<void> {
 		await webview.postMessage({
 			type: 'favoritesChanged',
-			favorites: this.getFavoritesWithinRoot(rootUri, this.getFavorites())
+			favorites: this.getFavoritesWithinRoot(rootUri, this.getFavorites()),
 		});
 	}
 
 	private async broadcastFavorites(favorites: string[]): Promise<void> {
-		await Promise.all([...this.panels].map(([panel, { rootUri }]) => panel.webview.postMessage({
-			type: 'favoritesChanged',
-			favorites: this.getFavoritesWithinRoot(rootUri, favorites)
-		})));
+		await Promise.all(
+			[...this.panels].map(([panel, { rootUri }]) =>
+				panel.webview.postMessage({
+					type: 'favoritesChanged',
+					favorites: this.getFavoritesWithinRoot(rootUri, favorites),
+				}),
+			),
+		);
 	}
 
 	private getFavoritesWithinRoot(rootUri: vscode.Uri, favorites: string[]) {

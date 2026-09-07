@@ -176,9 +176,12 @@ function renderResult(result: HttpResult): string {
 		return `${request}<div class="${className}">${escapeHtml(result.message ?? '')}</div>`;
 	}
 
-	const headers = (result.headers ?? []).map(([name, value]) =>
-		`<span class="header-name">${escapeHtml(name)}</span><span class="header-value">${escapeHtml(value)}</span>`
-	).join('');
+	const headers = (result.headers ?? [])
+		.map(
+			([name, value]) =>
+				`<span class="header-name">${escapeHtml(name)}</span><span class="header-value">${escapeHtml(value)}</span>`,
+		)
+		.join('');
 	return `${request}<main class="content">
 	<details><summary>Response headers (${result.headers?.length ?? 0})</summary><div class="headers">${headers}</div></details>
 	<div class="body-label">Response body</div>
@@ -190,15 +193,13 @@ function renderMeta(result: HttpResult): string {
 	if (result.status === undefined) {
 		return '';
 	}
-	const statusClass = result.status < 300 ? 'success' : result.status < 400 ? 'redirect' : 'failure';
+	const statusClass =
+		result.status < 300 ? 'success' : result.status < 400 ? 'redirect' : 'failure';
 	return `<span class="meta"><span class="status ${statusClass}">${result.status} ${escapeHtml(result.statusText ?? '')}</span><span class="elapsed">${result.elapsed} ms</span></span>`;
 }
 
 function escapeHtml(value: string): string {
-	return value
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;');
+	return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 function escapeAttribute(value: string): string {

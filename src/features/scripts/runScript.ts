@@ -1,7 +1,12 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getTypeScriptRuntimeArgs } from './nodeRuntime';
-import { getRunnableFileUri, isNodeScriptUri, isTypeScriptDocument, resolveNodeDocument } from './scriptDocument';
+import {
+	getRunnableFileUri,
+	isNodeScriptUri,
+	isTypeScriptDocument,
+	resolveNodeDocument,
+} from './scriptDocument';
 import { getScriptRuntime } from './scriptRuntime';
 
 const terminalName = 'Toolkit Script';
@@ -24,9 +29,8 @@ async function runResolvedScript(
 	scriptUri: vscode.Uri | undefined,
 	selectedUris: readonly vscode.Uri[] | undefined,
 ): Promise<void> {
-	const contextualUri = scriptUri && isSupportedScript(scriptUri)
-		? scriptUri
-		: selectedUris?.find(isSupportedScript);
+	const contextualUri =
+		scriptUri && isSupportedScript(scriptUri) ? scriptUri : selectedUris?.find(isSupportedScript);
 	const nodeDocument = await resolveNodeDocument(contextualUri);
 	if (nodeDocument) {
 		await runNodeDocument(context, nodeDocument);
@@ -52,22 +56,34 @@ async function runResolvedScript(
 	} else if (extension === '.cs') {
 		command = `dotnet run --file ${quoteShellArgument(localScriptUri.fsPath)}`;
 	} else {
-		void vscode.window.showErrorMessage('This script type is not supported on the current platform.');
+		void vscode.window.showErrorMessage(
+			'This script type is not supported on the current platform.',
+		);
 		return;
 	}
 
 	runInTerminal(localScriptUri, command);
 }
 
-async function runNodeDocument(context: vscode.ExtensionContext, document: vscode.TextDocument): Promise<void> {
+async function runNodeDocument(
+	context: vscode.ExtensionContext,
+	document: vscode.TextDocument,
+): Promise<void> {
 	const runnableUri = await getRunnableFileUri(context, document);
 	const runtime = await getScriptRuntime(runnableUri);
-	const runtimeArgs = runtime === 'node' && isTypeScriptDocument(document) ? getTypeScriptRuntimeArgs() : [];
-	runInTerminal(runnableUri, [runtime, ...runtimeArgs, quoteShellArgument(runnableUri.fsPath)].join(' '));
+	const runtimeArgs =
+		runtime === 'node' && isTypeScriptDocument(document) ? getTypeScriptRuntimeArgs() : [];
+	runInTerminal(
+		runnableUri,
+		[runtime, ...runtimeArgs, quoteShellArgument(runnableUri.fsPath)].join(' '),
+	);
 }
 
 function runInTerminal(scriptUri: vscode.Uri, command: string): void {
-	const terminal = vscode.window.createTerminal({ name: terminalName, cwd: path.dirname(scriptUri.fsPath) });
+	const terminal = vscode.window.createTerminal({
+		name: terminalName,
+		cwd: path.dirname(scriptUri.fsPath),
+	});
 	terminal.show();
 	terminal.sendText(command);
 }
@@ -79,7 +95,9 @@ function quoteShellArgument(value: string): string {
 	return `'${value.replaceAll("'", `'\\''`)}'`;
 }
 
-async function resolveScriptUri(contextualUri: vscode.Uri | undefined): Promise<vscode.Uri | undefined> {
+async function resolveScriptUri(
+	contextualUri: vscode.Uri | undefined,
+): Promise<vscode.Uri | undefined> {
 	if (contextualUri && isLocalScriptUri(contextualUri)) {
 		return contextualUri;
 	}
@@ -89,9 +107,10 @@ async function resolveScriptUri(contextualUri: vscode.Uri | undefined): Promise<
 		return activeUri;
 	}
 
-	const extensions = process.platform === 'win32'
-		? ['bat', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts']
-		: ['sh', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts'];
+	const extensions =
+		process.platform === 'win32'
+			? ['bat', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts']
+			: ['sh', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts'];
 	const pickedUris = await vscode.window.showOpenDialog({
 		canSelectFiles: true,
 		canSelectFolders: false,
@@ -112,5 +131,8 @@ function isLocalScriptUri(uri: vscode.Uri): boolean {
 	}
 
 	const extension = path.extname(uri.fsPath).toLowerCase();
-	return extension === '.cs' || (process.platform === 'win32' ? extension === '.bat' : extension === '.sh');
+	return (
+		extension === '.cs' ||
+		(process.platform === 'win32' ? extension === '.bat' : extension === '.sh')
+	);
 }

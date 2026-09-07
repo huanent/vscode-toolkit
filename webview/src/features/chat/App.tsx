@@ -6,5 +6,54 @@ import { useChat } from './hooks/useChat';
 
 export function App() {
 	const chat = useChat();
-	return <div className="relative h-full"><div className="absolute top-1 left-1 z-20 flex gap-1"><IconButton ref={chat.historyButtonRef} label="Show chat history" icon={<span className="codicon codicon-menu text-[14px] leading-none" aria-hidden="true" />} size={IconButtonSize.Medium} aria-expanded={chat.historyVisible} onClick={() => chat.setHistoryVisible(value => !value)} /></div>{chat.historyVisible && <HistoryPanel panelRef={chat.historyPanelRef} sessions={chat.sessions} currentSessionId={chat.currentSessionId} query={chat.historyQuery} onQueryChange={chat.setHistoryQuery} onClose={() => chat.setHistoryVisible(false)} onSelect={chat.selectSession} onDelete={chat.deleteSession} />}<div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]"><MessageList messages={chat.messages} busy={chat.busy} editingIndex={chat.editingIndex} onEdit={chat.editMessage} onRegenerate={chat.regenerate} onRetry={chat.retry} /><ChatInput inputRef={chat.inputRef} input={chat.input} busy={chat.busy} editingIndex={chat.editingIndex} models={chat.models} selectedModelId={chat.selectedModelId} modelsError={chat.modelsError} onInputChange={chat.setInput} onSelectModel={chat.selectModel} onSend={chat.send} /></div></div>;
+	return (
+		<div className="relative h-full">
+			<div className="absolute top-1 left-1 z-20 flex gap-1">
+				<IconButton
+					ref={chat.historyButtonRef}
+					label="Show chat history"
+					icon={
+						<span className="codicon codicon-menu text-[14px] leading-none" aria-hidden="true" />
+					}
+					size={IconButtonSize.Medium}
+					aria-expanded={chat.historyVisible}
+					onClick={() => chat.setHistoryVisible(value => !value)}
+				/>
+			</div>
+			{chat.historyVisible && (
+				<HistoryPanel
+					panelRef={chat.historyPanelRef}
+					sessions={chat.sessions}
+					currentSessionId={chat.currentSessionId}
+					query={chat.historyQuery}
+					onQueryChange={chat.setHistoryQuery}
+					onClose={() => chat.setHistoryVisible(false)}
+					onSelect={chat.selectSession}
+					onDelete={chat.deleteSession}
+				/>
+			)}
+			<div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+				<MessageList
+					messages={chat.messages}
+					busy={chat.busy}
+					editingIndex={chat.editingIndex}
+					onEdit={chat.editMessage}
+					onRegenerate={chat.regenerate}
+					onRetry={chat.retry}
+				/>
+				<ChatInput
+					inputRef={chat.inputRef}
+					input={chat.input}
+					busy={chat.busy}
+					editingIndex={chat.editingIndex}
+					models={chat.models}
+					selectedModelId={chat.selectedModelId}
+					modelsError={chat.modelsError}
+					onInputChange={chat.setInput}
+					onSelectModel={chat.selectModel}
+					onSend={chat.send}
+				/>
+			</div>
+		</div>
+	);
 }

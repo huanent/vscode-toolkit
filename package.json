@@ -432,6 +432,10 @@
     }
   },
   "scripts": {
+    "lint": "oxlint --deny-warnings .",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
     "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.ts",
@@ -456,6 +460,8 @@
     "lucide-react": "^0.468.0",
     "markdown-it": "^15.0.0",
     "markdown-it-texmath": "^1.0.0",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -463,6 +469,11 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^7.2.2"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.46-24",

@@ -6,7 +6,7 @@ import type { StoredSession } from './session';
 export class SessionStorage {
 	private readonly persistedSessionIds = new Set<string>();
 
-	private constructor(private readonly storageUri: vscode.Uri) { }
+	private constructor(private readonly storageUri: vscode.Uri) {}
 
 	static async create(context: vscode.ExtensionContext): Promise<SessionStorage> {
 		const storageUri = getStorageUri(context, 'chat');
@@ -32,20 +32,24 @@ export class SessionStorage {
 
 	private async loadFromDirectory(): Promise<StoredSession[]> {
 		const entries = await vscode.workspace.fs.readDirectory(this.storageUri);
-		const sessions = await Promise.all(entries.map(async ([name, type]) => {
-			if (type !== vscode.FileType.File || path.extname(name).toLowerCase() !== '.json') {
-				return undefined;
-			}
-			try {
-				const content = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(this.storageUri, name));
-				const session = JSON.parse(new TextDecoder().decode(content));
-				if (isStoredSession(session) && name === `${session.id}.json`) {
-					this.persistedSessionIds.add(session.id);
-					return session;
+		const sessions = await Promise.all(
+			entries.map(async ([name, type]) => {
+				if (type !== vscode.FileType.File || path.extname(name).toLowerCase() !== '.json') {
+					return undefined;
 				}
-			} catch { }
-			return undefined;
-		}));
+				try {
+					const content = await vscode.workspace.fs.readFile(
+						vscode.Uri.joinPath(this.storageUri, name),
+					);
+					const session = JSON.parse(new TextDecoder().decode(content));
+					if (isStoredSession(session) && name === `${session.id}.json`) {
+						this.persistedSessionIds.add(session.id);
+						return session;
+					}
+				} catch {}
+				return undefined;
+			}),
+		);
 		return sessions.filter(session => session !== undefined);
 	}
 
@@ -71,15 +75,20 @@ function isStoredSession(value: unknown): value is StoredSession {
 		return false;
 	}
 	const session = value as Partial<StoredSession>;
-	return typeof session.id === 'string'
-		&& typeof session.summary === 'string'
-		&& typeof session.updatedAt === 'number'
-		&& Array.isArray(session.messages)
-		&& session.messages.every(message => Boolean(message)
-			&& (message.role === 'user' || message.role === 'assistant')
-			&& typeof message.content === 'string'
-			&& (message.model === undefined || typeof message.model === 'string')
-			&& (message.tokenUsage === undefined || isTokenUsage(message.tokenUsage)));
+	return (
+		typeof session.id === 'string' &&
+		typeof session.summary === 'string' &&
+		typeof session.updatedAt === 'number' &&
+		Array.isArray(session.messages) &&
+		session.messages.every(
+			message =>
+				Boolean(message) &&
+				(message.role === 'user' || message.role === 'assistant') &&
+				typeof message.content === 'string' &&
+				(message.model === undefined || typeof message.model === 'string') &&
+				(message.tokenUsage === undefined || isTokenUsage(message.tokenUsage)),
+		)
+	);
 }
 
 function isTokenUsage(value: unknown): boolean {
@@ -87,7 +96,9 @@ function isTokenUsage(value: unknown): boolean {
 		return false;
 	}
 	const usage = value as Record<string, unknown>;
-	return typeof usage.input === 'number'
-		&& typeof usage.output === 'number'
-		&& (usage.cachedInput === undefined || typeof usage.cachedInput === 'number');
+	return (
+		typeof usage.input === 'number' &&
+		typeof usage.output === 'number' &&
+		(usage.cachedInput === undefined || typeof usage.cachedInput === 'number')
+	);
 }

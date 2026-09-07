@@ -16,15 +16,18 @@ const gitCommands = {
 export function registerSourceControl(context: vscode.ExtensionContext): void {
 	for (const [command, gitCommand] of Object.entries(gitCommands)) {
 		context.subscriptions.push(
-			vscode.commands.registerCommand(`vscode-toolkit.${command}`, (folderUri: vscode.Uri | undefined) => {
-				if (!folderUri) {
-					return;
-				}
+			vscode.commands.registerCommand(
+				`vscode-toolkit.${command}`,
+				(folderUri: vscode.Uri | undefined) => {
+					if (!folderUri) {
+						return;
+					}
 
-				const terminal = vscode.window.createTerminal({ name: 'Toolkit Git', cwd: folderUri });
-				terminal.show();
-				terminal.sendText(gitCommand);
-			}),
+					const terminal = vscode.window.createTerminal({ name: 'Toolkit Git', cwd: folderUri });
+					terminal.show();
+					terminal.sendText(gitCommand);
+				},
+			),
 		);
 	}
 	context.subscriptions.push(
@@ -66,23 +69,34 @@ async function checkoutGitRepository(folderUri: vscode.Uri | undefined): Promise
 	try {
 		const { stdout } = await execFileAsync(
 			'git',
-			['for-each-ref', '--format=%(refname)\t%(refname:short)\t%(HEAD)', 'refs/heads', 'refs/remotes'],
+			[
+				'for-each-ref',
+				'--format=%(refname)\t%(refname:short)\t%(HEAD)',
+				'refs/heads',
+				'refs/remotes',
+			],
 			{ cwd: folderUri.fsPath },
 		);
-		branches = stdout.trim().split('\n').filter(Boolean).flatMap(line => {
-			const [ref, branch, head] = line.split('\t');
-			const remote = ref.startsWith('refs/remotes/');
-			if (branch.endsWith('/HEAD')) {
-				return [];
-			}
+		branches = stdout
+			.trim()
+			.split('\n')
+			.filter(Boolean)
+			.flatMap(line => {
+				const [ref, branch, head] = line.split('\t');
+				const remote = ref.startsWith('refs/remotes/');
+				if (branch.endsWith('/HEAD')) {
+					return [];
+				}
 
-			return [{
-				label: branch,
-				description: head === '*' ? 'Current' : remote ? 'Remote' : 'Local',
-				branch,
-				remote,
-			}];
-		});
+				return [
+					{
+						label: branch,
+						description: head === '*' ? 'Current' : remote ? 'Remote' : 'Local',
+						branch,
+						remote,
+					},
+				];
+			});
 	} catch {
 		void vscode.window.showErrorMessage('Unable to read Git branches for this repository.');
 		return;
@@ -128,7 +142,11 @@ async function refreshGitRepositoryFolders(): Promise<void> {
 		}
 	}
 
-	await vscode.commands.executeCommand('setContext', gitRepositoryFoldersContext, repositoryFolders);
+	await vscode.commands.executeCommand(
+		'setContext',
+		gitRepositoryFoldersContext,
+		repositoryFolders,
+	);
 	gitDecorationEmitter.fire(undefined);
 }
 

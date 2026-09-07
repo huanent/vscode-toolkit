@@ -19,5 +19,5 @@ createRoot(root).render(
 			errorLabel="Unable to read spreadsheet"
 			render={sheets => <SpreadsheetPreview name={name} sheets={sheets} />}
 		/>
-	</StrictMode>
+	</StrictMode>,
 );

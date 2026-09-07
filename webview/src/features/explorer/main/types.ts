@@ -1,4 +1,7 @@
-import type { FolderEntry, PersistedExplorerState } from '../../../../../src/features/explorer/types';
+import type {
+	FolderEntry,
+	PersistedExplorerState,
+} from '../../../../../src/features/explorer/types';
 
 export interface FileEntry extends FolderEntry {
 	calculatedSize?: number;

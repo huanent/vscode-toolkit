@@ -28,7 +28,7 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 
 	async openLastOrCreate(): Promise<void> {
 		const last = await this.findMostRecentExisting();
-		await this.open(last ?? await this.create());
+		await this.open(last ?? (await this.create()));
 	}
 
 	async create(): Promise<vscode.Uri> {
@@ -94,7 +94,7 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 			return 'Enter a file name without a directory path.';
 		}
 		const target = this.uriForName(`${baseName}.http`);
-		if (target.toString() !== uri.toString() && await this.exists(target)) {
+		if (target.toString() !== uri.toString() && (await this.exists(target))) {
 			return 'An HTTP request with this name already exists.';
 		}
 		return undefined;
@@ -120,7 +120,11 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 		return vscode.workspace.fs.readFile(this.toStorageUri(uri));
 	}
 
-	async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): Promise<void> {
+	async writeFile(
+		uri: vscode.Uri,
+		content: Uint8Array,
+		options: { create: boolean; overwrite: boolean },
+	): Promise<void> {
 		const exists = await this.existsStorage(uri);
 		if (!exists && !options.create) {
 			throw vscode.FileSystemError.FileNotFound(uri);
@@ -129,16 +133,27 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 			throw vscode.FileSystemError.FileExists(uri);
 		}
 		await vscode.workspace.fs.writeFile(this.toStorageUri(uri), content);
-		this.changeEmitter.fire([{ type: exists ? vscode.FileChangeType.Changed : vscode.FileChangeType.Created, uri }]);
+		this.changeEmitter.fire([
+			{ type: exists ? vscode.FileChangeType.Changed : vscode.FileChangeType.Created, uri },
+		]);
 	}
 
 	async delete(uri: vscode.Uri, options: { recursive: boolean }): Promise<void> {
-		await vscode.workspace.fs.delete(this.toStorageUri(uri), { recursive: options.recursive, useTrash: false });
+		await vscode.workspace.fs.delete(this.toStorageUri(uri), {
+			recursive: options.recursive,
+			useTrash: false,
+		});
 		this.changeEmitter.fire([{ type: vscode.FileChangeType.Deleted, uri }]);
 	}
 
-	async rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean }): Promise<void> {
-		await vscode.workspace.fs.rename(this.toStorageUri(oldUri), this.toStorageUri(newUri), { overwrite: options.overwrite });
+	async rename(
+		oldUri: vscode.Uri,
+		newUri: vscode.Uri,
+		options: { overwrite: boolean },
+	): Promise<void> {
+		await vscode.workspace.fs.rename(this.toStorageUri(oldUri), this.toStorageUri(newUri), {
+			overwrite: options.overwrite,
+		});
 		this.changeEmitter.fire([
 			{ type: vscode.FileChangeType.Deleted, uri: oldUri },
 			{ type: vscode.FileChangeType.Created, uri: newUri },
@@ -164,7 +179,7 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 		while (true) {
 			const name = suffix === 1 ? `${baseName}.http` : `${baseName}-${suffix}.http`;
 			const uri = this.uriForName(name);
-			if (!await this.exists(uri)) {
+			if (!(await this.exists(uri))) {
 				return uri;
 			}
 			suffix++;
@@ -180,7 +195,10 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 	private async replaceHistoryUri(oldUri: vscode.Uri, newUri: vscode.Uri): Promise<void> {
 		const oldValue = oldUri.toString();
 		const newValue = newUri.toString();
-		const history = [newValue, ...this.getHistory().filter(item => item !== oldValue && item !== newValue)];
+		const history = [
+			newValue,
+			...this.getHistory().filter(item => item !== oldValue && item !== newValue),
+		];
 		await this.context.globalState.update(historyKey, history);
 	}
 
@@ -188,10 +206,12 @@ export class HttpDocumentStore implements vscode.FileSystemProvider, vscode.Disp
 		return this.context.globalState.get<string[]>(historyKey, []);
 	}
 
-	private async findMostRecentExisting(history = this.getHistory()): Promise<vscode.Uri | undefined> {
+	private async findMostRecentExisting(
+		history = this.getHistory(),
+	): Promise<vscode.Uri | undefined> {
 		for (const value of history) {
 			const uri = vscode.Uri.parse(value);
-			if (this.isManagedUri(uri) && await this.exists(uri)) {
+			if (this.isManagedUri(uri) && (await this.exists(uri))) {
 				return uri;
 			}
 		}
@@ -225,5 +245,7 @@ export function formatLocalTimestamp(date: Date): string {
 		date.getMinutes(),
 		date.getSeconds(),
 	];
-	return parts.map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0')).join('');
+	return parts
+		.map((part, index) => (index === 0 ? String(part) : String(part).padStart(2, '0')))
+		.join('');
 }

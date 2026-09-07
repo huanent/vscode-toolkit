@@ -50,11 +50,20 @@ export type ExplorerRequest =
 export type ExplorerResponse =
 	| { type: 'directory'; rootUri: string; currentUri: string; entries: FolderEntry[] }
 	| { type: 'archiveProgress'; operationId: string; percent: number; detail: string }
-	| { type: 'pasteProgress'; operationId: string; operation: 'cut' | 'copy'; percent: number; detail: string }
+	| {
+			type: 'pasteProgress';
+			operationId: string;
+			operation: 'cut' | 'copy';
+			percent: number;
+			detail: string;
+	  }
 	| { type: 'createdDirectory' | 'createdFile'; uri: string; parentUri: string }
 	| { type: 'deleted' | 'renamed' }
 	| { type: 'pasted'; operationId: string; uris: string[]; destinationUri: string }
-	| { type: 'compressed' | 'extracted' | 'archiveCancelled' | 'archiveDismissed' | 'pasteCancelled'; operationId: string }
+	| {
+			type: 'compressed' | 'extracted' | 'archiveCancelled' | 'archiveDismissed' | 'pasteCancelled';
+			operationId: string;
+	  }
 	| { type: 'clipboardChanged'; hasEntry: boolean; operation: 'cut' | 'copy'; uris: string[] }
 	| { type: 'favoritesChanged'; favorites: string[] }
 	| { type: 'directorySize'; uri: string; size: number }

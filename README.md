@@ -24,3 +24,10 @@ npm run build
 ```
 
 Press `F5` in VS Code to build and open an Extension Development Host.
+
+- `npm run lint`: check code with Oxlint; warnings fail the check.
+- `npm run lint:fix`: apply automatic Oxlint fixes.
+- `npm run format`: format source code, configuration, and documentation with Oxfmt.
+- `npm run format:check`: verify formatting without modifying files.
+
+Formatting uses tabs, single quotes, semicolons, and a 100-column print width. JSON, YAML, and Markdown use spaces. Generated output, dependencies, coverage output, bundled gitignore templates, and the lockfile are excluded. Import and package key sorting are disabled to keep formatting changes focused.

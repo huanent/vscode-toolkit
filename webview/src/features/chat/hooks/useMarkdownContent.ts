@@ -24,13 +24,17 @@ export function useMarkdownContent(text: string) {
 
 	useEffect(() => {
 		const container = containerRef.current;
-		const elements = Array.from(container?.querySelectorAll<HTMLElement>('pre, .katex-display') ?? []);
+		const elements = Array.from(
+			container?.querySelectorAll<HTMLElement>('pre, .katex-display') ?? [],
+		);
 		const updateOverflow = (element: HTMLElement) => {
 			const maxScrollLeft = element.scrollWidth - element.clientWidth;
 			element.dataset.overflowLeft = String(element.scrollLeft > 1);
 			element.dataset.overflowRight = String(maxScrollLeft - element.scrollLeft > 1);
 		};
-		const resizeObserver = new ResizeObserver(entries => entries.forEach(entry => updateOverflow(entry.target as HTMLElement)));
+		const resizeObserver = new ResizeObserver(entries =>
+			entries.forEach(entry => updateOverflow(entry.target as HTMLElement)),
+		);
 		const feedbackTimers = new Set<ReturnType<typeof setTimeout>>();
 		const copyCode = async (button: HTMLButtonElement) => {
 			const pre = button.parentElement?.querySelector('pre');

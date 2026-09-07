@@ -22,7 +22,7 @@ export function registerScriptRuntimeWatcher(context: vscode.ExtensionContext): 
 
 export async function getScriptRuntime(uri: vscode.Uri): Promise<ScriptRuntime> {
 	const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-	if (workspaceFolder && await isBunWorkspaceFolder(workspaceFolder.uri)) {
+	if (workspaceFolder && (await isBunWorkspaceFolder(workspaceFolder.uri))) {
 		return 'bun';
 	}
 
@@ -40,8 +40,11 @@ function isCommandAvailable(command: ScriptRuntime | 'npm'): boolean {
 
 async function refreshScriptRuntimeContexts(): Promise<void> {
 	const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
-	const bunWorkspace = workspaceFolders.length > 0
-		&& (await Promise.all(workspaceFolders.map(folder => isBunWorkspaceFolder(folder.uri)))).every(Boolean);
+	const bunWorkspace =
+		workspaceFolders.length > 0 &&
+		(await Promise.all(workspaceFolders.map(folder => isBunWorkspaceFolder(folder.uri)))).every(
+			Boolean,
+		);
 
 	await Promise.all([
 		vscode.commands.executeCommand('setContext', nodeAvailableContext, isCommandAvailable('node')),
@@ -56,8 +59,7 @@ async function isBunWorkspaceFolder(folderUri: vscode.Uri): Promise<boolean> {
 		try {
 			await vscode.workspace.fs.stat(vscode.Uri.joinPath(folderUri, marker));
 			return true;
-		} catch {
-		}
+		} catch {}
 	}
 
 	return false;

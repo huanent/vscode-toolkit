@@ -4,5 +4,5 @@ export type {
 	SqliteColumn,
 	SqliteRequest,
 	SqliteResponse,
-	SqliteState
+	SqliteState,
 } from '../../../../../../src/features/explorer/sqlite/types';

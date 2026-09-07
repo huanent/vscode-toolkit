@@ -3,8 +3,9 @@ import type { FolderEntry } from '../types';
 
 export async function readDirectory(directoryUri: vscode.Uri): Promise<FolderEntry[]> {
 	const limit = createConcurrencyLimit(64);
-	const directoryEntries = (await vscode.workspace.fs.readDirectory(directoryUri))
-		.filter(([name]) => name !== '.DS_Store');
+	const directoryEntries = (await vscode.workspace.fs.readDirectory(directoryUri)).filter(
+		([name]) => name !== '.DS_Store',
+	);
 	const entries = await Promise.all(
 		directoryEntries.map(async ([name, fileType]): Promise<FolderEntry | undefined> => {
 			const uri = vscode.Uri.joinPath(directoryUri, name);
@@ -16,7 +17,7 @@ export async function readDirectory(directoryUri: vscode.Uri): Promise<FolderEnt
 					type: fileType & vscode.FileType.Directory ? 'directory' : 'file',
 					size: stat.size,
 					created: stat.ctime,
-					modified: stat.mtime
+					modified: stat.mtime,
 				};
 			} catch (error) {
 				if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
@@ -24,7 +25,7 @@ export async function readDirectory(directoryUri: vscode.Uri): Promise<FolderEnt
 				}
 				throw error;
 			}
-		})
+		}),
 	);
 	const availableEntries = entries.filter((entry): entry is FolderEntry => entry !== undefined);
 
@@ -36,7 +37,10 @@ export async function readDirectory(directoryUri: vscode.Uri): Promise<FolderEnt
 	});
 }
 
-export async function calculateDirectorySize(directoryUri: vscode.Uri, token: vscode.CancellationToken): Promise<number> {
+export async function calculateDirectorySize(
+	directoryUri: vscode.Uri,
+	token: vscode.CancellationToken,
+): Promise<number> {
 	type PendingEntry = { uri: vscode.Uri; type: vscode.FileType };
 
 	const maxConcurrency = 16;
@@ -67,18 +71,21 @@ export async function calculateDirectorySize(directoryUri: vscode.Uri, token: vs
 				const entry = pending.pop();
 				if (!entry) break;
 				activeCount++;
-				void processEntry(entry).then(() => {
-					activeCount--;
-					if (!pending.length && activeCount === 0) {
-						settled = true;
-						resolve(totalSize);
-						return;
-					}
-					schedule();
-				}, error => {
-					activeCount--;
-					fail(error);
-				});
+				void processEntry(entry).then(
+					() => {
+						activeCount--;
+						if (!pending.length && activeCount === 0) {
+							settled = true;
+							resolve(totalSize);
+							return;
+						}
+						schedule();
+					},
+					error => {
+						activeCount--;
+						fail(error);
+					},
+				);
 			}
 		};
 

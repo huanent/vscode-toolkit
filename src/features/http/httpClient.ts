@@ -2,7 +2,12 @@ import { basename } from 'node:path';
 import * as vscode from 'vscode';
 import { HttpDocumentStore } from './httpDocumentStore';
 import { registerHttpFormatter } from './httpFormatter';
-import { HTTP_METHODS, HttpLanguageService, registerHttpHoverProvider, registerHttpLanguageDiagnostics } from './httpLanguageService';
+import {
+	HTTP_METHODS,
+	HttpLanguageService,
+	registerHttpHoverProvider,
+	registerHttpLanguageDiagnostics,
+} from './httpLanguageService';
 import { HttpResultPanel } from './httpResultPanel';
 
 const headers = [
@@ -37,14 +42,29 @@ export function registerHttpClient(context: vscode.ExtensionContext): void {
 			await documentStoreReady;
 			await documentStore.createAndOpen();
 		}),
-		vscode.commands.registerCommand('vscode-toolkit.renameHttpFile', () => renameHttpFile(documentStore)),
-		vscode.commands.registerCommand('vscode-toolkit.deleteHttpFile', () => deleteHttpFile(documentStore)),
-		vscode.commands.registerCommand('vscode-toolkit.sendHttpRequest', async (uri?: vscode.Uri, line?: number) => {
-			await sendRequest(resultPanel, requestStatus, uri, line);
-		}),
-		vscode.commands.registerCommand('vscode-toolkit.cancelHttpRequest', () => requestStatus.cancel()),
+		vscode.commands.registerCommand('vscode-toolkit.renameHttpFile', () =>
+			renameHttpFile(documentStore),
+		),
+		vscode.commands.registerCommand('vscode-toolkit.deleteHttpFile', () =>
+			deleteHttpFile(documentStore),
+		),
+		vscode.commands.registerCommand(
+			'vscode-toolkit.sendHttpRequest',
+			async (uri?: vscode.Uri, line?: number) => {
+				await sendRequest(resultPanel, requestStatus, uri, line);
+			},
+		),
+		vscode.commands.registerCommand('vscode-toolkit.cancelHttpRequest', () =>
+			requestStatus.cancel(),
+		),
 		vscode.languages.registerCodeLensProvider(selector, new HttpCodeLensProvider()),
-		vscode.languages.registerCompletionItemProvider(selector, new HttpCompletionProvider(), '{', ':', '@'),
+		vscode.languages.registerCompletionItemProvider(
+			selector,
+			new HttpCompletionProvider(),
+			'{',
+			':',
+			'@',
+		),
 		registerHttpHoverProvider(languageService),
 		registerHttpFormatter(),
 		registerHttpAutoSave(documentStore),
@@ -54,7 +74,10 @@ export function registerHttpClient(context: vscode.ExtensionContext): void {
 }
 
 class HttpRequestStatus implements vscode.Disposable {
-	private readonly sendingItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, Number.MIN_SAFE_INTEGER);
+	private readonly sendingItem = vscode.window.createStatusBarItem(
+		vscode.StatusBarAlignment.Left,
+		Number.MIN_SAFE_INTEGER,
+	);
 	private readonly controllers = new Set<AbortController>();
 
 	constructor() {
@@ -106,7 +129,7 @@ async function renameHttpFile(documentStore: HttpDocumentStore): Promise<void> {
 		return;
 	}
 
-	if (document.isDirty && !await document.save()) {
+	if (document.isDirty && !(await document.save())) {
 		void vscode.window.showErrorMessage('Unable to save the HTTP request before renaming it.');
 		return;
 	}
@@ -171,16 +194,19 @@ function registerHttpAutoSave(documentStore: HttpDocumentStore): vscode.Disposab
 
 		clearSaveTimer(document);
 		const key = document.uri.toString();
-		saveTimers.set(key, setTimeout(() => {
-			saveTimers.delete(key);
-			if (!document.isClosed && document.isDirty) {
-				void document.save().then(saved => {
-					if (!saved && !document.isClosed) {
-						void vscode.window.showWarningMessage('Unable to auto-save the HTTP request.');
-					}
-				});
-			}
-		}, httpSaveDelay));
+		saveTimers.set(
+			key,
+			setTimeout(() => {
+				saveTimers.delete(key);
+				if (!document.isClosed && document.isDirty) {
+					void document.save().then(saved => {
+						if (!saved && !document.isClosed) {
+							void vscode.window.showWarningMessage('Unable to auto-save the HTTP request.');
+						}
+					});
+				}
+			}, httpSaveDelay),
+		);
 	});
 	const saveSubscription = vscode.workspace.onDidSaveTextDocument(clearSaveTimer);
 	const closeSubscription = vscode.workspace.onDidCloseTextDocument(clearSaveTimer);
@@ -204,18 +230,23 @@ class HttpCodeLensProvider implements vscode.CodeLensProvider {
 				continue;
 			}
 
-			lenses.push(new vscode.CodeLens(document.lineAt(line).range, {
-				title: '$(play) Send Request',
-				command: 'vscode-toolkit.sendHttpRequest',
-				arguments: [document.uri, line],
-			}));
+			lenses.push(
+				new vscode.CodeLens(document.lineAt(line).range, {
+					title: '$(play) Send Request',
+					command: 'vscode-toolkit.sendHttpRequest',
+					arguments: [document.uri, line],
+				}),
+			);
 		}
 		return lenses;
 	}
 }
 
 class HttpCompletionProvider implements vscode.CompletionItemProvider {
-	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
+	provideCompletionItems(
+		document: vscode.TextDocument,
+		position: vscode.Position,
+	): vscode.CompletionItem[] {
 		const linePrefix = document.lineAt(position).text.slice(0, position.character);
 		const methodRange = languageService.getMethodRange(document, position);
 		if (/^\s*[A-Za-z-]*$/.test(linePrefix) && methodRange) {
@@ -278,7 +309,11 @@ async function sendRequest(
 		return;
 	}
 
-	const requestLine = line ?? (editor?.document.uri.toString() === document.uri.toString() ? editor.selection.active.line : 0);
+	const requestLine =
+		line ??
+		(editor?.document.uri.toString() === document.uri.toString()
+			? editor.selection.active.line
+			: 0);
 	let request;
 	try {
 		request = languageService.parseRequest(document, requestLine);
@@ -342,11 +377,12 @@ async function sendRequest(
 async function formatResponseBody(response: Response): Promise<string> {
 	const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
 	const bytes = new Uint8Array(await response.arrayBuffer());
-	const textual = contentType.startsWith('text/')
-		|| contentType.includes('json')
-		|| contentType.includes('xml')
-		|| contentType.includes('javascript')
-		|| contentType.includes('x-www-form-urlencoded');
+	const textual =
+		contentType.startsWith('text/') ||
+		contentType.includes('json') ||
+		contentType.includes('xml') ||
+		contentType.includes('javascript') ||
+		contentType.includes('x-www-form-urlencoded');
 	if (!textual) {
 		return `[Binary response: ${bytes.byteLength} bytes, ${contentType || 'unknown content type'}]`;
 	}

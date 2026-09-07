@@ -20,7 +20,10 @@ export function FavoritesPanel({ state, actions }: FavoritesPanelProps) {
 			onClick={event => event.stopPropagation()}
 			onMouseDown={event => event.preventDefault()}
 		>
-			<nav className="mb-1 grid grid-cols-2 border-b border-(--vscode-menu-separatorBackground,var(--vscode-panel-border)) pb-1 min-[600px]:grid-cols-4" aria-label="Quick locations">
+			<nav
+				className="mb-1 grid grid-cols-2 border-b border-(--vscode-menu-separatorBackground,var(--vscode-panel-border)) pb-1 min-[600px]:grid-cols-4"
+				aria-label="Quick locations"
+			>
 				{quickLocations.map(({ location, icon, label }) => (
 					<button
 						key={location}
@@ -32,48 +35,55 @@ export function FavoritesPanel({ state, actions }: FavoritesPanelProps) {
 							actions.navigateQuickLocation(location);
 						}}
 					>
-						<i className={cn('codicon shrink-0 text-base text-(--vscode-icon-foreground)', icon)} aria-hidden="true" />
+						<i
+							className={cn('codicon shrink-0 text-base text-(--vscode-icon-foreground)', icon)}
+							aria-hidden="true"
+						/>
 						<span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{label}</span>
 					</button>
 				))}
 			</nav>
 			{state.favoriteUris.length === 0 ? (
-				<div className="px-2 py-4.5 text-center text-(--vscode-descriptionForeground)">No favorite folders.</div>
-			) : state.favoriteUris.map(uri => {
-				const relativePath = getRelativePath(state.rootUri, uri);
-				const pathParts = relativePath.split('/');
-				const folderName = pathParts.pop() ?? relativePath;
-				const parentPath = pathParts.length ? `${pathParts.join('/')}/` : '';
-				return (
-					<div
-						key={uri}
-						className="group my-px flex h-8 w-full min-w-0 items-center rounded-sm text-(--vscode-menu-foreground) hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground)"
-					>
-						<button
-							type="button"
-							title={relativePath}
-							className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 overflow-hidden border-0 bg-transparent px-2 text-left text-inherit focus:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)"
-							onClick={() => {
-								actions.setPathInputOpen(false);
-								actions.requestDirectory(uri, true);
-							}}
+				<div className="px-2 py-4.5 text-center text-(--vscode-descriptionForeground)">
+					No favorite folders.
+				</div>
+			) : (
+				state.favoriteUris.map(uri => {
+					const relativePath = getRelativePath(state.rootUri, uri);
+					const pathParts = relativePath.split('/');
+					const folderName = pathParts.pop() ?? relativePath;
+					const parentPath = pathParts.length ? `${pathParts.join('/')}/` : '';
+					return (
+						<div
+							key={uri}
+							className="group my-px flex h-8 w-full min-w-0 items-center rounded-sm text-(--vscode-menu-foreground) hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground)"
 						>
-							<i className="codicon codicon-folder shrink-0 text-base text-(--vscode-symbolIcon-folderForeground,var(--vscode-icon-foreground))" />
-							<span className="flex min-w-0 overflow-hidden whitespace-nowrap">
-								<span className="min-w-0 overflow-hidden text-ellipsis">{parentPath}</span>
-								<span className="shrink-0">{folderName}</span>
-							</span>
-						</button>
-						<IconButton
-							icon="codicon-trash"
-							className="mr-0.5 shrink-0 text-(--vscode-menu-foreground) opacity-0 hover:bg-transparent group-hover:opacity-100 group-focus-within:opacity-100"
-							title="Remove from favorites"
-							aria-label={`Remove ${relativePath} from favorites`}
-							onClick={() => actions.setFavorite(uri, false)}
-						/>
-					</div>
-				);
-			})}
+							<button
+								type="button"
+								title={relativePath}
+								className="flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 overflow-hidden border-0 bg-transparent px-2 text-left text-inherit focus:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)"
+								onClick={() => {
+									actions.setPathInputOpen(false);
+									actions.requestDirectory(uri, true);
+								}}
+							>
+								<i className="codicon codicon-folder shrink-0 text-base text-(--vscode-symbolIcon-folderForeground,var(--vscode-icon-foreground))" />
+								<span className="flex min-w-0 overflow-hidden whitespace-nowrap">
+									<span className="min-w-0 overflow-hidden text-ellipsis">{parentPath}</span>
+									<span className="shrink-0">{folderName}</span>
+								</span>
+							</button>
+							<IconButton
+								icon="codicon-trash"
+								className="mr-0.5 shrink-0 text-(--vscode-menu-foreground) opacity-0 hover:bg-transparent group-hover:opacity-100 group-focus-within:opacity-100"
+								title="Remove from favorites"
+								aria-label={`Remove ${relativePath} from favorites`}
+								onClick={() => actions.setFavorite(uri, false)}
+							/>
+						</div>
+					);
+				})
+			)}
 		</section>
 	);
 }

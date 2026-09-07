@@ -45,7 +45,13 @@ export type SqliteRequest =
 	| { type: 'ready' }
 	| { type: 'openObject'; object: DatabaseObject; page?: number }
 	| { type: 'createTable'; requestId: string; tableName: string; columns: TableColumn[] }
-	| { type: 'updateTable'; requestId: string; originalName: string; tableName: string; columns: TableColumn[] }
+	| {
+			type: 'updateTable';
+			requestId: string;
+			originalName: string;
+			tableName: string;
+			columns: TableColumn[];
+	  }
 	| { type: 'updateRow'; requestId: string; rowIndex: number; values: unknown[] }
 	| { type: 'createRow'; requestId: string; tableName: string; values: NewRowValue[] }
 	| { type: 'deleteRow'; rowIndex: number }

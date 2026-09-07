@@ -17,5 +17,5 @@ createRoot(root).render(
 			errorLabel="Unable to read archive"
 			render={entries => <ArchiveContents name={name} entries={entries} />}
 		/>
-	</StrictMode>
+	</StrictMode>,
 );

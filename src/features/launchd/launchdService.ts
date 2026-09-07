@@ -55,9 +55,11 @@ export class LaunchdService {
 	async list(): Promise<LaunchAgent[]> {
 		await mkdir(this.agentsDirectory, { recursive: true });
 		const entries = await readdir(this.agentsDirectory, { withFileTypes: true });
-		const agents = await Promise.all(entries
-			.filter(entry => entry.isFile() && entry.name.endsWith('.plist'))
-			.map(entry => this.readAgent(entry.name)));
+		const agents = await Promise.all(
+			entries
+				.filter(entry => entry.isFile() && entry.name.endsWith('.plist'))
+				.map(entry => this.readAgent(entry.name)),
+		);
 		return agents.sort((left, right) => left.label.localeCompare(right.label));
 	}
 
@@ -117,7 +119,10 @@ export class LaunchdService {
 			throw new Error('LaunchAgent Label is required.');
 		}
 		try {
-			const { stdout } = await execFileAsync('/bin/launchctl', ['print', `${this.domain}/${label}`]);
+			const { stdout } = await execFileAsync('/bin/launchctl', [
+				'print',
+				`${this.domain}/${label}`,
+			]);
 			const state = detailValue(stdout, 'state');
 			return {
 				label,
@@ -144,13 +149,19 @@ export class LaunchdService {
 
 	private async readAgent(fileName: string): Promise<LaunchAgent> {
 		try {
-			const { stdout } = await execFileAsync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', this.agentPath(fileName)]);
+			const { stdout } = await execFileAsync('/usr/bin/plutil', [
+				'-convert',
+				'json',
+				'-o',
+				'-',
+				this.agentPath(fileName),
+			]);
 			const plist = JSON.parse(stdout) as Plist;
 			const config = this.fromPlist(fileName, plist);
 			if (!config.label) {
 				throw new Error('The plist does not contain a Label.');
 			}
-			return { ...config, fileName, ...await this.getStatus(config.label) };
+			return { ...config, fileName, ...(await this.getStatus(config.label)) };
 		} catch (error) {
 			return {
 				...emptyConfig(fileName, basename(fileName, '.plist')),
@@ -161,9 +172,14 @@ export class LaunchdService {
 		}
 	}
 
-	private async getStatus(label: string): Promise<Pick<LaunchAgent, 'state' | 'pid' | 'lastExitCode'>> {
+	private async getStatus(
+		label: string,
+	): Promise<Pick<LaunchAgent, 'state' | 'pid' | 'lastExitCode'>> {
 		try {
-			const { stdout } = await execFileAsync('/bin/launchctl', ['print', `${this.domain}/${label}`]);
+			const { stdout } = await execFileAsync('/bin/launchctl', [
+				'print',
+				`${this.domain}/${label}`,
+			]);
 			const state = /^\s*state = (.+)$/m.exec(stdout)?.[1].trim();
 			const pidText = /^\s*pid = (\d+)$/m.exec(stdout)?.[1];
 			const exitCodeText = /^\s*last exit code = (-?\d+)$/m.exec(stdout)?.[1];
@@ -179,8 +195,16 @@ export class LaunchdService {
 
 	private fromPlist(fileName: string, plist: Plist): LaunchAgentConfig {
 		const knownKeys = new Set([
-			'Label', 'Program', 'ProgramArguments', 'WorkingDirectory', 'EnvironmentVariables',
-			'KeepAlive', 'RunAtLoad', 'ThrottleInterval', 'StandardOutPath', 'StandardErrorPath',
+			'Label',
+			'Program',
+			'ProgramArguments',
+			'WorkingDirectory',
+			'EnvironmentVariables',
+			'KeepAlive',
+			'RunAtLoad',
+			'ThrottleInterval',
+			'StandardOutPath',
+			'StandardErrorPath',
 		]);
 		return {
 			fileName,
@@ -205,7 +229,9 @@ export class LaunchdService {
 			Program: config.program || undefined,
 			ProgramArguments: config.programArguments.length ? config.programArguments : undefined,
 			WorkingDirectory: config.workingDirectory || undefined,
-			EnvironmentVariables: Object.keys(config.environmentVariables).length ? config.environmentVariables : undefined,
+			EnvironmentVariables: Object.keys(config.environmentVariables).length
+				? config.environmentVariables
+				: undefined,
 			KeepAlive: config.keepAlive || undefined,
 			RunAtLoad: config.runAtLoad || undefined,
 			ThrottleInterval: config.throttleInterval,
@@ -280,18 +306,30 @@ function numberValue(value: unknown, fallback: number): number {
 }
 
 function stringArray(value: unknown): string[] {
-	return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+	return Array.isArray(value)
+		? value.filter((item): item is string => typeof item === 'string')
+		: [];
 }
 
 function stringRecord(value: unknown): Record<string, string> {
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 		return {};
 	}
-	return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+	return Object.fromEntries(
+		Object.entries(value).filter(
+			(entry): entry is [string, string] => typeof entry[1] === 'string',
+		),
+	);
 }
 
 function errorMessage(error: unknown): string {
-	if (typeof error === 'object' && error !== null && 'stderr' in error && typeof error.stderr === 'string' && error.stderr.trim()) {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		'stderr' in error &&
+		typeof error.stderr === 'string' &&
+		error.stderr.trim()
+	) {
 		return error.stderr.trim();
 	}
 	return error instanceof Error ? error.message : 'LaunchAgent operation failed.';

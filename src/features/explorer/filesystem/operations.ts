@@ -35,14 +35,16 @@ export async function renameEntry(targetUri: vscode.Uri): Promise<boolean> {
 		prompt: 'Enter a new name',
 		value: currentName,
 		valueSelection: [0, currentName.length],
-		validateInput: value => validateEntryName(value)
+		validateInput: value => validateEntryName(value),
 	});
 	if (newName === undefined || newName === currentName) {
 		return false;
 	}
 
 	const parentUri = vscode.Uri.joinPath(targetUri, '..');
-	await vscode.workspace.fs.rename(targetUri, vscode.Uri.joinPath(parentUri, newName), { overwrite: false });
+	await vscode.workspace.fs.rename(targetUri, vscode.Uri.joinPath(parentUri, newName), {
+		overwrite: false,
+	});
 	return true;
 }
 
@@ -52,7 +54,7 @@ export async function createDirectory(parentUri: vscode.Uri): Promise<vscode.Uri
 		prompt: 'Enter a folder name',
 		value: 'New Folder',
 		valueSelection: [0, 'New Folder'.length],
-		validateInput: value => validateEntryName(value)
+		validateInput: value => validateEntryName(value),
 	});
 	if (name === undefined) {
 		return undefined;
@@ -69,7 +71,7 @@ export async function createFile(parentUri: vscode.Uri): Promise<vscode.Uri | un
 		prompt: 'Enter a file name',
 		value: 'New File',
 		valueSelection: [0, 'New File'.length],
-		validateInput: value => validateEntryName(value)
+		validateInput: value => validateEntryName(value),
 	});
 	if (name === undefined) {
 		return undefined;
@@ -80,12 +82,15 @@ export async function createFile(parentUri: vscode.Uri): Promise<vscode.Uri | un
 	return fileUri;
 }
 
-export async function deleteEntries(targetUris: vscode.Uri[], permanent: boolean): Promise<boolean> {
+export async function deleteEntries(
+	targetUris: vscode.Uri[],
+	permanent: boolean,
+): Promise<boolean> {
 	if (targetUris.length === 0) {
 		return false;
 	}
 	if (permanent) {
-		if (!await confirmPermanentDelete(targetUris)) {
+		if (!(await confirmPermanentDelete(targetUris))) {
 			return false;
 		}
 	}
@@ -96,7 +101,7 @@ export async function deleteEntries(targetUris: vscode.Uri[], permanent: boolean
 		if (permanent || !isTrashUnsupportedError(error)) {
 			throw error;
 		}
-		if (!await confirmPermanentDelete(targetUris, 'Trash is not supported for this location.')) {
+		if (!(await confirmPermanentDelete(targetUris, 'Trash is not supported for this location.'))) {
 			return false;
 		}
 		await deleteTargetUris(targetUris, false);
@@ -104,12 +109,16 @@ export async function deleteEntries(targetUris: vscode.Uri[], permanent: boolean
 	return true;
 }
 
-async function confirmPermanentDelete(targetUris: vscode.Uri[], detail = 'This action cannot be undone.'): Promise<boolean> {
-	const label = targetUris.length === 1 ? `"${getDisplayName(targetUris[0])}"` : `${targetUris.length} items`;
+async function confirmPermanentDelete(
+	targetUris: vscode.Uri[],
+	detail = 'This action cannot be undone.',
+): Promise<boolean> {
+	const label =
+		targetUris.length === 1 ? `"${getDisplayName(targetUris[0])}"` : `${targetUris.length} items`;
 	const choice = await vscode.window.showWarningMessage(
 		`Permanently delete ${label}?`,
 		{ modal: true, detail },
-		'Delete Permanently'
+		'Delete Permanently',
 	);
 	return choice === 'Delete Permanently';
 }
@@ -121,10 +130,17 @@ async function deleteTargetUris(targetUris: vscode.Uri[], useTrash: boolean): Pr
 }
 
 function isTrashUnsupportedError(error: unknown): boolean {
-	return error instanceof Error && /trash.*provider does not support|provider does not support.*trash/i.test(error.message);
+	return (
+		error instanceof Error &&
+		/trash.*provider does not support|provider does not support.*trash/i.test(error.message)
+	);
 }
 
-export async function pasteEntries(clipboardState: ClipboardState, destinationDirectoryUri: vscode.Uri, operation?: PasteOperation): Promise<PasteResult> {
+export async function pasteEntries(
+	clipboardState: ClipboardState,
+	destinationDirectoryUri: vscode.Uri,
+	operation?: PasteOperation,
+): Promise<PasteResult> {
 	const destinationStat = await vscode.workspace.fs.stat(destinationDirectoryUri);
 	if (!(destinationStat.type & vscode.FileType.Directory)) {
 		throw new Error('Items can only be pasted into a folder.');
@@ -136,23 +152,31 @@ export async function pasteEntries(clipboardState: ClipboardState, destinationDi
 	}
 	let processedBytes = 0;
 	let lastProgressTime = 0;
-	const reportProgress = operation ? (uri: vscode.Uri, copiedBytes = 0, force = false) => {
-		processedBytes += copiedBytes;
-		const now = Date.now();
-		if (!force && now - lastProgressTime < progressIntervalMs) {
-			return;
-		}
-		lastProgressTime = now;
-		operation.onProgress({
-			percent: totalBytes === 0 ? 100 : Math.min((processedBytes / totalBytes) * 100, 100),
-			detail: `${clipboardState.operation === 'copy' ? 'Copying' : 'Moving'} ${getDisplayName(uri)}`
-		});
-	} : undefined;
+	const reportProgress = operation
+		? (uri: vscode.Uri, copiedBytes = 0, force = false) => {
+				processedBytes += copiedBytes;
+				const now = Date.now();
+				if (!force && now - lastProgressTime < progressIntervalMs) {
+					return;
+				}
+				lastProgressTime = now;
+				operation.onProgress({
+					percent: totalBytes === 0 ? 100 : Math.min((processedBytes / totalBytes) * 100, 100),
+					detail: `${clipboardState.operation === 'copy' ? 'Copying' : 'Moving'} ${getDisplayName(uri)}`,
+				});
+			}
+		: undefined;
 	const completedUris: vscode.Uri[] = [];
 	const pastedUris: vscode.Uri[] = [];
 	let changed = false;
 	for (const sourceUri of clipboardState.uris) {
-		const result = await pasteEntry(sourceUri, clipboardState.operation, destinationDirectoryUri, operation?.token, reportProgress);
+		const result = await pasteEntry(
+			sourceUri,
+			clipboardState.operation,
+			destinationDirectoryUri,
+			operation?.token,
+			reportProgress,
+		);
 		changed ||= result.changed;
 		if (result.completed) {
 			completedUris.push(sourceUri);
@@ -175,7 +199,7 @@ async function pasteEntry(
 	operation: 'cut' | 'copy',
 	destinationDirectoryUri: vscode.Uri,
 	token?: vscode.CancellationToken,
-	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void
+	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void,
 ): Promise<PasteEntryResult> {
 	throwIfPasteCancelled(token);
 	let targetUri = vscode.Uri.joinPath(destinationDirectoryUri, getDisplayName(sourceUri));
@@ -187,18 +211,28 @@ async function pasteEntry(
 		if (!(await confirmCopyInSameDirectory(sourceUri))) {
 			return { completed: false, changed: false };
 		}
-		targetUri = await getAvailableCopyUri(destinationDirectoryUri, getDisplayName(sourceUri), Boolean(sourceStat.type & vscode.FileType.Directory));
+		targetUri = await getAvailableCopyUri(
+			destinationDirectoryUri,
+			getDisplayName(sourceUri),
+			Boolean(sourceStat.type & vscode.FileType.Directory),
+		);
 	}
 
 	const sourcePath = sourceUri.path.endsWith('/') ? sourceUri.path : `${sourceUri.path}/`;
-	if ((sourceStat.type & vscode.FileType.Directory) && destinationDirectoryUri.path.startsWith(sourcePath)) {
+	if (
+		sourceStat.type & vscode.FileType.Directory &&
+		destinationDirectoryUri.path.startsWith(sourcePath)
+	) {
 		throw new Error('A folder cannot be pasted into itself.');
 	}
 
 	let overwrite = false;
 	try {
 		const targetStat = await vscode.workspace.fs.stat(targetUri);
-		if ((sourceStat.type & vscode.FileType.Directory) && (targetStat.type & vscode.FileType.Directory)) {
+		if (
+			sourceStat.type & vscode.FileType.Directory &&
+			targetStat.type & vscode.FileType.Directory
+		) {
 			const choice = await confirmDirectoryConflict(targetUri);
 			if (choice === 'merge') {
 				const result = await mergeDirectory(sourceUri, targetUri, operation, token, onProgress);
@@ -222,7 +256,10 @@ async function pasteEntry(
 
 	throwIfPasteCancelled(token);
 	if (operation === 'cut') {
-		const movedBytes = sourceStat.type & vscode.FileType.Directory ? await countBytes(sourceUri, token) : sourceStat.size;
+		const movedBytes =
+			sourceStat.type & vscode.FileType.Directory
+				? await countBytes(sourceUri, token)
+				: sourceStat.size;
 		await vscode.workspace.fs.rename(sourceUri, targetUri, { overwrite });
 		onProgress?.(sourceUri, movedBytes, true);
 	} else {
@@ -236,14 +273,20 @@ async function mergeDirectory(
 	targetUri: vscode.Uri,
 	operation: 'cut' | 'copy',
 	token?: vscode.CancellationToken,
-	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void
+	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void,
 ): Promise<PasteEntryResult> {
 	throwIfPasteCancelled(token);
 	const entries = await vscode.workspace.fs.readDirectory(sourceUri);
 	let completed = true;
 	let changed = false;
 	for (const [name] of entries) {
-		const result = await pasteEntry(vscode.Uri.joinPath(sourceUri, name), operation, targetUri, token, onProgress);
+		const result = await pasteEntry(
+			vscode.Uri.joinPath(sourceUri, name),
+			operation,
+			targetUri,
+			token,
+			onProgress,
+		);
 		completed &&= result.completed;
 		changed ||= result.changed;
 	}
@@ -262,7 +305,7 @@ async function copyEntry(
 	sourceStat: vscode.FileStat,
 	overwrite: boolean,
 	token?: vscode.CancellationToken,
-	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void
+	onProgress?: (uri: vscode.Uri, copiedBytes?: number, force?: boolean) => void,
 ): Promise<void> {
 	throwIfPasteCancelled(token);
 	if (sourceStat.type & vscode.FileType.Directory) {
@@ -273,13 +316,22 @@ async function copyEntry(
 			const childSourceUri = vscode.Uri.joinPath(sourceUri, name);
 			const childTargetUri = vscode.Uri.joinPath(targetUri, name);
 			const childSourceStat = await vscode.workspace.fs.stat(childSourceUri);
-			await copyEntry(childSourceUri, childTargetUri, childSourceStat, overwrite, token, onProgress);
+			await copyEntry(
+				childSourceUri,
+				childTargetUri,
+				childSourceStat,
+				overwrite,
+				token,
+				onProgress,
+			);
 		}
 		return;
 	}
 
 	if (sourceUri.scheme === 'file' && targetUri.scheme === 'file') {
-		await copyLocalFile(sourceUri, targetUri, overwrite, token, copiedBytes => onProgress?.(sourceUri, copiedBytes));
+		await copyLocalFile(sourceUri, targetUri, overwrite, token, copiedBytes =>
+			onProgress?.(sourceUri, copiedBytes),
+		);
 		onProgress?.(sourceUri, 0, true);
 		return;
 	}
@@ -293,7 +345,7 @@ async function copyLocalFile(
 	targetUri: vscode.Uri,
 	overwrite: boolean,
 	token: vscode.CancellationToken | undefined,
-	onChunk: (copiedBytes: number) => void
+	onChunk: (copiedBytes: number) => void,
 ): Promise<void> {
 	const sourceStream = createReadStream(sourceUri.fsPath);
 	const targetStream = createWriteStream(targetUri.fsPath, { flags: overwrite ? 'w' : 'wx' });
@@ -306,7 +358,7 @@ async function copyLocalFile(
 			} catch (error) {
 				callback(error instanceof Error ? error : new Error(String(error)));
 			}
-		}
+		},
 	});
 	try {
 		await pipeline(sourceStream, progressStream, targetStream);
@@ -356,12 +408,17 @@ function validateEntryName(value: string): string | undefined {
 	return undefined;
 }
 
-async function confirmDirectoryConflict(targetUri: vscode.Uri): Promise<'merge' | 'replace' | undefined> {
+async function confirmDirectoryConflict(
+	targetUri: vscode.Uri,
+): Promise<'merge' | 'replace' | undefined> {
 	const choice = await vscode.window.showWarningMessage(
 		`A folder named "${getDisplayName(targetUri)}" already exists.`,
-		{ modal: true, detail: 'Merge keeps existing items. Replace deletes the existing folder first.' },
+		{
+			modal: true,
+			detail: 'Merge keeps existing items. Replace deletes the existing folder first.',
+		},
 		'Merge',
-		'Replace'
+		'Replace',
 	);
 	if (choice === 'Merge') {
 		return 'merge';
@@ -376,12 +433,16 @@ async function confirmCopyInSameDirectory(sourceUri: vscode.Uri): Promise<boolea
 	const choice = await vscode.window.showWarningMessage(
 		`Copy "${getDisplayName(sourceUri)}" in this folder?`,
 		{ modal: true, detail: 'A new copy will be created with the next available name.' },
-		'Copy'
+		'Copy',
 	);
 	return choice === 'Copy';
 }
 
-async function getAvailableCopyUri(parentUri: vscode.Uri, requestedName: string, isDirectory: boolean): Promise<vscode.Uri> {
+async function getAvailableCopyUri(
+	parentUri: vscode.Uri,
+	requestedName: string,
+	isDirectory: boolean,
+): Promise<vscode.Uri> {
 	const extensionIndex = isDirectory ? requestedName.length : getExtensionIndex(requestedName);
 	const baseName = requestedName.slice(0, extensionIndex);
 	const extension = requestedName.slice(extensionIndex);

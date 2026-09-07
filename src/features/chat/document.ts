@@ -5,7 +5,7 @@ export class ChatDocument implements vscode.CustomDocument {
 	constructor(
 		readonly uri: vscode.Uri,
 		readonly sessions: StoredSession[],
-	) { }
+	) {}
 
-	dispose(): void { }
+	dispose(): void {}
 }

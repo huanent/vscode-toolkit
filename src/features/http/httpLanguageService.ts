@@ -1,13 +1,34 @@
 import * as vscode from 'vscode';
 
 export const HTTP_METHODS = [
-	'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'CONNECT', 'TRACE',
-	'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK', 'UNLOCK', 'CHECKOUT',
-	'CHECKIN', 'REPORT', 'MERGE', 'PURGE',
+	'GET',
+	'HEAD',
+	'POST',
+	'PUT',
+	'PATCH',
+	'DELETE',
+	'OPTIONS',
+	'CONNECT',
+	'TRACE',
+	'PROPFIND',
+	'PROPPATCH',
+	'MKCOL',
+	'COPY',
+	'MOVE',
+	'LOCK',
+	'UNLOCK',
+	'CHECKOUT',
+	'CHECKIN',
+	'REPORT',
+	'MERGE',
+	'PURGE',
 ] as const;
 
 const methodPattern = HTTP_METHODS.join('|');
-export const requestLinePattern = new RegExp(`^\\s*(${methodPattern})\\s+(\\S+)(?:\\s+(HTTP\\/\\d(?:\\.\\d)?))?\\s*$`, 'i');
+export const requestLinePattern = new RegExp(
+	`^\\s*(${methodPattern})\\s+(\\S+)(?:\\s+(HTTP\\/\\d(?:\\.\\d)?))?\\s*$`,
+	'i',
+);
 export const separatorPattern = /^\s*###(?:\s|$)/;
 export const variablePattern = /^\s*@([A-Za-z_][\w.-]*)\s*=\s*(.*)$/;
 
@@ -87,28 +108,52 @@ export class HttpLanguageService {
 		return foundRequest ? 'header' : 'request';
 	}
 
-	getMethodRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | undefined {
+	getMethodRange(
+		document: vscode.TextDocument,
+		position: vscode.Position,
+	): vscode.Range | undefined {
 		if (this.getLineContext(document, position.line) !== 'request') {
 			return undefined;
 		}
 		const text = document.lineAt(position.line).text;
 		const match = /^(\s*)([A-Za-z-]*)/.exec(text);
-		if (!match || position.character < match[1].length || position.character > match[1].length + match[2].length) {
+		if (
+			!match ||
+			position.character < match[1].length ||
+			position.character > match[1].length + match[2].length
+		) {
 			return undefined;
 		}
-		return new vscode.Range(position.line, match[1].length, position.line, match[1].length + match[2].length);
+		return new vscode.Range(
+			position.line,
+			match[1].length,
+			position.line,
+			match[1].length + match[2].length,
+		);
 	}
 
-	getHeaderNameRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | undefined {
+	getHeaderNameRange(
+		document: vscode.TextDocument,
+		position: vscode.Position,
+	): vscode.Range | undefined {
 		if (this.getLineContext(document, position.line) !== 'header') {
 			return undefined;
 		}
 		const text = document.lineAt(position.line).text;
 		const match = /^(\s*)([!#$%&'*+.^_`|~0-9A-Za-z-]*)/.exec(text);
-		if (!match || position.character < match[1].length || position.character > match[1].length + match[2].length) {
+		if (
+			!match ||
+			position.character < match[1].length ||
+			position.character > match[1].length + match[2].length
+		) {
 			return undefined;
 		}
-		return new vscode.Range(position.line, match[1].length, position.line, match[1].length + match[2].length);
+		return new vscode.Range(
+			position.line,
+			match[1].length,
+			position.line,
+			match[1].length + match[2].length,
+		);
 	}
 
 	parseRequest(document: vscode.TextDocument, selectedLine: number): ParsedHttpRequest {
@@ -147,9 +192,15 @@ export class HttpLanguageService {
 			headers[name] = this.substituteVariables(value, variables);
 		}
 
-		const rawBody = bodyStart >= 0
-			? document.getText(new vscode.Range(bodyStart, 0, bounds.end, document.lineAt(bounds.end).text.length)).trimEnd()
-			: '';
+		const rawBody =
+			bodyStart >= 0
+				? document
+						.getText(
+							new vscode.Range(bodyStart, 0, bounds.end, document.lineAt(bounds.end).text.length),
+						)
+						.replace(/^[\t ]*(?:#|\/\/)[^\r\n]*(?:\r?\n|$)/gm, '')
+						.trimEnd()
+				: '';
 		const body = rawBody ? this.substituteVariables(rawBody, variables) : undefined;
 		if ((parsedLine.method === 'GET' || parsedLine.method === 'HEAD') && body) {
 			throw new Error(`${parsedLine.method} requests cannot include a request body.`);
@@ -171,16 +222,18 @@ export class HttpLanguageService {
 			const text = document.lineAt(line).text;
 			const methodCandidate = /^\s*([A-Za-z-]+)\b/.exec(text)?.[1].toUpperCase();
 			if (
-				this.getLineContext(document, line) === 'request'
-				&& methodCandidate
-				&& HTTP_METHODS.includes(methodCandidate as typeof HTTP_METHODS[number])
-				&& !this.parseRequestLine(text)
+				this.getLineContext(document, line) === 'request' &&
+				methodCandidate &&
+				HTTP_METHODS.includes(methodCandidate as (typeof HTTP_METHODS)[number]) &&
+				!this.parseRequestLine(text)
 			) {
-				diagnostics.push(new vscode.Diagnostic(
-					document.lineAt(line).range,
-					'Invalid request line. Expected: METHOD URL [HTTP/version].',
-					vscode.DiagnosticSeverity.Error,
-				));
+				diagnostics.push(
+					new vscode.Diagnostic(
+						document.lineAt(line).range,
+						'Invalid request line. Expected: METHOD URL [HTTP/version].',
+						vscode.DiagnosticSeverity.Error,
+					),
+				);
 			}
 
 			for (const match of text.matchAll(/\{\{\s*([\w.-]+)\s*\}\}/g)) {
@@ -188,11 +241,13 @@ export class HttpLanguageService {
 					continue;
 				}
 				const start = match.index ?? 0;
-				diagnostics.push(new vscode.Diagnostic(
-					new vscode.Range(line, start, line, start + match[0].length),
-					`HTTP variable "${match[1]}" is not defined.`,
-					vscode.DiagnosticSeverity.Error,
-				));
+				diagnostics.push(
+					new vscode.Diagnostic(
+						new vscode.Range(line, start, line, start + match[0].length),
+						`HTTP variable "${match[1]}" is not defined.`,
+						vscode.DiagnosticSeverity.Error,
+					),
+				);
 			}
 		}
 		return diagnostics;
@@ -209,7 +264,10 @@ export class HttpLanguageService {
 	}
 }
 
-export function registerHttpLanguageDiagnostics(context: vscode.ExtensionContext, service: HttpLanguageService): void {
+export function registerHttpLanguageDiagnostics(
+	context: vscode.ExtensionContext,
+	service: HttpLanguageService,
+): void {
 	const diagnostics = vscode.languages.createDiagnosticCollection('http');
 	const update = (document: vscode.TextDocument): void => {
 		if (document.languageId === 'http') {

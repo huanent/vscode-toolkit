@@ -92,7 +92,12 @@ export class ChatPanelController implements vscode.Disposable {
 					await this.setWebviewFocus(message.focused);
 					return;
 				case 'send':
-					await this.send(message.requestId, message.text, message.modelId, message.editMessageIndex);
+					await this.send(
+						message.requestId,
+						message.text,
+						message.modelId,
+						message.editMessageIndex,
+					);
 					return;
 				case 'selectModel':
 					await this.context.globalState.update(storageKeys.selectedModel, message.modelId);
@@ -119,7 +124,11 @@ export class ChatPanelController implements vscode.Disposable {
 	}
 
 	private setWebviewFocus(focused: boolean): Thenable<unknown> {
-		return vscode.commands.executeCommand('setContext', webviewFocusContextKey, focused && this.panel.active);
+		return vscode.commands.executeCommand(
+			'setContext',
+			webviewFocusContextKey,
+			focused && this.panel.active,
+		);
 	}
 
 	private getSessionItems() {
@@ -134,9 +143,12 @@ export class ChatPanelController implements vscode.Disposable {
 
 	private async refreshSessionHistory(): Promise<void> {
 		const sessions = this.getSessionItems();
-		await Promise.all(this.manager.getEditors()
-			.filter(editor => editor !== this)
-			.map(editor => editor.panel.webview.postMessage({ type: 'sessionHistory', sessions })));
+		await Promise.all(
+			this.manager
+				.getEditors()
+				.filter(editor => editor !== this)
+				.map(editor => editor.panel.webview.postMessage({ type: 'sessionHistory', sessions })),
+		);
 	}
 
 	private async renderSessions(): Promise<void> {
@@ -181,8 +193,9 @@ export class ChatPanelController implements vscode.Disposable {
 		for (const editor of this.manager.getEditors()) {
 			if (editor.currentSessionId === sessionId) {
 				editor.cancel();
-				editor.currentSessionId = [...this.document.sessions]
-					.sort((left, right) => right.updatedAt - left.updatedAt)[0]?.id ?? randomUUID();
+				editor.currentSessionId =
+					[...this.document.sessions].sort((left, right) => right.updatedAt - left.updatedAt)[0]
+						?.id ?? randomUUID();
 			}
 		}
 		await this.manager.persist(this.currentSessionId);
@@ -196,7 +209,9 @@ export class ChatPanelController implements vscode.Disposable {
 				return;
 			}
 			if (models.length === 0) {
-				throw new Error('No language models are available. Make sure a model provider is installed and signed in locally.');
+				throw new Error(
+					'No language models are available. Make sure a model provider is installed and signed in locally.',
+				);
 			}
 			const modelItems = await this.modelService.getModelItems(models);
 			if (version !== this.modelService.currentVersion) {
@@ -229,7 +244,12 @@ export class ChatPanelController implements vscode.Disposable {
 		});
 	}
 
-	private async send(requestId: string, text: string, modelId: string, editMessageIndex?: number): Promise<void> {
+	private async send(
+		requestId: string,
+		text: string,
+		modelId: string,
+		editMessageIndex?: number,
+	): Promise<void> {
 		const userText = text.trim();
 		if (!userText) {
 			return;
@@ -245,8 +265,12 @@ export class ChatPanelController implements vscode.Disposable {
 
 		const sessionId = this.currentSessionId;
 		const session = this.getCurrentSession();
-		if (editMessageIndex !== undefined
-			&& (!session || !Number.isInteger(editMessageIndex) || session.messages[editMessageIndex]?.role !== 'user')) {
+		if (
+			editMessageIndex !== undefined &&
+			(!session ||
+				!Number.isInteger(editMessageIndex) ||
+				session.messages[editMessageIndex]?.role !== 'user')
+		) {
 			await this.panel.webview.postMessage({
 				type: 'error',
 				requestId,
@@ -273,12 +297,17 @@ export class ChatPanelController implements vscode.Disposable {
 			this.panel.title = createTabTitle(userText);
 		}
 
-		const prompt = vscode.workspace.getConfiguration('toolkit.chat').get<string>('prompt', '').trim();
+		const prompt = vscode.workspace
+			.getConfiguration('toolkit.chat')
+			.get<string>('prompt', '')
+			.trim();
 		const requestMessages = [
 			...(prompt ? [vscode.LanguageModelChatMessage.User(prompt, 'instructions')] : []),
-			...(session?.messages ?? []).map(message => message.role === 'user'
-				? vscode.LanguageModelChatMessage.User(message.content)
-				: vscode.LanguageModelChatMessage.Assistant(message.content)),
+			...(session?.messages ?? []).map(message =>
+				message.role === 'user'
+					? vscode.LanguageModelChatMessage.User(message.content)
+					: vscode.LanguageModelChatMessage.Assistant(message.content),
+			),
 			vscode.LanguageModelChatMessage.User(userText),
 		];
 		let answer = '';
@@ -288,11 +317,14 @@ export class ChatPanelController implements vscode.Disposable {
 			const models = await this.modelService.getModels();
 			const model = models.find(candidate => candidate.id === modelId) ?? models[0];
 			if (!model) {
-				throw new Error('No language model is available. Configure or sign in to a model provider in VS Code.');
+				throw new Error(
+					'No language model is available. Configure or sign in to a model provider in VS Code.',
+				);
 			}
-			const summaryPromise = !session || editMessageIndex === 0
-				? this.generateSummary(model, userText, sessionId)
-				: undefined;
+			const summaryPromise =
+				!session || editMessageIndex === 0
+					? this.generateSummary(model, userText, sessionId)
+					: undefined;
 			modelName = model.name;
 			await this.panel.webview.postMessage({ type: 'started', requestId, model: modelName });
 			const inputTokenCountPromise = countMessageTokens(model, requestMessages, cancellation.token);
@@ -301,7 +333,13 @@ export class ChatPanelController implements vscode.Disposable {
 				answer += chunk;
 				await this.panel.webview.postMessage({ type: 'chunk', requestId, text: chunk });
 			}
-			const tokenUsage = await resolveTokenUsage(response, model, answer, inputTokenCountPromise, cancellation.token);
+			const tokenUsage = await resolveTokenUsage(
+				response,
+				model,
+				answer,
+				inputTokenCountPromise,
+				cancellation.token,
+			);
 
 			const updatedSession = session ?? createStoredSession(sessionId, userText);
 			updatedSession.messages.push(
@@ -364,12 +402,16 @@ export class ChatPanelController implements vscode.Disposable {
 		this.summaryCancellations.set(sessionId, cancellation);
 		let summary = '';
 		try {
-			const response = await model.sendRequest([
-				vscode.LanguageModelChatMessage.User(
-					`Create a concise chat title that captures the user's intent. `
-					+ `Use the same language as the user, no more than 12 words, and output only the title without quotes or punctuation wrappers.\n\nUser input:\n${userText}`,
-				),
-			], {}, cancellation.token);
+			const response = await model.sendRequest(
+				[
+					vscode.LanguageModelChatMessage.User(
+						`Create a concise chat title that captures the user's intent. ` +
+							`Use the same language as the user, no more than 12 words, and output only the title without quotes or punctuation wrappers.\n\nUser input:\n${userText}`,
+					),
+				],
+				{},
+				cancellation.token,
+			);
 			for await (const chunk of response.text) {
 				summary = normalizeGeneratedSummary(summary + chunk);
 				if (summary) {
@@ -388,12 +430,14 @@ export class ChatPanelController implements vscode.Disposable {
 	}
 
 	private async postSummary(sessionId: string, summary: string): Promise<void> {
-		await Promise.all(this.manager.getEditors().map(editor => {
-			if (editor.currentSessionId === sessionId) {
-				editor.panel.title = createTabTitle(summary);
-			}
-			return editor.panel.webview.postMessage({ type: 'summaryChunk', sessionId, summary });
-		}));
+		await Promise.all(
+			this.manager.getEditors().map(editor => {
+				if (editor.currentSessionId === sessionId) {
+					editor.panel.title = createTabTitle(summary);
+				}
+				return editor.panel.webview.postMessage({ type: 'summaryChunk', sessionId, summary });
+			}),
+		);
 	}
 
 	private async applyGeneratedSummary(sessionId: string, summary: string): Promise<void> {
@@ -461,24 +505,49 @@ async function resolveTokenUsage(
 	return input === undefined || output === undefined ? undefined : { input, output };
 }
 
-async function getReportedTokenUsage(response: vscode.LanguageModelChatResponse): Promise<TokenUsage | undefined> {
+async function getReportedTokenUsage(
+	response: vscode.LanguageModelChatResponse,
+): Promise<TokenUsage | undefined> {
 	const responseRecord = response as unknown as Record<string, unknown>;
 	const rawUsage = await Promise.resolve(responseRecord.tokenUsage ?? responseRecord.usage);
 	if (!rawUsage || typeof rawUsage !== 'object') return undefined;
 
 	const usage = rawUsage as Record<string, unknown>;
-	const inputDetails = getRecord(usage.inputTokenDetails ?? usage.input_tokens_details ?? usage.promptTokensDetails ?? usage.prompt_tokens_details);
-	const input = getTokenCount(usage, ['input', 'inputTokens', 'input_tokens', 'promptTokens', 'prompt_tokens']);
-	const output = getTokenCount(usage, ['output', 'outputTokens', 'output_tokens', 'completionTokens', 'completion_tokens']);
+	const inputDetails = getRecord(
+		usage.inputTokenDetails ??
+			usage.input_tokens_details ??
+			usage.promptTokensDetails ??
+			usage.prompt_tokens_details,
+	);
+	const input = getTokenCount(usage, [
+		'input',
+		'inputTokens',
+		'input_tokens',
+		'promptTokens',
+		'prompt_tokens',
+	]);
+	const output = getTokenCount(usage, [
+		'output',
+		'outputTokens',
+		'output_tokens',
+		'completionTokens',
+		'completion_tokens',
+	]);
 	if (input === undefined || output === undefined) return undefined;
 
-	const cachedInput = getTokenCount(usage, ['cachedInput', 'cachedInputTokens', 'cached_input_tokens', 'cacheReadInputTokens'])
-		?? (inputDetails ? getTokenCount(inputDetails, ['cachedTokens', 'cached_tokens']) : undefined);
+	const cachedInput =
+		getTokenCount(usage, [
+			'cachedInput',
+			'cachedInputTokens',
+			'cached_input_tokens',
+			'cacheReadInputTokens',
+		]) ??
+		(inputDetails ? getTokenCount(inputDetails, ['cachedTokens', 'cached_tokens']) : undefined);
 	return { input, output, ...(cachedInput === undefined ? {} : { cachedInput }) };
 }
 
 function getRecord(value: unknown): Record<string, unknown> | undefined {
-	return value && typeof value === 'object' ? value as Record<string, unknown> : undefined;
+	return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
 }
 
 function getTokenCount(source: Record<string, unknown>, keys: string[]): number | undefined {
@@ -502,7 +571,11 @@ function collectErrorDetails(error: unknown, seen = new Set<unknown>()): string[
 		details.push(`Language model error code: ${error.code}`);
 	}
 	const record = error as Record<string, unknown>;
-	for (const [label, key] of [['Error code', 'code'], ['HTTP status', 'status'], ['HTTP status', 'statusCode']] as const) {
+	for (const [label, key] of [
+		['Error code', 'code'],
+		['HTTP status', 'status'],
+		['HTTP status', 'statusCode'],
+	] as const) {
 		const value = record[key];
 		if ((typeof value === 'string' || typeof value === 'number') && String(value) !== '') {
 			details.push(`${label}: ${value}`);

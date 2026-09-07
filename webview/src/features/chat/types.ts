@@ -29,16 +29,22 @@ export type ModelItem = {
 export type InboundMessage =
 	| { type: 'sessionHistory'; sessions: SessionItem[] }
 	| {
-		type: 'sessions';
-		currentSessionId: string;
-		messages: StoredMessage[];
-		sessions: SessionItem[];
-	}
+			type: 'sessions';
+			currentSessionId: string;
+			messages: StoredMessage[];
+			sessions: SessionItem[];
+	  }
 	| { type: 'models'; selectedModelId?: string; models: ModelItem[] }
 	| { type: 'modelsError'; message: string }
 	| { type: 'started'; requestId: string; model: string }
 	| { type: 'chunk'; requestId: string; text: string }
 	| { type: 'completed'; requestId: string; tokenUsage?: TokenUsage }
 	| { type: 'cancelled'; requestId: string }
-	| { type: 'error'; requestId?: string; message: string; details?: string; retryWithoutEdit?: boolean }
+	| {
+			type: 'error';
+			requestId?: string;
+			message: string;
+			details?: string;
+			retryWithoutEdit?: boolean;
+	  }
 	| { type: 'summaryChunk'; sessionId: string; summary: string };

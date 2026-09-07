@@ -45,9 +45,13 @@ export function useChat() {
 				case 'models': {
 					setModels(message.models);
 					setModelsError(false);
-					setSelectedModelId(current => message.models.some(model => model.id === current)
-						? current
-						: message.models.find(model => model.id === message.selectedModelId)?.id ?? message.models[0]?.id ?? '');
+					setSelectedModelId(current =>
+						message.models.some(model => model.id === current)
+							? current
+							: (message.models.find(model => model.id === message.selectedModelId)?.id ??
+								message.models[0]?.id ??
+								''),
+					);
 					return;
 				}
 				case 'modelsError':
@@ -57,15 +61,30 @@ export function useChat() {
 					return;
 				case 'started':
 					if (message.requestId !== pendingRequest?.requestId) return;
-					setMessages(current => updateAssistant(current, pendingRequest.assistantIndex, item => ({ ...item, model: message.model })));
+					setMessages(current =>
+						updateAssistant(current, pendingRequest.assistantIndex, item => ({
+							...item,
+							model: message.model,
+						})),
+					);
 					return;
 				case 'chunk':
 					if (message.requestId !== pendingRequest?.requestId) return;
-					setMessages(current => updateAssistant(current, pendingRequest.assistantIndex, item => ({ ...item, content: item.content + message.text })));
+					setMessages(current =>
+						updateAssistant(current, pendingRequest.assistantIndex, item => ({
+							...item,
+							content: item.content + message.text,
+						})),
+					);
 					return;
 				case 'completed':
 					if (message.requestId !== pendingRequest?.requestId) return;
-					setMessages(current => updateAssistant(current, pendingRequest.assistantIndex, item => ({ ...item, tokenUsage: message.tokenUsage })));
+					setMessages(current =>
+						updateAssistant(current, pendingRequest.assistantIndex, item => ({
+							...item,
+							tokenUsage: message.tokenUsage,
+						})),
+					);
 					setBusy(false);
 					pendingRequestRef.current = undefined;
 					return;
@@ -75,19 +94,27 @@ export function useChat() {
 					pendingRequestRef.current = undefined;
 					return;
 				case 'error':
-					if (!pendingRequest || (message.requestId && message.requestId !== pendingRequest.requestId)) return;
+					if (
+						!pendingRequest ||
+						(message.requestId && message.requestId !== pendingRequest.requestId)
+					)
+						return;
 					if (message.retryWithoutEdit) pendingRequest.editMessageIndex = undefined;
-					setMessages(current => updateAssistant(current, pendingRequest.assistantIndex, item => ({
-						...item,
-						error: message.message,
-						errorDetails: message.details,
-					})));
+					setMessages(current =>
+						updateAssistant(current, pendingRequest.assistantIndex, item => ({
+							...item,
+							error: message.message,
+							errorDetails: message.details,
+						})),
+					);
 					setBusy(false);
 					return;
 				case 'summaryChunk':
-					setSessions(current => current.map(session => session.id === message.sessionId
-						? { ...session, summary: message.summary }
-						: session));
+					setSessions(current =>
+						current.map(session =>
+							session.id === message.sessionId ? { ...session, summary: message.summary } : session,
+						),
+					);
 					return;
 			}
 		};
@@ -130,7 +157,8 @@ export function useChat() {
 		const closeHistory = (event: PointerEvent) => {
 			const target = event.target;
 			if (!(target instanceof Node)) return;
-			if (historyButtonRef.current?.contains(target) || historyPanelRef.current?.contains(target)) return;
+			if (historyButtonRef.current?.contains(target) || historyPanelRef.current?.contains(target))
+				return;
 			setHistoryVisible(false);
 		};
 		document.addEventListener('pointerdown', closeHistory);
@@ -162,23 +190,31 @@ export function useChat() {
 		}
 		const text = input.trim();
 		if (!text || !selectedModelId) return;
-		const nextMessages = editingIndex === undefined ? [...messages] : messages.slice(0, editingIndex);
+		const nextMessages =
+			editingIndex === undefined ? [...messages] : messages.slice(0, editingIndex);
 		nextMessages.push({ role: 'user', content: text }, { role: 'assistant', content: '' });
 		setMessages(nextMessages);
 		setInput('');
-		startRequest({ text, modelId: selectedModelId, editMessageIndex: editingIndex, assistantIndex: nextMessages.length - 1 });
+		startRequest({
+			text,
+			modelId: selectedModelId,
+			editMessageIndex: editingIndex,
+			assistantIndex: nextMessages.length - 1,
+		});
 		setEditingIndex(undefined);
 	};
 
 	const retry = (assistantIndex: number) => {
 		const failedRequest = pendingRequestRef.current;
 		if (busy || !failedRequest || failedRequest.assistantIndex !== assistantIndex) return;
-		setMessages(current => updateAssistant(current, assistantIndex, item => ({
-			...item,
-			content: '',
-			error: undefined,
-			errorDetails: undefined,
-		})));
+		setMessages(current =>
+			updateAssistant(current, assistantIndex, item => ({
+				...item,
+				content: '',
+				error: undefined,
+				errorDetails: undefined,
+			})),
+		);
 		startRequest({
 			text: failedRequest.text,
 			modelId: failedRequest.modelId,
@@ -190,7 +226,13 @@ export function useChat() {
 	const regenerate = (assistantIndex: number) => {
 		const userIndex = assistantIndex - 1;
 		const userMessage = messages[userIndex];
-		if (busy || messages[assistantIndex]?.role !== 'assistant' || userMessage?.role !== 'user' || !selectedModelId) return;
+		if (
+			busy ||
+			messages[assistantIndex]?.role !== 'assistant' ||
+			userMessage?.role !== 'user' ||
+			!selectedModelId
+		)
+			return;
 		const nextMessages = [
 			...messages.slice(0, userIndex),
 			userMessage,

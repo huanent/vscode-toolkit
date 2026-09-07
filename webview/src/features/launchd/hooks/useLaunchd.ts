@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { vscode } from '../../../vscodeApi';
-import type { LaunchAgent, LaunchAgentConfig, LaunchAgentDetails, LaunchdExtensionMessage } from '../types';
+import type {
+	LaunchAgent,
+	LaunchAgentConfig,
+	LaunchAgentDetails,
+	LaunchdExtensionMessage,
+} from '../types';
 import { blankConfig, cloneConfig, parseEnvironment } from '../utils';
 
 export function useLaunchd() {
@@ -18,7 +23,11 @@ export function useLaunchd() {
 	const setEditor = (config: LaunchAgentConfig) => {
 		setDraft(cloneConfig(config));
 		setArgumentsText(config.programArguments.join('\n'));
-		setEnvironmentText(Object.entries(config.environmentVariables).map(([key, value]) => `${key}=${value}`).join('\n'));
+		setEnvironmentText(
+			Object.entries(config.environmentVariables)
+				.map(([key, value]) => `${key}=${value}`)
+				.join('\n'),
+		);
 	};
 
 	useEffect(() => {
@@ -81,7 +90,10 @@ export function useLaunchd() {
 		try {
 			const config = {
 				...draft,
-				programArguments: argumentsText.split('\n').map(value => value.trim()).filter(Boolean),
+				programArguments: argumentsText
+					.split('\n')
+					.map(value => value.trim())
+					.filter(Boolean),
 				environmentVariables: parseEnvironment(environmentText),
 			};
 			setSelectedFileName(`${config.label.trim()}.plist`);
@@ -92,7 +104,11 @@ export function useLaunchd() {
 	};
 
 	const remove = (agent: LaunchAgent) => {
-		if (window.confirm(`Delete ${agent.label}? This removes ${agent.fileName} from ~/Library/LaunchAgents.`)) {
+		if (
+			window.confirm(
+				`Delete ${agent.label}? This removes ${agent.fileName} from ~/Library/LaunchAgents.`,
+			)
+		) {
 			runAction({ type: 'remove', fileName: agent.fileName, label: agent.label });
 		}
 	};
@@ -109,11 +125,29 @@ export function useLaunchd() {
 		setDetailsLoading(false);
 	};
 
-	const update = <Key extends keyof LaunchAgentConfig>(key: Key, value: LaunchAgentConfig[Key]) => setDraft(current => ({ ...current, [key]: value }));
+	const update = <Key extends keyof LaunchAgentConfig>(key: Key, value: LaunchAgentConfig[Key]) =>
+		setDraft(current => ({ ...current, [key]: value }));
 
 	return {
-		agents, selectedFileName, draft, argumentsText, setArgumentsText, environmentText, setEnvironmentText,
-		busy, notice, error, details, detailsLoading, selectAgent, createNew, runAction, save, remove,
-		showDetails, closeDetails, update,
+		agents,
+		selectedFileName,
+		draft,
+		argumentsText,
+		setArgumentsText,
+		environmentText,
+		setEnvironmentText,
+		busy,
+		notice,
+		error,
+		details,
+		detailsLoading,
+		selectAgent,
+		createNew,
+		runAction,
+		save,
+		remove,
+		showDetails,
+		closeDetails,
+		update,
 	};
 }

@@ -3,7 +3,8 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 export function getStorageUri(context: vscode.ExtensionContext, directory: string): vscode.Uri {
-	const configuredPath = vscode.workspace.getConfiguration('toolkit')
+	const configuredPath = vscode.workspace
+		.getConfiguration('toolkit')
 		.get<string>('storagePath', '')
 		.trim();
 	const rootUri = configuredPath
@@ -13,11 +14,12 @@ export function getStorageUri(context: vscode.ExtensionContext, directory: strin
 }
 
 function resolveStoragePath(configuredPath: string): string {
-	const expandedPath = configuredPath === '~'
-		? os.homedir()
-		: configuredPath.startsWith(`~${path.sep}`)
-			? path.join(os.homedir(), configuredPath.slice(2))
-			: configuredPath;
+	const expandedPath =
+		configuredPath === '~'
+			? os.homedir()
+			: configuredPath.startsWith(`~${path.sep}`)
+				? path.join(os.homedir(), configuredPath.slice(2))
+				: configuredPath;
 	if (!path.isAbsolute(expandedPath)) {
 		throw new Error('Toolkit storage path must be an absolute path.');
 	}

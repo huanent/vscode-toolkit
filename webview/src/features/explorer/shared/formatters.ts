@@ -2,7 +2,20 @@ const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ic
 const archiveExtensions = new Set(['zip', 'tar', 'gz', '7z', 'rar']);
 const markdownExtensions = new Set(['md', 'mdx']);
 const jsonExtensions = new Set(['json', 'jsonc']);
-const codeExtensions = new Set(['js', 'jsx', 'ts', 'tsx', 'css', 'scss', 'html', 'py', 'java', 'cs', 'go', 'rs']);
+const codeExtensions = new Set([
+	'js',
+	'jsx',
+	'ts',
+	'tsx',
+	'css',
+	'scss',
+	'html',
+	'py',
+	'java',
+	'cs',
+	'go',
+	'rs',
+]);
 
 export function getFileIcon(name: string): string {
 	const extension = name.split('.').pop()?.toLowerCase() ?? '';

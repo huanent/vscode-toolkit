@@ -26,14 +26,29 @@ const sizeClasses: Record<IconButtonSize, string> = {
 };
 
 const variantClasses: Record<IconButtonVariant, string> = {
-	[IconButtonVariant.Default]: 'hover:bg-[var(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground))] hover:text-(--vscode-foreground)',
+	[IconButtonVariant.Default]:
+		'hover:bg-[var(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground))] hover:text-(--vscode-foreground)',
 	[IconButtonVariant.Ghost]: 'opacity-70 transition-opacity duration-75 enabled:hover:opacity-100',
 };
 
-export function IconButton({ label, icon, size = IconButtonSize.Small, variant = IconButtonVariant.Default, className = '', title = label, type = 'button', ...props }: IconButtonProps) {
+export function IconButton({
+	label,
+	icon,
+	size = IconButtonSize.Small,
+	variant = IconButtonVariant.Default,
+	className = '',
+	title = label,
+	type = 'button',
+	...props
+}: IconButtonProps) {
 	return (
 		<button
-			className={cn(sizeClasses[size], variantClasses[variant], 'grid shrink-0 place-items-center rounded border-0 bg-transparent p-0 text-(--vscode-icon-foreground) transition-colors duration-75 disabled:cursor-default disabled:opacity-50 focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)', className)}
+			className={cn(
+				sizeClasses[size],
+				variantClasses[variant],
+				'grid shrink-0 place-items-center rounded border-0 bg-transparent p-0 text-(--vscode-icon-foreground) transition-colors duration-75 disabled:cursor-default disabled:opacity-50 focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+				className,
+			)}
 			type={type}
 			title={title}
 			aria-label={label}

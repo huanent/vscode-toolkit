@@ -3,7 +3,16 @@ import { LoaderCircle, Save } from 'lucide-react';
 import { FieldLabel, PrimaryButton, TextArea, TextInput } from '../../../components/ui';
 import type { LaunchAgentConfig } from '../types';
 
-export function AgentEditor({ draft, argumentsText, environmentText, busy, onArgumentsChange, onEnvironmentChange, onUpdate, onSave }: {
+export function AgentEditor({
+	draft,
+	argumentsText,
+	environmentText,
+	busy,
+	onArgumentsChange,
+	onEnvironmentChange,
+	onUpdate,
+	onSave,
+}: {
 	draft: LaunchAgentConfig;
 	argumentsText: string;
 	environmentText: string;
@@ -14,36 +23,181 @@ export function AgentEditor({ draft, argumentsText, environmentText, busy, onArg
 	onSave(): void;
 }) {
 	return (
-		<section className="min-w-0 bg-(--vscode-editor-background)" aria-label="LaunchAgent configuration">
+		<section
+			className="min-w-0 bg-(--vscode-editor-background)"
+			aria-label="LaunchAgent configuration"
+		>
 			<div className="flex min-h-17 items-center justify-between gap-4 border-b border-b-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-5 py-3">
-				<div className="min-w-0"><Eyebrow>{draft.fileName ? 'Edit agent' : 'New agent'}</Eyebrow><h2 className="m-0 truncate text-[16px] font-semibold">{draft.label || 'Untitled LaunchAgent'}</h2></div>
-				<PrimaryButton type="button" disabled={busy} onClick={onSave}>{busy ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}Save</PrimaryButton>
+				<div className="min-w-0">
+					<Eyebrow>{draft.fileName ? 'Edit agent' : 'New agent'}</Eyebrow>
+					<h2 className="m-0 truncate text-[16px] font-semibold">
+						{draft.label || 'Untitled LaunchAgent'}
+					</h2>
+				</div>
+				<PrimaryButton type="button" disabled={busy} onClick={onSave}>
+					{busy ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}Save
+				</PrimaryButton>
 			</div>
 			<div className="grid grid-cols-2 gap-x-5 gap-y-4 p-5 max-[760px]:grid-cols-1 max-[760px]:p-4">
-				<FormField className="col-span-2 max-[760px]:col-auto" label="Label"><TextInput value={draft.label} onChange={event => onUpdate('label', event.target.value)} placeholder="com.example.worker" spellCheck={false} /></FormField>
-				<FormField className="col-span-2 max-[760px]:col-auto" label="Program"><TextInput value={draft.program} onChange={event => onUpdate('program', event.target.value)} placeholder="/usr/local/bin/node" spellCheck={false} /></FormField>
-				<FormField className="col-span-2 max-[760px]:col-auto" label="Program arguments" hint="one per line"><TextArea value={argumentsText} onChange={event => onArgumentsChange(event.target.value)} placeholder={'/path/to/script.js\n--production'} spellCheck={false} /></FormField>
-				<FormField className="col-span-2 max-[760px]:col-auto" label="Working directory"><TextInput value={draft.workingDirectory} onChange={event => onUpdate('workingDirectory', event.target.value)} placeholder="/Users/me/project" spellCheck={false} /></FormField>
-				<ToggleField label="Run at load" description="Start immediately after loading" checked={draft.runAtLoad} onChange={value => onUpdate('runAtLoad', value)} />
-				<ToggleField label="Keep alive" description="Restart after the process exits" checked={draft.keepAlive} onChange={value => onUpdate('keepAlive', value)} />
-				<FormField label="Throttle interval" hint="seconds"><TextInput type="number" min="0" step="1" value={draft.throttleInterval} onChange={event => onUpdate('throttleInterval', Number(event.target.value))} /></FormField>
+				<FormField className="col-span-2 max-[760px]:col-auto" label="Label">
+					<TextInput
+						value={draft.label}
+						onChange={event => onUpdate('label', event.target.value)}
+						placeholder="com.example.worker"
+						spellCheck={false}
+					/>
+				</FormField>
+				<FormField className="col-span-2 max-[760px]:col-auto" label="Program">
+					<TextInput
+						value={draft.program}
+						onChange={event => onUpdate('program', event.target.value)}
+						placeholder="/usr/local/bin/node"
+						spellCheck={false}
+					/>
+				</FormField>
+				<FormField
+					className="col-span-2 max-[760px]:col-auto"
+					label="Program arguments"
+					hint="one per line"
+				>
+					<TextArea
+						value={argumentsText}
+						onChange={event => onArgumentsChange(event.target.value)}
+						placeholder={'/path/to/script.js\n--production'}
+						spellCheck={false}
+					/>
+				</FormField>
+				<FormField className="col-span-2 max-[760px]:col-auto" label="Working directory">
+					<TextInput
+						value={draft.workingDirectory}
+						onChange={event => onUpdate('workingDirectory', event.target.value)}
+						placeholder="/Users/me/project"
+						spellCheck={false}
+					/>
+				</FormField>
+				<ToggleField
+					label="Run at load"
+					description="Start immediately after loading"
+					checked={draft.runAtLoad}
+					onChange={value => onUpdate('runAtLoad', value)}
+				/>
+				<ToggleField
+					label="Keep alive"
+					description="Restart after the process exits"
+					checked={draft.keepAlive}
+					onChange={value => onUpdate('keepAlive', value)}
+				/>
+				<FormField label="Throttle interval" hint="seconds">
+					<TextInput
+						type="number"
+						min="0"
+						step="1"
+						value={draft.throttleInterval}
+						onChange={event => onUpdate('throttleInterval', Number(event.target.value))}
+					/>
+				</FormField>
 				<div className="max-[760px]:hidden" />
-				<FormField className="col-span-2 max-[760px]:col-auto" label="Environment variables" hint="KEY=value, one per line"><TextArea value={environmentText} onChange={event => onEnvironmentChange(event.target.value)} placeholder={'NODE_ENV=production\nPORT=3000'} spellCheck={false} /></FormField>
-				<FormField label="Standard output path"><TextInput value={draft.standardOutPath} onChange={event => onUpdate('standardOutPath', event.target.value)} placeholder="/tmp/worker.log" spellCheck={false} /></FormField>
-				<FormField label="Standard error path"><TextInput value={draft.standardErrorPath} onChange={event => onUpdate('standardErrorPath', event.target.value)} placeholder="/tmp/worker.error.log" spellCheck={false} /></FormField>
+				<FormField
+					className="col-span-2 max-[760px]:col-auto"
+					label="Environment variables"
+					hint="KEY=value, one per line"
+				>
+					<TextArea
+						value={environmentText}
+						onChange={event => onEnvironmentChange(event.target.value)}
+						placeholder={'NODE_ENV=production\nPORT=3000'}
+						spellCheck={false}
+					/>
+				</FormField>
+				<FormField label="Standard output path">
+					<TextInput
+						value={draft.standardOutPath}
+						onChange={event => onUpdate('standardOutPath', event.target.value)}
+						placeholder="/tmp/worker.log"
+						spellCheck={false}
+					/>
+				</FormField>
+				<FormField label="Standard error path">
+					<TextInput
+						value={draft.standardErrorPath}
+						onChange={event => onUpdate('standardErrorPath', event.target.value)}
+						placeholder="/tmp/worker.error.log"
+						spellCheck={false}
+					/>
+				</FormField>
 			</div>
 		</section>
 	);
 }
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
-	return <span className="mb-0.5 block text-[10px] font-semibold uppercase text-(--vscode-descriptionForeground)">{children}</span>;
+	return (
+		<span className="mb-0.5 block text-[10px] font-semibold uppercase text-(--vscode-descriptionForeground)">
+			{children}
+		</span>
+	);
 }
 
-function FormField({ className = '', label, hint, children }: { className?: string; label: string; hint?: string; children: React.ReactNode }) {
-	return <label className={className}><FieldLabel hint={hint}>{label}</FieldLabel>{children}</label>;
+function FormField({
+	className = '',
+	label,
+	hint,
+	children,
+}: {
+	className?: string;
+	label: string;
+	hint?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<label className={className}>
+			<FieldLabel hint={hint}>{label}</FieldLabel>
+			{children}
+		</label>
+	);
 }
 
-function ToggleField({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange(value: boolean): void }) {
-	return <label className="group flex min-h-14 items-center justify-between gap-4 rounded-[2px] border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2.5 hover:border-(--vscode-focusBorder)"><span><strong className="block text-xs font-medium">{label}</strong><small className="mt-0.5 block text-[11px] text-(--vscode-descriptionForeground)">{description}</small></span><span className={cn('relative h-4.5 w-8 shrink-0 rounded-full border transition-colors duration-100', checked ? 'border-(--vscode-button-background) bg-(--vscode-button-background)' : 'border-(--vscode-checkbox-border,var(--vscode-panel-border)) bg-(--vscode-checkbox-background)')}><span className={cn('absolute top-0.5 size-3 rounded-full bg-(--vscode-button-foreground) shadow-sm transition-[left] duration-100', checked ? 'left-4' : 'left-0.5')} /></span><input className="sr-only" type="checkbox" role="switch" checked={checked} onChange={event => onChange(event.target.checked)} /></label>;
+function ToggleField({
+	label,
+	description,
+	checked,
+	onChange,
+}: {
+	label: string;
+	description: string;
+	checked: boolean;
+	onChange(value: boolean): void;
+}) {
+	return (
+		<label className="group flex min-h-14 items-center justify-between gap-4 rounded-[2px] border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2.5 hover:border-(--vscode-focusBorder)">
+			<span>
+				<strong className="block text-xs font-medium">{label}</strong>
+				<small className="mt-0.5 block text-[11px] text-(--vscode-descriptionForeground)">
+					{description}
+				</small>
+			</span>
+			<span
+				className={cn(
+					'relative h-4.5 w-8 shrink-0 rounded-full border transition-colors duration-100',
+					checked
+						? 'border-(--vscode-button-background) bg-(--vscode-button-background)'
+						: 'border-(--vscode-checkbox-border,var(--vscode-panel-border)) bg-(--vscode-checkbox-background)',
+				)}
+			>
+				<span
+					className={cn(
+						'absolute top-0.5 size-3 rounded-full bg-(--vscode-button-foreground) shadow-sm transition-[left] duration-100',
+						checked ? 'left-4' : 'left-0.5',
+					)}
+				/>
+			</span>
+			<input
+				className="sr-only"
+				type="checkbox"
+				role="switch"
+				checked={checked}
+				onChange={event => onChange(event.target.checked)}
+			/>
+		</label>
+	);
 }

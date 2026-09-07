@@ -13,7 +13,9 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [pathValue, setPathValue] = useState('');
 	const favorite = state.favoriteUris.includes(state.currentUri);
-	const favoriteLabel = favorite ? 'Remove current folder from favorites' : 'Add current folder to favorites';
+	const favoriteLabel = favorite
+		? 'Remove current folder from favorites'
+		: 'Add current folder to favorites';
 	const crumbs = getBreadcrumbs(state.rootUri, state.currentUri);
 
 	useEffect(() => {
@@ -40,13 +42,27 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 	return (
 		<header className="grid p-1 grid-cols-[auto_minmax(0,1fr)_28px] items-center gap-1 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) max-[600px]:gap-1.5 max-[600px]:px-2">
 			<div className="flex items-center gap-0.5" role="toolbar" aria-label="Navigation">
-				<IconButton icon="codicon-arrow-left" title="Back" aria-label="Back" disabled={!state.history.length} onClick={actions.navigateBack} />
-				<IconButton icon="codicon-refresh" title="Refresh" aria-label="Refresh" onClick={() => actions.requestDirectory(state.currentUri, false)} />
+				<IconButton
+					icon="codicon-arrow-left"
+					title="Back"
+					aria-label="Back"
+					disabled={!state.history.length}
+					onClick={actions.navigateBack}
+				/>
+				<IconButton
+					icon="codicon-refresh"
+					title="Refresh"
+					aria-label="Refresh"
+					onClick={() => actions.requestDirectory(state.currentUri, false)}
+				/>
 			</div>
 			<div className="relative grid h-7.5 min-w-0 grid-cols-[minmax(0,1fr)_28px] items-center rounded border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background)">
 				{state.searchOpen ? (
 					<div className="flex h-full min-w-0 items-center gap-1 pl-1.5">
-						<i className="codicon codicon-search shrink-0 text-(--vscode-descriptionForeground)" aria-hidden="true" />
+						<i
+							className="codicon codicon-search shrink-0 text-(--vscode-descriptionForeground)"
+							aria-hidden="true"
+						/>
 						<input
 							ref={searchInputRef}
 							value={state.searchQuery}
@@ -71,7 +87,13 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 						/>
 					</div>
 				) : state.pathInputOpen ? (
-					<form className="h-full min-w-0" onSubmit={event => { event.preventDefault(); actions.navigatePath(pathValue); }}>
+					<form
+						className="h-full min-w-0"
+						onSubmit={event => {
+							event.preventDefault();
+							actions.navigatePath(pathValue);
+						}}
+					>
 						<input
 							ref={pathInputRef}
 							value={pathValue}
@@ -88,45 +110,62 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 							spellCheck={false}
 						/>
 					</form>
-				) : <nav
-					ref={breadcrumbsRef}
-					className="scrollbar-none flex h-full min-w-0 cursor-text items-center overflow-x-auto pl-1 [&::-webkit-scrollbar]:hidden"
-					aria-label="Folder path"
-					onClick={event => {
-						if (event.button !== 0) return;
-						event.stopPropagation();
-						actions.closeContextMenu();
-						actions.setPathInputOpen(true);
-					}}
-				>
-					{crumbs.map((crumb, index) => (
-						<span className="flex shrink-0 items-center" key={crumb.uri}>
-							{index > 0 && <i className="codicon codicon-chevron-right shrink-0 text-(--vscode-breadcrumb-foreground)" />}
-							<button
-								type="button"
-								title={crumb.label}
-								aria-label={crumb.label}
-								aria-current={index === crumbs.length - 1 ? 'page' : undefined}
-								disabled={index === crumbs.length - 1}
-								className="flex max-w-55 shrink-0 cursor-pointer items-center overflow-hidden rounded-sm border-0 bg-transparent px-1.25 py-0.5 text-(--vscode-breadcrumb-foreground) text-ellipsis whitespace-nowrap hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-breadcrumb-focusForeground) focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder) disabled:cursor-default disabled:font-semibold disabled:text-(--vscode-breadcrumb-activeSelectionForeground)"
-								onClick={event => {
-									event.stopPropagation();
-									actions.requestDirectory(crumb.uri, true);
-								}}
-								onContextMenu={event => actions.showDirectoryContextMenu(event, crumb.uri)}
-							>
-								{index === 0 ? <i className={cn('codicon codicon-home', index === crumbs.length - 1 && 'breadcrumb-active-icon')} aria-hidden="true" /> : crumb.label}
-							</button>
-						</span>
-					))}
-				</nav>}
+				) : (
+					<nav
+						ref={breadcrumbsRef}
+						className="scrollbar-none flex h-full min-w-0 cursor-text items-center overflow-x-auto pl-1 [&::-webkit-scrollbar]:hidden"
+						aria-label="Folder path"
+						onClick={event => {
+							if (event.button !== 0) return;
+							event.stopPropagation();
+							actions.closeContextMenu();
+							actions.setPathInputOpen(true);
+						}}
+					>
+						{crumbs.map((crumb, index) => (
+							<span className="flex shrink-0 items-center" key={crumb.uri}>
+								{index > 0 && (
+									<i className="codicon codicon-chevron-right shrink-0 text-(--vscode-breadcrumb-foreground)" />
+								)}
+								<button
+									type="button"
+									title={crumb.label}
+									aria-label={crumb.label}
+									aria-current={index === crumbs.length - 1 ? 'page' : undefined}
+									disabled={index === crumbs.length - 1}
+									className="flex max-w-55 shrink-0 cursor-pointer items-center overflow-hidden rounded-sm border-0 bg-transparent px-1.25 py-0.5 text-(--vscode-breadcrumb-foreground) text-ellipsis whitespace-nowrap hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-breadcrumb-focusForeground) focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder) disabled:cursor-default disabled:font-semibold disabled:text-(--vscode-breadcrumb-activeSelectionForeground)"
+									onClick={event => {
+										event.stopPropagation();
+										actions.requestDirectory(crumb.uri, true);
+									}}
+									onContextMenu={event => actions.showDirectoryContextMenu(event, crumb.uri)}
+								>
+									{index === 0 ? (
+										<i
+											className={cn(
+												'codicon codicon-home',
+												index === crumbs.length - 1 && 'breadcrumb-active-icon',
+											)}
+											aria-hidden="true"
+										/>
+									) : (
+										crumb.label
+									)}
+								</button>
+							</span>
+						))}
+					</nav>
+				)}
 				{state.searchOpen ? (
 					<IconButton
 						icon="codicon-close"
 						className="rounded-none hover:bg-transparent"
 						title="Close search"
 						aria-label="Close search"
-						onClick={() => { actions.setSearchQuery(''); actions.setSearchOpen(false); }}
+						onClick={() => {
+							actions.setSearchQuery('');
+							actions.setSearchOpen(false);
+						}}
 					/>
 				) : (
 					<IconButton
@@ -158,7 +197,10 @@ function getBreadcrumbs(rootUri: string, currentUri: string) {
 	const root = new URL(rootUri);
 	const current = new URL(currentUri);
 	const rootParts = decodeURIComponent(root.pathname).split('/').filter(Boolean);
-	const relativeParts = decodeURIComponent(current.pathname).split('/').filter(Boolean).slice(rootParts.length);
+	const relativeParts = decodeURIComponent(current.pathname)
+		.split('/')
+		.filter(Boolean)
+		.slice(rootParts.length);
 	const labels = [rootParts.at(-1) || '/', ...relativeParts];
 	return labels.map((label, index) => {
 		const target = new URL(rootUri);

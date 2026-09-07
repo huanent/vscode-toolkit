@@ -11,7 +11,15 @@ type EmptyStateProps = {
 	descriptionClassName?: string;
 };
 
-export function EmptyState({ icon, title, titleAs: Title = 'strong', description, className = '', titleClassName = '', descriptionClassName = '' }: EmptyStateProps) {
+export function EmptyState({
+	icon,
+	title,
+	titleAs: Title = 'strong',
+	description,
+	className = '',
+	titleClassName = '',
+	descriptionClassName = '',
+}: EmptyStateProps) {
 	return (
 		<div className={cn('grid place-content-center justify-items-center text-center', className)}>
 			{icon}

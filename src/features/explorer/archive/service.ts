@@ -52,7 +52,12 @@ export async function readArchiveTree(archiveUri: vscode.Uri): Promise<ArchiveTr
 			const entryPath = parts.join('/');
 			if (entry.fileName.endsWith('/')) {
 				if (!directories.has(entryPath)) {
-					const directory = { name: parts.at(-1)!, type: 'directory' as const, size: 0, children: [] };
+					const directory = {
+						name: parts.at(-1)!,
+						type: 'directory' as const,
+						size: 0,
+						children: [],
+					};
 					parent.children?.push(directory);
 					directories.set(entryPath, directory);
 				}
@@ -69,9 +74,13 @@ export async function readArchiveTree(archiveUri: vscode.Uri): Promise<ArchiveTr
 }
 
 function sortArchiveTree(entries: ArchiveTreeEntry[]): void {
-	entries.sort((left, right) => left.type === right.type
-		? left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
-		: left.type === 'directory' ? -1 : 1);
+	entries.sort((left, right) =>
+		left.type === right.type
+			? left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
+			: left.type === 'directory'
+				? -1
+				: 1,
+	);
 	for (const entry of entries) {
 		if (entry.children) sortArchiveTree(entry.children);
 	}
@@ -81,7 +90,7 @@ export async function compressEntries(
 	sourceUris: vscode.Uri[],
 	destinationDirectoryUri: vscode.Uri,
 	operation: ArchiveOperation,
-	onProgress: (progress: { percent: number; detail: string }) => void
+	onProgress: (progress: { percent: number; detail: string }) => void,
 ): Promise<void> {
 	if (sourceUris.length === 0) {
 		return;
@@ -97,16 +106,24 @@ export async function compressEntries(
 	let processedBytes = 0;
 	let lastProgressTime = 0;
 	onProgress({ percent: 0, detail: 'Collecting files...' });
-	const singleStat = sourceUris.length === 1 ? await vscode.workspace.fs.stat(sourceUris[0]) : undefined;
+	const singleStat =
+		sourceUris.length === 1 ? await vscode.workspace.fs.stat(sourceUris[0]) : undefined;
 	if (sourceUris.length === 1 && singleStat && singleStat.type & vscode.FileType.Directory) {
 		totalBytes = await addDirectoryToZip(zip, sourceUris[0], '', operation, reportFileProgress);
 	} else {
 		for (const sourceUri of sourceUris) {
-			totalBytes += await addEntryToZip(zip, sourceUri, getDisplayName(sourceUri), operation, reportFileProgress);
+			totalBytes += await addEntryToZip(
+				zip,
+				sourceUri,
+				getDisplayName(sourceUri),
+				operation,
+				reportFileProgress,
+			);
 		}
 	}
 
-	const defaultName = sourceUris.length === 1 ? `${getDisplayName(sourceUris[0])}.zip` : 'Archive.zip';
+	const defaultName =
+		sourceUris.length === 1 ? `${getDisplayName(sourceUris[0])}.zip` : 'Archive.zip';
 	const archiveUri = await getAvailableChildUri(destinationDirectoryUri, defaultName);
 	const archiveStream = createWriteStream(archiveUri.fsPath, { flags: 'wx' });
 	zip.on('error', error => archiveStream.destroy(error));
@@ -133,14 +150,14 @@ export async function compressEntries(
 						lastProgressTime = now;
 						onProgress({
 							percent: totalBytes === 0 ? 99 : Math.min((processedBytes / totalBytes) * 99, 99),
-							detail: `Compressing ${zipPath}`
+							detail: `Compressing ${zipPath}`,
 						});
 					}
 					callback(null, chunk);
 				} catch (error) {
 					callback(error instanceof Error ? error : new Error(String(error)));
 				}
-			}
+			},
 		});
 	}
 }
@@ -150,7 +167,7 @@ async function addEntryToZip(
 	sourceUri: vscode.Uri,
 	zipPath: string,
 	operation: ArchiveOperation,
-	createProgressStream: (zipPath: string) => Transform
+	createProgressStream: (zipPath: string) => Transform,
 ): Promise<number> {
 	assertNotCancelled(operation);
 	const stat = await vscode.workspace.fs.stat(sourceUri);
@@ -174,7 +191,7 @@ async function addEntryToZip(
 			} catch (error) {
 				callback(error, undefined as never);
 			}
-		}
+		},
 	);
 	return stat.size;
 }
@@ -184,7 +201,7 @@ async function addDirectoryToZip(
 	directoryUri: vscode.Uri,
 	zipPath: string,
 	operation: ArchiveOperation,
-	createProgressStream: (zipPath: string) => Transform
+	createProgressStream: (zipPath: string) => Transform,
 ): Promise<number> {
 	const entries = await vscode.workspace.fs.readDirectory(directoryUri);
 	if (entries.length === 0 && zipPath) {
@@ -194,7 +211,13 @@ async function addDirectoryToZip(
 	for (const [name] of entries) {
 		assertNotCancelled(operation);
 		const entryPath = zipPath ? `${zipPath}/${name}` : name;
-		totalBytes += await addEntryToZip(zip, vscode.Uri.joinPath(directoryUri, name), entryPath, operation, createProgressStream);
+		totalBytes += await addEntryToZip(
+			zip,
+			vscode.Uri.joinPath(directoryUri, name),
+			entryPath,
+			operation,
+			createProgressStream,
+		);
 	}
 	return totalBytes;
 }
@@ -202,7 +225,7 @@ async function addDirectoryToZip(
 export async function extractArchive(
 	archiveUri: vscode.Uri,
 	operation: ArchiveOperation,
-	onProgress: (progress: { percent: number; detail: string }) => void
+	onProgress: (progress: { percent: number; detail: string }) => void,
 ): Promise<boolean> {
 	if (!getDisplayName(archiveUri).toLowerCase().endsWith('.zip')) {
 		throw new Error('Only ZIP archives can be extracted.');
@@ -250,19 +273,27 @@ export async function extractArchive(
 							const now = Date.now();
 							if (now - lastProgressTime >= progressIntervalMs) {
 								lastProgressTime = now;
-								const entryProgress = entry.uncompressedSize === 0 ? 1 : extractedBytes / entry.uncompressedSize;
+								const entryProgress =
+									entry.uncompressedSize === 0 ? 1 : extractedBytes / entry.uncompressedSize;
 								onProgress({
-									percent: Math.min(((zip.entriesRead - 1 + entryProgress) / Math.max(zip.entryCount, 1)) * 80, 80),
-									detail: `Extracting ${entry.fileName}`
+									percent: Math.min(
+										((zip.entriesRead - 1 + entryProgress) / Math.max(zip.entryCount, 1)) * 80,
+										80,
+									),
+									detail: `Extracting ${entry.fileName}`,
 								});
 							}
 							callback(null, chunk);
 						} catch (error) {
 							callback(error instanceof Error ? error : new Error(String(error)));
 						}
-					}
+					},
 				});
-				await pipeline(readStream, progressStream, createWriteStream(targetUri.fsPath, { flags: 'wx' }));
+				await pipeline(
+					readStream,
+					progressStream,
+					createWriteStream(targetUri.fsPath, { flags: 'wx' }),
+				);
 			}
 		} finally {
 			zip.close();
@@ -277,7 +308,9 @@ export async function extractArchive(
 				return false;
 			}
 			onProgress({ percent: 98, detail: 'Finishing extraction...' });
-			await vscode.workspace.fs.rename(sourceUri, targetUri, { overwrite: targetType !== undefined });
+			await vscode.workspace.fs.rename(sourceUri, targetUri, {
+				overwrite: targetType !== undefined,
+			});
 			return true;
 		}
 
@@ -285,13 +318,15 @@ export async function extractArchive(
 		try {
 			const destinationStat = await vscode.workspace.fs.stat(destinationUri);
 			if (!(destinationStat.type & vscode.FileType.Directory)) {
-				throw new Error(`Cannot extract because "${folderName}" already exists and is not a folder.`);
+				throw new Error(
+					`Cannot extract because "${folderName}" already exists and is not a folder.`,
+				);
 			}
 			destinationExists = true;
 			const choice = await vscode.window.showWarningMessage(
 				`The folder "${folderName}" already exists. Merge into it?`,
 				{ modal: true, detail: 'Existing files with the same names will be replaced.' },
-				'Merge'
+				'Merge',
 			);
 			if (choice !== 'Merge') {
 				return false;
@@ -310,12 +345,14 @@ export async function extractArchive(
 
 		await vscode.workspace.fs.createDirectory(mergedUri);
 		let completedEntries = 0;
-		const totalEntries = await countDirectoryEntries(destinationUri, operation) + await countDirectoryEntries(stagingUri, operation);
+		const totalEntries =
+			(await countDirectoryEntries(destinationUri, operation)) +
+			(await countDirectoryEntries(stagingUri, operation));
 		const reportMergeProgress = (detail: string) => {
 			completedEntries += 1;
 			onProgress({
 				percent: 80 + (completedEntries / Math.max(totalEntries, 1)) * 18,
-				detail
+				detail,
 			});
 		};
 		onProgress({ percent: 80, detail: 'Preparing merged folder...' });
@@ -331,7 +368,10 @@ export async function extractArchive(
 	}
 }
 
-async function countDirectoryEntries(directoryUri: vscode.Uri, operation: ArchiveOperation): Promise<number> {
+async function countDirectoryEntries(
+	directoryUri: vscode.Uri,
+	operation: ArchiveOperation,
+): Promise<number> {
 	let count = 0;
 	for (const [name, fileType] of await vscode.workspace.fs.readDirectory(directoryUri)) {
 		assertNotCancelled(operation);
@@ -347,7 +387,7 @@ async function mergeDirectory(
 	sourceUri: vscode.Uri,
 	destinationUri: vscode.Uri,
 	operation: ArchiveOperation,
-	onEntry: (detail: string) => void
+	onEntry: (detail: string) => void,
 ): Promise<void> {
 	for (const [name, fileType] of await vscode.workspace.fs.readDirectory(sourceUri)) {
 		assertNotCancelled(operation);
@@ -387,7 +427,7 @@ async function replaceDirectory(
 	destinationUri: vscode.Uri,
 	mergedUri: vscode.Uri,
 	parentUri: vscode.Uri,
-	folderName: string
+	folderName: string,
 ): Promise<void> {
 	const backupUri = vscode.Uri.joinPath(parentUri, `.${folderName}.backup-${randomUUID()}`);
 	await vscode.workspace.fs.rename(destinationUri, backupUri, { overwrite: false });
@@ -425,14 +465,23 @@ function assertFileUris(uris: vscode.Uri[]): void {
 function getSafeArchivePathParts(relativePath: string): string[] {
 	const normalized = relativePath.replaceAll('\\', '/');
 	const parts = normalized.split('/').filter(Boolean);
-	if (normalized.startsWith('/') || /^[a-z]:\//i.test(normalized) || parts.some(part => part === '.' || part === '..')) {
+	if (
+		normalized.startsWith('/') ||
+		/^[a-z]:\//i.test(normalized) ||
+		parts.some(part => part === '.' || part === '..')
+	) {
 		throw new Error(`The archive contains an unsafe path: ${relativePath}`);
 	}
 	return parts;
 }
 
-async function getAvailableChildUri(parentUri: vscode.Uri, requestedName: string): Promise<vscode.Uri> {
-	const extensionIndex = requestedName.toLowerCase().endsWith('.zip') ? requestedName.length - 4 : requestedName.length;
+async function getAvailableChildUri(
+	parentUri: vscode.Uri,
+	requestedName: string,
+): Promise<vscode.Uri> {
+	const extensionIndex = requestedName.toLowerCase().endsWith('.zip')
+		? requestedName.length - 4
+		: requestedName.length;
 	const baseName = requestedName.slice(0, extensionIndex);
 	const extension = requestedName.slice(extensionIndex);
 	let index = 1;

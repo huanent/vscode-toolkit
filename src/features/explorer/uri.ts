@@ -17,8 +17,8 @@ export function isUriWithinRoot(rootUri: vscode.Uri, value: string | vscode.Uri)
 	}
 	const rootPath = rootUri.path.endsWith('/') ? rootUri.path : `${rootUri.path}/`;
 	return !(
-		candidate.scheme !== rootUri.scheme
-		|| candidate.authority !== rootUri.authority
-		|| (candidate.path !== rootUri.path && !candidate.path.startsWith(rootPath))
+		candidate.scheme !== rootUri.scheme ||
+		candidate.authority !== rootUri.authority ||
+		(candidate.path !== rootUri.path && !candidate.path.startsWith(rootPath))
 	);
 }

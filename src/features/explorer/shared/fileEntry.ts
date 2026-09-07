@@ -9,7 +9,7 @@ export async function confirmOverwrite(targetUri: vscode.Uri): Promise<boolean> 
 	const choice = await vscode.window.showWarningMessage(
 		`Replace "${getDisplayName(targetUri)}"?`,
 		{ modal: true, detail: 'An item with the same name already exists in the destination folder.' },
-		'Replace'
+		'Replace',
 	);
 	return choice === 'Replace';
 }

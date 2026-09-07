@@ -14,10 +14,12 @@ export function registerHttpFormatter(): vscode.Disposable {
 				return [];
 			}
 
-			return [vscode.TextEdit.replace(
-				new vscode.Range(document.positionAt(0), document.positionAt(source.length)),
-				formatted,
-			)];
+			return [
+				vscode.TextEdit.replace(
+					new vscode.Range(document.positionAt(0), document.positionAt(source.length)),
+					formatted,
+				),
+			];
 		},
 	});
 }
@@ -41,7 +43,9 @@ export function formatHttp(source: string, indentation = '  ', lineEnding = '\n'
 	}
 	sections.push(section);
 
-	const formattedSections = sections.map(linesInSection => formatSection(linesInSection, indentation));
+	const formattedSections = sections.map(linesInSection =>
+		formatSection(linesInSection, indentation),
+	);
 	const output: string[] = [];
 	for (const formattedSection of formattedSections) {
 		if (formattedSection.length === 0) {
@@ -77,7 +81,8 @@ function formatSection(lines: string[], indentation: string): string[] {
 		const request = requestLinePattern.exec(output[index]);
 		if (request) {
 			requestLine = index;
-			output[index] = `${request[1].toUpperCase()} ${request[2]}${request[3] ? ` ${request[3].toUpperCase()}` : ''}`;
+			output[index] =
+				`${request[1].toUpperCase()} ${request[2]}${request[3] ? ` ${request[3].toUpperCase()}` : ''}`;
 			break;
 		}
 	}
@@ -113,8 +118,7 @@ function formatSection(lines: string[], indentation: string): string[] {
 			try {
 				const formattedBody = JSON.stringify(JSON.parse(body), null, indentation).split('\n');
 				output.splice(bodyStart, output.length - bodyStart, ...formattedBody);
-			} catch {
-			}
+			} catch {}
 		}
 	}
 

@@ -114,7 +114,9 @@ export class ChatManager implements vscode.Disposable {
 	private async replaceSplitEditor(panel: vscode.WebviewPanel): Promise<void> {
 		const viewColumn = panel.viewColumn ?? vscode.ViewColumn.Active;
 		panel.dispose();
-		await vscode.commands.executeCommand('vscode.openWith', createEditorUri(), editorViewType, { viewColumn });
+		await vscode.commands.executeCommand('vscode.openWith', createEditorUri(), editorViewType, {
+			viewColumn,
+		});
 	}
 }
 

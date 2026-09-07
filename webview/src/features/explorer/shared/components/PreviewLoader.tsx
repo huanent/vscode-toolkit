@@ -1,15 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
-type PreviewMessage<T> =
-	| { type: 'loaded'; data: T }
-	| { type: 'error'; message: string };
+type PreviewMessage<T> = { type: 'loaded'; data: T } | { type: 'error'; message: string };
 
 const vscode = acquireVsCodeApi();
 
 export function PreviewLoader<T>({
 	loadingLabel,
 	errorLabel,
-	render
+	render,
 }: {
 	loadingLabel: string;
 	errorLabel: string;
@@ -25,7 +23,9 @@ export function PreviewLoader<T>({
 	}, []);
 
 	if (message?.type === 'loaded') return render(message.data);
-	return <main className="grid h-full place-items-center bg-(--vscode-editor-background) text-sm text-(--vscode-descriptionForeground)">
-		{message?.type === 'error' ? `${errorLabel}: ${message.message}` : loadingLabel}
-	</main>;
+	return (
+		<main className="grid h-full place-items-center bg-(--vscode-editor-background) text-sm text-(--vscode-descriptionForeground)">
+			{message?.type === 'error' ? `${errorLabel}: ${message.message}` : loadingLabel}
+		</main>
+	);
 }

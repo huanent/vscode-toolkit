@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 
 const nodeExtensions = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts']);
 
-export async function resolveNodeDocument(uri: vscode.Uri | undefined): Promise<vscode.TextDocument | undefined> {
+export async function resolveNodeDocument(
+	uri: vscode.Uri | undefined,
+): Promise<vscode.TextDocument | undefined> {
 	if (uri && isNodeScriptUri(uri)) {
 		return vscode.workspace.openTextDocument(uri);
 	}
@@ -32,16 +34,24 @@ export async function getRunnableFileUri(
 }
 
 export function isTypeScriptDocument(document: vscode.TextDocument): boolean {
-	return document.languageId === 'typescript' || ['.ts', '.mts', '.cts'].includes(path.extname(document.uri.fsPath).toLowerCase());
+	return (
+		document.languageId === 'typescript' ||
+		['.ts', '.mts', '.cts'].includes(path.extname(document.uri.fsPath).toLowerCase())
+	);
 }
 
 export function isNodeScriptUri(uri: vscode.Uri): boolean {
 	const isFileSystemUri = uri.scheme === 'file' || uri.scheme === 'vscode-remote';
-	return uri.scheme === 'untitled' || (isFileSystemUri && nodeExtensions.has(path.extname(uri.fsPath).toLowerCase()));
+	return (
+		uri.scheme === 'untitled' ||
+		(isFileSystemUri && nodeExtensions.has(path.extname(uri.fsPath).toLowerCase()))
+	);
 }
 
 function isNodeScriptDocument(document: vscode.TextDocument): boolean {
-	return document.languageId === 'javascript'
-		|| document.languageId === 'typescript'
-		|| isNodeScriptUri(document.uri);
+	return (
+		document.languageId === 'javascript' ||
+		document.languageId === 'typescript' ||
+		isNodeScriptUri(document.uri)
+	);
 }

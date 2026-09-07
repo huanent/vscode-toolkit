@@ -12,11 +12,16 @@ export function openSqlitePanel(context: vscode.ExtensionContext, uri: vscode.Ur
 		vscode.ViewColumn.Active,
 		{
 			enableScripts: true,
-			localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')]
-		}
+			localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
+		},
 	);
 	panel.iconPath = new vscode.ThemeIcon('database');
-	panel.webview.html = getExplorerPreviewWebviewHtml(panel.webview, context.extensionUri, 'sqlite', name);
+	panel.webview.html = getExplorerPreviewWebviewHtml(
+		panel.webview,
+		context.extensionUri,
+		'sqlite',
+		name,
+	);
 	const session = new SqliteSession(uri, message => panel.webview.postMessage(message));
 	let requestQueue = Promise.resolve();
 	panel.onDidDispose(() => session.dispose());

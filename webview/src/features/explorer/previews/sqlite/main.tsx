@@ -11,5 +11,5 @@ if (!root) {
 createRoot(root).render(
 	<StrictMode>
 		<SqliteManager name={root.dataset.name ?? ''} />
-	</StrictMode>
+	</StrictMode>,
 );
