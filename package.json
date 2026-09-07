@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -432,6 +432,7 @@
     }
   },
   "scripts": {
+    "test:http": "node --test tests/http.test.cjs",
     "lint": "oxlint --deny-warnings .",
     "lint:fix": "npm run lint -- --fix",
     "format": "oxfmt --write .",

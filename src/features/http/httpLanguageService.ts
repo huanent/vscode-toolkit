@@ -21,7 +21,20 @@ export const HTTP_METHODS = [
 	'CHECKIN',
 	'REPORT',
 	'MERGE',
+	'MKACTIVITY',
+	'MKWORKSPACE',
+	'VERSION-CONTROL',
+	'BASELINE-CONTROL',
+	'ORDERPATCH',
+	'ACL',
+	'SEARCH',
 	'PURGE',
+	'LINK',
+	'UNLINK',
+	'VIEW',
+	'NOTIFY',
+	'SUBSCRIBE',
+	'UNSUBSCRIBE',
 ] as const;
 
 const methodPattern = HTTP_METHODS.join('|');
@@ -83,7 +96,11 @@ export class HttpLanguageService {
 
 	collectVariables(document: vscode.TextDocument): Map<string, string> {
 		const variables = new Map<string, string>();
+		const contexts = this.getLineContexts(document);
 		for (let line = 0; line < document.lineCount; line++) {
+			if (contexts[line] !== 'request') {
+				continue;
+			}
 			const match = variablePattern.exec(document.lineAt(line).text);
 			if (match) {
 				variables.set(match[1], match[2]);
@@ -93,19 +110,25 @@ export class HttpLanguageService {
 	}
 
 	getLineContext(document: vscode.TextDocument, line: number): HttpLineContext {
-		const bounds = this.findRequestBounds(document, line);
-		let foundRequest = false;
-		for (let current = bounds.start; current < line; current++) {
-			const text = document.lineAt(current).text;
-			if (this.parseRequestLine(text)) {
-				foundRequest = true;
-				continue;
+		return this.getLineContexts(document)[line] ?? 'request';
+	}
+
+	getLineContexts(document: vscode.TextDocument): HttpLineContext[] {
+		const contexts: HttpLineContext[] = [];
+		let context: HttpLineContext = 'request';
+		for (let line = 0; line < document.lineCount; line++) {
+			const text = document.lineAt(line).text;
+			if (separatorPattern.test(text)) {
+				context = 'request';
 			}
-			if (foundRequest && text.trim() === '') {
-				return 'body';
+			contexts.push(context);
+			if (context === 'request' && this.parseRequestLine(text)) {
+				context = 'header';
+			} else if (context === 'header' && text.trim() === '') {
+				context = 'body';
 			}
 		}
-		return foundRequest ? 'header' : 'request';
+		return contexts;
 	}
 
 	getMethodRange(
@@ -173,6 +196,7 @@ export class HttpLanguageService {
 
 		const variables = this.collectVariables(document);
 		const headers: Record<string, string> = {};
+		const headerNames = new Map<string, string>();
 		let bodyStart = -1;
 		for (let line = requestLine + 1; line <= bounds.end; line++) {
 			const text = document.lineAt(line).text;
@@ -189,7 +213,20 @@ export class HttpLanguageService {
 			}
 			const name = text.slice(0, separator).trim();
 			const value = text.slice(separator + 1).trim();
-			headers[name] = this.substituteVariables(value, variables);
+			if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name)) {
+				throw new Error(`Invalid HTTP header name on line ${line + 1}.`);
+			}
+			const resolvedValue = this.substituteVariables(value, variables);
+			if (/[\r\n\0]/.test(resolvedValue)) {
+				throw new Error(`Invalid HTTP header value on line ${line + 1}.`);
+			}
+			const existingName = headerNames.get(name.toLowerCase());
+			if (existingName) {
+				headers[existingName] += `${name.toLowerCase() === 'cookie' ? '; ' : ', '}${resolvedValue}`;
+			} else {
+				headerNames.set(name.toLowerCase(), name);
+				headers[name] = resolvedValue;
+			}
 		}
 
 		const rawBody =
@@ -205,10 +242,30 @@ export class HttpLanguageService {
 		if ((parsedLine.method === 'GET' || parsedLine.method === 'HEAD') && body) {
 			throw new Error(`${parsedLine.method} requests cannot include a request body.`);
 		}
+		if (['CONNECT', 'TRACE', 'TRACK'].includes(parsedLine.method)) {
+			throw new Error(
+				`${parsedLine.method} is not supported by the HTTP client's fetch transport.`,
+			);
+		}
+		const url = this.substituteVariables(parsedLine.url, variables);
+		let parsedUrl: URL;
+		try {
+			parsedUrl = new URL(url);
+		} catch {
+			throw new Error('Invalid request URL. Expected an absolute HTTP or HTTPS URL.');
+		}
+		if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+			throw new Error('Only HTTP and HTTPS request URLs are supported.');
+		}
+		if (parsedUrl.username || parsedUrl.password) {
+			throw new Error(
+				'Credentials in request URLs are not supported. Use an Authorization header.',
+			);
+		}
 
 		return {
 			method: parsedLine.method,
-			url: this.substituteVariables(parsedLine.url, variables),
+			url,
 			headers,
 			body,
 			line: requestLine,
@@ -218,11 +275,15 @@ export class HttpLanguageService {
 	getDiagnostics(document: vscode.TextDocument): vscode.Diagnostic[] {
 		const diagnostics: vscode.Diagnostic[] = [];
 		const variables = this.collectVariables(document);
+		const contexts = this.getLineContexts(document);
 		for (let line = 0; line < document.lineCount; line++) {
 			const text = document.lineAt(line).text;
+			if (/^\s*(?:#|\/\/)/.test(text)) {
+				continue;
+			}
 			const methodCandidate = /^\s*([A-Za-z-]+)\b/.exec(text)?.[1].toUpperCase();
 			if (
-				this.getLineContext(document, line) === 'request' &&
+				contexts[line] === 'request' &&
 				methodCandidate &&
 				HTTP_METHODS.includes(methodCandidate as (typeof HTTP_METHODS)[number]) &&
 				!this.parseRequestLine(text)
@@ -237,14 +298,18 @@ export class HttpLanguageService {
 			}
 
 			for (const match of text.matchAll(/\{\{\s*([\w.-]+)\s*\}\}/g)) {
-				if (variables.has(match[1])) {
+				let message: string;
+				try {
+					this.substituteVariables(match[0], variables);
 					continue;
+				} catch (error) {
+					message = error instanceof Error ? error.message : String(error);
 				}
 				const start = match.index ?? 0;
 				diagnostics.push(
 					new vscode.Diagnostic(
 						new vscode.Range(line, start, line, start + match[0].length),
-						`HTTP variable "${match[1]}" is not defined.`,
+						message,
 						vscode.DiagnosticSeverity.Error,
 					),
 				);
@@ -254,13 +319,32 @@ export class HttpLanguageService {
 	}
 
 	substituteVariables(value: string, variables: Map<string, string>): string {
-		return value.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_match, name: string) => {
-			const replacement = variables.get(name);
-			if (replacement === undefined) {
-				throw new Error(`HTTP variable "${name}" is not defined.`);
-			}
-			return replacement;
-		});
+		const resolved = new Map<string, string>();
+		const resolving = new Set<string>();
+		const expand = (text: string): string =>
+			text.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_match, name: string) => {
+				if (resolving.has(name)) {
+					throw new Error(
+						`Circular HTTP variable reference: ${[...resolving, name].join(' -> ')}.`,
+					);
+				}
+				if (resolved.has(name)) {
+					return resolved.get(name)!;
+				}
+				const replacement = variables.get(name);
+				if (replacement === undefined) {
+					throw new Error(`HTTP variable "${name}" is not defined.`);
+				}
+				if (resolving.size >= 100) {
+					throw new Error('HTTP variable nesting exceeds 100 levels.');
+				}
+				resolving.add(name);
+				const result = expand(replacement);
+				resolving.delete(name);
+				resolved.set(name, result);
+				return result;
+			});
+		return expand(value);
 	}
 }
 

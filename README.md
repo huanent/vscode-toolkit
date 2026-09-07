@@ -18,6 +18,29 @@ Focused developer tools for VS Code.
 
 ## Development
 
+### HTTP Files
+
+Separate requests with `###` lines. Define file-wide variables with `@name = value`
+before a request line; reference them with `{{name}}` in URLs, headers, and bodies.
+Variables can reference other variables, with diagnostics for missing definitions
+and circular references. Definitions inside a request body are treated as body text.
+
+Standalone `#` and `//` comment lines, including indented ones, are excluded from
+request bodies. These prefixes inside JSON strings are preserved. A raw text line
+starting with either prefix is therefore reserved for comments.
+
+Formatting preserves non-JSON body whitespace and formats valid JSON, including
+JSON surrounded by comments. JSON with internal comments is left unchanged by the
+formatter. Requests require absolute HTTP(S) URLs; use `Authorization` headers
+instead of URL credentials. The fetch transport does not support CONNECT or TRACE,
+or request bodies on GET and HEAD. The HTTP version suffix is descriptive and does
+not force the negotiated transport version. Responses appear in the Toolkit HTTP
+result panel; the status bar provides request cancellation.
+
+Run `npm run test:http` for offline parser, variable, diagnostic, and formatter tests.
+
+### Build
+
 ```bash
 npm install
 npm run build

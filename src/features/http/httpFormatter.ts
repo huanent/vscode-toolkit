@@ -61,7 +61,7 @@ export function formatHttp(source: string, indentation = '  ', lineEnding = '\n'
 }
 
 function formatSection(lines: string[], indentation: string): string[] {
-	const output = lines.map(line => line.trimEnd());
+	const output = [...lines];
 	if (output.length === 0) {
 		return output;
 	}
@@ -73,6 +73,7 @@ function formatSection(lines: string[], indentation: string): string[] {
 
 	let requestLine = -1;
 	for (let index = 0; index < output.length; index++) {
+		output[index] = output[index].trimEnd();
 		const variable = variablePattern.exec(output[index]);
 		if (variable) {
 			output[index] = `@${variable[1]} = ${variable[2]}`;
@@ -113,13 +114,23 @@ function formatSection(lines: string[], indentation: string): string[] {
 	}
 
 	if (bodyStart >= 0) {
-		const body = output.slice(bodyStart).join('\n').trim();
+		let contentStart = bodyStart;
+		let contentEnd = output.length;
+		const isCommentOrBlank = (line: string): boolean => /^\s*(?:(?:#|\/\/).*)?$/.test(line);
+		while (contentStart < contentEnd && isCommentOrBlank(output[contentStart])) {
+			contentStart++;
+		}
+		while (contentEnd > contentStart && isCommentOrBlank(output[contentEnd - 1])) {
+			contentEnd--;
+		}
+		const body = output.slice(contentStart, contentEnd).join('\n').trim();
 		if (body) {
 			try {
 				const formattedBody = JSON.stringify(JSON.parse(body), null, indentation).split('\n');
-				output.splice(bodyStart, output.length - bodyStart, ...formattedBody);
+				output.splice(contentStart, contentEnd - contentStart, ...formattedBody);
 			} catch {}
 		}
+		return output;
 	}
 
 	return trimBlankEdges(output);

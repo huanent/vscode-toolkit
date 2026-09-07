@@ -225,8 +225,12 @@ function registerHttpAutoSave(documentStore: HttpDocumentStore): vscode.Disposab
 class HttpCodeLensProvider implements vscode.CodeLensProvider {
 	provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
 		const lenses: vscode.CodeLens[] = [];
+		const contexts = languageService.getLineContexts(document);
 		for (let line = 0; line < document.lineCount; line++) {
-			if (!languageService.parseRequestLine(document.lineAt(line).text)) {
+			if (
+				contexts[line] !== 'request' ||
+				!languageService.parseRequestLine(document.lineAt(line).text)
+			) {
 				continue;
 			}
 
@@ -248,6 +252,9 @@ class HttpCompletionProvider implements vscode.CompletionItemProvider {
 		position: vscode.Position,
 	): vscode.CompletionItem[] {
 		const linePrefix = document.lineAt(position).text.slice(0, position.character);
+		if (/^\s*(?:#|\/\/)/.test(linePrefix)) {
+			return [];
+		}
 		const methodRange = languageService.getMethodRange(document, position);
 		if (/^\s*[A-Za-z-]*$/.test(linePrefix) && methodRange) {
 			return HTTP_METHODS.map(method => {
@@ -271,16 +278,28 @@ class HttpCompletionProvider implements vscode.CompletionItemProvider {
 			});
 		}
 
-		if (/\{\{[\w.-]*$/.test(linePrefix)) {
+		const variableMatch = /\{\{\s*[\w.-]*$/.exec(linePrefix);
+		if (variableMatch) {
+			const suffix = document.lineAt(position.line).text.slice(position.character);
+			const remaining = /^[\w.-]*(?:\s*\}\})?/.exec(suffix)?.[0] ?? '';
 			return Array.from(languageService.collectVariables(document).keys(), name => {
 				const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable);
-				item.insertText = `${name}}}`;
+				item.insertText = `{{${name}}}`;
+				item.range = new vscode.Range(
+					position.line,
+					variableMatch.index,
+					position.line,
+					position.character + remaining.length,
+				);
 				item.detail = 'HTTP file variable';
 				return item;
 			});
 		}
 
-		if (/^\s*@?[\w.-]*$/.test(linePrefix)) {
+		if (
+			languageService.getLineContext(document, position.line) === 'request' &&
+			/^\s*@?[\w.-]*$/.test(linePrefix)
+		) {
 			const item = new vscode.CompletionItem('@variable', vscode.CompletionItemKind.Snippet);
 			item.insertText = new vscode.SnippetString('@${1:name} = ${2:value}');
 			item.detail = 'Define an HTTP file variable';
@@ -339,8 +358,8 @@ async function sendRequest(
 			signal: controller.signal,
 			redirect: 'follow',
 		});
-		const elapsed = Date.now() - startedAt;
 		const body = await formatResponseBody(response);
+		const elapsed = Date.now() - startedAt;
 
 		await resultPanel.show({
 			method: request.method,
