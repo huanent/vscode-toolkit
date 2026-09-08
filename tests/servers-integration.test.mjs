@@ -82,19 +82,23 @@ test('Servers storage follows Toolkit default, absolute and home paths', () => {
 	assert.throws(() => sandbox.exports.getStorageUri(context, 'servers'), /absolute path/);
 });
 
-test('all Servers webview bundles and shared styles are built', () => {
+test('all connection feature webview bundles and shared styles are built', () => {
 	for (const entry of [
-		'serverManagement',
+		'sshManagement',
+		'databaseManagement',
+		'containerManagement',
 		'containerEditor',
 		'databaseSqlResults',
 		'mysqlOverview',
 		'mysqlTablePreview',
-		'serverForm',
+		'sshForm',
+		'databaseForm',
+		'containerForm',
 		'sshTerminal',
 	]) {
 		assert.ok(fs.statSync(path.join(root, 'media', `${entry}.js`)).size > 0);
 	}
-	for (const entry of ['servers', 'sshTerminal'])
+	for (const entry of ['styles', 'sshTerminal'])
 		assert.ok(fs.statSync(path.join(root, 'media', `${entry}.css`)).size > 0);
 	assert.doesNotMatch(read('.vscodeignore'), /^node_modules\/\*\*$/m);
 	assert.equal(typeof require('ssh2').Client, 'function');

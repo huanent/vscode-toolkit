@@ -36,7 +36,12 @@ export async function configureServerForm(
 		enableScripts: true,
 		localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 	};
-	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, 'serverForm', title);
+	panel.webview.html = getWebviewHtml(
+		panel.webview,
+		context.extensionUri,
+		serverType === 'mysql' ? 'databaseForm' : `${serverType}Form`,
+		title,
+	);
 	const saveState = { inProgress: false };
 	panel.webview.onDidReceiveMessage(
 		(message: ServerFormWebviewMessage) =>

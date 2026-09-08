@@ -17,7 +17,7 @@ export function getWebviewHtml(
 	options: WebviewHtmlOptions,
 ): string {
 	const nonce = getNonce();
-	const styleEntry = options.styleEntry ?? options.entry;
+	const styleEntry = options.styleEntry ?? 'styles';
 	const styleUri = webview.asWebviewUri(
 		vscode.Uri.joinPath(extensionUri, 'media', `${styleEntry}.css`),
 	);
@@ -41,11 +41,12 @@ export function getWebviewHtml(
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Security-Policy" content="default-src 'none';${imagePolicy} font-src ${webview.cspSource}; ${stylePolicy}${styleAttributePolicy} script-src ${webview.cspSource} 'nonce-${nonce}';">
-        <link rel="stylesheet" href="${styleUri}">
+		${styleEntry !== 'styles' ? `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'))}">` : ''}
+		<link rel="stylesheet" href="${styleUri}">
 		${(options.additionalStyleEntries ?? []).map(entry => `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', `${entry}.css`))}">`).join('\n')}
         <title>${escapeHtml(options.title)}</title>
 </head>
-<body>
+<body data-webview="${escapeHtml(options.entry)}">
         <div id="root"${rootDataAttributes}></div>
         <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>

@@ -1,6 +1,18 @@
 import { cn } from 'cn';
 import type { ButtonHTMLAttributes } from 'react';
 
+export function SecondaryButton({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+	return (
+		<button
+			className={cn(
+				'inline-flex h-8 items-center justify-center gap-1.5 rounded-[2px] border border-(--vscode-button-border,transparent) bg-(--vscode-button-secondaryBackground) px-3 text-xs font-semibold text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground) disabled:cursor-default disabled:opacity-45',
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
 export function IconButton({ className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
 	return (
 		<button

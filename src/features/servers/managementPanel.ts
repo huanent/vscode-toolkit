@@ -121,7 +121,7 @@ export function registerManagementFeature(
 		current.webview.html = getWebviewHtml(
 			current.webview,
 			context.extensionUri,
-			'serverManagement',
+			serverType === 'mysql' ? 'databaseManagement' : `${serverType}Management`,
 			name,
 		);
 	});

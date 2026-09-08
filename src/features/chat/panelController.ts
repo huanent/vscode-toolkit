@@ -36,6 +36,7 @@ export class ChatPanelController implements vscode.Disposable {
 		panel.iconPath = new vscode.ThemeIcon('comment-discussion');
 		panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, {
 			entry: 'chat',
+			styleEntry: 'chat',
 			title: 'New Chat',
 			useStyleNonce: true,
 			allowInlineStyleAttributes: true,
