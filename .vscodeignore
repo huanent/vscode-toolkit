@@ -3,8 +3,8 @@
 node_modules/**
 src/**
 webview/**
-vite.config.ts
-vite.extension.config.ts
+vite.config.mts
+vite.extension.config.mts
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md

@@ -449,7 +449,7 @@
     "format:check": "oxfmt --check .",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
-    "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.ts",
+    "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.mts",
     "compile:webview": "tsc -p webview/tsconfig.json && vite build",
     "package": "vsce package --no-yarn",
     "publish": "vsce publish --no-yarn"
