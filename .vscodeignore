@@ -12,3 +12,5 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+node_modules/ssh2/lib/protocol/crypto/build/**
+node_modules/cpu-features/**
