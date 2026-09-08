@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -149,7 +149,7 @@
       },
       {
         "command": "vscode-toolkit.openLaunchd",
-        "title": "Open LaunchAgents",
+        "title": "Open Launchd",
         "category": "Toolkit",
         "enablement": "isMac"
       },

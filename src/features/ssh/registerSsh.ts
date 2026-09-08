@@ -6,5 +6,5 @@ export function registerSsh(
 	context: vscode.ExtensionContext,
 	store: ServerStore,
 ): vscode.Disposable {
-	return registerManagementFeature(context, store, 'SSH', 'ssh', 'remote');
+	return registerManagementFeature(context, store, 'SSH', 'ssh', 'terminal');
 }

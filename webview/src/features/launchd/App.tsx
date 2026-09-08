@@ -13,7 +13,7 @@ export function App() {
 		<main className="mx-auto w-[min(1220px,calc(100%-40px))] py-6 pb-10 max-[760px]:w-[calc(100%-20px)] max-[760px]:pt-4">
 			<PageHeading
 				icon={<Rocket size={22} aria-hidden="true" />}
-				title="LaunchAgents"
+				title="Launchd"
 				description="Manage per-user background services in ~/Library/LaunchAgents."
 				accentClassName="text-(--vscode-charts-green)"
 				actions={

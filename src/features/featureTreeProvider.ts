@@ -14,7 +14,6 @@ export class FeatureTreeProvider
 	async getChildren(): Promise<vscode.TreeItem[]> {
 		const items: vscode.TreeItem[] = [];
 		const chatItem = new vscode.TreeItem('Chat', vscode.TreeItemCollapsibleState.None);
-		chatItem.description = 'Open chat';
 		chatItem.iconPath = new vscode.ThemeIcon('comment-discussion');
 		chatItem.command = {
 			command: 'vscode-toolkit.openChat',
@@ -23,7 +22,6 @@ export class FeatureTreeProvider
 		items.push(chatItem);
 
 		const explorerItem = new vscode.TreeItem('Explorer', vscode.TreeItemCollapsibleState.None);
-		explorerItem.description = 'Browse files';
 		explorerItem.iconPath = new vscode.ThemeIcon('files');
 		explorerItem.command = {
 			command: 'vscode-toolkit.openExplorer',
@@ -32,7 +30,6 @@ export class FeatureTreeProvider
 		items.push(explorerItem);
 
 		const httpClientItem = new vscode.TreeItem('HTTP Client', vscode.TreeItemCollapsibleState.None);
-		httpClientItem.description = 'Open last request';
 		httpClientItem.iconPath = new vscode.ThemeIcon('globe');
 		httpClientItem.command = {
 			command: 'vscode-toolkit.openHttpClient',
@@ -41,7 +38,7 @@ export class FeatureTreeProvider
 		items.push(httpClientItem);
 
 		for (const [name, icon] of [
-			['SSH', 'remote'],
+			['SSH', 'terminal'],
 			['Database', 'database'],
 			['Container', 'package'],
 		]) {
@@ -52,12 +49,11 @@ export class FeatureTreeProvider
 		}
 
 		if (process.platform === 'darwin') {
-			const launchdItem = new vscode.TreeItem('LaunchAgents', vscode.TreeItemCollapsibleState.None);
-			launchdItem.description = 'Manage startup items';
+			const launchdItem = new vscode.TreeItem('Launchd', vscode.TreeItemCollapsibleState.None);
 			launchdItem.iconPath = new vscode.ThemeIcon('server-process');
 			launchdItem.command = {
 				command: 'vscode-toolkit.openLaunchd',
-				title: 'Open LaunchAgents',
+				title: 'Open Launchd',
 			};
 			items.push(launchdItem);
 		}

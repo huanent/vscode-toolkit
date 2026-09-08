@@ -59,7 +59,7 @@ export function TerminalView({
 }) {
 	const elementRef = useRef<HTMLDivElement>(null);
 	const terminalRef = useRef<Terminal | null>(null);
-	const fitRef = useRef<FitAddon | null>(null);
+	const layoutRef = useRef<(focus?: boolean) => void>(() => {});
 	useImperativeHandle(
 		ref,
 		() => ({
@@ -72,11 +72,10 @@ export function TerminalView({
 				terminalRef.current?.paste(data);
 			},
 			fit() {
-				const element = elementRef.current;
-				if (element && element.clientWidth > 0 && element.clientHeight > 0) fitRef.current?.fit();
+				layoutRef.current();
 			},
 			focus() {
-				terminalRef.current?.focus();
+				layoutRef.current(true);
 			},
 		}),
 		[],
@@ -134,23 +133,42 @@ export function TerminalView({
 		};
 		elementRef.current!.addEventListener('contextmenu', handleContextMenu);
 		terminalRef.current = terminal;
-		fitRef.current = fit;
+		let layoutFrame: number | undefined;
+		let focusPending = false;
+		const scheduleLayout = (focus = false) => {
+			focusPending ||= focus;
+			if (layoutFrame !== undefined) cancelAnimationFrame(layoutFrame);
+			layoutFrame = requestAnimationFrame(() => {
+				layoutFrame = undefined;
+				const element = elementRef.current;
+				if (document.visibilityState !== 'visible' || !element?.getClientRects().length ||
+					!element.clientWidth || !element.clientHeight) return;
+				fit.fit();
+				terminal.refresh(0, terminal.rows - 1);
+				if (focusPending) terminal.focus();
+				focusPending = false;
+			});
+		};
+		layoutRef.current = scheduleLayout;
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') scheduleLayout();
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 		const dataDisposable = terminal.onData(onData);
 		const resizeDisposable = terminal.onResize(size => onResize(size.rows, size.cols));
-		const observer = new ResizeObserver(() => {
-			if (elementRef.current?.clientWidth && elementRef.current.clientHeight) fit.fit();
-		});
+		const observer = new ResizeObserver(() => scheduleLayout());
 		observer.observe(elementRef.current!);
 		const themeObserver = new MutationObserver(() => {
 			terminal.options.theme = readTerminalTheme();
 		});
 		themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-		requestAnimationFrame(() => {
-			fit.fit();
-			terminal.focus();
-			onReady();
-		});
+		scheduleLayout(true);
+		onReady();
 		return () => {
+			if (layoutFrame !== undefined) cancelAnimationFrame(layoutFrame);
+			layoutRef.current = () => {};
+			terminalRef.current = null;
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			observer.disconnect();
 			themeObserver.disconnect();
 			elementRef.current?.removeEventListener('contextmenu', handleContextMenu);

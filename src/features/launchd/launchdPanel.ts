@@ -20,7 +20,7 @@ export class LaunchdPanel {
 
 	static show(extensionUri: vscode.Uri): void {
 		if (process.platform !== 'darwin') {
-			void vscode.window.showInformationMessage('LaunchAgents are only available on macOS.');
+			void vscode.window.showInformationMessage('Launchd is only available on macOS.');
 			return;
 		}
 		if (LaunchdPanel.currentPanel) {
@@ -30,7 +30,7 @@ export class LaunchdPanel {
 
 		const panel = vscode.window.createWebviewPanel(
 			LaunchdPanel.viewType,
-			'LaunchAgents',
+			'Launchd',
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
@@ -48,7 +48,7 @@ export class LaunchdPanel {
 		panel.iconPath = new vscode.ThemeIcon('server-process');
 		panel.webview.html = getWebviewHtml(panel.webview, extensionUri, {
 			entry: 'launchd',
-			title: 'LaunchAgents',
+			title: 'Launchd',
 			allowImages: true,
 		});
 		panel.onDidDispose(() => {
