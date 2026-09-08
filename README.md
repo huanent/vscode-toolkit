@@ -18,6 +18,20 @@ Focused developer tools for VS Code.
 
 ## Development
 
+### Structure
+
+- `src/features`: extension-host features; editors coordinate UI and call feature services.
+- `webview/src/features`: React views, hooks, and feature-local components.
+- `shared/protocol`: platform-independent message and data types shared by both sides.
+- `tests`: offline behavior tests and manifest/build integration checks.
+
+Container command execution is shared by editors and Copilot tools. MySQL overview,
+table preview, and table definition logic are separate modules. Keep shared protocols
+free of VS Code, Node.js, and React dependencies; validate incoming messages at runtime.
+
+Run `npm run build` followed by `npm test` and `npm run lint` to verify changes.
+The integration tests require the generated Webview bundles from the build.
+
 ### Servers
 
 The Servers view is part of the Toolkit Activity Bar. It supports server groups,

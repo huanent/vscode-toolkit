@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { FolderEntry } from '../types';
+import type { FolderEntry } from '../../../../shared/protocol/explorer/index';
 
 export async function readDirectory(directoryUri: vscode.Uri): Promise<FolderEntry[]> {
 	const limit = createConcurrencyLimit(64);

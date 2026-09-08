@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { vscode } from '../../../../vscodeApi';
 import type {
+	ContainerRequest,
 	ContainerExtensionMessage,
 	ContainerRecreateConfig,
 	ResourceRow,
 	ResourceType,
 	ServiceState,
-} from '../types';
+} from '../../../../../../shared/protocol/containers';
+
+const postMessage = (message: ContainerRequest) => vscode.postMessage(message);
 
 export function useContainerEditor() {
 	const [server, setServer] = useState<{
@@ -121,7 +124,7 @@ export function useContainerEditor() {
 			}
 		};
 		window.addEventListener('message', handleMessage);
-		vscode.postMessage({ type: 'ready' });
+		postMessage({ type: 'ready' });
 		return () => window.removeEventListener('message', handleMessage);
 	}, []);
 
@@ -130,7 +133,7 @@ export function useContainerEditor() {
 		setDetails(undefined);
 		setLoading(true);
 		setError('');
-		vscode.postMessage({ type: 'load', resource: next });
+		postMessage({ type: 'load', resource: next });
 	};
 	return {
 		server,
@@ -145,17 +148,17 @@ export function useContainerEditor() {
 		details,
 		containerEditor,
 		setResource,
-		refresh: () => vscode.postMessage({ type: 'load', resource }),
+		refresh: () => postMessage({ type: 'load', resource }),
 		systemAction: () =>
-			vscode.postMessage({
+			postMessage({
 				type: 'systemAction',
 				action: serviceState === 'running' ? 'stop' : 'start',
 			}),
 		containerAction: (id: string, action: 'start' | 'stop') =>
-			vscode.postMessage({ type: 'containerAction', id, action }),
+			postMessage({ type: 'containerAction', id, action }),
 		editContainer: (id: string) => {
 			setContainerEditor({ id, loading: true, saving: false, error: '' });
-			vscode.postMessage({ type: 'editContainer', id });
+			postMessage({ type: 'editContainer', id });
 		},
 		updateContainerConfig: <Key extends keyof ContainerRecreateConfig>(
 			key: Key,
@@ -166,7 +169,7 @@ export function useContainerEditor() {
 			),
 		recreateContainer: () => {
 			if (containerEditor?.config)
-				vscode.postMessage({
+				postMessage({
 					type: 'recreateContainer',
 					id: containerEditor.id,
 					config: containerEditor.config,
@@ -177,7 +180,7 @@ export function useContainerEditor() {
 		},
 		inspect: (row: ResourceRow) => {
 			setDetails({ title: row.name, content: 'Loading details...' });
-			vscode.postMessage({ type: 'inspect', resource, id: row.id });
+			postMessage({ type: 'inspect', resource, id: row.id });
 		},
 		closeDetails: () => setDetails(undefined),
 	};

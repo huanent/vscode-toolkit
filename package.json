@@ -915,6 +915,7 @@
     ]
   },
   "scripts": {
+    "test": "npm run test:http && npm run test:servers",
     "test:http": "node --test tests/http.test.cjs",
     "lint": "oxlint --deny-warnings .",
     "lint:fix": "npm run lint -- --fix",

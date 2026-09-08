@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as yauzl from 'yauzl';
 import * as yazl from 'yazl';
 import { confirmOverwrite, getDisplayName } from '../shared/fileEntry';
-import type { ArchiveTreeEntry } from './types';
+import type { ArchiveTreeEntry } from '../../../../shared/protocol/explorer/archive';
 
 const progressIntervalMs = 50;
 

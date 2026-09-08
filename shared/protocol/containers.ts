@@ -66,3 +66,12 @@ export type ContainerExtensionMessage =
 	| { type: 'containerRecreateError'; id: string; message: string }
 	| { type: 'details'; resource: ResourceType; id: string; details: unknown }
 	| { type: 'detailsError'; message: string };
+
+export type ContainerRequest =
+	| { type: 'ready' }
+	| { type: 'load'; resource: ResourceType }
+	| { type: 'inspect'; resource: ResourceType; id: string }
+	| { type: 'editContainer'; id: string }
+	| { type: 'recreateContainer'; id: string; config: ContainerRecreateConfig }
+	| { type: 'systemAction'; action: 'start' | 'stop' }
+	| { type: 'containerAction'; id: string; action: 'start' | 'stop' };

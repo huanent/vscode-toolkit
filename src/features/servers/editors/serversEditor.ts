@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { configureContainerEditor } from '../containers/containerEditor';
 import { configureServerForm } from '../serverForm/serverFormPanel';
-import { configureMysqlEditor, configureMysqlTablePreview } from '../mysql/mysqlEditor';
+import { configureMysqlEditor } from '../mysql/mysqlEditor';
+import { configureMysqlTablePreview } from '../mysql/mysqlTablePreview';
 import { MysqlServer, Server, ServerType } from '../servers/server';
 import { ServerStore } from '../servers/serverStore';
 import { configureSshTerminal } from '../ssh/sshTerminal';

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { SpreadsheetSheet } from '../../../../../../src/features/explorer/excel/types';
+import type { SpreadsheetSheet } from '../../../../../../shared/protocol/explorer/excel';
 import { PreviewLoader } from '../../shared/components/PreviewLoader';
 import '../../explorer.css';
 import { SpreadsheetPreview } from './SpreadsheetPreview';

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { executeContainerCommand } from '../containers/containerEditor';
+import { executeContainerCommand } from '../containers/containerCommand';
 import { createMysqlConnection } from '../mysql/mysqlConnection';
 import { Server, ContainerServer, MysqlServer, SshServer } from '../servers/server';
 import { ServerStore } from '../servers/serverStore';

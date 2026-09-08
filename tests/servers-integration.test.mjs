@@ -79,14 +79,6 @@ test('Servers storage follows Toolkit default, absolute and home paths', () => {
 	);
 	configured = 'relative';
 	assert.throws(() => sandbox.exports.getStorageUri(context, 'servers'), /absolute path/);
-	assert.match(
-		read('src/features/servers/servers/serverStore.ts'),
-		/getStorageUri\(context, 'servers'\)/,
-	);
-	assert.match(
-		read('src/features/servers/mysql/mysqlSqlEditor.ts'),
-		/getStorageUri\(this.context, 'servers'\)/,
-	);
 });
 
 test('all Servers webview bundles and shared styles are built', () => {

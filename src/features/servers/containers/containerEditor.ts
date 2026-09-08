@@ -1,75 +1,17 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import * as vscode from 'vscode';
-import { ContainerServer, SshServer } from '../servers/server';
+import { ContainerServer } from '../servers/server';
 import { ServerStore } from '../servers/serverStore';
-import { executeSshCommand } from '../ssh/sshCommand';
+import { executeContainerCommand } from './containerCommand';
 import { getWebviewHtml } from '../webview';
 
-const execFileAsync = promisify(execFile);
-
-type ResourceType = 'containers' | 'images' | 'volumes' | 'networks';
-
-interface ContainerEditorMessage {
-	type:
-		| 'ready'
-		| 'load'
-		| 'inspect'
-		| 'editContainer'
-		| 'recreateContainer'
-		| 'systemAction'
-		| 'containerAction';
-	resource?: unknown;
-	id?: unknown;
-	action?: unknown;
-	config?: unknown;
-}
-
-type ServiceState = 'checking' | 'running' | 'stopped' | 'error';
-
-interface ResourceRow {
-	id: string;
-	name: string;
-	status: string;
-	detail: string;
-	size: string;
-}
-
-interface ContainerRecreateConfig {
-	name: string;
-	image: string;
-	entrypoint: string;
-	command: string;
-	environment: string;
-	ports: string;
-	sockets: string;
-	volumes: string;
-	mounts: string;
-	tmpfs: string;
-	networks: string;
-	labels: string;
-	dnsServers: string;
-	dnsSearch: string;
-	dnsOptions: string;
-	capAdd: string;
-	capDrop: string;
-	ulimits: string;
-	workingDirectory: string;
-	user: string;
-	restartPolicy: string;
-	cpus: string;
-	memory: string;
-	platform: string;
-	runtime: string;
-	shmSize: string;
-	interactive: boolean;
-	tty: boolean;
-	readOnly: boolean;
-	init: boolean;
-	rosetta: boolean;
-	ssh: boolean;
-	virtualization: boolean;
-}
+import type {
+	ContainerRequest,
+	ContainerExtensionMessage,
+	ResourceType,
+	ResourceRow,
+	ServiceState,
+	ContainerRecreateConfig,
+} from '../../../../shared/protocol/containers';
 
 export function configureContainerEditor(
 	extensionUri: vscode.Uri,
@@ -77,6 +19,7 @@ export function configureContainerEditor(
 	server: ContainerServer,
 	serverStore: ServerStore,
 ): void {
+	const postMessage = (message: ContainerExtensionMessage) => panel.webview.postMessage(message);
 	panel.title = server.name;
 	panel.iconPath = new vscode.ThemeIcon('server-process');
 	panel.webview.options = {
@@ -85,9 +28,9 @@ export function configureContainerEditor(
 	};
 	panel.webview.html = getWebviewHtml(panel.webview, extensionUri, 'containerEditor', server.name);
 
-	panel.webview.onDidReceiveMessage(async (message: ContainerEditorMessage) => {
+	panel.webview.onDidReceiveMessage(async (message: ContainerRequest) => {
 		if (message.type === 'ready') {
-			await panel.webview.postMessage({
+			await postMessage({
 				type: 'initialize',
 				server: {
 					name: server.name,
@@ -141,15 +84,15 @@ export function configureContainerEditor(
 	});
 
 	async function refreshServiceStatus(): Promise<void> {
-		void panel.webview.postMessage({
+		void postMessage({
 			type: 'serviceStatus',
 			state: 'checking' satisfies ServiceState,
 		});
 		try {
 			const state = await readServiceState(server, serverStore);
-			void panel.webview.postMessage({ type: 'serviceStatus', state });
+			void postMessage({ type: 'serviceStatus', state });
 		} catch (error) {
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'serviceStatus',
 				state: 'error' satisfies ServiceState,
 				message: errorMessage(error),
@@ -158,7 +101,7 @@ export function configureContainerEditor(
 	}
 
 	async function changeAppleSystemState(action: 'start' | 'stop'): Promise<void> {
-		void panel.webview.postMessage({ type: 'systemActionPending', action });
+		void postMessage({ type: 'systemActionPending', action });
 		try {
 			await executeContainerCommand(
 				server,
@@ -170,52 +113,52 @@ export function configureContainerEditor(
 				await loadResource('containers');
 			}
 		} catch (error) {
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'serviceStatus',
 				state: 'error' satisfies ServiceState,
 				message: errorMessage(error),
 			});
 		} finally {
-			void panel.webview.postMessage({ type: 'systemActionComplete' });
+			void postMessage({ type: 'systemActionComplete' });
 		}
 	}
 
 	async function loadResource(resource: ResourceType): Promise<void> {
-		void panel.webview.postMessage({ type: 'loading', resource });
+		void postMessage({ type: 'loading', resource });
 		try {
 			const rows = await listResource(server, serverStore, resource);
-			void panel.webview.postMessage({ type: 'resource', resource, rows });
+			void postMessage({ type: 'resource', resource, rows });
 		} catch (error) {
-			void panel.webview.postMessage({ type: 'error', resource, message: errorMessage(error) });
+			void postMessage({ type: 'error', resource, message: errorMessage(error) });
 		}
 	}
 
 	async function changeContainerState(id: string, action: 'start' | 'stop'): Promise<void> {
-		void panel.webview.postMessage({ type: 'containerActionPending', id, action });
+		void postMessage({ type: 'containerActionPending', id, action });
 		try {
 			await executeContainerCommand(server, serverStore, [action, id]);
 			await loadResource('containers');
 		} catch (error) {
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'containerActionError',
 				id,
 				message: errorMessage(error),
 			});
 		} finally {
-			void panel.webview.postMessage({ type: 'containerActionComplete', id });
+			void postMessage({ type: 'containerActionComplete', id });
 		}
 	}
 
 	async function loadContainerConfig(id: string): Promise<void> {
 		try {
 			const details = await inspectResourceDetails(server, serverStore, 'containers', id);
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'containerConfig',
 				id,
 				config: containerRecreateConfig(details, server.runtime),
 			});
 		} catch (error) {
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'containerConfigError',
 				id,
 				message: errorMessage(error),
@@ -224,7 +167,7 @@ export function configureContainerEditor(
 	}
 
 	async function recreateContainer(id: string, config: ContainerRecreateConfig): Promise<void> {
-		void panel.webview.postMessage({ type: 'containerRecreatePending', id });
+		void postMessage({ type: 'containerRecreatePending', id });
 		try {
 			if (server.runtime === 'apple') {
 				await executeContainerCommand(server, serverStore, ['rm', '--force', id]);
@@ -236,10 +179,10 @@ export function configureContainerEditor(
 			} else {
 				await safelyRecreateContainer(id, config);
 			}
-			void panel.webview.postMessage({ type: 'containerRecreateComplete', id });
+			void postMessage({ type: 'containerRecreateComplete', id });
 			await loadResource('containers');
 		} catch (error) {
-			void panel.webview.postMessage({
+			void postMessage({
 				type: 'containerRecreateError',
 				id,
 				message: errorMessage(error),
@@ -288,9 +231,9 @@ export function configureContainerEditor(
 	async function inspectResource(resource: ResourceType, id: string): Promise<void> {
 		try {
 			const details = await inspectResourceDetails(server, serverStore, resource, id);
-			void panel.webview.postMessage({ type: 'details', resource, id, details });
+			void postMessage({ type: 'details', resource, id, details });
 		} catch (error) {
-			void panel.webview.postMessage({ type: 'detailsError', message: errorMessage(error) });
+			void postMessage({ type: 'detailsError', message: errorMessage(error) });
 		}
 	}
 }
@@ -340,75 +283,6 @@ async function readServiceState(
 			: ['info', '--format', 'json'],
 	);
 	return 'running';
-}
-
-export async function executeContainerCommand(
-	server: ContainerServer,
-	serverStore: ServerStore,
-	args: string[],
-): Promise<string> {
-	if (server.connectionType === 'ssh') {
-		const { sshServer, credentials } = await resolveSshConnection(server, serverStore);
-		const command = [server.executablePath, ...args].map(shellQuote).join(' ');
-		try {
-			return await executeSshCommand(sshServer, credentials, command);
-		} catch (error) {
-			throw new Error(`${server.runtime} command failed: ${errorMessage(error)}`);
-		}
-	}
-	try {
-		const { stdout } = await execFileAsync(server.executablePath, args, {
-			encoding: 'utf8',
-			maxBuffer: 20 * 1024 * 1024,
-		});
-		return stdout.trim();
-	} catch (error) {
-		if (isExecError(error)) {
-			const detail = error.stderr?.trim() || error.message;
-			throw new Error(`${server.runtime} command failed: ${detail}`);
-		}
-		throw error;
-	}
-}
-
-async function resolveSshConnection(server: ContainerServer, serverStore: ServerStore) {
-	if (server.connectionType !== 'ssh') {
-		throw new Error('The container server is not configured for SSH.');
-	}
-	if (server.sshServerId) {
-		const sshServer = serverStore
-			.getServers()
-			.find(
-				(candidate): candidate is SshServer =>
-					candidate.type === 'ssh' && candidate.id === server.sshServerId,
-			);
-		if (!sshServer) {
-			throw new Error('The selected SSH server no longer exists.');
-		}
-		return { sshServer, credentials: await serverStore.getCredentials(sshServer.id) };
-	}
-	if (!('authType' in server)) {
-		throw new Error('The manual SSH configuration is invalid.');
-	}
-	const sshServer: SshServer = {
-		id: server.id,
-		type: 'ssh',
-		name: server.name,
-		group: server.group,
-		aiEnabled: server.aiEnabled,
-		host: server.host,
-		port: server.port,
-		username: server.username,
-		authType: server.authType,
-		commands: [],
-		...(server.proxyCommand ? { proxyCommand: server.proxyCommand } : {}),
-		...(server.proxy ? { proxy: server.proxy } : {}),
-	};
-	return { sshServer, credentials: await serverStore.getCredentials(server.id) };
-}
-
-function shellQuote(value: string): string {
-	return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 
 function listArguments(runtime: ContainerServer['runtime'], resource: ResourceType): string[] {
@@ -1027,10 +901,6 @@ function displayValue(value: unknown): string {
 
 function numberValue(value: unknown): number | undefined {
 	return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function isExecError(error: unknown): error is Error & { stderr?: string } {
-	return error instanceof Error;
 }
 
 function shortId(id: string): string {

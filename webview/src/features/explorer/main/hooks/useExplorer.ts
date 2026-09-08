@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { ExplorerResponse } from '../../../../../../src/features/explorer/types';
+import type { ExplorerResponse } from '../../../../../../shared/protocol/explorer/index';
 import type { ArchiveOperation, ContextMenuState, FileEntry, PersistedState } from '../types';
 import { vscode } from '../services/vscode';
 import { useSelection } from './useSelection';
