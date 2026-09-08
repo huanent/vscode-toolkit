@@ -6,7 +6,18 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
 	root: 'webview',
 	base: './',
-	plugins: [react(), tailwindcss()],
+	plugins: [
+		{
+			name: 'prism-language-dependencies',
+			transform(code, id) {
+				if (/[/\\]prismjs[/\\]components[/\\]prism-[\w-]+\.js$/.test(id)) {
+					return { code: `import Prism from 'prismjs';\n${code}`, map: null };
+				}
+			},
+		},
+		react(),
+		tailwindcss(),
+	],
 	resolve: {
 		alias: [
 			{
@@ -18,6 +29,7 @@ export default defineConfig({
 	build: {
 		outDir: '../media',
 		emptyOutDir: true,
+		assetsInlineLimit: (filePath) => /\.(?:woff2?|ttf|otf)$/i.test(filePath) ? false : undefined,
 		rolldownOptions: {
 			input: {
 				serverManagement: 'webview/src/features/servers/management/main.tsx',
