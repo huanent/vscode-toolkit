@@ -18,7 +18,7 @@ export default defineConfig({
 	build: {
 		outDir: '../media',
 		emptyOutDir: true,
-		rollupOptions: {
+		rolldownOptions: {
 			input: {
 				launchd: 'webview/src/features/launchd/main.tsx',
 				chat: 'webview/src/features/chat/main.tsx',
@@ -28,13 +28,11 @@ export default defineConfig({
 				spreadsheet: 'webview/src/features/explorer/previews/excel/main.tsx',
 			},
 			output: {
-				manualChunks(id) {
-					if (id.includes('/node_modules/katex/')) {
-						return 'katex';
-					}
-					if (id.includes('/node_modules/prismjs/')) {
-						return 'syntax-highlighting';
-					}
+				codeSplitting: {
+					groups: [
+						{ name: 'katex', test: /node_modules[\\/]katex[\\/]/ },
+						{ name: 'syntax-highlighting', test: /node_modules[\\/]prismjs[\\/]/ },
+					],
 				},
 				entryFileNames: '[name].js',
 				assetFileNames: assetInfo =>

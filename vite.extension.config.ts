@@ -17,7 +17,7 @@ export default defineConfig({
 		outDir: 'out',
 		emptyOutDir: true,
 		minify: false,
-		rollupOptions: {
+		rolldownOptions: {
 			external: id => externalModules.has(id),
 		},
 		target: 'node20',
