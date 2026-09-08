@@ -40,6 +40,17 @@ export class FeatureTreeProvider
 		};
 		items.push(httpClientItem);
 
+		for (const [name, icon] of [
+			['SSH', 'remote'],
+			['Database', 'database'],
+			['Container', 'package'],
+		]) {
+			const item = new vscode.TreeItem(name, vscode.TreeItemCollapsibleState.None);
+			item.iconPath = new vscode.ThemeIcon(icon);
+			item.command = { command: `vscode-toolkit.open${name}`, title: `Open ${name}` };
+			items.push(item);
+		}
+
 		if (process.platform === 'darwin') {
 			const launchdItem = new vscode.TreeItem('LaunchAgents', vscode.TreeItemCollapsibleState.None);
 			launchdItem.description = 'Manage startup items';

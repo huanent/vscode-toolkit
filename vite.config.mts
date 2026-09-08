@@ -20,6 +20,7 @@ export default defineConfig({
 		emptyOutDir: true,
 		rolldownOptions: {
 			input: {
+				serverManagement: 'webview/src/features/servers/management/main.tsx',
 				containerEditor: 'webview/src/features/servers/containerEditor/main.tsx',
 				databaseSqlResults: 'webview/src/features/servers/database/sqlResults/main.tsx',
 				mysqlOverview: 'webview/src/features/servers/database/mysql/overview/main.tsx',

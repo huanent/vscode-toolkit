@@ -20,13 +20,14 @@ export async function configureServerForm(
 	serverType: ServerType,
 	existingServer?: Server,
 	duplicate = false,
+	sshStore: ServerStore = serverStore,
 ): Promise<void> {
 	const isEditing = existingServer !== undefined && !duplicate;
 	const typeLabel =
 		serverType === 'mysql' ? 'MySQL' : serverType === 'container' ? 'Container' : 'SSH';
 	const title = isEditing ? `Edit ${existingServer.name} Server` : `Add ${typeLabel} Server`;
 	const credentials = existingServer ? await serverStore.getCredentials(existingServer.id) : {};
-	const sshServers = serverStore
+	const sshServers = sshStore
 		.getServers()
 		.filter((server): server is SshServer => server.type === 'ssh');
 

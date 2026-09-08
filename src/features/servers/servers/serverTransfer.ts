@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import * as vscode from 'vscode';
-import { ExportedServer, parseServerExport, Server } from './server';
+import { ExportedServer, parseServerExport, Server, ServerType } from './server';
 import { ServerStore } from './serverStore';
 
 export async function exportServers(serverStore: ServerStore): Promise<void> {
@@ -48,7 +48,10 @@ async function exportServerFile(servers: ExportedServer[], fileName: string): Pr
 	void vscode.window.showInformationMessage(`Exported ${formatServerCount(servers.length)}.`);
 }
 
-export async function importServers(serverStore: ServerStore): Promise<void> {
+export async function importServers(
+	serverStore: ServerStore,
+	serverType?: ServerType,
+): Promise<void> {
 	const selection = await vscode.window.showOpenDialog({
 		canSelectMany: false,
 		filters: { JSON: ['json'] },
@@ -67,6 +70,17 @@ export async function importServers(serverStore: ServerStore): Promise<void> {
 		return;
 	}
 
+	if (serverType) {
+		importedServers = importedServers.filter(server => server.type === serverType);
+		const existing = serverStore.getServers();
+		if (
+			importedServers.some(server =>
+				existing.some(current => current.id === server.id && current.type !== serverType),
+			)
+		) {
+			throw new Error('An imported connection ID belongs to another connection type.');
+		}
+	}
 	await serverStore.importServers(importedServers);
 	void vscode.window.showInformationMessage(
 		`Imported ${formatServerCount(importedServers.length)}.`,

@@ -2,33 +2,37 @@ import * as vscode from 'vscode';
 import { registerServerCommands } from './commands';
 import { registerServersEditor } from './editors/serversEditor';
 import { MysqlSqlEditorController } from './mysql/mysqlSqlEditor';
-import { ServerStore } from './servers/serverStore';
-import { ServerTreeDataProvider } from './servers/serverTree';
+import { combineServerStores, ServerStore } from './servers/serverStore';
 import { registerServersTools } from './tools/serversTools';
 import { initializeSftpFileEditing } from './ssh/sshTerminal';
+import { registerSsh } from '../ssh/registerSsh';
+import { registerDatabase } from '../database/registerDatabase';
+import { registerContainer } from '../container/registerContainer';
 
 export async function registerServers(context: vscode.ExtensionContext): Promise<void> {
 	await initializeSftpFileEditing(context);
-	const serverStore = await ServerStore.create(context);
-	const treeDataProvider = new ServerTreeDataProvider(serverStore);
-	const treeView = vscode.window.createTreeView('vscode-toolkit.servers.servers', {
-		treeDataProvider,
-		canSelectMany: true,
-		showCollapseAll: true,
-	});
-	const mysqlSqlEditor = new MysqlSqlEditorController(context, serverStore);
+	const sshStore = await ServerStore.create(context, 'ssh');
+	context.subscriptions.push(sshStore);
+	const databaseStore = await ServerStore.create(context, 'mysql');
+	context.subscriptions.push(databaseStore);
+	const containerStore = await ServerStore.create(context, 'container');
+	context.subscriptions.push(containerStore);
+	const stores = { ssh: sshStore, mysql: databaseStore, container: containerStore };
+	const serverStore = combineServerStores(stores);
+	const mysqlSqlEditor = new MysqlSqlEditorController(context, databaseStore);
 
 	context.subscriptions.push(
 		serverStore,
-		treeDataProvider,
 		mysqlSqlEditor,
 		registerServersTools(serverStore),
 		registerServersEditor(
 			context,
-			serverStore,
+			stores,
 			(serverId, database, initialSql) => void mysqlSqlEditor.open(serverId, database, initialSql),
 		),
-		registerServerCommands(serverStore, treeDataProvider, treeView),
-		treeView,
+		registerServerCommands(sshStore),
+		registerSsh(context, sshStore),
+		registerDatabase(context, databaseStore),
+		registerContainer(context, containerStore),
 	);
 }

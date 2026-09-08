@@ -32,10 +32,12 @@ free of VS Code, Node.js, and React dependencies; validate incoming messages at 
 Run `npm run build` followed by `npm test` and `npm run lint` to verify changes.
 The integration tests require the generated Webview bundles from the build.
 
-### Servers
+### SSH, Database And Container
 
-The Servers view is part of the Toolkit Activity Bar. It supports server groups,
-search, ordering, duplication, import/export, and connection management.
+Toolkit has three independent entries: SSH, Database and Container. Each opens
+its own editor management tab with search, connection creation, editing, ordering,
+duplication, deletion and type-specific import/export. Connections open their
+terminal, database browser or container manager in editor tabs.
 
 - SSH: password/private-key authentication, jump hosts and proxy commands, terminal,
   saved commands, remote metrics, and SFTP browsing, transfer and file editing.
@@ -46,14 +48,27 @@ search, ordering, duplication, import/export, and connection management.
   `servers_container` and `servers_sftp`. Control visibility with
   `toolkit.servers.enableLanguageModelTools`; individual servers retain their AI access setting.
 
-Servers uses `toolkit.storagePath`, falling back to Toolkit global storage.
-Connection files are under `servers/connections`, ordering is in `servers/order.json`,
-and temporary SQL documents are under `servers/mysql-sql`. Storage path expansion
+Each feature uses `toolkit.storagePath`, falling back to Toolkit global storage.
+Connection files and credentials are stored independently under `ssh/connections`,
+`database/connections` and `container/connections`, with a separate `order.json`
+in each feature directory. Temporary SQL documents are under `database/mysql-sql`.
+Container connections can reference SSH connections without copying their credentials. Storage path expansion
 and validation follow Toolkit, including support for `~` and absolute paths.
 Reload the extension after changing the storage location.
 
-Existing connection exports can be imported using the Servers view's Import action.
-Migration of code does not move existing user data automatically. Connection files
+Existing exports can be imported from the corresponding management tab; other
+connection types in the file are ignored. There is no runtime migration or fallback
+to the old `servers` directory. To migrate old data, close VS Code and run:
+
+```bash
+node scripts/migrate-servers.mjs /absolute/path/to/toolkit-data
+```
+
+Run this before opening the new extension for the first time. The script refuses
+to overwrite any existing `ssh`, `database` or `container` destination directory.
+It copies connection files, credentials, IDs and ordering, preserving SSH references
+and leaving the original `servers` directory untouched. Old temporary SQL documents
+are not migrated. Connection files
 and exports can contain credentials; protect the storage directory and exported files.
 
 Run `npm run build` then `npm run test:servers` for the migrated regression tests

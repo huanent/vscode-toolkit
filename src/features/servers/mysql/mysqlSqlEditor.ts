@@ -116,7 +116,7 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 
 	async open(serverId: string, database: string, initialSql = ''): Promise<void> {
 		const temporaryDirectory = vscode.Uri.joinPath(
-			getStorageUri(this.context, 'servers'),
+			getStorageUri(this.context, 'database'),
 			'mysql-sql',
 			crypto.randomUUID(),
 		);

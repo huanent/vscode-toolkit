@@ -4,7 +4,7 @@ import { configureServerForm } from '../serverForm/serverFormPanel';
 import { configureMysqlEditor } from '../mysql/mysqlEditor';
 import { configureMysqlTablePreview } from '../mysql/mysqlTablePreview';
 import { MysqlServer, Server, ServerType } from '../servers/server';
-import { ServerStore } from '../servers/serverStore';
+import { combineServerStores, ServerStore } from '../servers/serverStore';
 import { configureSshTerminal } from '../ssh/sshTerminal';
 import {
 	createEditorUri,
@@ -23,13 +23,26 @@ class ServersDocument implements vscode.CustomDocument {
 
 export function registerServersEditor(
 	context: vscode.ExtensionContext,
-	serverStore: ServerStore,
+	stores: Record<ServerType, ServerStore>,
 	openMysqlSqlEditor: (serverId: string, database: string, initialSql?: string) => void,
 ): vscode.Disposable {
+	const connections = combineServerStores(stores);
 	const provider: vscode.CustomReadonlyEditorProvider<ServersDocument> = {
 		openCustomDocument: uri => new ServersDocument(uri, parseEditorDescriptor(uri)),
 		resolveCustomEditor: async (document, panel) => {
 			const { descriptor } = document;
+			const type =
+				descriptor.kind === 'serverForm'
+					? descriptor.serverType
+					: descriptor.kind === 'sshTerminal'
+						? 'ssh'
+						: descriptor.kind === 'containerEditor'
+							? 'container'
+							: 'mysql';
+			if (!type) {
+				throw new Error('The editor does not specify a connection type.');
+			}
+			const serverStore = stores[type];
 			if (descriptor.kind === 'serverForm') {
 				const server = descriptor.serverId
 					? findServer(serverStore, descriptor.serverId)
@@ -45,13 +58,14 @@ export function registerServersEditor(
 					serverType,
 					server,
 					descriptor.duplicate,
+					stores.ssh,
 				);
 				return;
 			}
 
 			const server = findServer(serverStore, descriptor.serverId);
 			if (descriptor.kind === 'containerEditor' && server.type === 'container') {
-				configureContainerEditor(context.extensionUri, panel, server, serverStore);
+				configureContainerEditor(context.extensionUri, panel, server, connections);
 				return;
 			}
 			if (descriptor.kind === 'sshTerminal' && server.type === 'ssh') {
@@ -99,10 +113,13 @@ export function registerServersEditor(
 		},
 	};
 
-	return vscode.window.registerCustomEditorProvider(serversEditorViewType, provider, {
-		supportsMultipleEditorsPerDocument: true,
-		webviewOptions: { retainContextWhenHidden: true },
-	});
+	return vscode.Disposable.from(
+		connections,
+		vscode.window.registerCustomEditorProvider(serversEditorViewType, provider, {
+			supportsMultipleEditorsPerDocument: true,
+			webviewOptions: { retainContextWhenHidden: true },
+		}),
+	);
 }
 
 export function openServerForm(

@@ -1,7 +1,7 @@
 import { watch, FSWatcher } from 'node:fs';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../../storagePath';
-import { ExportedServer, parseServer, Server, usesPrivateKey } from './server';
+import { ExportedServer, parseServer, Server, ServerType, usesPrivateKey } from './server';
 
 const serverOrderFileName = 'order.json';
 const serverOrderVersion = 1;
@@ -17,7 +17,7 @@ export interface ServerCredentials {
 
 export type ServerMoveDirection = 'up' | 'down';
 
-export class ServerStore {
+class ConnectionStore {
 	private readonly changeEmitter = new vscode.EventEmitter<void>();
 	readonly onDidChange = this.changeEmitter.event;
 	private readonly storageDirectoryUri: vscode.Uri;
@@ -29,15 +29,29 @@ export class ServerStore {
 	private mutationQueue: Promise<void> = Promise.resolve();
 	private writeInProgress = false;
 
-	private constructor(context: vscode.ExtensionContext) {
-		this.storageDirectoryUri = getStorageUri(context, 'servers');
+	private constructor(
+		context: vscode.ExtensionContext,
+		private readonly serverType: ServerType,
+	) {
+		this.storageDirectoryUri = getStorageUri(
+			context,
+			serverType === 'mysql' ? 'database' : serverType,
+		);
 		this.serversDirectoryUri = vscode.Uri.joinPath(this.storageDirectoryUri, 'connections');
 	}
 
-	static async create(context: vscode.ExtensionContext): Promise<ServerStore> {
-		const store = new ServerStore(context);
-		await store.initialize();
-		return store;
+	static async create(
+		context: vscode.ExtensionContext,
+		serverType: ServerType,
+	): Promise<ConnectionStore> {
+		const store = new ConnectionStore(context, serverType);
+		try {
+			await store.initialize();
+			return store;
+		} catch (error) {
+			store.dispose();
+			throw error;
+		}
 	}
 
 	getServers(): Server[] {
@@ -55,6 +69,7 @@ export class ServerStore {
 	}
 
 	async saveServer(server: Server, credentials: ServerCredentials = {}): Promise<void> {
+		this.assertServerType(server);
 		await this.enqueueMutation(async () => {
 			const servers = this.getServers();
 			const exists = servers.some(current => current.id === server.id);
@@ -158,6 +173,7 @@ export class ServerStore {
 	}
 
 	async importServers(importedServers: ExportedServer[]): Promise<void> {
+		importedServers.forEach(server => this.assertServerType(server));
 		await this.enqueueMutation(async () => {
 			const importedIds = new Set(importedServers.map(server => server.id));
 			const updatedServers = [
@@ -224,7 +240,9 @@ export class ServerStore {
 						const storedServer = parseStoredServer(
 							JSON.parse(Buffer.from(content).toString('utf8')),
 						);
-						return storedServer && name === serverFileName(storedServer.server)
+						return storedServer &&
+							(!this.serverType || storedServer.server.type === this.serverType) &&
+							name === serverFileName(storedServer.server)
 							? storedServer
 							: undefined;
 					} catch {
@@ -261,6 +279,7 @@ export class ServerStore {
 	}
 
 	private async writeServers(servers: Server[]): Promise<void> {
+		servers.forEach(server => this.assertServerType(server));
 		this.writeInProgress = true;
 		try {
 			const existingEntries = await vscode.workspace.fs.readDirectory(this.serversDirectoryUri);
@@ -310,7 +329,8 @@ export class ServerStore {
 							type === vscode.FileType.File &&
 							name.endsWith('.json') &&
 							name !== serverOrderFileName &&
-							!expectedFiles.has(name),
+							!expectedFiles.has(name) &&
+							this.servers.some(server => serverFileName(server) === name),
 					)
 					.map(({ name }) =>
 						vscode.workspace.fs.delete(vscode.Uri.joinPath(this.serversDirectoryUri, name)),
@@ -381,6 +401,12 @@ export class ServerStore {
 		});
 	}
 
+	private assertServerType(server: Server): void {
+		if (this.serverType && server.type !== this.serverType) {
+			throw new Error('Connection type does not match this feature storage.');
+		}
+	}
+
 	dispose(): void {
 		this.watcher?.close();
 		if (this.reloadTimer) {
@@ -388,6 +414,55 @@ export class ServerStore {
 		}
 		this.changeEmitter.dispose();
 	}
+}
+
+export const ServerStore = ConnectionStore;
+export type ServerStore = Pick<ConnectionStore, keyof ConnectionStore>;
+
+export function combineServerStores(stores: Record<ServerType, ServerStore>): ServerStore {
+	const emitter = new vscode.EventEmitter<void>();
+	const subscriptions = Object.values(stores).map(store => store.onDidChange(() => emitter.fire()));
+	const owner = (id: string) => {
+		const store = Object.values(stores).find(candidate =>
+			candidate.getServers().some(server => server.id === id),
+		);
+		if (!store) {
+			throw new Error('The connection no longer exists.');
+		}
+		return store;
+	};
+	return {
+		onDidChange: emitter.event,
+		getServers: () => Object.values(stores).flatMap(store => store.getServers()),
+		getGroups: () => [...new Set(Object.values(stores).flatMap(store => store.getGroups()))].sort(),
+		saveServer: (server, credentials) => stores[server.type].saveServer(server, credentials),
+		getCredentials: id => owner(id).getCredentials(id),
+		getPassword: id => owner(id).getPassword(id),
+		deleteServer: id => owner(id).deleteServer(id),
+		deleteServers: async ids => {
+			await Promise.all(Object.values(stores).map(store => store.deleteServers(ids)));
+		},
+		moveServer: (id, direction) => owner(id).moveServer(id, direction),
+		moveGroup: async (group, direction) => {
+			await Promise.all(Object.values(stores).map(store => store.moveGroup(group, direction)));
+		},
+		renameGroup: async (group, name) => {
+			await Promise.all(Object.values(stores).map(store => store.renameGroup(group, name)));
+		},
+		getExportedServers: async () =>
+			(await Promise.all(Object.values(stores).map(store => store.getExportedServers()))).flat(),
+		importServers: async servers => {
+			await Promise.all(
+				Object.entries(stores).map(([type, store]) =>
+					store.importServers(servers.filter(server => server.type === type)),
+				),
+			);
+		},
+		dispose: () => {
+			subscriptions.forEach(subscription => subscription.dispose());
+			emitter.dispose();
+		},
+	};
 }
 
 function serverFileName(server: Server): string {

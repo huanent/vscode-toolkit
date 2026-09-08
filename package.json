@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -101,11 +101,6 @@
           "id": "vscode-toolkit.features",
           "name": "Toolkit",
           "icon": "$(list-tree)"
-        },
-        {
-          "id": "vscode-toolkit.servers.servers",
-          "name": "Servers",
-          "icon": "$(server)"
         }
       ],
       "vscode-toolkit-result": [
@@ -268,96 +263,6 @@
         "icon": "$(fold-all)"
       },
       {
-        "command": "vscode-toolkit.servers.addServer",
-        "title": "Add",
-        "icon": "$(add)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.importServers",
-        "title": "Import",
-        "icon": "$(cloud-download)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.exportServers",
-        "title": "Export",
-        "icon": "$(cloud-upload)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.exportServer",
-        "title": "Export",
-        "icon": "$(cloud-upload)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.connectServer",
-        "title": "Connect",
-        "icon": "$(run-compact)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.copyHost",
-        "title": "Copy Host",
-        "icon": "$(copy)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.copyInfo",
-        "title": "Copy Info",
-        "icon": "$(copy)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.editServer",
-        "title": "Edit",
-        "icon": "$(edit)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.duplicateServer",
-        "title": "Duplicate",
-        "icon": "$(copy)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.renameGroup",
-        "title": "Rename",
-        "icon": "$(edit)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveGroupUp",
-        "title": "Move Up",
-        "icon": "$(arrow-up)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveGroupDown",
-        "title": "Move Down",
-        "icon": "$(arrow-down)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveServerUp",
-        "title": "Move Up",
-        "icon": "$(arrow-up)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveServerDown",
-        "title": "Move Down",
-        "icon": "$(arrow-down)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.deleteServer",
-        "title": "Delete",
-        "icon": "$(trash)",
-        "category": "Toolkit"
-      },
-      {
         "command": "vscode-toolkit.servers.openSftp",
         "title": "Open SFTP",
         "icon": "$(folder)",
@@ -370,18 +275,6 @@
         "category": "Toolkit"
       },
       {
-        "command": "vscode-toolkit.servers.searchServers",
-        "title": "Search Servers",
-        "icon": "$(search)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.servers.clearServerSearch",
-        "title": "Clear Server Search",
-        "icon": "$(clear-all)",
-        "category": "Toolkit"
-      },
-      {
         "command": "vscode-toolkit.servers.executeMysqlSql",
         "title": "Execute SQL",
         "icon": "$(play)",
@@ -391,6 +284,21 @@
         "command": "vscode-toolkit.servers.exportMysqlSqlResults",
         "title": "Export SQL Results",
         "icon": "$(cloud-download)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.openSSH",
+        "title": "Open SSH",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.openDatabase",
+        "title": "Open Database",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.openContainer",
+        "title": "Open Container",
         "category": "Toolkit"
       }
     ],
@@ -551,105 +459,6 @@
           "command": "vscode-toolkit.checkoutGitRepository",
           "when": "false"
         }
-      ],
-      "view/title": [
-        {
-          "command": "vscode-toolkit.servers.clearServerSearch",
-          "when": "view == vscode-toolkit.servers.servers && vscode-toolkit.servers.serverFilterActive",
-          "group": "navigation@1"
-        },
-        {
-          "command": "vscode-toolkit.servers.searchServers",
-          "when": "view == vscode-toolkit.servers.servers",
-          "group": "navigation@2"
-        },
-        {
-          "command": "vscode-toolkit.servers.importServers",
-          "when": "view == vscode-toolkit.servers.servers",
-          "group": "1_transfer@1"
-        },
-        {
-          "command": "vscode-toolkit.servers.exportServers",
-          "when": "view == vscode-toolkit.servers.servers",
-          "group": "1_transfer@2"
-        },
-        {
-          "command": "vscode-toolkit.servers.addServer",
-          "when": "view == vscode-toolkit.servers.servers",
-          "group": "navigation@4"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "vscode-toolkit.servers.addServer",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup/",
-          "group": "1_modification@1"
-        },
-        {
-          "command": "vscode-toolkit.servers.renameGroup",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup/",
-          "group": "1_modification@2"
-        },
-        {
-          "command": "vscode-toolkit.servers.moveGroupUp",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup:.*moveUp/",
-          "group": "1_modification@3"
-        },
-        {
-          "command": "vscode-toolkit.servers.moveGroupDown",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup:.*moveDown/",
-          "group": "1_modification@4"
-        },
-        {
-          "command": "vscode-toolkit.servers.connectServer",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "inline"
-        },
-        {
-          "command": "vscode-toolkit.servers.editServer",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification"
-        },
-        {
-          "command": "vscode-toolkit.servers.duplicateServer",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification@1"
-        },
-        {
-          "command": "vscode-toolkit.servers.runSshCommand",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^sshServer:.*hasCommands/",
-          "group": "1_modification@2"
-        },
-        {
-          "command": "vscode-toolkit.servers.copyHost",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification@3"
-        },
-        {
-          "command": "vscode-toolkit.servers.copyInfo",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification@4"
-        },
-        {
-          "command": "vscode-toolkit.servers.moveServerUp",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server:.*moveUp/",
-          "group": "1_modification@5"
-        },
-        {
-          "command": "vscode-toolkit.servers.moveServerDown",
-          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server:.*moveDown/",
-          "group": "1_modification@6"
-        },
-        {
-          "command": "vscode-toolkit.servers.exportServer",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification@7"
-        },
-        {
-          "command": "vscode-toolkit.servers.deleteServer",
-          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
-          "group": "1_modification@8"
-        }
       ]
     },
     "keybindings": [
@@ -681,18 +490,6 @@
         "key": "ctrl+t",
         "mac": "cmd+t",
         "when": "activeCustomEditorId == vscode-toolkit.explorerEditor && vscode-toolkit.explorerWebviewFocus"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveSelectionUp",
-        "key": "alt+up",
-        "mac": "alt+up",
-        "when": "focusedView == vscode-toolkit.servers.servers && listFocus && !listMultiSelection && !vscode-toolkit.servers.serverFilterActive"
-      },
-      {
-        "command": "vscode-toolkit.servers.moveSelectionDown",
-        "key": "alt+down",
-        "mac": "alt+down",
-        "when": "focusedView == vscode-toolkit.servers.servers && listFocus && !listMultiSelection && !vscode-toolkit.servers.serverFilterActive"
       },
       {
         "command": "vscode-toolkit.servers.executeMysqlSql",

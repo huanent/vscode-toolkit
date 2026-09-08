@@ -12,17 +12,18 @@ const root = path.resolve(import.meta.dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('Servers contributions belong to Toolkit and use the renamed IDs', () => {
-	assert.ok(
-		manifest.contributes.views['vscode-toolkit'].some(
-			view => view.id === 'vscode-toolkit.servers.servers',
-		),
-	);
+test('independent connection features replace the Servers view', () => {
+	assert.doesNotMatch(JSON.stringify(manifest.contributes), /vscode-toolkit\.servers\.servers/);
+	for (const name of ['SSH', 'Database', 'Container']) {
+		assert.ok(
+			manifest.contributes.commands.some(entry => entry.command === `vscode-toolkit.open${name}`),
+		);
+	}
 	assert.equal(
 		manifest.contributes.commands.filter(command =>
 			command.command.startsWith('vscode-toolkit.servers.'),
 		).length,
-		21,
+		4,
 	);
 	const tools = manifest.contributes.languageModelTools;
 	assert.deepEqual(
@@ -83,6 +84,7 @@ test('Servers storage follows Toolkit default, absolute and home paths', () => {
 
 test('all Servers webview bundles and shared styles are built', () => {
 	for (const entry of [
+		'serverManagement',
 		'containerEditor',
 		'databaseSqlResults',
 		'mysqlOverview',
