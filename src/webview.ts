@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 interface WebviewHtmlOptions {
 	entry: string;
 	styleEntry?: string;
+	additionalStyleEntries?: string[];
 	title: string;
 	rootData?: Record<string, string>;
 	allowImages?: boolean;
@@ -41,6 +42,7 @@ export function getWebviewHtml(
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Security-Policy" content="default-src 'none';${imagePolicy} font-src ${webview.cspSource}; ${stylePolicy}${styleAttributePolicy} script-src ${webview.cspSource} 'nonce-${nonce}';">
         <link rel="stylesheet" href="${styleUri}">
+		${(options.additionalStyleEntries ?? []).map(entry => `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', `${entry}.css`))}">`).join('\n')}
         <title>${escapeHtml(options.title)}</title>
 </head>
 <body>

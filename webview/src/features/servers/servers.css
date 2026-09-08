@@ -1,0 +1,62 @@
+@import '@vscode/codicons/dist/codicon.css';
+@import 'tailwindcss';
+
+@layer base {
+	:root {
+		font-family: var(--vscode-font-family);
+		font-size: var(--vscode-font-size);
+		color: var(--vscode-foreground);
+		background: var(--vscode-editor-background);
+		color-scheme: light dark;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		margin: 0;
+		min-width: 280px;
+		min-height: 100vh;
+		line-height: 1.4;
+		background: var(--vscode-editor-background);
+	}
+
+	::selection {
+		color: var(--vscode-editor-selectionForeground);
+		background: var(--vscode-editor-selectionBackground);
+	}
+
+	button,
+	input,
+	select,
+	textarea {
+		font: inherit;
+	}
+
+	button:not(:disabled) {
+		cursor: pointer;
+	}
+
+	button:disabled,
+	input:disabled,
+	select:disabled,
+	textarea:disabled {
+		cursor: default;
+	}
+
+	input::placeholder,
+	textarea::placeholder {
+		color: var(--vscode-input-placeholderForeground);
+		opacity: 1;
+	}
+
+	input[type='checkbox'] {
+		accent-color: var(--vscode-checkbox-selectBackground, var(--vscode-button-background));
+	}
+
+	:focus-visible {
+		outline: 1px solid var(--vscode-focusBorder);
+		outline-offset: -1px;
+	}
+}

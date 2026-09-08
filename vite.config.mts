@@ -20,6 +20,12 @@ export default defineConfig({
 		emptyOutDir: true,
 		rolldownOptions: {
 			input: {
+				containerEditor: 'webview/src/features/servers/containerEditor/main.tsx',
+				databaseSqlResults: 'webview/src/features/servers/database/sqlResults/main.tsx',
+				mysqlOverview: 'webview/src/features/servers/database/mysql/overview/main.tsx',
+				mysqlTablePreview: 'webview/src/features/servers/database/mysql/tablePreview/main.tsx',
+				serverForm: 'webview/src/features/servers/serverForm/main.tsx',
+				sshTerminal: 'webview/src/features/servers/sshTerminal/main.tsx',
 				launchd: 'webview/src/features/launchd/main.tsx',
 				chat: 'webview/src/features/chat/main.tsx',
 				explorer: 'webview/src/features/explorer/main/main.tsx',

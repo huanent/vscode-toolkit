@@ -18,6 +18,33 @@ Focused developer tools for VS Code.
 
 ## Development
 
+### Servers
+
+The Servers view is part of the Toolkit Activity Bar. It supports server groups,
+search, ordering, duplication, import/export, and connection management.
+
+- SSH: password/private-key authentication, jump hosts and proxy commands, terminal,
+  saved commands, remote metrics, and SFTP browsing, transfer and file editing.
+- MySQL: database and table browsing, data editing, SQL completion and execution,
+  result export, and database import/export.
+- Containers: local or SSH-based Docker, Podman and Apple Container management.
+- Copilot tools: `servers_list_servers`, `servers_ssh`, `servers_sql`,
+  `servers_container` and `servers_sftp`. Control visibility with
+  `toolkit.servers.enableLanguageModelTools`; individual servers retain their AI access setting.
+
+Servers uses `toolkit.storagePath`, falling back to Toolkit global storage.
+Connection files are under `servers/connections`, ordering is in `servers/order.json`,
+and temporary SQL documents are under `servers/mysql-sql`. Storage path expansion
+and validation follow Toolkit, including support for `~` and absolute paths.
+Reload the extension after changing the storage location.
+
+Existing connection exports can be imported using the Servers view's Import action.
+Migration of code does not move existing user data automatically. Connection files
+and exports can contain credentials; protect the storage directory and exported files.
+
+Run `npm run build` then `npm run test:servers` for the migrated regression tests
+and integration checks. Live SSH, MySQL and container operations require configured services.
+
 ### HTTP Files
 
 Separate requests with `###` lines. Define file-wide variables with `@name = value`

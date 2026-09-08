@@ -1,0 +1,71 @@
+export interface MysqlEditorMessage {
+	type:
+		| 'ready'
+		| 'selectDatabase'
+		| 'refresh'
+		| 'openTable'
+		| 'deleteTable'
+		| 'openSql'
+		| 'loadTableDefinition'
+		| 'previewCreateTable'
+		| 'previewAlterTable'
+		| 'confirmTableStatement'
+		| 'createDatabase'
+		| 'deleteDatabase'
+		| 'importDatabase'
+		| 'exportDatabase';
+	database?: unknown;
+	table?: unknown;
+	definition?: unknown;
+	confirmationId?: unknown;
+}
+
+export interface MysqlTablePreviewMessage {
+	type:
+		| 'ready'
+		| 'loadPage'
+		| 'refresh'
+		| 'previewUpdateRow'
+		| 'confirmRowUpdate'
+		| 'previewInsertRow'
+		| 'confirmRowInsert'
+		| 'deleteRow';
+	page?: unknown;
+	pageSize?: unknown;
+	sort?: unknown;
+	filters?: unknown;
+	rowId?: unknown;
+	values?: unknown;
+	confirmationId?: unknown;
+}
+
+export interface MysqlTableSort {
+	column: string;
+	direction: 'asc' | 'desc';
+}
+
+export interface MysqlTableFilter {
+	column: string;
+	value: string;
+}
+
+export interface MysqlColumnInfo {
+	name: string;
+	dataType: string;
+	boolean: boolean;
+	nullable: boolean;
+	primaryKey: boolean;
+	autoIncrement: boolean;
+	hasDefault: boolean;
+	editable: boolean;
+}
+
+export interface MysqlTableInfo {
+	name: string;
+	engine: string;
+	rowCount: number;
+	dataSize: number;
+	indexSize: number;
+	updatedAt: string | null;
+	collation: string;
+}

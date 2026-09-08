@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -43,6 +43,16 @@
         "selector": [
           {
             "filenamePattern": "*.explorer"
+          }
+        ],
+        "priority": "option"
+      },
+      {
+        "viewType": "vscode-toolkit.servers.editor",
+        "displayName": "Servers",
+        "selector": [
+          {
+            "filenamePattern": "*.servers"
           }
         ],
         "priority": "option"
@@ -91,6 +101,11 @@
           "id": "vscode-toolkit.features",
           "name": "Toolkit",
           "icon": "$(list-tree)"
+        },
+        {
+          "id": "vscode-toolkit.servers.servers",
+          "name": "Servers",
+          "icon": "$(server)"
         }
       ],
       "vscode-toolkit-result": [
@@ -251,6 +266,132 @@
         "command": "editor.foldAll",
         "title": "Fold All",
         "icon": "$(fold-all)"
+      },
+      {
+        "command": "vscode-toolkit.servers.addServer",
+        "title": "Add",
+        "icon": "$(add)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.importServers",
+        "title": "Import",
+        "icon": "$(cloud-download)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.exportServers",
+        "title": "Export",
+        "icon": "$(cloud-upload)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.exportServer",
+        "title": "Export",
+        "icon": "$(cloud-upload)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.connectServer",
+        "title": "Connect",
+        "icon": "$(run-compact)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.copyHost",
+        "title": "Copy Host",
+        "icon": "$(copy)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.copyInfo",
+        "title": "Copy Info",
+        "icon": "$(copy)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.editServer",
+        "title": "Edit",
+        "icon": "$(edit)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.duplicateServer",
+        "title": "Duplicate",
+        "icon": "$(copy)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.renameGroup",
+        "title": "Rename",
+        "icon": "$(edit)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveGroupUp",
+        "title": "Move Up",
+        "icon": "$(arrow-up)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveGroupDown",
+        "title": "Move Down",
+        "icon": "$(arrow-down)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveServerUp",
+        "title": "Move Up",
+        "icon": "$(arrow-up)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveServerDown",
+        "title": "Move Down",
+        "icon": "$(arrow-down)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.deleteServer",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.openSftp",
+        "title": "Open SFTP",
+        "icon": "$(folder)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.runSshCommand",
+        "title": "Run Script",
+        "icon": "$(three-bars)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.searchServers",
+        "title": "Search Servers",
+        "icon": "$(search)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.clearServerSearch",
+        "title": "Clear Server Search",
+        "icon": "$(clear-all)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.executeMysqlSql",
+        "title": "Execute SQL",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.servers.exportMysqlSqlResults",
+        "title": "Export SQL Results",
+        "icon": "$(cloud-download)",
+        "category": "Toolkit"
       }
     ],
     "menus": {
@@ -279,6 +420,26 @@
           "command": "vscode-toolkit.newChat",
           "when": "activeCustomEditorId == vscode-toolkit.chatEditor",
           "group": "navigation"
+        },
+        {
+          "command": "vscode-toolkit.servers.executeMysqlSql",
+          "when": "editorLangId == sql && vscode-toolkit.servers.mysqlSqlEditorActive",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.exportMysqlSqlResults",
+          "when": "activeWebviewPanelId == vscode-toolkit.servers.mysqlSqlResults && vscode-toolkit.servers.mysqlSqlResultsExportable",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.runSshCommand",
+          "when": "activeWebviewPanelId == vscode-toolkit.servers.editor && resourceFilename == sshTerminal.servers && vscode-toolkit.servers.activeSshHasCommands",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.openSftp",
+          "when": "activeWebviewPanelId == vscode-toolkit.servers.editor && resourceFilename == sshTerminal.servers",
+          "group": "navigation@2"
         }
       ],
       "explorer/context": [
@@ -390,6 +551,105 @@
           "command": "vscode-toolkit.checkoutGitRepository",
           "when": "false"
         }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-toolkit.servers.clearServerSearch",
+          "when": "view == vscode-toolkit.servers.servers && vscode-toolkit.servers.serverFilterActive",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.searchServers",
+          "when": "view == vscode-toolkit.servers.servers",
+          "group": "navigation@2"
+        },
+        {
+          "command": "vscode-toolkit.servers.importServers",
+          "when": "view == vscode-toolkit.servers.servers",
+          "group": "1_transfer@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.exportServers",
+          "when": "view == vscode-toolkit.servers.servers",
+          "group": "1_transfer@2"
+        },
+        {
+          "command": "vscode-toolkit.servers.addServer",
+          "when": "view == vscode-toolkit.servers.servers",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vscode-toolkit.servers.addServer",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup/",
+          "group": "1_modification@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.renameGroup",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup/",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "vscode-toolkit.servers.moveGroupUp",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup:.*moveUp/",
+          "group": "1_modification@3"
+        },
+        {
+          "command": "vscode-toolkit.servers.moveGroupDown",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^serverGroup:.*moveDown/",
+          "group": "1_modification@4"
+        },
+        {
+          "command": "vscode-toolkit.servers.connectServer",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "inline"
+        },
+        {
+          "command": "vscode-toolkit.servers.editServer",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification"
+        },
+        {
+          "command": "vscode-toolkit.servers.duplicateServer",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification@1"
+        },
+        {
+          "command": "vscode-toolkit.servers.runSshCommand",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^sshServer:.*hasCommands/",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "vscode-toolkit.servers.copyHost",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification@3"
+        },
+        {
+          "command": "vscode-toolkit.servers.copyInfo",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification@4"
+        },
+        {
+          "command": "vscode-toolkit.servers.moveServerUp",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server:.*moveUp/",
+          "group": "1_modification@5"
+        },
+        {
+          "command": "vscode-toolkit.servers.moveServerDown",
+          "when": "view == vscode-toolkit.servers.servers && !listMultiSelection && viewItem =~ /^(ssh|mysql|container)Server:.*moveDown/",
+          "group": "1_modification@6"
+        },
+        {
+          "command": "vscode-toolkit.servers.exportServer",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification@7"
+        },
+        {
+          "command": "vscode-toolkit.servers.deleteServer",
+          "when": "view == vscode-toolkit.servers.servers && viewItem =~ /^(ssh|mysql|container)Server/",
+          "group": "1_modification@8"
+        }
       ]
     },
     "keybindings": [
@@ -421,6 +681,23 @@
         "key": "ctrl+t",
         "mac": "cmd+t",
         "when": "activeCustomEditorId == vscode-toolkit.explorerEditor && vscode-toolkit.explorerWebviewFocus"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveSelectionUp",
+        "key": "alt+up",
+        "mac": "alt+up",
+        "when": "focusedView == vscode-toolkit.servers.servers && listFocus && !listMultiSelection && !vscode-toolkit.servers.serverFilterActive"
+      },
+      {
+        "command": "vscode-toolkit.servers.moveSelectionDown",
+        "key": "alt+down",
+        "mac": "alt+down",
+        "when": "focusedView == vscode-toolkit.servers.servers && listFocus && !listMultiSelection && !vscode-toolkit.servers.serverFilterActive"
+      },
+      {
+        "command": "vscode-toolkit.servers.executeMysqlSql",
+        "key": "f5",
+        "when": "editorTextFocus && editorLangId == sql && vscode-toolkit.servers.mysqlSqlEditorActive"
       }
     ],
     "configuration": {
@@ -437,9 +714,205 @@
           "default": "",
           "markdownDescription": "The prompt used for chats.",
           "scope": "window"
+        },
+        "toolkit.servers.enableLanguageModelTools": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Expose Servers operations to Copilot tools."
         }
       }
-    }
+    },
+    "languageModelTools": [
+      {
+        "name": "servers_list_servers",
+        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "toolReferenceName": "serversListServers",
+        "displayName": "List Servers",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "List configured servers by type.",
+        "modelDescription": "List servers by type. Use serverType ssh, db, or container.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "serverType": {
+              "type": "string",
+              "enum": [
+                "ssh",
+                "db",
+                "container"
+              ],
+              "description": "Server type to list."
+            }
+          },
+          "required": [
+            "serverType"
+          ]
+        },
+        "tags": [
+          "server",
+          "list"
+        ]
+      },
+      {
+        "name": "servers_ssh",
+        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "toolReferenceName": "serversSsh",
+        "displayName": "Run SSH Command",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "Run a command on a configured SSH server.",
+        "modelDescription": "Run a shell command on an SSH server. Get serverId from servers_list_servers with serverType ssh.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "serverId": {
+              "type": "string",
+              "description": "SSH server id from servers_list_servers."
+            },
+            "command": {
+              "type": "string",
+              "description": "Shell command to run remotely."
+            }
+          },
+          "required": [
+            "serverId",
+            "command"
+          ]
+        },
+        "tags": [
+          "ssh",
+          "command"
+        ]
+      },
+      {
+        "name": "servers_sql",
+        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "toolReferenceName": "serversSql",
+        "displayName": "Run SQL",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "Run SQL on a configured database server.",
+        "modelDescription": "Run one SQL statement on a database server. Get serverId from servers_list_servers with serverType database.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "serverId": {
+              "type": "string",
+              "description": "DB server id from servers_list_servers."
+            },
+            "database": {
+              "type": "string",
+              "description": "Database name to use."
+            },
+            "sql": {
+              "type": "string",
+              "minLength": 1,
+              "description": "SQL statement to run."
+            }
+          },
+          "required": [
+            "serverId",
+            "sql"
+          ]
+        },
+        "tags": [
+          "database",
+          "sql",
+          "query"
+        ]
+      },
+      {
+        "name": "servers_container",
+        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "toolReferenceName": "serversContainer",
+        "displayName": "Run Container Command",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "Run a command on a configured container runtime.",
+        "modelDescription": "Run a Docker, Podman, or Apple Container command. Get serverId from servers_list_servers with serverType container.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "serverId": {
+              "type": "string",
+              "description": "Container server id from servers_list_servers."
+            },
+            "args": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              },
+              "description": "Runtime arguments, excluding the executable path."
+            }
+          },
+          "required": [
+            "serverId",
+            "args"
+          ]
+        },
+        "tags": [
+          "container",
+          "runtime",
+          "command"
+        ]
+      },
+      {
+        "name": "servers_sftp",
+        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "toolReferenceName": "serversSftp",
+        "displayName": "Run SFTP Operation",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "Run an SFTP file operation on a configured SSH server.",
+        "modelDescription": "Run an SFTP operation on an SSH server. Get serverId from servers_list_servers with serverType ssh.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "serverId": {
+              "type": "string",
+              "description": "SSH server id from servers_list_servers."
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "list",
+                "read",
+                "upload",
+                "download",
+                "delete",
+                "mkdir",
+                "rename"
+              ],
+              "description": "SFTP operation to run."
+            },
+            "remotePath": {
+              "type": "string",
+              "description": "Remote POSIX path."
+            },
+            "localPath": {
+              "type": "string",
+              "description": "Local absolute path for upload or download."
+            },
+            "toRemotePath": {
+              "type": "string",
+              "description": "Destination remote path for rename."
+            },
+            "isDirectory": {
+              "type": "boolean",
+              "description": "Whether the target is a directory for delete."
+            }
+          },
+          "required": [
+            "serverId",
+            "action",
+            "remotePath"
+          ]
+        },
+        "tags": [
+          "ssh",
+          "sftp",
+          "file"
+        ]
+      }
+    ]
   },
   "scripts": {
     "test:http": "node --test tests/http.test.cjs",
@@ -452,7 +925,8 @@
     "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.mts",
     "compile:webview": "tsc -p webview/tsconfig.json && vite build",
     "package": "vsce package --no-yarn",
-    "publish": "vsce publish --no-yarn"
+    "publish": "vsce publish --no-yarn",
+    "test:servers": "node --test tests/servers-*.test.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -461,11 +935,14 @@
     "@types/prismjs": "^1.26.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@types/ssh2": "^1.15.6",
     "@types/vscode": "^1.125.0",
     "@types/yauzl": "^3.4.0",
     "@types/yazl": "^3.3.1",
     "@vitejs/plugin-react": "^6.1.1",
     "@vscode/vsce": "^3.6.2",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "dompurify": "^3.4.13",
     "katex": "^0.18.4",
     "lucide-react": "^0.468.0",
@@ -491,6 +968,8 @@
     "@vscode/debugprotocol": "^1.68.0",
     "cn": "^0.2.4",
     "exceljs": "^4.4.0",
+    "mysql2": "^3.24.3",
+    "ssh2": "^1.17.0",
     "xml-formatter": "^3.7.0",
     "yauzl": "^3.4.0",
     "yazl": "^3.3.1"
