@@ -463,6 +463,11 @@
     },
     "keybindings": [
       {
+        "command": "vscode-toolkit.openSSH",
+        "key": "ctrl+shift+.",
+        "mac": "cmd+shift+."
+      },
+      {
         "command": "vscode-toolkit.openChat",
         "key": "ctrl+shift+i",
         "mac": "cmd+shift+i",
