@@ -3,7 +3,7 @@ import { File, Folder } from '../../../components/icons';
 import type { SftpEntry } from './types';
 
 export const fileGridClassName =
-	'grid grid-cols-[minmax(140px,1fr)_72px_112px] items-center max-[760px]:grid-cols-[minmax(130px,1fr)_68px]';
+	'grid grid-cols-[minmax(0,1fr)_5.5rem_11rem] items-center gap-2 @max-[32rem]:grid-cols-[minmax(0,1fr)_5.5rem]';
 
 interface SftpFileRowProps {
 	entry: SftpEntry;
@@ -18,7 +18,7 @@ export function SftpFileRow({ entry, active, onSelect, onOpen, onContextMenu }: 
 		<div
 			className={cn(
 				fileGridClassName,
-				'min-h-8 border-l-2 px-2 hover:bg-(--vscode-list-hoverBackground)',
+				'min-h-8 border-l-2 px-3 py-1 hover:bg-(--vscode-list-hoverBackground)',
 				active
 					? 'border-l-(--vscode-focusBorder) bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
 					: 'border-l-transparent',
@@ -50,14 +50,14 @@ export function SftpFileRow({ entry, active, onSelect, onOpen, onContextMenu }: 
 						size={15}
 					/>
 				)}
-				<span className="overflow-hidden text-[11px] text-ellipsis whitespace-nowrap">
+				<span className="min-w-0 truncate text-sm">
 					{entry.name}
 				</span>
 			</span>
-			<span className="overflow-hidden text-right font-(family-name:--vscode-editor-font-family) text-[10px] text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+			<span className="truncate text-right font-(family-name:--vscode-editor-font-family) text-xs tabular-nums text-(--vscode-descriptionForeground)">
 				{entry.isDirectory ? '-' : formatFileSize(entry.size)}
 			</span>
-			<span className="overflow-hidden text-right text-[10px] text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground) max-[760px]:hidden">
+			<span className="truncate text-right text-xs tabular-nums text-(--vscode-descriptionForeground) @max-[32rem]:hidden">
 				{formatModifiedAt(entry.modifiedAt)}
 			</span>
 		</div>

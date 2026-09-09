@@ -32,10 +32,10 @@ export function Field({
 
 export function FieldLabel({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
 	return (
-		<span className="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-medium">
+		<span className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-sm font-medium">
 			{children}
 			{hint && (
-				<small className="shrink-0 font-normal text-(--vscode-descriptionForeground)">{hint}</small>
+				<small className="min-w-0 text-xs font-normal wrap-anywhere text-(--vscode-descriptionForeground)">{hint}</small>
 			)}
 		</span>
 	);

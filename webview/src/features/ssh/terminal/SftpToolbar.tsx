@@ -16,7 +16,7 @@ interface SftpToolbarProps {
 }
 
 const popupClassName =
-	'rounded-[4px] border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
+	'rounded-sm border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
 
 export function SftpToolbar({
 	sftpPath,
@@ -45,7 +45,7 @@ export function SftpToolbar({
 	const favorite = favorites.includes(sftpPath);
 
 	return (
-		<header className="flex min-w-0 items-center gap-1 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-1">
+		<header className="flex min-w-0 items-center gap-1 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-2">
 			<IconButton
 				className="size-7 border-0"
 				disabled={!parentPath || loading}
@@ -63,7 +63,7 @@ export function SftpToolbar({
 				<RefreshCw className={cn(loading ? 'codicon-modifier-spin' : '')} size={15} />
 			</IconButton>
 			<div
-				className="relative flex min-w-0 flex-1 items-center overflow-visible rounded-[3px] border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]"
+				className="relative flex min-w-0 flex-1 items-center overflow-visible rounded-xs border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]"
 				onClick={event => event.stopPropagation()}
 				onBlur={event => {
 					if (!event.currentTarget.contains(event.relatedTarget)) setShowFavorites(false);
@@ -71,7 +71,7 @@ export function SftpToolbar({
 			>
 				<TextInput
 					aria-label="Remote path"
-					className="min-w-0 border-0 bg-transparent px-2 font-(family-name:--vscode-editor-font-family) text-xs shadow-none focus:border-transparent"
+					className="min-w-0 border-0 bg-transparent px-2 font-(family-name:--vscode-editor-font-family) text-sm shadow-none focus:border-transparent"
 					disabled={loading}
 					spellCheck={false}
 					value={pathValue}
@@ -156,14 +156,14 @@ function Favorites({
 				<div
 					key={path}
 					className={cn(
-						'group flex min-h-7 items-center rounded-[3px] hover:bg-(--vscode-list-hoverBackground) focus-within:bg-(--vscode-list-hoverBackground)',
+						'group flex min-h-8 items-center rounded-xs hover:bg-(--vscode-list-hoverBackground) focus-within:bg-(--vscode-list-hoverBackground)',
 						path === activePath ? 'text-(--vscode-textLink-foreground)' : '',
 					)}
 					role="option"
 					aria-selected={path === activePath}
 				>
 					<button
-						className="min-w-0 flex-1 overflow-hidden border-0 bg-transparent px-2 text-left font-(family-name:--vscode-editor-font-family) text-[11px] text-ellipsis whitespace-nowrap outline-none"
+						className="min-w-0 flex-1 truncate border-0 bg-transparent px-2 py-1 text-left font-(family-name:--vscode-editor-font-family) text-sm outline-none"
 						title={path}
 						onClick={() => onSelect(path)}
 					>

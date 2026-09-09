@@ -43,9 +43,9 @@ export function AgentList({
 			className="border-r border-(--vscode-panel-border) bg-(--vscode-sideBar-background) max-[760px]:max-h-77.5 max-[760px]:overflow-auto max-[760px]:border-r-0 max-[760px]:border-b"
 			aria-label="LaunchAgents"
 		>
-			<div className="sticky top-0 z-10 flex min-h-11 items-center justify-between border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-3.5 text-[11px] font-semibold uppercase text-(--vscode-sideBarSectionHeader-foreground,var(--vscode-foreground))">
+			<div className="sticky top-0 z-10 flex min-h-11 items-center justify-between gap-2 border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-4 py-2 text-xs font-semibold text-(--vscode-sideBarSectionHeader-foreground,var(--vscode-foreground))">
 				<span>Agents</span>
-				<span className="grid h-5 min-w-5 place-items-center rounded-full bg-(--vscode-badge-background) px-1.5 text-[10px] font-normal text-(--vscode-badge-foreground)">
+				<span className="grid min-h-5 min-w-5 shrink-0 place-items-center rounded-full bg-(--vscode-badge-background) px-1.5 text-xs font-normal text-(--vscode-badge-foreground)">
 					{agents.length}
 				</span>
 			</div>
@@ -63,7 +63,7 @@ export function AgentList({
 						<article
 							key={agent.fileName}
 							className={cn(
-								'group relative flex min-h-14.5 items-center justify-between gap-2 border-b border-(--vscode-tree-tableColumnsBorder) py-2 pr-2 pl-3.5 transition-colors duration-75 hover:bg-(--vscode-list-hoverBackground)',
+								'group relative flex min-h-14 items-center justify-between gap-2 border-b border-(--vscode-tree-tableColumnsBorder) py-2 pr-2 pl-4 transition-colors duration-75 hover:bg-(--vscode-list-hoverBackground)',
 								selected &&
 									'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground) before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-(--vscode-focusBorder)',
 							)}
@@ -72,10 +72,10 @@ export function AgentList({
 							<div className="flex min-w-0 items-center gap-2.5">
 								<StatusDot state={agent.state} title={statusLabel(agent)} />
 								<div className="min-w-0">
-									<strong className="block truncate text-xs font-semibold">{agent.label}</strong>
+									<strong className="block truncate text-sm font-medium">{agent.label}</strong>
 									<small
 										className={cn(
-											'mt-1 block truncate text-[11px]',
+											'mt-1 block truncate text-xs',
 											selected
 												? 'text-inherit opacity-75'
 												: 'text-(--vscode-descriptionForeground)',
@@ -85,7 +85,7 @@ export function AgentList({
 									</small>
 								</div>
 							</div>
-							<div className="flex gap-0.5 opacity-0 transition-opacity duration-100 group-hover:opacity-100 focus-within:opacity-100 max-[760px]:opacity-100">
+							<div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity duration-100 group-hover:opacity-100 focus-within:opacity-100 max-[760px]:opacity-100">
 								<RowButton
 									title="Runtime details"
 									aria-label={`View runtime details for ${agent.label}`}

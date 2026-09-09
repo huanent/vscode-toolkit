@@ -15,7 +15,7 @@ export function PaginationFooter({
 }: PaginationFooterProps) {
 	const pageCount = Math.ceil(totalRows / pageSize);
 	return (
-		<footer className="flex h-8 shrink-0 items-center gap-3 border-t border-(--vscode-panel-border) px-3 text-[11px] text-(--vscode-descriptionForeground)">
+		<footer className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1 text-xs tabular-nums text-(--vscode-descriptionForeground)">
 			<span className="flex-1">Rows: {totalRows}</span>
 			<span>
 				{pageCount}/{totalRows === 0 ? 0 : currentPage}

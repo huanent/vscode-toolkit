@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { cn } from 'cn';
+import { PrimaryButton, SecondaryButton } from '../../../../components/button';
+import { TextInput } from '../../../../components/input';
 
 export type TableColumn = {
 	name: string;
@@ -19,6 +22,8 @@ interface CreateTableDialogProps {
 }
 
 const columnTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC'];
+const columnGridClassName =
+	'grid grid-cols-[minmax(9rem,1fr)_9rem_5rem_5.5rem_minmax(9rem,1fr)_2rem] items-center gap-2';
 
 function createColumn(): TableColumn {
 	return { name: '', type: 'TEXT', primaryKey: false, notNull: false, defaultValue: '' };
@@ -76,9 +81,9 @@ export function CreateTableDialog({
 				aria-labelledby="table-dialog-title"
 				onSubmit={submit}
 			>
-				<header className="flex h-11 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3">
+				<header className="flex min-h-12 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-4 py-2">
 					<i className="codicon codicon-table" aria-hidden="true" />
-					<h2 id="table-dialog-title" className="m-0 flex-1 text-sm font-semibold">
+					<h2 id="table-dialog-title" className="m-0 min-w-0 flex-1 text-lg font-semibold wrap-anywhere">
 						{title}
 					</h2>
 					<button
@@ -91,19 +96,20 @@ export function CreateTableDialog({
 					</button>
 				</header>
 				<div className="min-h-0 overflow-auto p-4">
-					<label className="mb-4 block text-xs font-semibold">
+					<label className="mb-4 block text-sm font-medium">
 						Table name
-						<input
+						<TextInput
 							autoFocus
 							value={tableName}
 							onChange={event => {
 								setTableName(event.target.value);
 								setError('');
 							}}
-							className="mt-1 h-8 w-full border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) outline-none focus:border-(--vscode-focusBorder)"
+							className="mt-2 font-normal"
 						/>
 					</label>
-					<div className="mb-1 grid grid-cols-[minmax(120px,1fr)_120px_62px_72px_minmax(110px,1fr)_28px] gap-2 px-1 text-[11px] text-(--vscode-descriptionForeground)">
+					<div className="overflow-x-auto pb-2">
+					<div className={cn(columnGridClassName, 'mb-2 min-w-2xl text-xs font-medium text-(--vscode-descriptionForeground)')}>
 						<span>Name</span>
 						<span>Type</span>
 						<span>Primary</span>
@@ -111,11 +117,11 @@ export function CreateTableDialog({
 						<span>Default</span>
 						<span />
 					</div>
-					<div className="space-y-2">
+					<div className="min-w-2xl space-y-2">
 						{columns.map((column, index) => (
 							<div
 								key={index}
-								className="grid grid-cols-[minmax(120px,1fr)_120px_62px_72px_minmax(110px,1fr)_28px] items-center gap-2"
+								className={columnGridClassName}
 							>
 								<input
 									aria-label={`Column ${index + 1} name`}
@@ -166,6 +172,7 @@ export function CreateTableDialog({
 							</div>
 						))}
 					</div>
+					</div>
 					<button
 						type="button"
 						className="mt-3 flex h-7 items-center gap-1 border-0 bg-transparent px-1 text-(--vscode-textLink-foreground) hover:text-(--vscode-textLink-activeForeground)"
@@ -179,20 +186,16 @@ export function CreateTableDialog({
 						</div>
 					)}
 				</div>
-				<footer className="flex shrink-0 justify-end gap-2 border-t border-(--vscode-panel-border) p-3">
-					<button
+				<footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-(--vscode-panel-border) px-4 py-3">
+					<SecondaryButton
 						type="button"
-						className="h-8 border border-(--vscode-button-border,transparent) bg-(--vscode-button-secondaryBackground) px-3 text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground)"
 						onClick={onCancel}
 					>
 						Cancel
-					</button>
-					<button
-						type="submit"
-						className="h-8 border border-(--vscode-button-border,transparent) bg-(--vscode-button-background) px-3 text-(--vscode-button-foreground) hover:bg-(--vscode-button-hoverBackground)"
-					>
+					</SecondaryButton>
+					<PrimaryButton type="submit">
 						{submitLabel}
-					</button>
+					</PrimaryButton>
 				</footer>
 			</form>
 		</div>

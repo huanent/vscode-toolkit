@@ -22,8 +22,8 @@ export function DatabaseSidebar({
 			className="flex min-h-0 flex-col border-r border-(--vscode-panel-border) bg-(--vscode-sideBar-background)"
 			aria-label="Database objects"
 		>
-			<div className="flex h-8 shrink-0 items-center border-b border-(--vscode-panel-border) px-2">
-				<span className="flex-1 text-[11px] font-semibold uppercase text-(--vscode-descriptionForeground)">
+			<div className="flex min-h-9 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-1">
+				<span className="min-w-0 flex-1 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)">
 					Tables
 				</span>
 				<button
@@ -41,7 +41,7 @@ export function DatabaseSidebar({
 						key={`${object.type}:${object.name}`}
 						type="button"
 						className={cn(
-							'flex h-7 w-full items-center gap-2 border-0 px-3 text-left text-xs',
+							'flex min-h-8 w-full items-center gap-2 border-0 px-3 py-1 text-left text-sm',
 							selectedObject?.name === object.name
 								? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
 								: 'bg-transparent hover:bg-(--vscode-list-hoverBackground)',

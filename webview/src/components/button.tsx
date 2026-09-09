@@ -5,7 +5,7 @@ export function SecondaryButton({ className, ...props }: ButtonHTMLAttributes<HT
 	return (
 		<button
 			className={cn(
-				'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-(--vscode-button-border,transparent) bg-(--vscode-button-secondaryBackground) px-3 text-xs font-semibold text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground) disabled:cursor-default disabled:opacity-45',
+				'inline-flex min-h-8 items-center justify-center gap-2 rounded-md border border-(--vscode-button-border,transparent) bg-(--vscode-button-secondaryBackground) px-3 py-1 text-sm font-medium text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground) disabled:cursor-default disabled:opacity-45',
 				className,
 			)}
 			{...props}
@@ -32,7 +32,7 @@ export function PrimaryButton({
 	return (
 		<button
 			className={cn(
-				'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-(--vscode-button-border,transparent) bg-(--vscode-button-background) px-3 text-xs font-semibold text-(--vscode-button-foreground) transition-colors duration-100 hover:bg-(--vscode-button-hoverBackground) active:brightness-95 disabled:cursor-default disabled:opacity-45',
+				'inline-flex min-h-8 items-center justify-center gap-2 rounded-md border border-(--vscode-button-border,transparent) bg-(--vscode-button-background) px-3 py-1 text-sm font-medium text-(--vscode-button-foreground) transition-colors duration-100 hover:bg-(--vscode-button-hoverBackground) active:brightness-95 disabled:cursor-default disabled:opacity-45',
 				className,
 			)}
 			{...props}

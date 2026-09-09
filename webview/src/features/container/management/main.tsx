@@ -112,8 +112,8 @@ function App() {
 					</button>
 				</div>
 			</header>
-			<div className="flex items-center justify-between gap-4 pb-[18px]">
-				<label className="flex w-[min(380px,100%)] items-center gap-2 rounded-[5px] border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2.5 py-1.5 focus-within:outline focus-within:outline-(--vscode-focusBorder)">
+			<div className="flex items-center justify-between gap-4 pb-4">
+				<label className="flex min-h-8 w-[min(380px,100%)] items-center gap-2 rounded-md border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 py-1 text-sm focus-within:outline focus-within:outline-(--vscode-focusBorder)">
 					<Search size={16} />
 					<input
 						className="min-w-0 w-full border-0 bg-transparent text-(--vscode-input-foreground) outline-none"
@@ -142,7 +142,7 @@ function App() {
 				</div>
 			) : (
 				<div className="pb-[190px]">
-					<table className="w-full border-collapse text-left [&_td]:max-w-[320px] [&_td]:border-b [&_td]:border-(--vscode-panel-border) [&_td]:px-3 [&_td]:py-3.5 [&_td]:wrap-anywhere [&_th]:max-w-[320px] [&_th]:border-b [&_th]:border-(--vscode-panel-border) [&_th]:bg-[color-mix(in_srgb,var(--vscode-foreground)_3%,transparent)] [&_th]:px-3 [&_th]:py-[9px] [&_th]:text-[11px] [&_th]:font-medium [&_th]:text-(--vscode-descriptionForeground) [&_th]:wrap-anywhere [&_td:last-child]:w-28 [&_td:last-child]:min-w-28 max-[600px]:[&_td]:px-[5px] max-[600px]:[&_td]:py-2.5 max-[600px]:[&_th]:px-[5px] max-[600px]:[&_th]:py-2.5">
+					<table className="w-full border-collapse text-left text-sm [&_td]:max-w-80 [&_td]:border-b [&_td]:border-(--vscode-panel-border) [&_td]:px-3 [&_td]:py-3 [&_td]:wrap-anywhere [&_th]:max-w-80 [&_th]:border-b [&_th]:border-(--vscode-panel-border) [&_th]:bg-[color-mix(in_srgb,var(--vscode-foreground)_3%,transparent)] [&_th]:px-3 [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-(--vscode-descriptionForeground) [&_th]:wrap-anywhere [&_td:last-child]:w-28 [&_td:last-child]:min-w-28 max-[600px]:[&_td]:px-2 max-[600px]:[&_td]:py-2 max-[600px]:[&_th]:px-2">
 						<thead>
 							<tr>
 								<th>Name</th>

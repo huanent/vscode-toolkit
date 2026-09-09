@@ -18,21 +18,21 @@ export function Dialog({
 }) {
 	return (
 		<div
-			className="fixed inset-0 z-30 grid place-items-center bg-black/45 p-5"
+			className="fixed inset-0 z-30 grid place-items-center bg-black/45 p-4"
 			onMouseDown={event => {
 				if (event.target === event.currentTarget) onClose();
 			}}
 		>
 			<section
 				className={cn(
-					'grid max-h-full min-h-0 w-full grid-rows-[42px_minmax(0,1fr)_auto] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]',
+					'grid max-h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]',
 					wide ? 'max-w-245' : 'max-w-180',
 				)}
 				role="dialog"
 				aria-modal="true"
 			>
-				<header className="flex min-w-0 items-center border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3">
-					<h2 className="m-0 min-w-0 text-sm font-semibold">{title}</h2>
+				<header className="flex min-h-12 min-w-0 items-center gap-3 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-2">
+					<h2 className="m-0 min-w-0 text-lg font-semibold wrap-anywhere">{title}</h2>
 					<IconButton
 						className="ml-auto border-0"
 						type="button"
@@ -45,7 +45,7 @@ export function Dialog({
 				</header>
 				<div className="min-h-0 overflow-auto p-4">{children}</div>
 				{actions && (
-					<footer className="flex justify-end gap-2 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) p-3">
+					<footer className="flex flex-wrap justify-end gap-2 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-3">
 						{actions}
 					</footer>
 				)}

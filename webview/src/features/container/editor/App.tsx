@@ -71,10 +71,10 @@ export function App() {
 					? CircleSlash
 					: CircleAlert;
 	return (
-		<div className="grid h-screen min-w-75 grid-rows-[42px_minmax(0,1fr)] overflow-hidden p-1 select-none">
-			<header className="flex min-w-0 items-center gap-2.5 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-2">
+		<div className="grid h-screen min-w-75 grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-1 select-none">
+			<header className="flex min-h-10 min-w-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-2">
 				<span
-					className="min-w-0 overflow-hidden text-[13px] font-semibold text-ellipsis whitespace-nowrap"
+					className="min-w-0 text-sm font-semibold wrap-anywhere"
 					title={editor.server.executablePath}
 				>
 					{editor.server.name}
@@ -84,7 +84,7 @@ export function App() {
 				</span>
 				<span
 					className={cn(
-						'ml-auto inline-flex min-w-0 items-center gap-1.5 text-xs',
+						'ml-auto inline-flex min-w-0 items-center gap-2 text-xs wrap-anywhere',
 						editor.serviceState === 'running'
 							? 'text-(--vscode-testing-iconPassed,var(--vscode-charts-green))'
 							: editor.serviceState === 'checking'
@@ -94,8 +94,9 @@ export function App() {
 					title={statusLabel}
 				>
 					<StatusIcon
-						className={cn(
-							editor.serviceState === 'checking' || editor.systemPending ? 'animate-spin' : '',
+							className={cn(
+								'shrink-0',
+								editor.serviceState === 'checking' || editor.systemPending ? 'animate-spin' : '',
 						)}
 						size={14}
 					/>
@@ -171,21 +172,21 @@ export function App() {
 			</div>
 			{editor.details && (
 				<div
-					className="fixed inset-0 z-20 grid place-items-center bg-black/45 p-6"
+					className="fixed inset-0 z-20 grid place-items-center bg-black/45 p-4"
 					onMouseDown={event => {
 						if (event.target === event.currentTarget) editor.closeDetails();
 					}}
 				>
 					<section
-						className="grid h-[min(760px,100%)] w-[min(840px,100%)] min-h-0 grid-rows-[42px_minmax(0,1fr)] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
+						className="grid h-[min(760px,100%)] w-[min(840px,100%)] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="container-details-title"
 					>
-						<header className="flex min-w-0 items-center border-b border-(--vscode-panel-border,var(--vscode-widget-border)) pr-1.5 pl-3.5">
+						<header className="flex min-h-12 min-w-0 items-center gap-3 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-2">
 							<h2
 								id="container-details-title"
-								className="m-0 min-w-0 overflow-hidden text-[13px] font-semibold text-ellipsis whitespace-nowrap"
+								className="m-0 min-w-0 text-lg font-semibold wrap-anywhere"
 							>
 								{editor.details.title}
 							</h2>
@@ -200,7 +201,7 @@ export function App() {
 								<X size={16} />
 							</IconButton>
 						</header>
-						<pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-3 font-(family-name:--vscode-editor-font-family) text-xs leading-6 whitespace-pre-wrap wrap-break-word">
+						<pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-4 font-(family-name:--vscode-editor-font-family) text-sm whitespace-pre-wrap wrap-anywhere">
 							{editor.details.content}
 						</pre>
 					</section>

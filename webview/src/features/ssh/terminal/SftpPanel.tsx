@@ -29,7 +29,7 @@ interface ContextMenuState {
 }
 
 const popupClassName =
-	'rounded-[4px] border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
+	'rounded-sm border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
 
 export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 	const [menu, setMenu] = useState<ContextMenuState>();
@@ -48,7 +48,7 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 
 	return (
 		<aside
-			className="grid min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] border-l border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) select-none"
+			className="@container grid min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] border-l border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) select-none max-[760px]:border-t max-[760px]:border-l-0"
 			aria-label="SFTP file browser"
 		>
 			<SftpToolbar
@@ -65,12 +65,12 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 			<div
 				className={cn(
 					fileGridClassName,
-					'border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-2 text-xs font-semibold text-(--vscode-descriptionForeground)',
+					'border-b border-l-2 border-l-transparent border-b-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-2 text-xs font-medium text-(--vscode-descriptionForeground)',
 				)}
 			>
 				<span>Name</span>
 				<span className="text-right">Size</span>
-				<span className="text-right max-[760px]:hidden">Modified</span>
+				<span className="text-right @max-[32rem]:hidden">Modified</span>
 			</div>
 
 			<div className="relative min-h-0 overflow-hidden">
@@ -168,7 +168,7 @@ function Menu({
 				<button
 					key={item.label}
 					className={cn(
-						'block min-h-7.5 w-full rounded-[3px] border-0 bg-transparent px-2.5 text-left text-xs outline-none hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground) focus:bg-(--vscode-menu-selectionBackground) focus:text-(--vscode-menu-selectionForeground)',
+						'block min-h-8 w-full rounded-xs border-0 bg-transparent px-2 py-1 text-left text-sm outline-none hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground) focus:bg-(--vscode-menu-selectionBackground) focus:text-(--vscode-menu-selectionForeground)',
 						item.danger
 							? 'text-(--vscode-errorForeground) hover:text-(--vscode-errorForeground)! focus:text-(--vscode-errorForeground)!'
 							: '',
@@ -189,10 +189,10 @@ function Menu({
 
 function Status({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) {
 	return (
-		<div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[color-mix(in_srgb,var(--vscode-editor-background)_90%,transparent)] p-6 text-center text-(--vscode-descriptionForeground)">
+		<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-auto bg-[color-mix(in_srgb,var(--vscode-editor-background)_90%,transparent)] p-4 text-center text-(--vscode-descriptionForeground)">
 			<span className="text-(--vscode-icon-foreground)">{icon}</span>
-			<strong className="text-[11px] font-semibold text-(--vscode-foreground)">{title}</strong>
-			<span className="max-w-60 overflow-hidden text-[10px] text-ellipsis whitespace-nowrap">
+			<strong className="text-sm font-medium text-(--vscode-foreground)">{title}</strong>
+			<span className="max-w-full text-xs wrap-anywhere">
 				{detail}
 			</span>
 		</div>

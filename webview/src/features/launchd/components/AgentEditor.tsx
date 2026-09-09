@@ -27,10 +27,10 @@ export function AgentEditor({
 			className="min-w-0 bg-(--vscode-editor-background)"
 			aria-label="LaunchAgent configuration"
 		>
-			<div className="flex min-h-17 items-center justify-between gap-4 border-b border-b-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-5 py-3">
+			<div className="flex min-h-16 flex-wrap items-center justify-between gap-4 border-b border-b-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-4 py-3">
 				<div className="min-w-0">
 					<Eyebrow>{draft.fileName ? 'Edit agent' : 'New agent'}</Eyebrow>
-					<h2 className="m-0 truncate text-[16px] font-semibold">
+					<h2 className="m-0 text-lg font-semibold wrap-anywhere">
 						{draft.label || 'Untitled LaunchAgent'}
 					</h2>
 				</div>
@@ -38,7 +38,7 @@ export function AgentEditor({
 					{busy ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}Save
 				</PrimaryButton>
 			</div>
-			<div className="grid grid-cols-2 gap-x-5 gap-y-4 p-5 max-[760px]:grid-cols-1 max-[760px]:p-4">
+			<div className="grid grid-cols-2 gap-4 p-4 max-[760px]:grid-cols-1">
 				<FormField className="col-span-2 max-[760px]:col-auto" label="Label">
 					<TextInput
 						value={draft.label}
@@ -132,7 +132,7 @@ export function AgentEditor({
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="mb-0.5 block text-[10px] font-semibold uppercase text-(--vscode-descriptionForeground)">
+		<span className="mb-1 block text-xs font-medium text-(--vscode-descriptionForeground)">
 			{children}
 		</span>
 	);
@@ -150,7 +150,7 @@ function FormField({
 	children: React.ReactNode;
 }) {
 	return (
-		<label className={className}>
+		<label className={cn('min-w-0', className)}>
 			<FieldLabel hint={hint}>{label}</FieldLabel>
 			{children}
 		</label>
@@ -169,10 +169,10 @@ function ToggleField({
 	onChange(value: boolean): void;
 }) {
 	return (
-		<label className="group flex min-h-14 items-center justify-between gap-4 rounded-[2px] border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2.5 hover:border-(--vscode-focusBorder)">
-			<span>
-				<strong className="block text-xs font-medium">{label}</strong>
-				<small className="mt-0.5 block text-[11px] text-(--vscode-descriptionForeground)">
+		<label className="group flex min-h-14 items-center justify-between gap-4 rounded-xs border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) p-3 hover:border-(--vscode-focusBorder)">
+			<span className="min-w-0 wrap-anywhere">
+				<strong className="block text-sm font-medium">{label}</strong>
+				<small className="mt-1 block text-xs text-(--vscode-descriptionForeground)">
 					{description}
 				</small>
 			</span>

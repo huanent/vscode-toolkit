@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { PrimaryButton, SecondaryButton } from '../../../../components/button';
+import { TextInput } from '../../../../components/input';
 import type { SqliteColumn } from './EditRowDialog';
 
 export type NewRowValue = {
@@ -75,11 +77,11 @@ export function NewRowDialog({ tableName, columns, onCancel, onCreate }: NewRowD
 				aria-labelledby="new-row-title"
 				onSubmit={submit}
 			>
-				<header className="flex h-11 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3">
+				<header className="flex min-h-12 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-4 py-2">
 					<i className="codicon codicon-add" aria-hidden="true" />
 					<h2
 						id="new-row-title"
-						className="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold"
+						className="m-0 min-w-0 flex-1 text-lg font-semibold wrap-anywhere"
 					>
 						New data · {tableName}
 					</h2>
@@ -92,20 +94,20 @@ export function NewRowDialog({ tableName, columns, onCancel, onCreate }: NewRowD
 						<i className="codicon codicon-close" aria-hidden="true" />
 					</button>
 				</header>
-				<div className="min-h-0 space-y-3 overflow-auto p-4">
+				<div className="min-h-0 space-y-4 overflow-auto p-4">
 					{columns.map((column, index) => {
 						const field = fields[index];
 						return (
 							<div key={column.name}>
-								<div className="mb-1 flex items-center gap-2 text-xs">
-									<label htmlFor={`new-field-${index}`} className="font-semibold">
+								<div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+									<label htmlFor={`new-field-${index}`} className="min-w-0 font-medium wrap-anywhere">
 										{column.name}
 									</label>
-									<span className="text-[11px] text-(--vscode-descriptionForeground)">
+									<span className="text-xs wrap-anywhere text-(--vscode-descriptionForeground)">
 										{column.type || 'ANY'}
 										{column.primaryKey ? ' · PRIMARY KEY' : ''}
 									</span>
-									<label className="ml-auto flex items-center gap-1 text-[11px] font-normal text-(--vscode-descriptionForeground)">
+									<label className="ml-auto flex shrink-0 items-center gap-2 text-xs font-normal text-(--vscode-descriptionForeground)">
 										<input
 											type="checkbox"
 											checked={field.useDefault}
@@ -113,7 +115,7 @@ export function NewRowDialog({ tableName, columns, onCancel, onCreate }: NewRowD
 										/>{' '}
 										Default
 									</label>
-									<label className="flex items-center gap-1 text-[11px] font-normal text-(--vscode-descriptionForeground)">
+									<label className="flex shrink-0 items-center gap-2 text-xs font-normal text-(--vscode-descriptionForeground)">
 										<input
 											type="checkbox"
 											checked={field.isNull}
@@ -123,13 +125,13 @@ export function NewRowDialog({ tableName, columns, onCancel, onCreate }: NewRowD
 										NULL
 									</label>
 								</div>
-								<input
+								<TextInput
 									id={`new-field-${index}`}
 									value={field.value}
 									disabled={field.isNull || field.useDefault}
 									placeholder={field.useDefault ? (column.defaultValue ?? 'Automatic') : ''}
 									onChange={event => updateField(index, { value: event.target.value })}
-									className="h-8 w-full border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) outline-none focus:border-(--vscode-focusBorder) disabled:opacity-60"
+									className="disabled:opacity-60"
 								/>
 							</div>
 						);
@@ -140,20 +142,16 @@ export function NewRowDialog({ tableName, columns, onCancel, onCreate }: NewRowD
 						</div>
 					)}
 				</div>
-				<footer className="flex shrink-0 justify-end gap-2 border-t border-(--vscode-panel-border) p-3">
-					<button
+				<footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-(--vscode-panel-border) px-4 py-3">
+					<SecondaryButton
 						type="button"
-						className="h-8 border border-(--vscode-button-border,transparent) bg-(--vscode-button-secondaryBackground) px-3 text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground)"
 						onClick={onCancel}
 					>
 						Cancel
-					</button>
-					<button
-						type="submit"
-						className="h-8 border border-(--vscode-button-border,transparent) bg-(--vscode-button-background) px-3 text-(--vscode-button-foreground) hover:bg-(--vscode-button-hoverBackground)"
-					>
+					</SecondaryButton>
+					<PrimaryButton type="submit">
 						Create
-					</button>
+					</PrimaryButton>
 				</footer>
 			</form>
 		</div>

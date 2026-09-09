@@ -26,7 +26,7 @@ export function MessageFooter({
 	return (
 		<div
 			className={cn(
-				'flex min-h-7 max-w-full flex-wrap items-center gap-x-1 gap-y-0.5',
+				'flex min-h-8 max-w-full flex-wrap items-center gap-x-2 gap-y-1',
 				visibilityClassName,
 			)}
 		>
@@ -40,7 +40,7 @@ export function MessageFooter({
 			/>
 			{message.model && (
 				<span
-					className="max-w-55 overflow-hidden text-[11px] text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)"
+					className="min-w-0 max-w-full text-xs wrap-anywhere text-(--vscode-descriptionForeground)"
 					title={message.model}
 				>
 					{message.model}
@@ -48,7 +48,7 @@ export function MessageFooter({
 			)}
 			{message.tokenUsage && (
 				<span
-					className="max-w-full overflow-hidden text-[11px] text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)"
+					className="min-w-0 max-w-full text-xs tabular-nums wrap-anywhere text-(--vscode-descriptionForeground)"
 					title={formatTokenUsageTitle(message.tokenUsage)}
 				>
 					{formatTokenCount(message.tokenUsage.input)} in ·{' '}

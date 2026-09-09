@@ -34,7 +34,7 @@ export function ModelPicker({
 		>
 			<TextButton
 				className={cn(
-					'flex h-7 min-w-0 max-w-full items-center gap-1.5 px-2 text-xs text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground)) hover:text-(--vscode-foreground)',
+					'flex min-h-8 min-w-0 max-w-full items-center gap-2 px-2 py-1 text-sm text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground)) hover:text-(--vscode-foreground)',
 					open &&
 						'bg-(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground)) text-(--vscode-foreground)',
 				)}
@@ -58,12 +58,12 @@ export function ModelPicker({
 				>
 					{[...providers].map(([providerName, providerModels]) => (
 						<div key={providerName}>
-							<div className="px-1.5 pt-1.5 pb-0.5 text-[10px] font-semibold text-(--vscode-descriptionForeground)">
+							<div className="px-2 pt-2 pb-1 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)">
 								{providerName}
 							</div>
 							{providerModels.map(model => (
 								<TextButton
-									className="grid min-h-8 w-full grid-cols-[16px_minmax(0,1fr)] items-center gap-1 px-1.5 py-1 text-left text-xs text-(--vscode-menu-foreground,var(--vscode-foreground)) hover:bg-(--vscode-menu-selectionBackground,var(--vscode-list-hoverBackground)) aria-selected:[&_.model-check]:visible"
+									className="grid min-h-8 w-full grid-cols-[16px_minmax(0,1fr)] items-center gap-2 px-2 py-2 text-left text-sm text-(--vscode-menu-foreground,var(--vscode-foreground)) hover:bg-(--vscode-menu-selectionBackground,var(--vscode-list-hoverBackground)) aria-selected:[&_.model-check]:visible"
 									key={model.id}
 									role="option"
 									aria-selected={model.id === selectedModelId}
@@ -76,12 +76,12 @@ export function ModelPicker({
 										className="codicon codicon-check model-check invisible text-[14px] leading-none"
 										aria-hidden="true"
 									/>
-									<span className="grid min-w-0">
-										<span className="overflow-hidden text-ellipsis whitespace-nowrap">
+									<span className="grid min-w-0 gap-1">
+										<span className="wrap-anywhere">
 											{model.name}
 										</span>
 										{model.family !== model.name && (
-											<small className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+											<small className="text-xs wrap-anywhere text-(--vscode-descriptionForeground)">
 												{model.family}
 											</small>
 										)}

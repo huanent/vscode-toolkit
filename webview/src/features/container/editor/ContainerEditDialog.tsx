@@ -26,7 +26,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 			}}
 		>
 			<form
-				className="grid h-[min(780px,100%)] w-[min(760px,100%)] min-h-0 grid-rows-[46px_minmax(0,1fr)_54px] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
+				className="grid h-[min(780px,100%)] w-[min(760px,100%)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="container-edit-title"
@@ -35,8 +35,8 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 					editor.recreateContainer();
 				}}
 			>
-				<header className="flex items-center border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3.5">
-					<h2 id="container-edit-title" className="m-0 text-[13px] font-semibold">
+				<header className="flex min-h-12 min-w-0 items-center gap-3 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-2">
+					<h2 id="container-edit-title" className="m-0 min-w-0 text-lg font-semibold wrap-anywhere">
 						Edit and recreate container
 					</h2>
 					<IconButton
@@ -56,7 +56,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 							Loading configuration...
 						</Message>
 					) : config ? (
-						<div className="grid gap-3.5">
+						<div className="grid gap-4">
 							<div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">
 								<EditField label="Name" required>
 									<TextInput
@@ -356,7 +356,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 						</div>
 					)}
 				</div>
-				<footer className="flex items-center justify-end gap-2 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) px-3.5">
+				<footer className="flex flex-wrap items-center justify-end gap-2 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-3">
 					<SecondaryButton
 						type="button"
 						disabled={state.saving}
@@ -398,8 +398,8 @@ function EditField({
 
 function EditSection({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<section className="grid gap-3.5 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) pt-3.5">
-			<h3 className="m-0 text-xs font-semibold text-(--vscode-descriptionForeground)">{title}</h3>
+		<section className="grid gap-4 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) pt-4">
+			<h3 className="m-0 text-sm font-semibold text-(--vscode-descriptionForeground)">{title}</h3>
 			{children}
 		</section>
 	);

@@ -15,13 +15,13 @@ export function App() {
 		() => terminalRef.current?.focus(),
 	);
 	return (
-		<div className="grid h-screen grid-rows-[34px_minmax(0,1fr)] overflow-hidden">
+		<div className="grid h-screen grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
 			<RemoteMetrics metrics={ssh.metrics} />
 			<main
 				className={cn(
 					'grid min-h-0',
 					ssh.sftpVisible
-						? 'grid-cols-[minmax(320px,3fr)_minmax(280px,2fr)] max-[760px]:grid-cols-[minmax(260px,1fr)_minmax(240px,1fr)]'
+						? 'grid-cols-[minmax(320px,3fr)_minmax(280px,2fr)] max-[760px]:grid-cols-1 max-[760px]:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]'
 						: 'grid-cols-1',
 				)}
 			>
@@ -55,14 +55,14 @@ export function App() {
 										size={17}
 									/>
 								</span>
-								<strong className="text-[13px]">
+								<strong className="text-sm">
 									{ssh.status === 'connecting'
 										? 'Connecting'
 										: ssh.status === 'error'
 											? 'Connection failed'
 											: 'Connection closed'}
 								</strong>
-								<span className="overflow-hidden font-(family-name:--vscode-editor-font-family) text-[11px] text-ellipsis whitespace-nowrap">
+								<span className="min-w-0 font-(family-name:--vscode-editor-font-family) text-xs wrap-anywhere">
 									{ssh.statusMessage || ssh.server?.address}
 								</span>
 							</div>

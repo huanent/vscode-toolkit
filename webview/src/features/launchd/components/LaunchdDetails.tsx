@@ -29,10 +29,10 @@ export function LaunchdDetails({
 				aria-modal="true"
 				aria-label="LaunchAgent runtime details"
 			>
-				<div className="sticky top-0 z-10 flex min-h-17 items-center justify-between gap-4 border-b border-b-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-5 py-3">
+				<div className="sticky top-0 z-10 flex min-h-16 items-center justify-between gap-4 border-b border-b-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-4 py-3">
 					<div className="min-w-0">
 						<Eyebrow>Runtime details</Eyebrow>
-						<h2 className="m-0 truncate text-[16px] font-semibold">
+						<h2 className="m-0 text-lg font-semibold wrap-anywhere">
 							{details?.label || 'Loading'}
 						</h2>
 					</div>
@@ -60,8 +60,8 @@ export function LaunchdDetails({
 
 function DetailsContent({ details }: { details: LaunchAgentDetails }) {
 	return (
-		<div className="p-5">
-			<div className="mb-4 flex items-center gap-2 rounded-xs border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2.5 text-xs">
+		<div className="p-4">
+			<div className="mb-4 flex items-center gap-2 rounded-xs border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) p-3 text-sm">
 				<StatusDot state={details.state} />
 				<strong>{stateText(details.state)}</strong>
 			</div>
@@ -77,10 +77,10 @@ function DetailsContent({ details }: { details: LaunchAgentDetails }) {
 				<Detail label="Termination reason" value={details.reason} wide />
 			</dl>
 			<div className="mt-4 overflow-hidden rounded-xs border border-(--vscode-panel-border)">
-				<h3 className="m-0 border-b border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2.5 text-[11px] font-semibold">
+				<h3 className="m-0 border-b border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) px-3 py-2 text-sm font-semibold">
 					launchctl print
 				</h3>
-				<pre className="m-0 max-h-110 overflow-auto bg-(--vscode-textCodeBlock-background) p-3 font-(--vscode-editor-font-family) text-[11px] leading-5 whitespace-pre text-(--vscode-editor-foreground)">
+				<pre className="m-0 max-h-110 overflow-auto bg-(--vscode-textCodeBlock-background) p-3 font-(--vscode-editor-font-family) text-sm whitespace-pre text-(--vscode-editor-foreground)">
 					{details.raw}
 				</pre>
 			</div>
@@ -101,14 +101,14 @@ function Detail({
 	return (
 		<div
 			className={cn(
-				'min-w-0 bg-(--vscode-editorWidget-background) px-3 py-2.5',
+				'min-w-0 bg-(--vscode-editorWidget-background) p-3',
 				wide && 'col-span-2 max-[760px]:col-auto',
 			)}
 		>
-			<dt className="mb-1 text-[10px] font-semibold uppercase text-(--vscode-descriptionForeground)">
+			<dt className="mb-1 text-xs font-medium text-(--vscode-descriptionForeground)">
 				{label}
 			</dt>
-			<dd className="m-0 font-(--vscode-editor-font-family) text-xs leading-5 break-anywhere">
+			<dd className="m-0 font-(--vscode-editor-font-family) text-sm wrap-anywhere">
 				{value}
 			</dd>
 		</div>

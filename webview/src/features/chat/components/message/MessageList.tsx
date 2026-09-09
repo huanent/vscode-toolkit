@@ -56,8 +56,8 @@ export function MessageList({
 							</>
 						}
 						className="h-full"
-						titleClassName="mt-3.5 text-xl font-semibold"
-						descriptionClassName="mt-2 max-w-105 text-[12px] leading-5 text-(--vscode-descriptionForeground)"
+						titleClassName="mt-4 text-xl font-semibold"
+						descriptionClassName="mt-2 max-w-105 text-xs wrap-anywhere text-(--vscode-descriptionForeground)"
 					/>
 				)}
 				{messages.length > 0 && (
