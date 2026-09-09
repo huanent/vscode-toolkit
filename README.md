@@ -18,6 +18,13 @@ Focused developer tools for VS Code.
 
 ## Development
 
+### UI Guidelines
+
+See the [Toolkit UI guide](docs/ui-guide.md) for the VS Code visual baseline,
+theme tokens, component conventions, migration priorities, and review checklist.
+The guide distinguishes official UX guidance from experimental UI changes and
+project-specific recommendations.
+
 ### Workflow
 
 Open **Toolkit > Workflow** (or **Toolkit: Open Workflow**) to create and manage
