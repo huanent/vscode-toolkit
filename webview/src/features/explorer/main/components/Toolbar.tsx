@@ -40,7 +40,7 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 	}, [state.searchOpen]);
 
 	return (
-		<header className="grid p-1 grid-cols-[auto_minmax(0,1fr)_28px] items-center gap-1 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) max-[600px]:gap-1.5 max-[600px]:px-2">
+		<header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_28px] items-center gap-2 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 text-sm">
 			<div className="flex items-center gap-0.5" role="toolbar" aria-label="Navigation">
 				<IconButton
 					icon="codicon-arrow-left"
@@ -56,9 +56,9 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 					onClick={() => actions.requestDirectory(state.currentUri, false)}
 				/>
 			</div>
-			<div className="relative grid h-7.5 min-w-0 grid-cols-[minmax(0,1fr)_28px] items-center rounded border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background)">
+			<div className="relative grid min-h-8 min-w-0 grid-cols-[minmax(0,1fr)_28px] items-center rounded border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background)">
 				{state.searchOpen ? (
-					<div className="flex h-full min-w-0 items-center gap-1 pl-1.5">
+					<div className="flex h-full min-w-0 items-center gap-2 pl-2">
 						<i
 							className="codicon codicon-search shrink-0 text-(--vscode-descriptionForeground)"
 							aria-hidden="true"
@@ -80,7 +80,7 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 									actions.setSearchOpen(false);
 								}
 							}}
-							className="h-full min-w-0 flex-1 border-0 bg-transparent text-(--vscode-foreground) outline-none"
+							className="h-full min-w-0 flex-1 border-0 bg-transparent py-1 text-sm text-(--vscode-foreground) outline-none"
 							aria-label="Search files"
 							placeholder="Search files"
 							spellCheck={false}
@@ -105,7 +105,7 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 									actions.setPathInputOpen(false);
 								}
 							}}
-							className="h-full w-full border-0 bg-transparent px-1.5 text-(--vscode-foreground) outline-none"
+							className="h-full w-full border-0 bg-transparent px-2 py-1 text-sm text-(--vscode-foreground) outline-none"
 							aria-label="Go to path"
 							spellCheck={false}
 						/>

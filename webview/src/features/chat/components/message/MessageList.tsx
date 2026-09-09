@@ -36,7 +36,7 @@ export function MessageList({
 				onSelect={navigation.scrollToMessage}
 			/>
 			<main
-				className="h-full w-[calc(100%+12px)] overflow-x-hidden overflow-y-auto pr-4 pl-1"
+				className="h-full w-[calc(100%+12px)] overflow-x-hidden overflow-y-auto pr-4 pl-1 max-[620px]:w-full"
 				ref={navigation.containerRef}
 				onScroll={navigation.handleScroll}
 			>

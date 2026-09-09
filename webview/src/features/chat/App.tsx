@@ -32,7 +32,7 @@ export function App() {
 					onDelete={chat.deleteSession}
 				/>
 			)}
-			<div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+			<div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto]">
 				<MessageList
 					messages={chat.messages}
 					busy={chat.busy}

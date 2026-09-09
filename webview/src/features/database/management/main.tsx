@@ -141,7 +141,7 @@ function App() {
 					</button>
 				</div>
 			) : (
-				<div className="pb-[190px]">
+				<div className="overflow-x-auto pb-64 [contain:inline-size_layout] [&_table]:min-w-160">
 					<table className="w-full border-collapse text-left text-sm [&_td]:max-w-80 [&_td]:border-b [&_td]:border-(--vscode-panel-border) [&_td]:px-3 [&_td]:py-3 [&_td]:wrap-anywhere [&_th]:max-w-80 [&_th]:border-b [&_th]:border-(--vscode-panel-border) [&_th]:bg-[color-mix(in_srgb,var(--vscode-foreground)_3%,transparent)] [&_th]:px-3 [&_th]:py-2 [&_th]:text-xs [&_th]:font-medium [&_th]:text-(--vscode-descriptionForeground) [&_th]:wrap-anywhere [&_td:last-child]:w-28 [&_td:last-child]:min-w-28 max-[600px]:[&_td]:px-2 max-[600px]:[&_td]:py-2 max-[600px]:[&_th]:px-2">
 						<thead>
 							<tr>
