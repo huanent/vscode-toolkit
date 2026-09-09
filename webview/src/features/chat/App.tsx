@@ -15,7 +15,7 @@ export function App() {
 					icon={
 						<span className="codicon codicon-menu text-[14px] leading-none" aria-hidden="true" />
 					}
-					size={IconButtonSize.Medium}
+					size={IconButtonSize.Large}
 					aria-expanded={chat.historyVisible}
 					onClick={() => chat.setHistoryVisible(value => !value)}
 				/>
