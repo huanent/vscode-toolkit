@@ -1,8 +1,8 @@
-import { IconButton } from '../../../../components/ui/button';
-import { Field } from '../../../../components/ui/field';
-import { KeyRound } from '../../../../components/ui/icons';
-import { PasswordInput, TextArea } from '../../../../components/ui/input';
-import { SegmentedControl } from '../../../../components/ui/segmentedControl';
+import { IconButton } from '../../../../components/button';
+import { Field } from '../../../../components/field';
+import { KeyRound } from '../../../../components/icons';
+import { PasswordInput, TextArea } from '../../../../components/input';
+import { SegmentedControl } from '../../../../components/segmentedControl';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 export function AuthenticationFields({ form }: { form: ServerFormState }) {

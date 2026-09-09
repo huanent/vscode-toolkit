@@ -1,5 +1,5 @@
-import { Field } from '../../../../components/ui/field';
-import { PasswordInput } from '../../../../components/ui/input';
+import { Field } from '../../../../components/field';
+import { PasswordInput } from '../../../../components/input';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 export function AuthenticationFields({ form }: { form: ServerFormState }) {

@@ -1,8 +1,8 @@
-import { IconButton } from '../../../../components/ui/button';
-import { Field } from '../../../../components/ui/field';
-import { FolderOpen } from '../../../../components/ui/icons';
-import { TextInput } from '../../../../components/ui/input';
-import { SegmentedControl } from '../../../../components/ui/segmentedControl';
+import { IconButton } from '../../../../components/button';
+import { Field } from '../../../../components/field';
+import { FolderOpen } from '../../../../components/icons';
+import { TextInput } from '../../../../components/input';
+import { SegmentedControl } from '../../../../components/segmentedControl';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 const runtimeDefaults = {

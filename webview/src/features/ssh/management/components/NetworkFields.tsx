@@ -1,5 +1,5 @@
-import { Field } from '../../../../components/ui/field';
-import { TextInput } from '../../../../components/ui/input';
+import { Field } from '../../../../components/field';
+import { TextInput } from '../../../../components/input';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 export function NetworkFields({ form }: { form: ServerFormState }) {

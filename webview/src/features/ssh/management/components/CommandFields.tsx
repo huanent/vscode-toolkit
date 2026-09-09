@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { IconButton } from '../../../../components/ui/button';
-import { Pencil, Plus, Trash2 } from '../../../../components/ui/icons';
+import { IconButton } from '../../../../components/button';
+import { Pencil, Plus, Trash2 } from '../../../../components/icons';
 import type { ServerFormState } from '../hooks/useServerForm';
 import { CommandDialog } from './CommandDialog';
 

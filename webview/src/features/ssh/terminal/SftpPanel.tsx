@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { FolderOpen, LoaderCircle } from '../../../components/ui/icons';
+import { FolderOpen, LoaderCircle } from '../../../components/icons';
 import { fileGridClassName, SftpFileRow } from './SftpFileRow';
 import { SftpToolbar } from './SftpToolbar';
 import type { SftpEntry } from './types';

@@ -8,10 +8,10 @@ import {
 	Gist,
 	Trash2,
 	Upload,
-} from '../../../../components/ui/icons';
-import { IconButton, PrimaryButton, SecondaryButton } from '../../../../components/ui/button';
-import { Dialog } from '../../../../components/ui/dialog';
-import { SelectInput, TextInput } from '../../../../components/ui/input';
+} from '../../../../components/icons';
+import { IconButton, PrimaryButton, SecondaryButton } from '../../../../components/button';
+import { Dialog } from '../../../../components/dialog';
+import { SelectInput, TextInput } from '../../../../components/input';
 import { SqlPreview } from '../../components/SqlPreview';
 import type { MysqlColumnType, MysqlTableColumnDefinition, MysqlTableInfo } from '../types';
 import { useMysqlOverview } from './useMysqlOverview';

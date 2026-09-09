@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
-import { Codicon } from '../../../components/ui/codicon';
+import { Codicon } from '../../../components/codicon';
 import { RemoteMetrics } from './RemoteMetrics';
 import { SftpPanel } from './SftpPanel';
 import { TerminalView, type TerminalViewHandle } from './TerminalView';

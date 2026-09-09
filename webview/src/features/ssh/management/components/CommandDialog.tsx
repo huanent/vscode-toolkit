@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { PrimaryButton, SecondaryButton } from '../../../../components/ui/button';
-import { Dialog } from '../../../../components/ui/dialog';
-import { FieldLabel } from '../../../../components/ui/field';
-import { TextArea, TextInput } from '../../../../components/ui/input';
+import { PrimaryButton, SecondaryButton } from '../../../../components/button';
+import { Dialog } from '../../../../components/dialog';
+import { FieldLabel } from '../../../../components/field';
+import { TextArea, TextInput } from '../../../../components/input';
 import type { ServerCommand } from '../../../../../../shared/protocol/ssh/form';
 
 export function CommandDialog({

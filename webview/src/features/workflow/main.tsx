@@ -12,7 +12,7 @@ import {
 	Trash2,
 } from 'lucide-react';
 import { cn } from 'cn';
-import { TextInput, TextArea, SelectInput } from '../../components/ui/input';
+import { TextInput, TextArea, SelectInput } from '../../components/input';
 import { vscode } from '../../vscodeApi';
 import type { Workflow, WorkflowStep } from '../../../../src/features/workflow/workflow';
 

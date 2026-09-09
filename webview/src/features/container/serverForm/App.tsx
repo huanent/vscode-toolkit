@@ -1,9 +1,9 @@
 import { cn } from 'cn';
 import { useState } from 'react';
-import { Save } from '../../../components/ui/icons';
-import { PrimaryButton } from '../../../components/ui/button';
-import { Field } from '../../../components/ui/field';
-import { TextInput } from '../../../components/ui/input';
+import { Save } from '../../../components/icons';
+import { PrimaryButton } from '../../../components/button';
+import { Field } from '../../../components/field';
+import { TextInput } from '../../../components/input';
 import { ContainerFields } from './components/ContainerFields';
 import { ProxyFields } from './components/ProxyFields';
 import { useServerForm } from './hooks/useServerForm';

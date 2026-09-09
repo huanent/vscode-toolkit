@@ -1,8 +1,8 @@
 import { cn } from 'cn';
-import { LoaderCircle, RotateCw, X } from '../../../components/ui/icons';
-import { IconButton, PrimaryButton, SecondaryButton } from '../../../components/ui/button';
-import { FieldLabel } from '../../../components/ui/field';
-import { SelectInput, TextArea, TextInput } from '../../../components/ui/input';
+import { LoaderCircle, RotateCw, X } from '../../../components/icons';
+import { IconButton, PrimaryButton, SecondaryButton } from '../../../components/button';
+import { FieldLabel } from '../../../components/field';
+import { SelectInput, TextArea, TextInput } from '../../../components/input';
 import type { useContainerEditor } from './hooks/useContainerEditor';
 import { Message } from './Message';
 

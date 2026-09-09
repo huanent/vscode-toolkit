@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { FolderOpen, Plus, RefreshCw, Rocket } from 'lucide-react';
-import { IconButton, PageHeading, PrimaryButton } from '../../components/ui';
+import { IconButton, PageHeading, PrimaryButton } from '../../components';
 import { vscode } from '../../vscodeApi';
 import { AgentEditor } from './components/AgentEditor';
 import { AgentList } from './components/AgentList';

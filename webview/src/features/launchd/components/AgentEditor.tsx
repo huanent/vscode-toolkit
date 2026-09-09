@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { LoaderCircle, Save } from 'lucide-react';
-import { FieldLabel, PrimaryButton, TextArea, TextInput } from '../../../components/ui';
+import { FieldLabel, PrimaryButton, TextArea, TextInput } from '../../../components';
 import type { LaunchAgentConfig } from '../types';
 
 export function AgentEditor({

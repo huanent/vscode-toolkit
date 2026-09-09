@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { LoaderCircle, X } from 'lucide-react';
-import { IconButton } from '../../../components/ui';
+import { IconButton } from '../../../components';
 import type { LaunchAgentDetails } from '../types';
 import { stateText } from '../utils';
 import { Eyebrow } from './AgentEditor';

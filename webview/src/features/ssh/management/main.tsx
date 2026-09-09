@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowLeft, ArrowRight, Copy, Download, Pencil, Plus, RefreshCw, Search, Trash2, Upload, X } from 'lucide-react';
-import { IconButton, PrimaryButton } from '../../../components/ui/button';
+import { IconButton, PrimaryButton } from '../../../components/button';
 import { vscode } from '../../../vscodeApi';
 import { ServerDialog } from './ServerDialog';
 

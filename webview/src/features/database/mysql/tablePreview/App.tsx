@@ -10,11 +10,11 @@ import {
 	Plus,
 	RefreshCw,
 	Trash2,
-} from '../../../../components/ui/icons';
+} from '../../../../components/icons';
 import { useEffect, useRef, useState } from 'react';
-import { IconButton, PrimaryButton } from '../../../../components/ui/button';
-import { Dialog } from '../../../../components/ui/dialog';
-import { SelectInput, TextArea, TextInput } from '../../../../components/ui/input';
+import { IconButton, PrimaryButton } from '../../../../components/button';
+import { Dialog } from '../../../../components/dialog';
+import { SelectInput, TextArea, TextInput } from '../../../../components/input';
 import { SqlPreview } from '../../components/SqlPreview';
 import type { MysqlColumnInfo, MysqlTableFilter } from '../types';
 import { useMysqlTablePreview } from './useMysqlTablePreview';

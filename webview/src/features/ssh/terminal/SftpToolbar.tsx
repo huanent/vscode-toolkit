@@ -1,8 +1,8 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { IconButton } from '../../../components/ui/button';
-import { ArrowUp, FolderPlus, RefreshCw, Star, Upload, X } from '../../../components/ui/icons';
-import { TextInput } from '../../../components/ui/input';
+import { IconButton } from '../../../components/button';
+import { ArrowUp, FolderPlus, RefreshCw, Star, Upload, X } from '../../../components/icons';
+import { TextInput } from '../../../components/input';
 
 interface SftpToolbarProps {
 	sftpPath: string;

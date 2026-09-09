@@ -14,9 +14,9 @@ import {
 	RefreshCw,
 	Square,
 	X,
-} from '../../../components/ui/icons';
+} from '../../../components/icons';
 import { useEffect } from 'react';
-import { IconButton } from '../../../components/ui/button';
+import { IconButton } from '../../../components/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
 import { ContainerEditDialog } from './ContainerEditDialog';
 import { Message } from './Message';

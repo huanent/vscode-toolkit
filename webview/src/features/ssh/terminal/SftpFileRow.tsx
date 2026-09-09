@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { File, Folder } from '../../../components/ui/icons';
+import { File, Folder } from '../../../components/icons';
 import type { SftpEntry } from './types';
 
 export const fileGridClassName =
