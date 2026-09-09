@@ -11,7 +11,7 @@ import {
 import { ServerCredentials, ServerStore } from '../servers/serverStore';
 import { getWebviewHtml } from '../webview';
 
-type ServerFormWebviewMessage = ServerFormMessage | { type: 'ready' };
+export type ServerFormWebviewMessage = ServerFormMessage | { type: 'ready' };
 
 export async function configureServerForm(
 	context: vscode.ExtensionContext,
@@ -62,7 +62,7 @@ export async function configureServerForm(
 	);
 }
 
-async function handleMessage(
+export async function handleMessage(
 	message: ServerFormWebviewMessage,
 	context: vscode.ExtensionContext,
 	panel: vscode.WebviewPanel,
@@ -73,9 +73,12 @@ async function handleMessage(
 	sshServers: SshServer[],
 	duplicate: boolean,
 	saveState: { inProgress: boolean },
+	onSaved: () => void = () => panel.dispose(),
+	sessionId?: number,
 ): Promise<void> {
+	const postMessage = (response: object) => panel.webview.postMessage({ ...response, sessionId });
 	if (message.type === 'ready') {
-		await panel.webview.postMessage({
+		await postMessage({
 			type: 'initialize',
 			model: {
 				serverType,
@@ -104,7 +107,7 @@ async function handleMessage(
 		}
 		try {
 			const contents = await vscode.workspace.fs.readFile(selection[0]);
-			await panel.webview.postMessage({
+			await postMessage({
 				type:
 					message.type === 'selectProxyPrivateKey'
 						? 'proxyPrivateKeySelected'
@@ -112,7 +115,7 @@ async function handleMessage(
 				contents: Buffer.from(contents).toString('utf8'),
 			});
 		} catch (error) {
-			await panel.webview.postMessage({
+			await postMessage({
 				type: 'error',
 				message: `Could not read the private key: ${error instanceof Error ? error.message : String(error)}`,
 			});
@@ -187,7 +190,7 @@ async function handleMessage(
 		(proxyCredentialRequired && !hasProxyCredential)
 	) {
 		saveState.inProgress = false;
-		await panel.webview.postMessage({
+		await postMessage({
 			type: 'error',
 			message: 'Please complete all required fields.',
 		});
@@ -196,10 +199,10 @@ async function handleMessage(
 
 	try {
 		await serverStore.saveServer(server, nextCredentials);
-		panel.dispose();
+		onSaved();
 	} catch (error) {
 		saveState.inProgress = false;
-		await panel.webview.postMessage({
+		await postMessage({
 			type: 'error',
 			message: `Could not save the server: ${error instanceof Error ? error.message : String(error)}`,
 		});

@@ -30,16 +30,20 @@ const emptyValues: ServerFormValues = {
 	commands: [],
 };
 
-export function useServerForm() {
+export function useServerForm(sessionId: number, onClose: () => void) {
 	const [model, setModel] = useState<ServerFormModel>();
 	const [values, setValues] = useState(emptyValues);
 	const [error, setError] = useState('');
 	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		const handleMessage = (event: MessageEvent<ServerFormExtensionMessage>) => {
+		const handleMessage = (event: MessageEvent<(ServerFormExtensionMessage | { type: 'saved' }) & { sessionId?: number }>) => {
 			const message = event.data;
+			if (message.sessionId !== sessionId) return;
 			switch (message.type) {
+				case 'saved':
+					onClose();
+					break;
 				case 'initialize': {
 					const nextModel = message.model;
 					if (nextModel.serverType !== 'ssh') return;
@@ -90,9 +94,9 @@ export function useServerForm() {
 			}
 		};
 		window.addEventListener('message', handleMessage);
-		vscode.postMessage({ type: 'ready' });
+		vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'ready' } });
 		return () => window.removeEventListener('message', handleMessage);
-	}, []);
+	}, [sessionId, onClose]);
 
 	const update = <Key extends keyof ServerFormValues>(key: Key, value: ServerFormValues[Key]) => {
 		setError('');
@@ -101,7 +105,7 @@ export function useServerForm() {
 	const save = () => {
 		setError('');
 		setSaving(true);
-		vscode.postMessage({ type: 'save', ...values });
+		vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'save', ...values } });
 	};
 
 	return {
@@ -111,8 +115,8 @@ export function useServerForm() {
 		saving,
 		update,
 		save,
-		selectPrivateKey: () => vscode.postMessage({ type: 'selectPrivateKey' }),
-		selectProxyPrivateKey: () => vscode.postMessage({ type: 'selectProxyPrivateKey' }),
+		selectPrivateKey: () => vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectPrivateKey' } }),
+		selectProxyPrivateKey: () => vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectProxyPrivateKey' } }),
 	};
 }
 

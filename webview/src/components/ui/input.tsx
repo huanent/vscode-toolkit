@@ -33,7 +33,7 @@ export function PasswordInput({
 				aria-pressed={visible}
 				disabled={disabled}
 				onClick={() => setVisible(current => !current)}
-				className="absolute inset-y-px right-px grid w-8 place-items-center border-0 bg-transparent text-(--vscode-icon-foreground) hover:bg-(--vscode-toolbar-hoverBackground) disabled:opacity-50"
+				className="absolute inset-y-px right-px grid w-8 place-items-center rounded-md border-0 bg-transparent text-(--vscode-icon-foreground) hover:bg-(--vscode-toolbar-hoverBackground) disabled:opacity-50"
 			>
 				<Codicon name={visible ? 'eye-closed' : 'eye'} />
 			</button>
@@ -42,7 +42,7 @@ export function PasswordInput({
 }
 
 export const inputClassName =
-	'w-full rounded-[2px] border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) text-(--vscode-input-foreground) outline-none transition-[border-color,box-shadow] duration-100 hover:border-(--vscode-inputOption-hoverBackground,var(--vscode-widget-border)) focus:border-(--vscode-focusBorder) focus:shadow-[0_0_0_1px_var(--vscode-focusBorder)]';
+	'w-full rounded-md border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) text-(--vscode-input-foreground) outline-none transition-[border-color,box-shadow] duration-100 hover:border-(--vscode-inputOption-hoverBackground,var(--vscode-widget-border)) focus:border-(--vscode-focusBorder) focus:shadow-[0_0_0_1px_var(--vscode-focusBorder)]';
 
 export function TextInput({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
 	return <input className={cn(inputClassName, 'h-8 px-2.5 text-xs', className)} {...props} />;

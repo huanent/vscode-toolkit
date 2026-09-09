@@ -9,9 +9,10 @@ import { CommandFields } from './components/CommandFields';
 import { NetworkFields } from './components/NetworkFields';
 import { ProxyFields } from './components/ProxyFields';
 import { useServerForm } from './hooks/useServerForm';
+import { Dialog } from '../../../components/ui/dialog';
 
-export function App() {
-	const form = useServerForm();
+export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClose: () => void }) {
+	const form = useServerForm(sessionId, onClose);
 	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(
 		'connection',
 	);
@@ -34,8 +35,8 @@ export function App() {
 	const selectedTab = tabs.some(tab => tab.value === activeTab) ? activeTab : 'connection';
 
 	return (
+		<Dialog title={model.server?.host ? 'Edit SSH connection' : 'New SSH connection'} wide onClose={() => { if (!form.saving) onClose(); }}>
 		<form
-			className="min-h-screen"
 			onSubmit={event => {
 				event.preventDefault();
 				form.save();
@@ -154,5 +155,6 @@ export function App() {
 				</div>
 			</main>
 		</form>
+		</Dialog>
 	);
 }

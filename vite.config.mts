@@ -34,7 +34,6 @@ export default defineConfig({
 			input: {
 				styles: 'webview/src/styles.css',
 				sshManagement: 'webview/src/features/ssh/management/main.tsx',
-				sshForm: 'webview/src/features/ssh/serverForm/main.tsx',
 				databaseManagement: 'webview/src/features/database/management/main.tsx',
 				databaseForm: 'webview/src/features/database/serverForm/main.tsx',
 				containerManagement: 'webview/src/features/container/management/main.tsx',

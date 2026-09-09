@@ -51,6 +51,11 @@ export function registerServersEditor(
 				if (!serverType) {
 					throw new Error('The server form does not specify a server type.');
 				}
+				if (serverType === 'ssh') {
+					await openServerForm(serverType, server, descriptor.duplicate);
+					panel.dispose();
+					return;
+				}
 				await configureServerForm(
 					context,
 					panel,
@@ -127,6 +132,9 @@ export function openServerForm(
 	server?: Server,
 	duplicate = false,
 ): Thenable<unknown> {
+	if (serverType === 'ssh') {
+		return vscode.commands.executeCommand('vscode-toolkit.openSSH', { server, duplicate });
+	}
 	return openEditor({ kind: 'serverForm', serverType, serverId: server?.id, duplicate });
 }
 
