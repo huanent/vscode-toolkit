@@ -48,11 +48,31 @@
         "priority": "option"
       },
       {
-        "viewType": "vscode-toolkit.servers.editor",
-        "displayName": "Servers",
+        "viewType": "vscode-toolkit.ssh.editor",
+        "displayName": "SSH",
         "selector": [
           {
-            "filenamePattern": "*.servers"
+            "filenamePattern": "*.ssh"
+          }
+        ],
+        "priority": "option"
+      },
+      {
+        "viewType": "vscode-toolkit.database.editor",
+        "displayName": "Database",
+        "selector": [
+          {
+            "filenamePattern": "*.database"
+          }
+        ],
+        "priority": "option"
+      },
+      {
+        "viewType": "vscode-toolkit.container.editor",
+        "displayName": "Container",
+        "selector": [
+          {
+            "filenamePattern": "*.container"
           }
         ],
         "priority": "option"
@@ -341,12 +361,12 @@
         },
         {
           "command": "vscode-toolkit.servers.runSshCommand",
-          "when": "activeWebviewPanelId == vscode-toolkit.servers.editor && resourceFilename == sshTerminal.servers && vscode-toolkit.servers.activeSshHasCommands",
+          "when": "activeWebviewPanelId == vscode-toolkit.ssh.editor && resourceFilename == sshTerminal.ssh && vscode-toolkit.servers.activeSshHasCommands",
           "group": "navigation@1"
         },
         {
           "command": "vscode-toolkit.servers.openSftp",
-          "when": "activeWebviewPanelId == vscode-toolkit.servers.editor && resourceFilename == sshTerminal.servers",
+          "when": "activeWebviewPanelId == vscode-toolkit.ssh.editor && resourceFilename == sshTerminal.ssh",
           "group": "navigation@2"
         }
       ],
@@ -517,59 +537,92 @@
           "markdownDescription": "The prompt used for chats.",
           "scope": "window"
         },
-        "toolkit.servers.enableLanguageModelTools": {
+        "toolkit.ssh.enableLanguageModelTools": {
           "type": "boolean",
           "default": true,
           "scope": "application",
-          "description": "Expose Servers operations to Copilot tools."
+          "description": "Expose SSH operations to Copilot tools."
+        },
+        "toolkit.database.enableLanguageModelTools": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Expose Database operations to Copilot tools."
+        },
+        "toolkit.container.enableLanguageModelTools": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Expose Container operations to Copilot tools."
         }
       }
     },
     "languageModelTools": [
       {
-        "name": "servers_list_servers",
-        "when": "config.toolkit.servers.enableLanguageModelTools",
-        "toolReferenceName": "serversListServers",
-        "displayName": "List Servers",
+        "name": "ssh_list_connections",
+        "when": "config.toolkit.ssh.enableLanguageModelTools",
+        "toolReferenceName": "sshConnections",
+        "displayName": "List SSH Connections",
         "canBeReferencedInPrompt": true,
-        "userDescription": "List configured servers by type.",
-        "modelDescription": "List servers by type. Use serverType ssh, db, or container.",
+        "userDescription": "List configured SSH connections enabled for AI.",
+        "modelDescription": "List SSH connections enabled for AI tools.",
         "inputSchema": {
           "type": "object",
-          "properties": {
-            "serverType": {
-              "type": "string",
-              "enum": [
-                "ssh",
-                "db",
-                "container"
-              ],
-              "description": "Server type to list."
-            }
-          },
-          "required": [
-            "serverType"
-          ]
+          "properties": {}
         },
         "tags": [
-          "server",
-          "list"
+          "ssh",
+          "connections"
+        ]
+      },
+      {
+        "name": "database_list_connections",
+        "when": "config.toolkit.database.enableLanguageModelTools",
+        "toolReferenceName": "databaseConnections",
+        "displayName": "List Database Connections",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "List configured Database connections enabled for AI.",
+        "modelDescription": "List Database connections enabled for AI tools.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "database",
+          "connections"
+        ]
+      },
+      {
+        "name": "container_list_connections",
+        "when": "config.toolkit.container.enableLanguageModelTools",
+        "toolReferenceName": "containerConnections",
+        "displayName": "List Container Connections",
+        "canBeReferencedInPrompt": true,
+        "userDescription": "List configured Container connections enabled for AI.",
+        "modelDescription": "List Container connections enabled for AI tools.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "container",
+          "connections"
         ]
       },
       {
         "name": "servers_ssh",
-        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "when": "config.toolkit.ssh.enableLanguageModelTools",
         "toolReferenceName": "serversSsh",
         "displayName": "Run SSH Command",
         "canBeReferencedInPrompt": true,
         "userDescription": "Run a command on a configured SSH server.",
-        "modelDescription": "Run a shell command on an SSH server. Get serverId from servers_list_servers with serverType ssh.",
+        "modelDescription": "Run a shell command on an SSH server. Get serverId from ssh_list_connections.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "serverId": {
               "type": "string",
-              "description": "SSH server id from servers_list_servers."
+              "description": "SSH server id from ssh_list_connections."
             },
             "command": {
               "type": "string",
@@ -588,18 +641,18 @@
       },
       {
         "name": "servers_sql",
-        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "when": "config.toolkit.database.enableLanguageModelTools",
         "toolReferenceName": "serversSql",
         "displayName": "Run SQL",
         "canBeReferencedInPrompt": true,
         "userDescription": "Run SQL on a configured database server.",
-        "modelDescription": "Run one SQL statement on a database server. Get serverId from servers_list_servers with serverType database.",
+        "modelDescription": "Run one SQL statement on a database server. Get serverId from database_list_connections.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "serverId": {
               "type": "string",
-              "description": "DB server id from servers_list_servers."
+              "description": "DB server id from database_list_connections."
             },
             "database": {
               "type": "string",
@@ -624,18 +677,18 @@
       },
       {
         "name": "servers_container",
-        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "when": "config.toolkit.container.enableLanguageModelTools",
         "toolReferenceName": "serversContainer",
         "displayName": "Run Container Command",
         "canBeReferencedInPrompt": true,
         "userDescription": "Run a command on a configured container runtime.",
-        "modelDescription": "Run a Docker, Podman, or Apple Container command. Get serverId from servers_list_servers with serverType container.",
+        "modelDescription": "Run a Docker, Podman, or Apple Container command. Get serverId from container_list_connections.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "serverId": {
               "type": "string",
-              "description": "Container server id from servers_list_servers."
+              "description": "Container server id from container_list_connections."
             },
             "args": {
               "type": "array",
@@ -659,18 +712,18 @@
       },
       {
         "name": "servers_sftp",
-        "when": "config.toolkit.servers.enableLanguageModelTools",
+        "when": "config.toolkit.ssh.enableLanguageModelTools",
         "toolReferenceName": "serversSftp",
         "displayName": "Run SFTP Operation",
         "canBeReferencedInPrompt": true,
         "userDescription": "Run an SFTP file operation on a configured SSH server.",
-        "modelDescription": "Run an SFTP operation on an SSH server. Get serverId from servers_list_servers with serverType ssh.",
+        "modelDescription": "Run an SFTP operation on an SSH server. Get serverId from ssh_list_connections.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "serverId": {
               "type": "string",
-              "description": "SSH server id from servers_list_servers."
+              "description": "SSH server id from ssh_list_connections."
             },
             "action": {
               "type": "string",
@@ -729,7 +782,8 @@
     "compile:webview": "tsc -p webview/tsconfig.json && vite build",
     "package": "vsce package --no-yarn",
     "publish": "vsce publish --no-yarn",
-    "test:servers": "node --test tests/servers-*.test.mjs"
+    "test:servers": "npm run test:features",
+    "test:features": "node --test tests/feature-isolation.test.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

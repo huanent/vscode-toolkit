@@ -44,9 +44,20 @@ terminal, database browser or container manager in editor tabs.
 - MySQL: database and table browsing, data editing, SQL completion and execution,
   result export, and database import/export.
 - Containers: local or SSH-based Docker, Podman and Apple Container management.
-- Copilot tools: `servers_list_servers`, `servers_ssh`, `servers_sql`,
-  `servers_container` and `servers_sftp`. Control visibility with
-  `toolkit.servers.enableLanguageModelTools`; individual servers retain their AI access setting.
+- Copilot connection lists: `ssh_list_connections`, `database_list_connections`,
+  and `container_list_connections`. Execution tools retain their names:
+  `servers_ssh`, `servers_sql`, `servers_container` and `servers_sftp`.
+- Tool visibility is configured independently with `toolkit.ssh.enableLanguageModelTools`,
+  `toolkit.database.enableLanguageModelTools`, and `toolkit.container.enableLanguageModelTools`.
+  The previous unified setting is no longer used; set the new switches explicitly
+  if tools were previously disabled. Individual connections retain their AI access setting.
+
+Each extension-host feature owns its registration, connection model, store, form,
+management panel, custom editor and tools. Form protocols are separate under
+`shared/protocol/ssh`, `shared/protocol/database` and `shared/protocol/container`.
+There is no shared server feature or form implementation. Container SSH references
+use the SSH connection service; database tunnels use the SSH transport.
+Previously open `.servers` tabs must be reopened from their feature management tab.
 
 Each feature uses `toolkit.storagePath`, falling back to Toolkit global storage.
 Connection files and credentials are stored independently under `ssh/connections`,
@@ -71,8 +82,8 @@ and leaving the original `servers` directory untouched. Old temporary SQL docume
 are not migrated. Connection files
 and exports can contain credentials; protect the storage directory and exported files.
 
-Run `npm run build` then `npm run test:servers` for the migrated regression tests
-and integration checks. Live SSH, MySQL and container operations require configured services.
+Run `npm run build` then `npm run test:features` for connection parsing and feature
+isolation regression tests. Live SSH, MySQL and container operations require configured services.
 
 ### HTTP Files
 

@@ -4,7 +4,7 @@ import { vscode } from '../../../../vscodeApi';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
-} from '../../../../../../shared/protocol/connections/form';
+} from '../../../../../../shared/protocol/ssh/form';
 
 const emptyValues: ServerFormValues = {
 	name: '',

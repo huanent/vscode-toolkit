@@ -11,7 +11,9 @@ import { registerNpmScriptWatcher, runNpmScript } from './features/scripts/npmSc
 import { runScript } from './features/scripts/runScript';
 import { registerScriptRuntimeWatcher } from './features/scripts/scriptRuntime';
 import { registerXmlFormatter } from './features/xml/xmlFormatter';
-import { registerServers } from './features/servers/registerServers';
+import { registerSsh } from './features/ssh/registerSsh';
+import { registerDatabase } from './features/database/registerDatabase';
+import { registerContainer } from './features/container/registerContainer';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	const featureTree = new FeatureTreeProvider();
@@ -41,7 +43,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	registerHttpClient(context);
 	await registerChat(context);
 	await registerExplorer(context);
-	await registerServers(context);
+	await registerSsh(context);
+	await registerDatabase(context);
+	await registerContainer(context);
 
 	const perfTipsProvider = new PerfTipsProvider();
 	context.subscriptions.push(

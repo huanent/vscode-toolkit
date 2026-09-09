@@ -3,7 +3,7 @@ import type {
 	ContainerRuntime,
 	ConnectionType,
 	ProxyMode,
-} from '../../../../../shared/protocol/connections/form';
+} from '../../../../../shared/protocol/container/form';
 
 export interface ServerFormValues {
 	name: string;
