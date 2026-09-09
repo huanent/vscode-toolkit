@@ -18,6 +18,26 @@ Focused developer tools for VS Code.
 
 ## Development
 
+### Workflow
+
+Open **Toolkit > Workflow** (or **Toolkit: Open Workflow**) to create and manage
+saved workflows in an editor tab. Search workflows in the sidebar and edit step
+types, commands, connections and paths inline. Add, reorder or delete named steps;
+Save persists changes, while Run saves and executes them sequentially after confirmation.
+The toolbar shows running state and opens Toolkit Workflow output. Cancellation is
+available in the VS Code progress notification. Unsaved edits prompt before switching workflows.
+Steps support non-interactive local shell commands with an absolute working
+directory, SSH commands using a saved SSH connection, and single-file SFTP uploads
+to an absolute remote file path. Upload parent directories must already exist;
+existing remote files are overwritten. Credentials are resolved from SSH at run time.
+
+Workflows are saved in VS Code extension global state on this machine, independently
+of `toolkit.storagePath`. Do not embed passwords in commands. Execution requires a
+trusted workspace and stops on the first error. Cancel stops after the current step
+finishes; it does not interrupt a running command or transfer. Only one workflow
+can run at a time. Directory uploads, parallel steps and interactive commands are
+not supported.
+
 ### Structure
 
 - `src/features`: extension-host features; editors coordinate UI and call feature services.

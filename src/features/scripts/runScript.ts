@@ -9,7 +9,7 @@ import {
 } from './scriptDocument';
 import { getScriptRuntime } from './scriptRuntime';
 
-const terminalName = 'Toolkit Script';
+const terminalName = 'Toolkit';
 
 export async function runScript(
 	context: vscode.ExtensionContext,

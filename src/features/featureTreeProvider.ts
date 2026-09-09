@@ -41,6 +41,7 @@ export class FeatureTreeProvider
 			['SSH', 'terminal'],
 			['Database', 'database'],
 			['Container', 'package'],
+			['Workflow', 'list-ordered'],
 		]) {
 			const item = new vscode.TreeItem(name, vscode.TreeItemCollapsibleState.None);
 			item.iconPath = new vscode.ThemeIcon(icon);

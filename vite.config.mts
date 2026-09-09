@@ -44,6 +44,7 @@ export default defineConfig({
 				mysqlTablePreview: 'webview/src/features/database/mysql/tablePreview/main.tsx',
 				sshTerminal: 'webview/src/features/ssh/terminal/main.tsx',
 				launchd: 'webview/src/features/launchd/main.tsx',
+				workflow: 'webview/src/features/workflow/main.tsx',
 				chat: 'webview/src/features/chat/main.tsx',
 				explorer: 'webview/src/features/explorer/main/main.tsx',
 				archive: 'webview/src/features/explorer/previews/archive/main.tsx',

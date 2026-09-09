@@ -141,6 +141,12 @@
     ],
     "commands": [
       {
+        "command": "vscode-toolkit.openWorkflow",
+        "title": "Open Workflow",
+        "icon": "$(list-ordered)",
+        "category": "Toolkit"
+      },
+      {
         "command": "vscode-toolkit.openHttpClient",
         "title": "Open HTTP Client",
         "icon": "$(globe)",
@@ -783,7 +789,7 @@
     "package": "vsce package --no-yarn",
     "publish": "vsce publish --no-yarn",
     "test:servers": "npm run test:features",
-    "test:features": "node --test tests/feature-isolation.test.mjs"
+    "test:features": "node --test tests/feature-isolation.test.mjs tests/workflow.test.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

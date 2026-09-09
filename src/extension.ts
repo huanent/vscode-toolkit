@@ -14,6 +14,7 @@ import { registerXmlFormatter } from './features/xml/xmlFormatter';
 import { registerSsh } from './features/ssh/registerSsh';
 import { registerDatabase } from './features/database/registerDatabase';
 import { registerContainer } from './features/container/registerContainer';
+import { registerWorkflow } from './features/workflow/registerWorkflow';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	const featureTree = new FeatureTreeProvider();
@@ -44,6 +45,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	await registerChat(context);
 	await registerExplorer(context);
 	await registerSsh(context);
+	registerWorkflow(context);
 	await registerDatabase(context);
 	await registerContainer(context);
 
