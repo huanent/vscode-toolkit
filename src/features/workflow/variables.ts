@@ -11,27 +11,16 @@ export function resolveWorkflowVariables(workflow: Workflow, location = ''): Wor
 	const folders = vscode.workspace.workspaceFolders ?? [];
 	const folder = folders.find(candidate => candidate.uri.toString() === location)
 		?? folders[0];
-	const requireFolder = (name?: string) => {
-		const selected = name === undefined ? folder : folders.find(candidate => candidate.name === name);
-		if (!selected) throw new Error(`Workflow variable requires ${name ? `workspace folder "${name}"` : 'an open workspace folder'}.`);
-		return selected.uri.fsPath;
+	const requireFolder = () => {
+		if (!folder) throw new Error('Workflow variable requires an open workspace folder.');
+		return folder.uri.fsPath;
 	};
 	const resolve = (value: string): string => value.replace(/\$\{([^{}]+)\}/g, (match: string, variable: string) => {
 		if (variable.startsWith('env:')) return process.env[variable.slice(4)] ?? '';
-		if (variable.startsWith('config:')) {
-			const configured = vscode.workspace.getConfiguration(undefined, folder?.uri).get<unknown>(variable.slice(7));
-			if (typeof configured !== 'string' && typeof configured !== 'number' && typeof configured !== 'boolean')
-				throw new Error(`Workflow variable ${match} must resolve to a string, number or boolean.`);
-			return String(configured);
-		}
-		if (variable.startsWith('workspaceFolder:')) return requireFolder(variable.slice(16));
 		switch (variable) {
 			case 'workspaceFolder': return requireFolder();
-			case 'workspaceFolderBasename': return path.basename(requireFolder());
 			case 'userHome': return os.homedir();
 			case 'cwd': return process.cwd();
-			case 'pathSeparator':
-			case '/': return path.sep;
 			default:
 				if (/^(command|input):/.test(variable)) throw new Error(`Workflow variable ${match} is not supported.`);
 				return match;
@@ -56,7 +45,9 @@ export function validateWorkflowPaths(workflow: Workflow, allowVariables = false
 		const absolute = (value: string, remote = false) =>
 			(allowVariables && hasWorkflowVariables(value)) || (remote ? path.posix : path).isAbsolute(value);
 		if (step.type === 'command' && !absolute(step.cwd)) throw new Error('Working directory must be absolute.');
-		if (step.type === 'sftp' && (!absolute(step.localPath) || !absolute(step.remotePath, true) || step.remotePath.endsWith('/')))
-			throw new Error('Upload requires absolute local and remote file paths.');
+		if (step.type !== 'sftp') continue;
+		if (!absolute(step.remotePath, true)) throw new Error('SFTP requires an absolute remote path.');
+		if (!step.localPath || !absolute(step.localPath) || step.remotePath.endsWith('/') || step.localPath.endsWith(path.sep))
+			throw new Error('Transfer requires absolute local and remote file paths.');
 	}
 }

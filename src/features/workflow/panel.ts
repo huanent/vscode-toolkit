@@ -58,17 +58,19 @@ export function registerWorkflowPanel(
 								return;
 							}
 							if (request.type === 'browse') {
-								const files = await vscode.window.showOpenDialog({
+								const file = request.field === 'localPath' && request.download === true
+									? await vscode.window.showSaveDialog({ saveLabel: 'Download To' })
+									: (await vscode.window.showOpenDialog({
 									canSelectFiles: request.field === 'localPath',
 									canSelectFolders: request.field === 'cwd',
 									canSelectMany: false,
-								});
-								if (files?.[0])
+								}))?.[0];
+								if (file)
 									await current.webview.postMessage({
 										type: 'path',
 										index: request.index,
 										field: request.field,
-										value: files[0].fsPath,
+										value: file.fsPath,
 										draftId: request.draftId,
 									});
 								return;

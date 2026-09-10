@@ -94,6 +94,7 @@ export function useWorkflow(editorMode: boolean) {
 				: {
 						type,
 						name: 'SFTP Upload',
+						action: 'upload',
 						serverId: state.servers[0]?.id ?? '',
 						localPath: '',
 						remotePath: '',
@@ -155,7 +156,10 @@ export function useWorkflow(editorMode: boolean) {
 		setDirty(true);
 	};
 	const browse = (field: 'cwd' | 'localPath', index: number) => {
-		if (draft) vscode.postMessage({ type: 'browse', field, index, draftId: draft.id });
+		if (draft) {
+			const step = draft.steps[index];
+			vscode.postMessage({ type: 'browse', field, index, draftId: draft.id, download: step?.type === 'sftp' && step.action === 'download' });
+		}
 	};
 	return {
 		state,

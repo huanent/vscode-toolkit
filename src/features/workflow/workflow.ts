@@ -1,7 +1,10 @@
+export const sftpActions = ['upload', 'download'] as const;
+export type SftpAction = typeof sftpActions[number];
+
 export type WorkflowStep =
 	| { name: string; type: 'command'; command: string; cwd: string }
 	| { name: string; type: 'ssh'; serverId: string; command: string }
-	| { name: string; type: 'sftp'; serverId: string; localPath: string; remotePath: string };
+	| { name: string; type: 'sftp'; serverId: string; action?: SftpAction; localPath: string; remotePath: string };
 
 export interface Workflow {
 	id: string;
@@ -46,14 +49,18 @@ export function parseWorkflow(value: unknown): Workflow {
 					serverId: text(step, 'serverId'),
 					command: text(step, 'command'),
 				};
-			if (step.type === 'sftp')
+			if (step.type === 'sftp') {
+				const action = step.action ?? 'upload';
+				if (!sftpActions.includes(action as SftpAction)) throw new Error('Invalid SFTP action.');
 				return {
 					name,
 					type: 'sftp',
+					action: action as SftpAction,
 					serverId: text(step, 'serverId'),
 					localPath: text(step, 'localPath'),
 					remotePath: text(step, 'remotePath'),
 				};
+			}
 			throw new Error('Invalid step type.');
 		}),
 	};

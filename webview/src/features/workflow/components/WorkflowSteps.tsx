@@ -43,7 +43,7 @@ export function WorkflowSteps({
 					>
 						<option value="command">Local Command</option>
 						<option value="ssh">SSH Command</option>
-						<option value="sftp">SFTP Upload</option>
+						<option value="sftp">SFTP</option>
 					</SelectInput>
 					<button
 						type="button"
@@ -80,7 +80,7 @@ export function WorkflowSteps({
 											? 'Local Command'
 											: step.type === 'ssh'
 												? 'SSH Command'
-												: 'SFTP Upload'}
+												: step.action === 'download' ? 'SFTP Download' : 'SFTP Upload'}
 									</span>
 								</span>
 							</button>
@@ -169,7 +169,7 @@ export function WorkflowSteps({
 								>
 									<option value="command">Local Command</option>
 									<option value="ssh">SSH Command</option>
-									<option value="sftp">SFTP Upload</option>
+									<option value="sftp">SFTP</option>
 								</SelectInput>
 							</Field>
 							{step.type !== 'command' ? (
@@ -206,7 +206,19 @@ export function WorkflowSteps({
 							)}
 							{step.type === 'sftp' ? (
 								<>
-									<Field label="Local file">
+									<Field label="Transfer direction">
+										<SelectInput
+											value={step.action ?? 'upload'}
+											onChange={event => {
+												const action = event.target.value as 'upload' | 'download';
+												updateStep(index, { ...step, action, name: ['SFTP Upload', 'SFTP Download'].includes(step.name) ? (action === 'download' ? 'SFTP Download' : 'SFTP Upload') : step.name });
+											}}
+										>
+											<option value="upload">Upload</option>
+											<option value="download">Download</option>
+										</SelectInput>
+									</Field>
+									<Field label={step.action === 'download' ? 'Local destination file' : 'Local source file'}>
 										<span className="flex gap-1">
 											<TextInput
 												required
@@ -215,12 +227,12 @@ export function WorkflowSteps({
 													updateStep(index, { ...step, localPath: event.target.value })
 												}
 											/>
-											<IconButton title="Choose file" onClick={() => browse('localPath', index)}>
+											<IconButton title={step.action === 'download' ? 'Choose download location' : 'Choose file'} onClick={() => browse('localPath', index)}>
 												<FolderOpen size={16} />
 											</IconButton>
 										</span>
 									</Field>
-									<Field label="Remote file path">
+									<Field label={step.action === 'download' ? 'Remote source file' : 'Remote destination file'}>
 										<TextInput
 											required
 											value={step.remotePath}

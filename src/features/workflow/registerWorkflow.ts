@@ -4,8 +4,8 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { listSshConnections, resolveSshConnection } from '../ssh/connectionService';
 import { executeSshCommand } from '../ssh/sshCommand';
-import { writeSftpFile } from '../ssh/sftp';
-import { executeWorkflow, Workflow, WorkflowStep } from './workflow';
+import { downloadSftpFile, writeSftpFile } from '../ssh/sftp';
+import { executeWorkflow, sftpActions, Workflow, WorkflowStep } from './workflow';
 import { registerWorkflowPanel } from './panel';
 import { registerWorkflowTools } from './tools';
 import { WorkflowStore } from './store';
@@ -77,6 +77,8 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 									const { server, credentials } = await resolveSshConnection(step.serverId);
 									if (step.type === 'ssh')
 										output.appendLine(await executeSshCommand(server, credentials, step.command));
+									else if (step.action === 'download')
+										await downloadSftpFile(server, credentials, step.remotePath, step.localPath);
 									else await writeSftpFile(server, credentials, step.localPath, step.remotePath);
 								}
 								output.appendLine(`\nCompleted: ${step.name}`);
@@ -234,7 +236,7 @@ function describeStep(step: WorkflowStep): string {
 		: `Missing SSH connection: ${step.serverId}`;
 	return step.type === 'ssh'
 		? `SSH ${target}: ${step.command}`
-		: `SFTP ${target}: ${step.localPath} -> ${step.remotePath}`;
+		: `SFTP ${step.action ?? 'upload'} ${target}: ${step.action === 'download' ? `${step.remotePath} -> ${step.localPath}` : `${step.localPath} -> ${step.remotePath}`}`;
 }
 
 async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefined> {
@@ -242,7 +244,7 @@ async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefin
 		[
 			{ label: 'Local Command', type: 'command' as const },
 			{ label: 'SSH Command', type: 'ssh' as const },
-			{ label: 'SFTP Upload', type: 'sftp' as const },
+			{ label: 'SFTP', type: 'sftp' as const },
 		],
 		{ title: 'Step Type' },
 	);
@@ -288,24 +290,22 @@ async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefin
 		);
 		return command ? { type: 'ssh', name, serverId, command } : undefined;
 	}
-	const files = await vscode.window.showOpenDialog({
-		canSelectMany: false,
-		canSelectFiles: true,
-		canSelectFolders: false,
-		openLabel: 'Upload File',
-		defaultUri: existing?.type === 'sftp' ? vscode.Uri.file(existing.localPath) : undefined,
-	});
-	if (!files?.[0]) return;
-	const remotePath = await vscode.window.showInputBox({
-		prompt: 'Absolute remote file path (parent directory must exist; existing file is overwritten)',
-		value: existing?.type === 'sftp' ? existing.remotePath : '',
-		ignoreFocusOut: true,
-		validateInput: value =>
-			(path.posix.isAbsolute(value) || hasWorkflowVariables(value)) && !value.endsWith('/')
-				? undefined
-				: 'Enter an absolute remote file path',
-	});
-	return remotePath
-		? { type: 'sftp', name, serverId, localPath: files[0].fsPath, remotePath }
-		: undefined;
+	const previous = existing?.type === 'sftp' ? existing : undefined;
+	const selectedAction = await vscode.window.showQuickPick(
+		sftpActions.map(action => ({ label: action, picked: action === (previous?.action ?? 'upload'), action })),
+		{ title: 'SFTP Operation' },
+	);
+	if (!selectedAction) return;
+	const action = selectedAction.action;
+	const remotePath = await input('Absolute remote path', previous?.remotePath);
+	if (!remotePath) return;
+	const defaultUri = previous?.localPath && !hasWorkflowVariables(previous.localPath)
+		? vscode.Uri.file(previous.localPath) : undefined;
+	const localFile = action === 'download'
+		? await vscode.window.showSaveDialog({ defaultUri, saveLabel: 'Download To' })
+		: (await vscode.window.showOpenDialog({ defaultUri, canSelectMany: false, canSelectFiles: true, canSelectFolders: false, openLabel: 'Upload File' }))?.[0];
+	if (!localFile) return;
+	const step: WorkflowStep = { type: 'sftp', name, serverId, action, remotePath, localPath: localFile.fsPath };
+	validateWorkflowPaths({ id: 'draft', name, steps: [step] }, true);
+	return step;
 }

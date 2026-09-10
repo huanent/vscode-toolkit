@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -595,7 +595,7 @@
         "toolReferenceName": "upsertWorkflow",
         "displayName": "Save Workflow",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Create or fully replace a workflow without running it. Before editing, call getWorkflow and preserve unchanged steps. Names, description, commands, paths and step serverId support runtime variables: ${workspaceFolder}, ${workspaceFolder:name}, ${workspaceFolderBasename}, ${userHome}, ${env:NAME}, ${config:setting}, ${cwd}, ${pathSeparator} and ${/}. IDs and storage location are literal. Remote steps require SSH connections. Use non-interactive commands without embedded credentials. Returns the saved workflow.",
+        "modelDescription": "Create or fully replace a workflow without running it. Before editing, call getWorkflow and preserve unchanged steps. Names, description, commands, paths and step serverId support runtime variables: ${workspaceFolder}, ${userHome}, ${env:NAME} and ${cwd}. IDs and storage location are literal. Remote steps require SSH connections. Use non-interactive commands without embedded credentials. Returns the saved workflow.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -697,11 +697,16 @@
                       },
                       "localPath": {
                         "type": "string",
-                        "description": "Local upload path; supports VS Code variables. Must resolve to an absolute path."
+                        "description": "Absolute local file path: upload source or download destination. Supports VS Code variables."
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": ["upload", "download"],
+                        "description": "Transfer direction; defaults to upload. Transfers overwrite destination files. Downloads create local parent directories."
                       },
                       "remotePath": {
                         "type": "string",
-                        "description": "Remote file path; supports VS Code variables resolved locally. Must resolve to an absolute POSIX path; parent must exist. Overwrites existing file."
+                        "description": "Absolute remote POSIX file path: upload destination or download source. Supports VS Code variables. Upload requires an existing remote parent directory."
                       }
                     },
                     "required": [

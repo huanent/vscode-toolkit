@@ -69,10 +69,10 @@ SSH, Database, and Container each support connection search, creation, editing, 
 ### Workflow
 
 - Create, search, and save named workflows with descriptions.
-- Add, edit, reorder, and delete steps for local shell commands, SSH commands, and single-file SFTP uploads.
+- Add, edit, reorder, and delete steps for local shell commands, SSH commands, and single-file SFTP uploads and downloads. Existing SFTP steps default to upload.
 - Save and run steps sequentially after confirmation, with logs in the Toolkit Workflow output channel.
 
-Execution requires a trusted workspace. Only one workflow can run at a time, and execution stops on the first error. Cancellation takes effect after the current step finishes; it does not interrupt a running command or transfer. Interactive commands, parallel steps, and directory uploads are not supported. Uploads overwrite existing files and require the remote parent directory to exist.
+Execution requires a trusted workspace. Only one workflow can run at a time, and execution stops on the first error. Cancellation takes effect after the current step finishes; it does not interrupt a running command or transfer. Interactive commands, parallel steps, and directory transfers are not supported. Transfers overwrite destination files. Uploads require the remote parent directory to exist; downloads create local parent directories. Use SSH command steps for other remote file operations.
 
 ### Launchd (macOS)
 
