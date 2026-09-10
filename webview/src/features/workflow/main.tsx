@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { ListOrdered, Plus, RefreshCw } from '../../components/icons';
+import { Plus, RefreshCw } from '../../components/icons';
 import { IconButton } from './components/controls';
 import { WorkflowEditor } from './components/WorkflowEditor';
 import { WorkflowList } from './components/WorkflowList';
@@ -16,7 +16,6 @@ export function App() {
 			)}
 		>
 			<header className="flex min-h-9 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) pb-2">
-				<ListOrdered size={18} />
 				<h1 className="text-sm font-semibold">Workflow</h1>
 				{!editorMode && (
 					<div className="ml-auto flex items-center gap-1">

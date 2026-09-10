@@ -3,9 +3,6 @@ import { createRoot } from 'react-dom/client';
 import {
 	CircuitBoard,
 	Database,
-	Folder,
-	Globe,
-	MessageSquare,
 	Container,
 	Rocket,
 	Terminal,
@@ -49,24 +46,6 @@ function App() {
 	};
 	return (
 		<main className="min-w-0 p-2 text-(--vscode-foreground)">
-			<header className="border-b border-(--vscode-panel-border) pb-2">
-				<nav aria-label="Quick navigation" className="grid grid-cols-3 gap-1">
-					{[
-						{ command: 'openExplorer', label: 'File Explorer', icon: Folder },
-						{ command: 'openChat', label: 'Chat', icon: MessageSquare },
-						{ command: 'openHttpClient', label: 'HTTP Client', icon: Globe },
-					].map(({ command, label, icon: Icon }) => (
-						<button
-							key={command}
-							className="flex min-h-10 min-w-0 flex-col items-center justify-center gap-1 rounded-xs px-1 py-1 text-xs hover:bg-(--vscode-toolbar-hoverBackground)"
-							onClick={() => vscode.postMessage({ type: 'dashboardNavigate', command })}
-						>
-							<Icon size={15} />
-							{label}
-						</button>
-					))}
-				</nav>
-			</header>
 			<div
 				role="tablist"
 				aria-label="Tools"

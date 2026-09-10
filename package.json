@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -267,6 +267,7 @@
       {
         "command": "vscode-toolkit.openChat",
         "title": "Open Chat",
+        "icon": "$(comment-discussion)",
         "category": "Toolkit"
       },
       {
@@ -283,6 +284,7 @@
       {
         "command": "vscode-toolkit.openExplorer",
         "title": "Open in Explorer",
+        "icon": "$(folder)",
         "category": "Toolkit"
       },
       {
@@ -336,6 +338,23 @@
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "vscode-toolkit.openExplorer",
+          "when": "view == vscode-toolkit.dashboard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vscode-toolkit.openChat",
+          "when": "view == vscode-toolkit.dashboard",
+          "group": "navigation@2"
+        },
+        {
+          "command": "vscode-toolkit.openHttpClient",
+          "when": "view == vscode-toolkit.dashboard",
+          "group": "navigation@3"
+        }
+      ],
       "editor/title": [
         {
           "command": "editor.foldAll",
