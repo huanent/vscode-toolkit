@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from 'cn';
 import {
-	ArrowLeft,
-	ArrowRight,
+	ArrowUp,
+	ArrowDown,
 	ChevronRight,
 	Copy,
 	Download,
@@ -88,8 +88,8 @@ export function ConnectionCard({
 	const actions = customActions ?? [
 		{ type: 'edit', label: 'Edit', icon: Pencil },
 		{ type: 'duplicate', label: 'Duplicate', icon: Copy },
-		{ type: 'up', label: 'Move Earlier', icon: ArrowLeft, disabled: filtered },
-		{ type: 'down', label: 'Move Later', icon: ArrowRight, disabled: filtered },
+		{ type: 'up', label: 'Move Up', icon: ArrowUp, disabled: filtered },
+		{ type: 'down', label: 'Move Down', icon: ArrowDown, disabled: filtered },
 		{ type: 'export', label: 'Export', icon: Download },
 		{ type: 'delete', label: 'Delete', icon: Trash2 },
 	];
