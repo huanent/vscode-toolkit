@@ -1,6 +1,7 @@
 import { cn } from 'cn';
 import { Plus, RefreshCw } from '../../components/icons';
-import { IconButton } from './components/controls';
+import { IconButton } from '../../components/button';
+import { DashboardHeader } from '../dashboard/components';
 import { WorkflowEditor } from './components/WorkflowEditor';
 import { WorkflowList } from './components/WorkflowList';
 import { useWorkflow } from './hooks/useWorkflow';
@@ -15,27 +16,31 @@ export function App() {
 				editorMode ? 'mx-auto max-w-240 px-3 py-4 sm:px-6' : 'py-3',
 			)}
 		>
-			<header className="flex min-h-9 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) pb-2">
-				<h1 className="text-sm font-semibold">Workflow</h1>
+			<DashboardHeader
+				title="Workflow"
+				count={!editorMode && controller.loaded ? controller.state.workflows.length : undefined}
+			>
 				{!editorMode && (
-					<div className="ml-auto flex items-center gap-1">
+					<div className="flex items-center gap-0.5">
 						<IconButton
 							title="Refresh workflows"
+							aria-label="Refresh workflows"
 							disabled={controller.locked}
 							onClick={controller.refresh}
 						>
-							<RefreshCw size={16} />
+							<RefreshCw size={15} />
 						</IconButton>
 						<IconButton
 							title="New workflow"
+							aria-label="New workflow"
 							disabled={controller.locked}
 							onClick={controller.create}
 						>
-							<Plus size={16} />
+							<Plus size={15} />
 						</IconButton>
 					</div>
 				)}
-			</header>
+			</DashboardHeader>
 			<div>
 				<div hidden={editorMode}>
 					<WorkflowList

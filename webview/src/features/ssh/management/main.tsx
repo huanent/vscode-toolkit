@@ -9,10 +9,9 @@ import {
 	Pencil,
 	Plus,
 	RefreshCw,
-	Search,
+	MoreHorizontal,
 	Trash2,
 	Upload,
-	X,
 	type IconComponent,
 } from '../../../components/icons';
 import { IconButton } from '../../../components/button';
@@ -21,6 +20,7 @@ import { ServerDialog } from './ServerDialog';
 import { App as DatabaseForm } from '../../database/serverForm/App';
 import { App as ContainerForm } from '../../container/serverForm/App';
 import { Dialog } from '../../../components/dialog';
+import { DashboardEmpty, DashboardHeader, DashboardSearch } from '../../dashboard/components';
 
 export interface Connection {
 	id: string;
@@ -40,12 +40,14 @@ export function ConnectionCard({
 	server,
 	filtered = false,
 	compact = false,
+	disabled = false,
 	onAction,
 	actions: customActions,
 }: {
 	server: Connection;
 	filtered?: boolean;
 	compact?: boolean;
+	disabled?: boolean;
 	onAction: (type: string, id: string) => void;
 	actions?: ItemAction[];
 }) {
@@ -99,7 +101,10 @@ export function ConnectionCard({
 	return (
 		<li
 			ref={container}
-			className={cn('relative flex min-w-0 items-center hover:bg-(--vscode-list-hoverBackground) focus-within:outline focus-within:outline-(--vscode-focusBorder)', compact ? 'rounded-xs' : 'rounded-sm border border-(--vscode-panel-border)')}
+			className={cn(
+				'relative flex min-w-0 items-center hover:bg-(--vscode-list-hoverBackground) focus-within:outline focus-within:outline-(--vscode-focusBorder)',
+				compact ? 'rounded-xs' : 'rounded-sm border border-(--vscode-panel-border)',
+			)}
 			onBlur={event => {
 				if (!event.currentTarget.contains(event.relatedTarget)) setPosition(undefined);
 			}}
@@ -117,7 +122,11 @@ export function ConnectionCard({
 		>
 			<button
 				type="button"
-				className={cn('flex min-w-0 flex-1 flex-col gap-0.5 rounded-sm bg-transparent text-left', compact ? 'px-2 py-1' : 'p-2')}
+				disabled={disabled}
+				className={cn(
+					'flex min-w-0 flex-1 flex-col gap-1 rounded-xs bg-transparent text-left disabled:opacity-45',
+					compact ? 'px-2 py-2' : 'p-2',
+				)}
 				title={`Open ${server.name}\n${server.address}`}
 				aria-label={`Open ${server.name}`}
 				onClick={() => onAction('connect', server.id)}
@@ -127,6 +136,20 @@ export function ConnectionCard({
 					{server.address}
 				</span>
 			</button>
+			<IconButton
+				type="button"
+				className="mr-1 size-7 rounded-xs focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
+				title={`Actions for ${server.name}`}
+				aria-label={`Actions for ${server.name}`}
+				aria-expanded={open}
+				aria-controls={open ? `actions-${server.id}` : undefined}
+				onClick={event => {
+					const bounds = event.currentTarget.getBoundingClientRect();
+					setPosition(open ? undefined : { left: bounds.right - 176, top: bounds.bottom });
+				}}
+			>
+				<MoreHorizontal size={16} />
+			</IconButton>
 			{open && (
 				<div
 					ref={menu}
@@ -158,29 +181,40 @@ export function ConnectionCard({
 	);
 }
 
-export function ConnectionGroup({ name, count, children }: { name: string; count: number; children: ReactNode }) {
+export function ConnectionGroup({
+	name,
+	count,
+	children,
+	filtered = false,
+}: {
+	name: string;
+	count: number;
+	children: ReactNode;
+	filtered?: boolean;
+}) {
 	if (!name) {
 		return <ul className="m-0 grid list-none grid-cols-1 p-0">{children}</ul>;
 	}
 	return (
-		<details className="group mb-1" aria-label={name}>
+		<details className="group mb-1" aria-label={name} open={filtered || undefined}>
 			<summary className="flex cursor-pointer list-none items-center gap-1 rounded-xs px-1 py-1 text-xs font-semibold hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:outline-(--vscode-focusBorder) [&::-webkit-details-marker]:hidden">
 				<ChevronRight size={14} aria-hidden="true" className="shrink-0 group-open:rotate-90" />
 				<span className="min-w-0 wrap-anywhere">{name}</span>
-				<span className="ml-auto shrink-0 pl-2 font-normal text-(--vscode-descriptionForeground)">{count}</span>
+				<span className="ml-auto shrink-0 pl-2 font-normal text-(--vscode-descriptionForeground)">
+					{count}
+				</span>
 			</summary>
-			<ul aria-label={name} className="m-0 ml-2.5 grid list-none grid-cols-1 border-l border-(--vscode-tree-indentGuidesStroke) p-0 pl-2">
+			<ul
+				aria-label={name}
+				className="m-0 ml-2.5 grid list-none grid-cols-1 border-l border-(--vscode-tree-indentGuidesStroke) p-0 pl-2"
+			>
 				{children}
 			</ul>
 		</details>
 	);
 }
 
-export function Connections({
-	tab,
-}: {
-	tab: Extract<Tab, 'ssh' | 'database' | 'container'>;
-}) {
+export function Connections({ tab }: { tab: Extract<Tab, 'ssh' | 'database' | 'container'> }) {
 	const send = (type: string, id?: string) => sendChannel(tab, { type, id });
 	const [formSession, setFormSession] = useState<number>();
 	const [closeForm] = useState(() => () => {
@@ -202,7 +236,7 @@ export function Connections({
 		state?.servers.filter(server =>
 			`${server.name} ${server.group} ${server.address} ${server.kind}`
 				.toLowerCase()
-				.includes(query.toLowerCase()),
+				.includes(query.trim().toLowerCase()),
 		) ?? [];
 	const groups = new Map<string, Connection[]>();
 	for (const server of servers) {
@@ -212,29 +246,11 @@ export function Connections({
 		else groups.set(group, [server]);
 	}
 	return (
-		<section className="py-2 text-(--vscode-foreground)">
-			<header className="mb-2 flex flex-wrap items-center gap-1">
-				<h1 className="mr-auto text-sm font-semibold">{state?.name ?? 'Connections'}</h1>
-				<label className="flex h-8 w-64 items-center gap-2 rounded-xs border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus-within:outline focus-within:outline-(--vscode-focusBorder) max-[600px]:order-last max-[600px]:w-full">
-					<Search size={14} className="shrink-0" />
-					<input
-						className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-						aria-label="Search connections"
-						placeholder="Search connections"
-						value={query}
-						onChange={event => setQuery(event.target.value)}
-					/>
-					{query && (
-						<IconButton
-							className="size-6"
-							title="Clear search"
-							aria-label="Clear search"
-							onClick={() => setQuery('')}
-						>
-							<X size={14} />
-						</IconButton>
-					)}
-				</label>
+		<section className="py-3 text-(--vscode-foreground)">
+			<DashboardHeader
+				title={state?.name ?? 'Connections'}
+				count={state ? servers.length : undefined}
+			>
 				<div className="flex items-center gap-0.5">
 					<IconButton
 						title="Import connections"
@@ -262,28 +278,35 @@ export function Connections({
 						<Plus size={15} />
 					</IconButton>
 				</div>
-			</header>
+			</DashboardHeader>
+			<DashboardSearch label="Search connections" value={query} onChange={setQuery} />
 			{!state ? (
-				<p role="status" className="text-xs text-(--vscode-descriptionForeground)">
-					Loading...
-				</p>
+				<DashboardEmpty loading noun="connections" />
 			) : servers.length === 0 ? (
-				<p role="status" className="py-6 text-center text-xs text-(--vscode-descriptionForeground)">
-					{query ? 'No matching connections.' : 'No connections yet.'}
-				</p>
+				<DashboardEmpty
+					noun="connections"
+					filtered={!!query.trim()}
+					onClear={() => setQuery('')}
+					onCreate={() => send('add')}
+				/>
 			) : (
 				<div className="space-y-1">
 					{Array.from(groups, ([group, connections]) => (
-						<ConnectionGroup key={group} name={group} count={connections.length}>
-								{connections.map(server => (
-									<ConnectionCard
-										key={server.id}
-										server={server}
-										compact
-										filtered={!!query}
-										onAction={send}
-									/>
-								))}
+						<ConnectionGroup
+							key={`${group}-${!!query.trim()}`}
+							name={group}
+							count={connections.length}
+							filtered={!!query.trim()}
+						>
+							{connections.map(server => (
+								<ConnectionCard
+									key={server.id}
+									server={server}
+									compact
+									filtered={!!query}
+									onAction={send}
+								/>
+							))}
 						</ConnectionGroup>
 					))}
 				</div>

@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-	CircuitBoard,
-	Database,
-	Container,
-	Terminal,
-} from '../../components/icons';
+import { CircuitBoard, Database, Container, Terminal } from '../../components/icons';
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
 import { Connections } from '../ssh/management/main';
 import { App as Workflow } from '../workflow/main';
 import { type Tab } from './channel';
+import { DashboardEmpty } from './components';
 
 document.body.classList.add('min-w-0');
 const tabs = [
@@ -40,11 +36,11 @@ function App() {
 		vscode.postMessage({ type: 'dashboardTab', tab });
 	};
 	return (
-		<main className="min-w-0 p-2 text-(--vscode-foreground)">
+		<main className="@container min-w-0 text-(--vscode-foreground)">
 			<div
 				role="tablist"
 				aria-label="Tools"
-				className="grid grid-cols-4 border-b border-(--vscode-panel-border)"
+				className="sticky top-0 z-10 grid grid-cols-4 border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background,var(--vscode-editor-background))"
 			>
 				{tabs.map(({ id, label, icon: Icon }, index) => (
 					<button
@@ -57,7 +53,7 @@ function App() {
 						aria-controls={`panel-${id}`}
 						tabIndex={active === id ? 0 : -1}
 						className={cn(
-							'flex h-9 min-w-0 items-center justify-center border-b-2 text-xs',
+							'flex h-10 min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 text-xs focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-(--vscode-focusBorder)',
 							active === id
 								? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
 								: 'border-transparent text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground)',
@@ -82,7 +78,7 @@ function App() {
 						}}
 					>
 						<Icon size={15} />
-						<span className="sr-only">{label}</span>
+						<span className="hidden truncate @min-[360px]:inline">{label}</span>
 					</button>
 				))}
 			</div>
@@ -93,19 +89,14 @@ function App() {
 						id={`panel-${id}`}
 						role="tabpanel"
 						aria-labelledby={`tab-${id}`}
+						className="min-w-0 px-3"
 						hidden={active !== id}
 					>
-						{id === 'workflow' ? (
-							<Workflow />
-						) : (
-							<Connections tab={id} />
-						)}
+						{id === 'workflow' ? <Workflow /> : <Connections tab={id} />}
 					</div>
 				))
 			) : (
-				<p role="status" className="py-6 text-xs">
-					Loading...
-				</p>
+				<DashboardEmpty loading noun="connections" />
 			)}
 		</main>
 	);
