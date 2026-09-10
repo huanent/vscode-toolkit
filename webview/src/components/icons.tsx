@@ -1,10 +1,12 @@
-import type { HTMLAttributes } from 'react';
+import type { ComponentType, HTMLAttributes } from 'react';
 import { Codicon } from './codicon';
 
 type IconProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
 	size?: number;
 	fill?: string;
 };
+
+export type IconComponent = ComponentType<IconProps>;
 
 function icon(name: string) {
 	return function Icon({ fill: _fill, ...props }: IconProps) {
@@ -21,6 +23,7 @@ export const ChevronsUpDown = icon('arrow-swap');
 export const CircleAlert = icon('warning');
 export const CircleCheck = icon('check');
 export const CircleSlash = icon('circle-slash');
+export const CircuitBoard = icon('circuit-board');
 export const Container = icon('server-process');
 export const Copy = icon('copy');
 export const Database = icon('database');
@@ -31,11 +34,14 @@ export const Folder = icon('folder');
 export const FolderOpen = icon('folder-opened');
 export const FolderPlus = icon('new-folder');
 export const Grid2X2 = icon('layout');
+export const Globe = icon('globe');
 export const Info = icon('info');
 export const KeyRound = icon('key');
 export const List = icon('list-flat');
+export const ListOrdered = icon('list-ordered');
 export const LoaderCircle = icon('loading');
 export const MoreHorizontal = icon('ellipsis');
+export const MessageSquare = icon('comment');
 export const Network = icon('globe');
 export const Package = icon('package');
 export const Pencil = icon('edit');
@@ -43,10 +49,13 @@ export const Play = icon('play');
 export const Plus = icon('add');
 export const RefreshCw = icon('refresh');
 export const RotateCw = icon('sync');
+export const Rocket = icon('rocket');
 export const Save = icon('save');
+export const Search = icon('search');
 export const Server = icon('server');
 export const Square = icon('debug-stop');
 export const Gist = icon('gist');
+export const Terminal = icon('terminal');
 export const Trash2 = icon('trash');
 export const Upload = icon('cloud-upload');
 export const X = icon('close');

@@ -9,7 +9,7 @@ import {
 	Save,
 	Terminal,
 	Trash2,
-} from 'lucide-react';
+} from '../../components/icons';
 import { cn } from 'cn';
 import { TextInput, TextArea, SelectInput } from '../../components/input';
 import { workflowApi as vscode, subscribe } from '../dashboard/channel';

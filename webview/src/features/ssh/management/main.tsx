@@ -13,8 +13,8 @@ import {
 	Trash2,
 	Upload,
 	X,
-	type LucideIcon,
-} from 'lucide-react';
+	type IconComponent,
+} from '../../../components/icons';
 import { IconButton } from '../../../components/button';
 import { send as sendChannel, subscribe, type Tab } from '../../dashboard/channel';
 import { ServerDialog } from './ServerDialog';
@@ -33,7 +33,7 @@ export interface Connection {
 export interface ItemAction {
 	type: string;
 	label: string;
-	icon: LucideIcon;
+	icon: IconComponent;
 	disabled?: boolean;
 }
 export function ConnectionCard({

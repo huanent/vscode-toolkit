@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { listSshConnections } from '../ssh/connectionService';
 import { parseWorkflow, Workflow } from './workflow';
+import { WorkflowStore } from './store';
 
 interface UpsertWorkflowInput {
 	id?: string;
@@ -12,10 +13,9 @@ interface UpsertWorkflowInput {
 }
 
 export function registerWorkflowTools(
-	context: vscode.ExtensionContext,
+	store: WorkflowStore,
 	run: (workflow: Workflow, token?: vscode.CancellationToken) => Promise<boolean>,
 ): vscode.Disposable {
-	const list = () => structuredClone(context.globalState.get<Workflow[]>('toolkit.workflows', []));
 	const result = (value: unknown) =>
 		new vscode.LanguageModelToolResult([
 			new vscode.LanguageModelTextPart(JSON.stringify(value, undefined, 2)),
@@ -41,9 +41,9 @@ export function registerWorkflowTools(
 	let mutation: Promise<void> = Promise.resolve();
 	return vscode.Disposable.from(
 		vscode.lm.registerTool('listWorkflows', {
-			invoke() {
+			async invoke() {
 				return result(
-					list().map(workflow => ({
+					(await store.list()).map(workflow => ({
 						id: workflow.id,
 						name: workflow.name,
 						description: workflow.description ?? '',
@@ -53,8 +53,8 @@ export function registerWorkflowTools(
 			},
 		}),
 		vscode.lm.registerTool<{ id: string }>('getWorkflow', {
-			invoke(options) {
-				const workflow = list().find(candidate => candidate.id === options.input.id);
+			async invoke(options) {
+				const workflow = (await store.list()).find(candidate => candidate.id === options.input.id);
 				if (!workflow) throw new Error('Workflow was not found. Call listWorkflows first.');
 				return result(parseWorkflow(workflow));
 			},
@@ -74,11 +74,7 @@ export function registerWorkflowTools(
 				const save = mutation.then(async () => {
 					if (token.isCancellationRequested) throw new Error('Workflow save cancelled.');
 					validate(workflow);
-					const workflows = list();
-					const index = workflows.findIndex(candidate => candidate.id === workflow.id);
-					if (index < 0) workflows.push(workflow);
-					else workflows[index] = workflow;
-					await context.globalState.update('toolkit.workflows', workflows);
+					await store.save(workflow);
 				});
 				mutation = save.catch(() => {});
 				await save;
@@ -87,7 +83,7 @@ export function registerWorkflowTools(
 		}),
 		vscode.lm.registerTool<{ id: string }>('runWorkflow', {
 			async invoke(options, token) {
-				const saved = list().find(workflow => workflow.id === options.input.id);
+				const saved = (await store.list()).find(workflow => workflow.id === options.input.id);
 				if (!saved) throw new Error('Workflow was not found. Call listWorkflows first.');
 				const workflow = parseWorkflow(saved);
 				validate(workflow);

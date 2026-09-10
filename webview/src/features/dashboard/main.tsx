@@ -9,7 +9,7 @@ import {
 	Package,
 	Rocket,
 	Terminal,
-} from 'lucide-react';
+} from '../../components/icons';
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
 import { Connections } from '../ssh/management/main';
@@ -26,7 +26,7 @@ const tabs = [
 	{ id: 'launchd', label: 'Launchd', icon: Rocket },
 ] as const;
 function App() {
-	const [active, setActive] = useState<Tab>('ssh');
+	const [active, setActive] = useState<Tab>('workflow');
 	const [connected, setConnected] = useState(false);
 	const [isMac, setIsMac] = useState(false);
 	useEffect(() => {

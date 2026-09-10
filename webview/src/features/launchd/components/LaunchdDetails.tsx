@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { LoaderCircle, X } from 'lucide-react';
+import { LoaderCircle, X } from '../../../components/icons';
 import { IconButton } from '../../../components';
 import type { LaunchAgentDetails } from '../types';
 import { stateText } from '../utils';
@@ -58,7 +58,7 @@ export function LaunchdDetails({
 				</div>
 				{loading ? (
 					<div className="grid min-h-65 place-content-center justify-items-center gap-2.5 text-xs text-(--vscode-descriptionForeground)">
-						<LoaderCircle className="animate-spin" size={22} />
+						<LoaderCircle className="codicon-modifier-spin" size={22} />
 						<span>Reading launchctl state</span>
 					</div>
 				) : (

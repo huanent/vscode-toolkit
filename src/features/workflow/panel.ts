@@ -3,26 +3,32 @@ import * as vscode from 'vscode';
 import { dashboardFeaturePanel } from '../dashboard/panel';
 import { listSshConnections } from '../ssh/connectionService';
 import { parseWorkflow, Workflow } from './workflow';
+import { WorkflowStore } from './store';
 
 export function registerWorkflowPanel(
 	context: vscode.ExtensionContext,
+	store: WorkflowStore,
 	run: (workflow: Workflow) => Promise<void>,
 	showOutput: () => void,
 ): void {
 	let panel: vscode.WebviewPanel | undefined;
 	let busy = false;
-	const workflows = () => context.globalState.get<Workflow[]>('toolkit.workflows', []);
-	const sendState = () =>
-		panel?.webview.postMessage({
-			type: 'state',
-			workflows: workflows(),
-			busy,
-			servers: listSshConnections().map(server => ({
-				id: server.id,
-				name: `${server.name} (${server.host})`,
-			})),
-			cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '',
-		});
+	const sendState = async () => {
+		try {
+			await panel?.webview.postMessage({
+				type: 'state',
+				workflows: await store.list(),
+				busy,
+				servers: listSshConnections().map(server => ({
+					id: server.id,
+					name: `${server.name} (${server.host})`,
+				})),
+				cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '',
+			});
+		} catch (error) {
+			void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+		}
+	};
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			'vscode-toolkit.openWorkflow',
@@ -83,11 +89,7 @@ export function registerWorkflowPanel(
 									)
 										throw new Error('Select an existing SSH connection.');
 								}
-								const saved = workflows();
-								const index = saved.findIndex(candidate => candidate.id === workflow.id);
-								if (index < 0) saved.push(workflow);
-								else saved[index] = workflow;
-								await context.globalState.update('toolkit.workflows', saved);
+								await store.save(workflow);
 								await current.webview.postMessage({ type: 'saved', workflow });
 								await sendState();
 								if (request.type === 'run') {
@@ -106,7 +108,7 @@ export function registerWorkflowPanel(
 										});
 								}
 							} else if (request.type === 'delete' && typeof request.id === 'string') {
-								const target = workflows().find(workflow => workflow.id === request.id);
+								const target = (await store.list()).find(workflow => workflow.id === request.id);
 								if (
 									target &&
 									(await vscode.window.showWarningMessage(
@@ -115,10 +117,7 @@ export function registerWorkflowPanel(
 										'Delete',
 									)) === 'Delete'
 								) {
-									await context.globalState.update(
-										'toolkit.workflows',
-										workflows().filter(workflow => workflow.id !== request.id),
-									);
+									await store.delete(request.id);
 									await current.webview.postMessage({ type: 'deleted', id: request.id });
 									await sendState();
 								}

@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { FolderOpen, Plus, RefreshCw, Play, Square, Info, Pencil, Trash2 } from 'lucide-react';
+import { FolderOpen, Plus, RefreshCw, Play, Square, Info, Pencil, Trash2 } from '../../components/icons';
 import { IconButton, PrimaryButton } from '../../components';
 import { launchdApi as vscode } from '../dashboard/channel';
 import { ConnectionCard, ConnectionGroup } from '../ssh/management/main';
@@ -92,7 +92,7 @@ export function App() {
 						disabled={launchd.busy}
 						onClick={() => launchd.runAction({ type: 'refresh' })}
 					>
-						<RefreshCw className={cn(launchd.busy && 'animate-spin')} size={17} />
+						<RefreshCw className={cn(launchd.busy && 'codicon-modifier-spin')} size={17} />
 					</IconButton>
 					<PrimaryButton
 						className="max-[760px]:size-8.5 max-[760px]:px-0"

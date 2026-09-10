@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { LoaderCircle, Save } from 'lucide-react';
+import { LoaderCircle, Save } from '../../../components/icons';
 import { FieldLabel, PrimaryButton, TextArea, TextInput } from '../../../components';
 import type { LaunchAgentConfig } from '../types';
 
@@ -35,7 +35,7 @@ export function AgentEditor({
 					</h2>
 				</div>
 				<PrimaryButton type="button" disabled={busy} onClick={onSave}>
-					{busy ? <LoaderCircle className="animate-spin" size={16} /> : <Save size={16} />}Save
+					{busy ? <LoaderCircle className="codicon-modifier-spin" size={16} /> : <Save size={16} />}Save
 				</PrimaryButton>
 			</div>
 			<div className="grid grid-cols-2 gap-4 p-4 max-[760px]:grid-cols-1">

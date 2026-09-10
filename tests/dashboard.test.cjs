@@ -16,6 +16,54 @@ function load(file, dependencies = {}) {
 	return loaded.exports;
 }
 
+test('Workflow storage uses JSON files and serializes mutations without losing data', async () => {
+	const files = new Map();
+	let failWrites = false;
+	class FileSystemError extends Error {
+		code = 'FileNotFound';
+	}
+	const { WorkflowStore } = load('src/features/workflow/store.ts', {
+		vscode: {
+			FileSystemError,
+			Uri: { joinPath: (...parts) => parts.join('/') },
+			workspace: { fs: {
+				async createDirectory() {},
+				async readFile(uri) {
+					if (!files.has(uri)) throw new FileSystemError();
+					return files.get(uri);
+				},
+				async writeFile(uri, content) {
+					if (failWrites) throw new Error('Write failed');
+					files.set(uri, content);
+				},
+			} },
+		},
+		'../../storagePath': { getStorageUri: (_context, directory) => `/configured/${directory}` },
+		'./workflow': load('src/features/workflow/workflow.ts'),
+	});
+	const context = {};
+	const store = new WorkflowStore(context);
+	assert.deepEqual(await store.list(), []);
+	failWrites = true;
+	await assert.rejects(store.save({ id: 'failed', name: 'Failed', steps: [] }), /Write failed/);
+	assert.equal(files.size, 0);
+	failWrites = false;
+	await Promise.all([
+		store.save({ id: 'first', name: 'First', steps: [] }),
+		store.save({ id: 'second', name: 'Second', steps: [] }),
+	]);
+	assert.ok(files.has('/configured/workflow/workflows.json'));
+	await store.save({ id: 'second', name: 'Updated', steps: [] });
+	await store.delete('first');
+	assert.deepEqual(await new WorkflowStore(context).list(), [
+		{ id: 'second', name: 'Updated', description: '', steps: [] },
+	]);
+	files.set('/configured/workflow/workflows.json', Buffer.from('{invalid'));
+	await assert.rejects(store.list(), SyntaxError);
+	await assert.rejects(store.save({ id: 'new', name: 'New', steps: [] }), SyntaxError);
+	assert.equal(files.get('/configured/workflow/workflows.json').toString(), '{invalid');
+});
+
 test('Dashboard sidebar routes editing to tabs and isolates credentials', async () => {
 	const commands = new Map();
 	const panels = [];

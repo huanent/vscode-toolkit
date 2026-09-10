@@ -8,14 +8,13 @@ import { writeSftpFile } from '../ssh/sftp';
 import { executeWorkflow, Workflow, WorkflowStep } from './workflow';
 import { registerWorkflowPanel } from './panel';
 import { registerWorkflowTools } from './tools';
-
-const storageKey = 'toolkit.workflows';
+import { WorkflowStore } from './store';
 
 export function registerWorkflow(context: vscode.ExtensionContext): void {
 	const output = vscode.window.createOutputChannel('Toolkit Workflow');
 	let managing = false;
 	let running = false;
-	const save = (workflows: Workflow[]) => context.globalState.update(storageKey, workflows);
+	const store = new WorkflowStore(context);
 
 	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken): Promise<boolean> {
 		if (toolToken?.isCancellationRequested) return false;
@@ -98,8 +97,8 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	}
 
 	async function manage(): Promise<void> {
-		const workflows = structuredClone(context.globalState.get<Workflow[]>(storageKey, []));
 		while (true) {
+			const workflows = await store.list();
 			const selected = await vscode.window.showQuickPick(
 				[
 					{ label: '$(add) New Workflow', workflow: undefined },
@@ -117,8 +116,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 				const name = await input('Workflow name');
 				if (!name) continue;
 				workflow = { id: randomUUID(), name, steps: [] };
-				workflows.push(workflow);
-				await save(workflows);
+				await store.save(workflow);
 			}
 			while (true) {
 				const action = await vscode.window.showQuickPick(
@@ -164,8 +162,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 						)) !== 'Delete'
 					)
 						continue;
-					workflows.splice(workflows.indexOf(workflow), 1);
-					await save(workflows);
+					await store.delete(workflow.id);
 					break;
 				} else {
 					const operation = await vscode.window.showQuickPick(
@@ -186,14 +183,14 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 						}
 					}
 				}
-				await save(workflows);
+				await store.save(workflow);
 			}
 		}
 	}
 
 	context.subscriptions.push(
 		output,
-		registerWorkflowTools(context, run),
+		registerWorkflowTools(store, run),
 		vscode.commands.registerCommand('vscode-toolkit.openWorkflowQuickPick', async () => {
 			if (managing) return;
 			managing = true;
@@ -208,6 +205,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	);
 	registerWorkflowPanel(
 		context,
+		store,
 		async workflow => {
 			await run(workflow);
 		},
