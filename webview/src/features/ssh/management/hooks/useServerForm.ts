@@ -4,7 +4,7 @@ import { sshApi as vscode, subscribe } from '../../../dashboard/channel';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
-} from '../../../../../../shared/protocol/ssh/form';
+} from '../../../../../../src/features/ssh/formProtocol';
 
 const emptyValues: ServerFormValues = {
 	location: '',

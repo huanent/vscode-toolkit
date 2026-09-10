@@ -159,6 +159,9 @@ export function ConnectionCard({
 }
 
 export function ConnectionGroup({ name, count, children }: { name: string; count: number; children: ReactNode }) {
+	if (!name) {
+		return <ul className="m-0 grid list-none grid-cols-1 p-0">{children}</ul>;
+	}
 	return (
 		<details className="group mb-1" aria-label={name}>
 			<summary className="flex cursor-pointer list-none items-center gap-1 rounded-xs px-1 py-1 text-xs font-semibold hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:outline-(--vscode-focusBorder) [&::-webkit-details-marker]:hidden">
@@ -271,7 +274,7 @@ export function Connections({
 			) : (
 				<div className="space-y-1">
 					{Array.from(groups, ([group, connections]) => (
-						<ConnectionGroup key={group} name={group || 'Ungrouped'} count={connections.length}>
+						<ConnectionGroup key={group} name={group} count={connections.length}>
 								{connections.map(server => (
 									<ConnectionCard
 										key={server.id}

@@ -1,7 +1,7 @@
 import type {
 	ExplorerRequest,
 	PersistedExplorerState,
-} from '../../../../../../shared/protocol/explorer/index';
+} from '../../../../../../src/features/explorer/protocol';
 
 const api = acquireVsCodeApi<PersistedExplorerState>();
 

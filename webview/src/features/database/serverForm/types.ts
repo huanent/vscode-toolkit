@@ -1,4 +1,4 @@
-import type { AuthType, ProxyMode } from '../../../../../shared/protocol/database/form';
+import type { AuthType, ProxyMode } from '../../../../../src/features/database/formProtocol';
 
 export interface ServerFormValues {
 	location: string;

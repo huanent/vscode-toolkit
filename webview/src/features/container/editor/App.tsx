@@ -20,7 +20,7 @@ import { IconButton } from '../../../components/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
 import { ContainerEditDialog } from './ContainerEditDialog';
 import { Message } from './Message';
-import type { ResourceType } from '../../../../../shared/protocol/containers';
+import type { ResourceType } from '../../../../../src/features/container/editorProtocol';
 
 const resources: { type: ResourceType; label: string; icon: typeof Boxes }[] = [
 	{ type: 'containers', label: 'Containers', icon: Boxes },

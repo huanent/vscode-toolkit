@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ExplorerViewState } from '../../../shared/protocol/explorer/index';
+import type { ExplorerViewState } from './protocol';
 
 export class ExplorerDocument implements vscode.CustomDocument {
 	latestViewState: ExplorerViewState;

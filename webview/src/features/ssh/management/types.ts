@@ -2,7 +2,7 @@ import type {
 	AuthType,
 	ProxyMode,
 	ServerCommand,
-} from '../../../../../shared/protocol/ssh/form';
+} from '../../../../../src/features/ssh/formProtocol';
 
 export interface ServerFormValues {
 	location: string;

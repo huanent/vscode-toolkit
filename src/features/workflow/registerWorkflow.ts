@@ -30,7 +30,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 				`Run "${workflow.name}"?`,
 				{
 					modal: true,
-					detail: `${workflow.steps.length} steps. Commands run with your permissions.${workflow.steps.some(step => step.type === 'sftp') ? ' Uploads may overwrite remote files.' : ''}`,
+					detail: workflow.steps.map((step, index) => `${index + 1}. ${step.name}`).join('\n'),
 				},
 				'Run',
 			);

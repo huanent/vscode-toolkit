@@ -3,7 +3,7 @@ import { PrimaryButton, SecondaryButton } from '../../../../components/button';
 import { Dialog } from '../../../../components/dialog';
 import { FieldLabel } from '../../../../components/field';
 import { TextArea, TextInput } from '../../../../components/input';
-import type { ServerCommand } from '../../../../../../shared/protocol/ssh/form';
+import type { ServerCommand } from '../../../../../../src/features/ssh/formProtocol';
 
 export function CommandDialog({
 	command,

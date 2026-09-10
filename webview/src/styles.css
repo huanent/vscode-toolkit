@@ -42,6 +42,7 @@
 	:root:has(> body[data-webview='dashboard']),
 	body[data-webview='dashboard'] {
 		background: transparent;
+		color-scheme: normal;
 	}
 
 	button,

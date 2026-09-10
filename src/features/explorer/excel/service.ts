@@ -1,7 +1,7 @@
 import { Workbook, type Cell } from 'exceljs';
 import { Readable } from 'stream';
 import * as vscode from 'vscode';
-import type { SpreadsheetSheet } from '../../../../shared/protocol/explorer/excel';
+import type { SpreadsheetSheet } from './protocol';
 
 const maxPreviewColumns = 100;
 

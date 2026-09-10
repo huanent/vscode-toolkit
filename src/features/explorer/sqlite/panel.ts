@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getDisplayName } from '../shared/fileEntry';
 import { getExplorerPreviewWebviewHtml } from '../webviewHtml';
 import { SqliteSession } from './service';
-import type { SqliteRequest } from '../../../../shared/protocol/explorer/sqlite';
+import type { SqliteRequest } from './protocol';
 
 export function openSqlitePanel(context: vscode.ExtensionContext, uri: vscode.Uri): void {
 	const name = getDisplayName(uri);

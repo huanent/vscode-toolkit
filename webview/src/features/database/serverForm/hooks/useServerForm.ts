@@ -4,7 +4,7 @@ import { formTransport } from '../../../dashboard/formTransport';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
-} from '../../../../../../shared/protocol/database/form';
+} from '../../../../../../src/features/database/formProtocol';
 
 const emptyValues: ServerFormValues = {
 	location: '',
