@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
+import { dashboardFeaturePanel } from '../dashboard/panel';
 import { openServerConnection } from './editor';
 import { Server } from './server';
 import { ServerCredentials, ServerStore } from './serverStore';
 import { handleMessage, ServerFormWebviewMessage } from './serverForm';
 import { exportServer, importServers } from './serverTransfer';
-import { getWebviewHtml } from './webview';
 export function registerManagementFeature(
 	context: vscode.ExtensionContext,
 	store: ServerStore,
 ): vscode.Disposable {
 	const name = 'SSH';
 	const serverType = 'ssh';
-	const icon = 'terminal';
 	let panel: vscode.WebviewPanel | undefined;
 	let pendingForm:
 		| {
@@ -24,9 +23,11 @@ export function registerManagementFeature(
 		| undefined;
 	const command = vscode.commands.registerCommand(
 		`vscode-toolkit.open${name}`,
-		async (request?: { server?: Server; duplicate?: boolean }) => {
+		async (request?: { server?: Server; duplicate?: boolean; background?: boolean }) => {
+			const background = request?.background;
+			if (background) request = undefined;
 			if (panel) {
-				panel.reveal();
+				if (!background) panel.reveal();
 				if (request) {
 					if (requestForm) await requestForm(request);
 					else pendingForm = request;
@@ -34,18 +35,8 @@ export function registerManagementFeature(
 				return;
 			}
 			pendingForm = request;
-			const current = vscode.window.createWebviewPanel(
-				`vscode-toolkit.${name.toLowerCase()}.management`,
-				name,
-				vscode.ViewColumn.Active,
-				{
-					enableScripts: true,
-					retainContextWhenHidden: true,
-					localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
-				},
-			);
+			const current = dashboardFeaturePanel('ssh', background);
 			panel = current;
-			current.iconPath = new vscode.ThemeIcon(icon);
 			let sequence = 0;
 			let form:
 				| {
@@ -98,6 +89,7 @@ export function registerManagementFeature(
 							if (!form?.inProgress) {
 								form = undefined;
 								sequence++;
+								await current.webview.postMessage({ type: 'formClosed' });
 							}
 							return;
 						}
@@ -202,12 +194,6 @@ export function registerManagementFeature(
 				pendingForm = undefined;
 				sequence++;
 			});
-			current.webview.html = getWebviewHtml(
-				current.webview,
-				context.extensionUri,
-				'sshManagement',
-				name,
-			);
 		},
 	);
 	return vscode.Disposable.from(command, { dispose: () => panel?.dispose() });

@@ -4,7 +4,6 @@ import { IconButton } from '../../../components';
 import type { LaunchAgentDetails } from '../types';
 import { stateText } from '../utils';
 import { Eyebrow } from './AgentEditor';
-import { StatusDot } from './AgentList';
 
 export function LaunchdDetails({
 	loading,
@@ -62,7 +61,17 @@ function DetailsContent({ details }: { details: LaunchAgentDetails }) {
 	return (
 		<div className="p-4">
 			<div className="mb-4 flex items-center gap-2 rounded-xs border border-(--vscode-panel-border) bg-(--vscode-editorWidget-background) p-3 text-sm">
-				<StatusDot state={details.state} />
+				<span
+					aria-hidden="true"
+					className={cn(
+						'size-2 shrink-0 rounded-full',
+						details.state === 'running'
+							? 'bg-(--vscode-testing-iconPassed)'
+							: details.state === 'error'
+								? 'bg-(--vscode-errorForeground)'
+								: 'bg-(--vscode-descriptionForeground)',
+					)}
+				/>
 				<strong>{stateText(details.state)}</strong>
 			</div>
 			<dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-xs border border-(--vscode-panel-border) bg-(--vscode-tree-tableColumnsBorder) max-[760px]:grid-cols-1">
@@ -105,12 +114,8 @@ function Detail({
 				wide && 'col-span-2 max-[760px]:col-auto',
 			)}
 		>
-			<dt className="mb-1 text-xs font-medium text-(--vscode-descriptionForeground)">
-				{label}
-			</dt>
-			<dd className="m-0 font-(--vscode-editor-font-family) text-sm wrap-anywhere">
-				{value}
-			</dd>
+			<dt className="mb-1 text-xs font-medium text-(--vscode-descriptionForeground)">{label}</dt>
+			<dd className="m-0 font-(--vscode-editor-font-family) text-sm wrap-anywhere">{value}</dd>
 		</div>
 	);
 }

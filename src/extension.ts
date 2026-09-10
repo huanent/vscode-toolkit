@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FeatureTreeProvider } from './features/featureTreeProvider';
+import { registerDashboard } from './features/dashboard/panel';
 import { registerSourceControl } from './features/git/sourceControl';
 import { generateGitignore } from './features/git/gitignoreService';
 import { registerHttpClient } from './features/http/httpClient';
@@ -17,13 +17,13 @@ import { registerContainer } from './features/container/registerContainer';
 import { registerWorkflow } from './features/workflow/registerWorkflow';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-	const featureTree = new FeatureTreeProvider();
+	registerDashboard(context);
 
 	context.subscriptions.push(
-		featureTree,
-		vscode.window.registerTreeDataProvider(FeatureTreeProvider.viewType, featureTree),
-		vscode.commands.registerCommand('vscode-toolkit.openLaunchd', () =>
-			LaunchdPanel.show(context.extensionUri),
+		vscode.commands.registerCommand(
+			'vscode-toolkit.openLaunchd',
+			(request?: { background?: boolean }) =>
+				LaunchdPanel.show(context.extensionUri, request?.background),
 		),
 		vscode.commands.registerCommand('vscode-toolkit.generateGitignore', () =>
 			generateGitignore(context.extensionUri),

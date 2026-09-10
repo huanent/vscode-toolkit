@@ -1,78 +1,187 @@
 import { cn } from 'cn';
-import { FolderOpen, Plus, RefreshCw, Rocket } from 'lucide-react';
-import { IconButton, PageHeading, PrimaryButton } from '../../components';
-import { vscode } from '../../vscodeApi';
+import { useEffect, useState } from 'react';
+import { FolderOpen, Plus, RefreshCw, Play, Square, Info, Pencil, Trash2 } from 'lucide-react';
+import { IconButton, PrimaryButton } from '../../components';
+import { launchdApi as vscode } from '../dashboard/channel';
+import { ConnectionCard } from '../ssh/management/main';
+import { Dialog } from '../../components/dialog';
 import { AgentEditor } from './components/AgentEditor';
-import { AgentList } from './components/AgentList';
 import { LaunchdDetails } from './components/LaunchdDetails';
 import { useLaunchd } from './hooks/useLaunchd';
 
-export function App() {
+export function App({
+	favorites = [],
+	onFavorite = () => {},
+}: {
+	favorites?: string[];
+	onFavorite?: (id: string) => void;
+}) {
 	const launchd = useLaunchd();
+	const [query, setQuery] = useState('');
+	const [editing, setEditing] = useState(false);
+	const [dirty, setDirty] = useState(false);
+	useEffect(() => {
+		const open = (event: Event) => {
+			const detail = (event as CustomEvent).detail;
+			const agent = launchd.agents.find(item => item.fileName === detail.id);
+			if (detail.tab !== 'launchd' || !agent || launchd.busy) return;
+			if (dirty && !window.confirm('Discard unsaved changes?')) return;
+			launchd.selectAgent(agent);
+			setEditing(true);
+			setDirty(false);
+		};
+		window.addEventListener('dashboardOpenItem', open);
+		return () => window.removeEventListener('dashboardOpenItem', open);
+	}, [launchd.agents, launchd.busy, dirty]);
+	const agents = launchd.agents.filter(agent =>
+		`${agent.label} ${agent.program} ${agent.state}`.toLowerCase().includes(query.toLowerCase()),
+	);
 	return (
-		<main className="mx-auto w-[min(1220px,calc(100%-40px))] py-6 pb-10 max-[760px]:w-[calc(100%-20px)] max-[760px]:pt-4">
-			<PageHeading
-				icon={<Rocket size={22} aria-hidden="true" />}
-				title="Launchd"
-				description="Manage per-user background services in ~/Library/LaunchAgents."
-				accentClassName="text-(--vscode-charts-green)"
-				actions={
-					<div className="flex shrink-0 items-center gap-2">
-						<IconButton
-							type="button"
-							title="Open LaunchAgents folder"
-							aria-label="Open LaunchAgents folder"
-							onClick={() => vscode.postMessage({ type: 'openDirectory' })}
-						>
-							<FolderOpen size={17} />
-						</IconButton>
-						<IconButton
-							type="button"
-							title="Refresh status"
-							aria-label="Refresh status"
-							disabled={launchd.busy}
-							onClick={() => launchd.runAction({ type: 'refresh' })}
-						>
-							<RefreshCw className={cn(launchd.busy && 'animate-spin')} size={17} />
-						</IconButton>
-						<PrimaryButton
-							className="max-[760px]:size-8.5 max-[760px]:px-0"
-							type="button"
-							aria-label="New agent"
-							onClick={launchd.createNew}
-						>
-							<Plus size={16} />
-							<span className="max-[760px]:hidden">New agent</span>
-						</PrimaryButton>
-					</div>
-				}
-			/>
+		<section className="py-4">
+			<header className="mb-4 flex flex-wrap items-center gap-2">
+				<h2 className="mr-auto text-sm font-semibold">Launchd</h2>
+				<input
+					aria-label="Search agents"
+					placeholder="Search agents"
+					className="h-8 min-w-0 rounded-xs bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground)"
+					value={query}
+					onChange={event => setQuery(event.target.value)}
+				/>
+				<div className="flex shrink-0 items-center gap-2">
+					<IconButton
+						type="button"
+						title="Open LaunchAgents folder"
+						aria-label="Open LaunchAgents folder"
+						onClick={() => vscode.postMessage({ type: 'openDirectory' })}
+					>
+						<FolderOpen size={17} />
+					</IconButton>
+					<IconButton
+						type="button"
+						title="Refresh status"
+						aria-label="Refresh status"
+						disabled={launchd.busy}
+						onClick={() => launchd.runAction({ type: 'refresh' })}
+					>
+						<RefreshCw className={cn(launchd.busy && 'animate-spin')} size={17} />
+					</IconButton>
+					<PrimaryButton
+						className="max-[760px]:size-8.5 max-[760px]:px-0"
+						type="button"
+						aria-label="New agent"
+						disabled={launchd.busy}
+						onClick={() => {
+							launchd.createNew();
+							setEditing(true);
+							setDirty(false);
+						}}
+					>
+						<Plus size={16} />
+						<span className="max-[760px]:hidden">New agent</span>
+					</PrimaryButton>
+				</div>
+			</header>
 
 			{launchd.error && <Message kind="error">{launchd.error}</Message>}
 			{launchd.notice && <Message kind="success">{launchd.notice}</Message>}
 
-			<div className="grid min-h-155 grid-cols-[minmax(260px,31%)_minmax(0,1fr)] overflow-hidden rounded-[4px] border border-(--vscode-panel-border) bg-(--vscode-editor-background) shadow-sm max-[760px]:grid-cols-1">
-				<AgentList
-					agents={launchd.agents}
-					selectedFileName={launchd.selectedFileName}
-					busy={launchd.busy}
-					detailsLoading={launchd.detailsLoading}
-					onSelect={launchd.selectAgent}
-					onAction={launchd.runAction}
-					onDetails={launchd.showDetails}
-					onRemove={launchd.remove}
-				/>
-				<AgentEditor
-					draft={launchd.draft}
-					argumentsText={launchd.argumentsText}
-					environmentText={launchd.environmentText}
-					busy={launchd.busy}
-					onArgumentsChange={launchd.setArgumentsText}
-					onEnvironmentChange={launchd.setEnvironmentText}
-					onUpdate={launchd.update}
-					onSave={launchd.save}
-				/>
-			</div>
+			{launchd.busy && (
+				<p role="status" className="text-xs">
+					Loading...
+				</p>
+			)}
+			{!launchd.busy && !agents.length && (
+				<p role="status" className="py-6 text-center text-xs text-(--vscode-descriptionForeground)">
+					{query ? 'No matching agents.' : 'No agents yet.'}
+				</p>
+			)}
+			{['running', 'loaded', 'unloaded', 'error'].map(state => {
+				const group = agents.filter(agent => agent.state === state);
+				return (
+					group.length > 0 && (
+						<section key={state} className="mb-4">
+							<h3 className="mb-1.5 text-xs font-semibold capitalize text-(--vscode-descriptionForeground)">
+								{state}
+							</h3>
+							<ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,180px),1fr))] gap-2 p-0">
+								{group.map(agent => (
+									<ConnectionCard
+										key={agent.fileName}
+										server={{
+											id: agent.fileName,
+											name: agent.label,
+											address: agent.program || agent.programArguments[0] || agent.fileName,
+											group: state,
+											kind: 'Launchd',
+										}}
+										favorite={favorites.includes(agent.fileName)}
+										onFavorite={() => onFavorite(agent.fileName)}
+										actions={[
+											{ type: 'edit', label: 'Edit', icon: Pencil, disabled: launchd.busy },
+											{
+												type: 'start',
+												label: 'Start',
+												icon: Play,
+												disabled: launchd.busy || state === 'running',
+											},
+											{
+												type: 'stop',
+												label: 'Stop',
+												icon: Square,
+												disabled: launchd.busy || state === 'unloaded',
+											},
+											{
+												type: 'details',
+												label: 'Details',
+												icon: Info,
+												disabled: launchd.detailsLoading,
+											},
+											{ type: 'delete', label: 'Delete', icon: Trash2, disabled: launchd.busy },
+										]}
+										onAction={type => {
+											if (launchd.busy) return;
+											if (type === 'connect' || type === 'edit') {
+												launchd.selectAgent(agent);
+												setEditing(true);
+												setDirty(false);
+											} else if (type === 'details') launchd.showDetails(agent);
+											else if (type === 'delete') launchd.remove(agent);
+											else
+												launchd.runAction({ type, fileName: agent.fileName, label: agent.label });
+										}}
+									/>
+								))}
+							</ul>
+						</section>
+					)
+				);
+			})}
+			{editing && (
+				<Dialog
+					title="LaunchAgent"
+					wide
+					onClose={() => {
+						if (launchd.busy || (dirty && !window.confirm('Discard unsaved changes?'))) return;
+						setEditing(false);
+						setDirty(false);
+					}}
+				>
+					<div onChange={() => setDirty(true)}>
+						<AgentEditor
+							draft={launchd.draft}
+							argumentsText={launchd.argumentsText}
+							environmentText={launchd.environmentText}
+							busy={launchd.busy}
+							onArgumentsChange={launchd.setArgumentsText}
+							onEnvironmentChange={launchd.setEnvironmentText}
+							onUpdate={launchd.update}
+							onSave={launchd.save}
+						/>
+					</div>
+					{launchd.error && <Message kind="error">{launchd.error}</Message>}
+					{launchd.notice && <Message kind="success">{launchd.notice}</Message>}
+				</Dialog>
+			)}
 
 			{(launchd.detailsLoading || launchd.details) && (
 				<LaunchdDetails
@@ -81,7 +190,7 @@ export function App() {
 					onClose={launchd.closeDetails}
 				/>
 			)}
-		</main>
+		</section>
 	);
 }
 
@@ -92,10 +201,7 @@ function Message({ kind, children }: { kind: 'error' | 'success'; children: Reac
 			: 'border-(--vscode-testing-iconPassed) bg-(--vscode-editorWidget-background)';
 	return (
 		<div
-			className={cn(
-				'mb-3.5 rounded-[2px] border border-l-[3px] px-3 py-2.5 text-xs',
-				kindClassName,
-			)}
+			className={cn('mb-3.5 rounded-xs border border-l-2 px-3 py-2.5 text-xs', kindClassName)}
 			role={kind === 'error' ? 'alert' : 'status'}
 		>
 			{children}

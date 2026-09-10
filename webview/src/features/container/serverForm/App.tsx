@@ -8,14 +8,14 @@ import { ContainerFields } from './components/ContainerFields';
 import { ProxyFields } from './components/ProxyFields';
 import { useServerForm } from './hooks/useServerForm';
 
-export function App() {
-	const form = useServerForm();
+export function App({ sessionId, onClose }: { sessionId?: number; onClose?: () => void }) {
+	const form = useServerForm(sessionId, onClose);
 	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(
 		'connection',
 	);
 	if (!form.model) {
 		return (
-			<main className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">
+			<main className="grid min-h-32 place-items-center text-sm text-(--vscode-descriptionForeground)">
 				Loading...
 			</main>
 		);
@@ -33,7 +33,6 @@ export function App() {
 
 	return (
 		<form
-			className="min-h-screen"
 			onSubmit={event => {
 				event.preventDefault();
 				form.save();

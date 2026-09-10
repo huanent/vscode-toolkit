@@ -4,9 +4,17 @@ A developer toolbox for VS Code: AI chat, file browsing, HTTP requests, SSH, dat
 
 ## Getting Started
 
-Click **Toolkit** in the Activity Bar to open a tool, or search for `Toolkit` in the Command Palette. Script runners, package scripts, and Git actions are also available from the VS Code Explorer context menu.
+Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard** from the Command Palette. Script runners, package scripts, and Git actions are also available from the VS Code Explorer context menu.
 
 ## Features
+
+### Dashboard
+
+- Open Chat, Explorer, and HTTP Client from the quick navigation bar.
+- Pin SSH, Workflow, Database, Container, and Launchd items to Favorites using their star buttons.
+- Manage tools in five tabs, with searchable card lists, context menus, and inline editor dialogs.
+- Favorites persist across sessions; existing tool commands select the corresponding Dashboard tab.
+- Launchd is available on macOS only. Active connections and resource editors still open in separate editor tabs.
 
 ### Chat
 

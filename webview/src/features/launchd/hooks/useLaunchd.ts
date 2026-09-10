@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { vscode } from '../../../vscodeApi';
+import { launchdApi as vscode, subscribe } from '../../dashboard/channel';
 import type {
 	LaunchAgent,
 	LaunchAgentConfig,
@@ -43,14 +43,15 @@ export function useLaunchd() {
 				setDetailsLoading(false);
 				return;
 			}
+			if (event.data.type !== 'launchdAgents') return;
 			setAgents(event.data.agents);
 			setNotice(event.data.message);
 			setError(undefined);
 			setBusy(false);
 		};
-		window.addEventListener('message', handleMessage);
+		const unsubscribe = subscribe('launchd', handleMessage);
 		vscode.postMessage({ type: 'ready' });
-		return () => window.removeEventListener('message', handleMessage);
+		return unsubscribe;
 	}, []);
 
 	useEffect(() => {

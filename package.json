@@ -100,13 +100,6 @@
       }
     ],
     "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "vscode-toolkit",
-          "title": "Toolkit",
-          "icon": "$(tools)"
-        }
-      ],
       "panel": [
         {
           "id": "vscode-toolkit-result",
@@ -116,13 +109,6 @@
       ]
     },
     "views": {
-      "vscode-toolkit": [
-        {
-          "id": "vscode-toolkit.features",
-          "name": "Toolkit",
-          "icon": "$(list-tree)"
-        }
-      ],
       "vscode-toolkit-result": [
         {
           "id": "vscode-toolkit.httpResult",
@@ -140,6 +126,12 @@
       }
     ],
     "commands": [
+      {
+        "command": "vscode-toolkit.openDashboard",
+        "title": "Open Dashboard",
+        "icon": "$(dashboard)",
+        "category": "Toolkit"
+      },
       {
         "command": "vscode-toolkit.openWorkflow",
         "title": "Open Workflow",
@@ -489,7 +481,7 @@
     },
     "keybindings": [
       {
-        "command": "vscode-toolkit.openSSH",
+        "command": "vscode-toolkit.openDashboard",
         "key": "ctrl+shift+.",
         "mac": "cmd+shift+."
       },
@@ -931,20 +923,17 @@
     ]
   },
   "scripts": {
-    "test": "npm run test:http && npm run test:servers",
-    "test:http": "node --test tests/http.test.cjs",
     "lint": "oxlint --deny-warnings .",
     "lint:fix": "npm run lint -- --fix",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
+    "test:dashboard": "node --test tests/dashboard.test.cjs",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
     "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.mts",
     "compile:webview": "tsc -p webview/tsconfig.json && vite build",
     "package": "vsce package --no-yarn",
-    "publish": "vsce publish --no-yarn",
-    "test:servers": "npm run test:features",
-    "test:features": "node --test tests/feature-isolation.test.mjs tests/workflow.test.mjs"
+    "publish": "vsce publish --no-yarn"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

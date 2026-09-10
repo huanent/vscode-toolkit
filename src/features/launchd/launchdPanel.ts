@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
+import { dashboardFeaturePanel } from '../dashboard/panel';
 import { homedir } from 'node:os';
-import { getWebviewHtml } from '../../webview';
 import { LaunchAgentConfig, LaunchdService } from './launchdService';
 
 type WebviewMessage =
@@ -18,39 +18,21 @@ export class LaunchdPanel {
 	private static currentPanel: LaunchdPanel | undefined;
 	private readonly service = new LaunchdService();
 
-	static show(extensionUri: vscode.Uri): void {
+	static show(extensionUri: vscode.Uri, background = false): void {
 		if (process.platform !== 'darwin') {
 			void vscode.window.showInformationMessage('Launchd is only available on macOS.');
 			return;
 		}
 		if (LaunchdPanel.currentPanel) {
-			LaunchdPanel.currentPanel.panel.reveal(vscode.ViewColumn.One);
+			if (!background) LaunchdPanel.currentPanel.panel.reveal(vscode.ViewColumn.One);
 			return;
 		}
 
-		const panel = vscode.window.createWebviewPanel(
-			LaunchdPanel.viewType,
-			'Launchd',
-			vscode.ViewColumn.One,
-			{
-				enableScripts: true,
-				localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'media')],
-				retainContextWhenHidden: true,
-			},
-		);
-		LaunchdPanel.currentPanel = new LaunchdPanel(panel, extensionUri);
+		const panel = dashboardFeaturePanel('launchd', background);
+		LaunchdPanel.currentPanel = new LaunchdPanel(panel);
 	}
 
-	private constructor(
-		private readonly panel: vscode.WebviewPanel,
-		extensionUri: vscode.Uri,
-	) {
-		panel.iconPath = new vscode.ThemeIcon('server-process');
-		panel.webview.html = getWebviewHtml(panel.webview, extensionUri, {
-			entry: 'launchd',
-			title: 'Launchd',
-			allowImages: true,
-		});
+	private constructor(private readonly panel: vscode.WebviewPanel) {
 		panel.onDidDispose(() => {
 			LaunchdPanel.currentPanel = undefined;
 		});

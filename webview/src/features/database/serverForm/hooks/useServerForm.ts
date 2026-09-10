@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ServerFormValues } from '../types';
-import { vscode } from '../../../../vscodeApi';
+import { formTransport } from '../../../dashboard/formTransport';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
@@ -27,7 +27,8 @@ const emptyValues: ServerFormValues = {
 	database: '',
 };
 
-export function useServerForm() {
+export function useServerForm(sessionId?: number, onClose?: () => void) {
+	const vscode = formTransport('database', sessionId);
 	const [model, setModel] = useState<ServerFormModel>();
 	const [values, setValues] = useState(emptyValues);
 	const [error, setError] = useState('');
@@ -75,10 +76,10 @@ export function useServerForm() {
 					break;
 			}
 		};
-		window.addEventListener('message', handleMessage);
+		const unsubscribe = vscode.subscribe(handleMessage, onClose);
 		vscode.postMessage({ type: 'ready' });
-		return () => window.removeEventListener('message', handleMessage);
-	}, []);
+		return unsubscribe;
+	}, [sessionId, onClose]);
 
 	const update = <Key extends keyof ServerFormValues>(key: Key, value: ServerFormValues[Key]) => {
 		setError('');

@@ -1,4 +1,3 @@
-import { createRoot } from 'react-dom/client';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
 	ArrowDown,
@@ -13,7 +12,9 @@ import {
 } from 'lucide-react';
 import { cn } from 'cn';
 import { TextInput, TextArea, SelectInput } from '../../components/input';
-import { vscode } from '../../vscodeApi';
+import { workflowApi as vscode, subscribe } from '../dashboard/channel';
+import { ConnectionCard } from '../ssh/management/main';
+import { Dialog } from '../../components/dialog';
 import type { Workflow, WorkflowStep } from '../../../../src/features/workflow/workflow';
 
 type State = {
@@ -57,7 +58,13 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 	);
 }
 
-function App() {
+export function App({
+	favorites,
+	onFavorite,
+}: {
+	favorites: string[];
+	onFavorite: (id: string) => void;
+}) {
 	const [state, setState] = useState<State>({ workflows: [], servers: [], cwd: '', busy: false });
 	const [draft, setDraft] = useState<Workflow>();
 	const [dirty, setDirty] = useState(false);
@@ -98,9 +105,9 @@ function App() {
 				setDirty(true);
 			}
 		};
-		window.addEventListener('message', receive);
+		const unsubscribe = subscribe('workflow', receive);
 		vscode.postMessage({ type: 'ready' });
-		return () => window.removeEventListener('message', receive);
+		return unsubscribe;
 	}, []);
 	const locked = state.busy || pending;
 	const change = (next: Workflow) => {
@@ -140,8 +147,17 @@ function App() {
 		setPending(true);
 		vscode.postMessage({ type, workflow: draft });
 	};
+	useEffect(() => {
+		const open = (event: Event) => {
+			const detail = (event as CustomEvent).detail;
+			const workflow = state.workflows.find(item => item.id === detail.id);
+			if (detail.tab === 'workflow' && workflow && !locked) select(workflow);
+		};
+		window.addEventListener('dashboardOpenItem', open);
+		return () => window.removeEventListener('dashboardOpenItem', open);
+	}, [state.workflows, dirty, locked]);
 	return (
-		<div className="flex min-h-screen flex-col bg-(--vscode-editor-background) text-(--vscode-foreground)">
+		<div className="flex flex-col py-4 text-(--vscode-foreground)">
 			<header className="flex h-12 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-4">
 				<ListOrdered size={18} />
 				<h1 className="text-sm font-semibold">Workflow</h1>
@@ -152,8 +168,8 @@ function App() {
 					<Terminal size={16} />
 				</IconButton>
 			</header>
-			<div className="grid flex-1 grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)]">
-				<aside className="border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) p-3 md:border-r md:border-b-0">
+			<div>
+				<section className="py-3">
 					<div className="mb-3 flex items-center gap-2">
 						<TextInput
 							aria-label="Search workflows"
@@ -169,254 +185,267 @@ function App() {
 							<Plus size={16} />
 						</IconButton>
 					</div>
-					<nav className="max-h-48 overflow-auto md:max-h-none" aria-label="Workflows">
+					<ul
+						className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,180px),1fr))] gap-2 p-0"
+						aria-label="Workflows"
+					>
 						{state.workflows
 							.filter(workflow => workflow.name.toLowerCase().includes(search.toLowerCase()))
 							.map(workflow => (
-								<button
+								<ConnectionCard
 									key={workflow.id}
-									disabled={locked}
-									onClick={() => select(workflow)}
-									className={cn(
-										'mb-1 flex w-full items-center gap-2 rounded-xs px-2 py-2 text-left text-xs hover:bg-(--vscode-list-hoverBackground)',
-										draft?.id === workflow.id &&
-											'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
-									)}
-								>
-									<ListOrdered size={14} className="shrink-0" />
-									<span className="min-w-0 flex-1 wrap-break-word">{workflow.name}</span>
-									<span>{workflow.steps.length}</span>
-								</button>
+									server={{
+										id: workflow.id,
+										name: workflow.name,
+										address: workflow.description || `${workflow.steps.length} steps`,
+										group: '',
+										kind: 'Workflow',
+									}}
+									favorite={favorites.includes(workflow.id)}
+									onFavorite={() => onFavorite(workflow.id)}
+									actions={[
+										{ type: 'edit', label: 'Edit', icon: ListOrdered, disabled: locked },
+										{ type: 'run', label: 'Run', icon: Play, disabled: locked },
+										{ type: 'delete', label: 'Delete', icon: Trash2, disabled: locked },
+									]}
+									onAction={type => {
+										if (locked) return;
+										if (type === 'run') vscode.postMessage({ type: 'run', workflow });
+										else if (type === 'delete')
+											vscode.postMessage({ type: 'delete', id: workflow.id });
+										else select(workflow);
+									}}
+								/>
 							))}
-					</nav>
+					</ul>
 					{!loaded && <p className="text-xs">Loading...</p>}
-				</aside>
-				<main className="min-w-0 p-4 md:p-6">
-					{nextDraft && (
-						<div
-							role="alert"
-							className="mb-4 flex flex-wrap items-center gap-2 border border-(--vscode-panel-border) p-3 text-xs"
-						>
-							<span className="mr-auto">Discard unsaved changes?</span>
-							<button
-								className={buttonClass}
-								onClick={() => {
-									setDraft(structuredClone(nextDraft));
-									setNextDraft(undefined);
-									setDirty(false);
-									setError('');
+					{loaded &&
+						!state.workflows.some(workflow =>
+							workflow.name.toLowerCase().includes(search.toLowerCase()),
+						) && (
+							<p
+								role="status"
+								className="py-6 text-center text-xs text-(--vscode-descriptionForeground)"
+							>
+								{search ? 'No matching workflows.' : 'No workflows yet.'}
+							</p>
+						)}
+					{error && !draft && (
+						<p role="alert" className="text-xs text-(--vscode-errorForeground)">
+							{error}
+						</p>
+					)}
+				</section>
+				{draft && (
+					<Dialog
+						title="Workflow"
+						wide
+						onClose={() => {
+							if (locked || (dirty && !window.confirm('Discard unsaved changes?'))) return;
+							setDraft(undefined);
+							setDirty(false);
+						}}
+					>
+						{nextDraft && (
+							<div
+								role="alert"
+								className="mb-4 flex flex-wrap items-center gap-2 border border-(--vscode-panel-border) p-3 text-xs"
+							>
+								<span className="mr-auto">Discard unsaved changes?</span>
+								<button
+									className={buttonClass}
+									onClick={() => {
+										setDraft(structuredClone(nextDraft));
+										setNextDraft(undefined);
+										setDirty(false);
+										setError('');
+									}}
+								>
+									Discard
+								</button>
+								<button className={buttonClass} onClick={() => setNextDraft(undefined)}>
+									Keep Editing
+								</button>
+							</div>
+						)}
+						{error && (
+							<div
+								role="alert"
+								className="mb-4 wrap-break-word border-l-2 border-(--vscode-errorForeground) bg-(--vscode-inputValidation-errorBackground) p-3 text-xs"
+							>
+								{error}
+							</div>
+						)}
+						{draft ? (
+							<form
+								onSubmit={event => {
+									event.preventDefault();
+									submit('save');
 								}}
 							>
-								Discard
-							</button>
-							<button className={buttonClass} onClick={() => setNextDraft(undefined)}>
-								Keep Editing
-							</button>
-						</div>
-					)}
-					{error && (
-						<div
-							role="alert"
-							className="mb-4 wrap-break-word border-l-2 border-(--vscode-errorForeground) bg-(--vscode-inputValidation-errorBackground) p-3 text-xs"
-						>
-							{error}
-						</div>
-					)}
-					{draft ? (
-						<form
-							onSubmit={event => {
-								event.preventDefault();
-								submit('save');
-							}}
-						>
-							<fieldset disabled={locked} className="min-w-0">
-								<div className="mb-5 flex flex-wrap items-end gap-2">
-									<div className="min-w-40 flex-1">
-										<Field label="Workflow name">
-											<TextInput
-												required
-												value={draft.name}
-												onChange={event => change({ ...draft, name: event.target.value })}
+								<fieldset disabled={locked} className="min-w-0">
+									<div className="mb-5 flex flex-wrap items-end gap-2">
+										<div className="min-w-40 flex-1">
+											<Field label="Workflow name">
+												<TextInput
+													required
+													value={draft.name}
+													onChange={event => change({ ...draft, name: event.target.value })}
+												/>
+											</Field>
+										</div>
+										<button className={buttonClass} type="submit" title="Save workflow">
+											<Save size={16} />
+											Save
+										</button>
+										<button
+											className={cn(
+												buttonClass,
+												'bg-(--vscode-button-background) text-(--vscode-button-foreground)',
+											)}
+											type="button"
+											disabled={!draft.steps.length}
+											onClick={event => {
+												if (event.currentTarget.form?.reportValidity()) submit('run');
+											}}
+										>
+											<Play size={16} />
+											Run
+										</button>
+										<IconButton
+											title="Delete workflow"
+											disabled={!state.workflows.some(workflow => workflow.id === draft.id)}
+											onClick={() => vscode.postMessage({ type: 'delete', id: draft.id })}
+										>
+											<Trash2 size={16} />
+										</IconButton>
+									</div>
+									<div className="mb-5">
+										<Field label="Workflow description">
+											<TextArea
+												rows={2}
+												value={draft.description ?? ''}
+												onChange={event => change({ ...draft, description: event.target.value })}
 											/>
 										</Field>
 									</div>
-									<button className={buttonClass} type="submit" title="Save workflow">
-										<Save size={16} />
-										Save
-									</button>
-									<button
-										className={cn(
-											buttonClass,
-											'bg-(--vscode-button-background) text-(--vscode-button-foreground)',
-										)}
-										type="button"
-										disabled={!draft.steps.length}
-										onClick={event => {
-											if (event.currentTarget.form?.reportValidity()) submit('run');
-										}}
-									>
-										<Play size={16} />
-										Run
-									</button>
-									<IconButton
-										title="Delete workflow"
-										disabled={!state.workflows.some(workflow => workflow.id === draft.id)}
-										onClick={() => vscode.postMessage({ type: 'delete', id: draft.id })}
-									>
-										<Trash2 size={16} />
-									</IconButton>
-								</div>
-								<div className="mb-5">
-									<Field label="Workflow description">
-										<TextArea
-											rows={2}
-											value={draft.description ?? ''}
-											onChange={event => change({ ...draft, description: event.target.value })}
-										/>
-									</Field>
-								</div>
-								<div className="flex items-center justify-between border-b border-(--vscode-panel-border) pb-2">
-									<h2 className="text-xs font-semibold">Steps ({draft.steps.length})</h2>
-									<button
-										type="button"
-										className={buttonClass}
-										onClick={() =>
-											change({ ...draft, steps: [...draft.steps, newStep('command')] })
-										}
-									>
-										<Plus size={16} />
-										Add Step
-									</button>
-								</div>
-								{draft.steps.map((step, index) => (
-									<section
-										key={`${draft.id}-${index}`}
-										className="border-b border-(--vscode-panel-border) py-4"
-									>
-										<div className="mb-3 flex items-center gap-2">
-											<span className="w-6 shrink-0 text-xs text-(--vscode-descriptionForeground)">
-												{index + 1}.
-											</span>
-											<TextInput
-												aria-label={`Step ${index + 1} name`}
-												required
-												value={step.name}
-												onChange={event => updateStep(index, { ...step, name: event.target.value })}
-											/>
-											<IconButton
-												title="Move up"
-												disabled={index === 0}
-												onClick={() => {
-													const steps = [...draft.steps];
-													[steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
-													change({ ...draft, steps });
-												}}
-											>
-												<ArrowUp size={14} />
-											</IconButton>
-											<IconButton
-												title="Move down"
-												disabled={index === draft.steps.length - 1}
-												onClick={() => {
-													const steps = [...draft.steps];
-													[steps[index + 1], steps[index]] = [steps[index], steps[index + 1]];
-													change({ ...draft, steps });
-												}}
-											>
-												<ArrowDown size={14} />
-											</IconButton>
-											<IconButton
-												title="Delete step"
-												onClick={() =>
-													change({
-														...draft,
-														steps: draft.steps.filter((_, position) => position !== index),
-													})
-												}
-											>
-												<Trash2 size={14} />
-											</IconButton>
-										</div>
-										<div className="grid gap-3 sm:grid-cols-2">
-											<Field label="Type">
-												<SelectInput
-													value={step.type}
+									<div className="flex items-center justify-between border-b border-(--vscode-panel-border) pb-2">
+										<h2 className="text-xs font-semibold">Steps ({draft.steps.length})</h2>
+										<button
+											type="button"
+											className={buttonClass}
+											onClick={() =>
+												change({ ...draft, steps: [...draft.steps, newStep('command')] })
+											}
+										>
+											<Plus size={16} />
+											Add Step
+										</button>
+									</div>
+									{draft.steps.map((step, index) => (
+										<section
+											key={`${draft.id}-${index}`}
+											className="border-b border-(--vscode-panel-border) py-4"
+										>
+											<div className="mb-3 flex items-center gap-2">
+												<span className="w-6 shrink-0 text-xs text-(--vscode-descriptionForeground)">
+													{index + 1}.
+												</span>
+												<TextInput
+													aria-label={`Step ${index + 1} name`}
+													required
+													value={step.name}
 													onChange={event =>
-														updateStep(index, {
-															...newStep(event.target.value as WorkflowStep['type']),
-															name: step.name,
+														updateStep(index, { ...step, name: event.target.value })
+													}
+												/>
+												<IconButton
+													title="Move up"
+													disabled={index === 0}
+													onClick={() => {
+														const steps = [...draft.steps];
+														[steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
+														change({ ...draft, steps });
+													}}
+												>
+													<ArrowUp size={14} />
+												</IconButton>
+												<IconButton
+													title="Move down"
+													disabled={index === draft.steps.length - 1}
+													onClick={() => {
+														const steps = [...draft.steps];
+														[steps[index + 1], steps[index]] = [steps[index], steps[index + 1]];
+														change({ ...draft, steps });
+													}}
+												>
+													<ArrowDown size={14} />
+												</IconButton>
+												<IconButton
+													title="Delete step"
+													onClick={() =>
+														change({
+															...draft,
+															steps: draft.steps.filter((_, position) => position !== index),
 														})
 													}
 												>
-													<option value="command">Local Command</option>
-													<option value="ssh">SSH Command</option>
-													<option value="sftp">SFTP Upload</option>
-												</SelectInput>
-											</Field>
-											{step.type !== 'command' ? (
-												<Field label="SSH connection">
+													<Trash2 size={14} />
+												</IconButton>
+											</div>
+											<div className="grid gap-3 sm:grid-cols-2">
+												<Field label="Type">
 													<SelectInput
-														required
-														value={step.serverId}
+														value={step.type}
 														onChange={event =>
-															updateStep(index, { ...step, serverId: event.target.value })
+															updateStep(index, {
+																...newStep(event.target.value as WorkflowStep['type']),
+																name: step.name,
+															})
 														}
 													>
-														<option value="">Select connection</option>
-														{step.serverId &&
-															!state.servers.some(server => server.id === step.serverId) && (
-																<option value={step.serverId}>Missing connection</option>
-															)}
-														{state.servers.map(server => (
-															<option key={server.id} value={server.id}>
-																{server.name}
-															</option>
-														))}
+														<option value="command">Local Command</option>
+														<option value="ssh">SSH Command</option>
+														<option value="sftp">SFTP Upload</option>
 													</SelectInput>
 												</Field>
-											) : (
-												<Field label="Working directory">
-													<span className="flex gap-1">
-														<TextInput
+												{step.type !== 'command' ? (
+													<Field label="SSH connection">
+														<SelectInput
 															required
-															value={step.cwd}
+															value={step.serverId}
 															onChange={event =>
-																updateStep(index, { ...step, cwd: event.target.value })
-															}
-														/>
-														<IconButton
-															title="Choose directory"
-															onClick={() =>
-																vscode.postMessage({
-																	type: 'browse',
-																	field: 'cwd',
-																	index,
-																	draftId: draft.id,
-																})
+																updateStep(index, { ...step, serverId: event.target.value })
 															}
 														>
-															<FolderOpen size={16} />
-														</IconButton>
-													</span>
-												</Field>
-											)}
-											{step.type === 'sftp' ? (
-												<>
-													<Field label="Local file">
+															<option value="">Select connection</option>
+															{step.serverId &&
+																!state.servers.some(server => server.id === step.serverId) && (
+																	<option value={step.serverId}>Missing connection</option>
+																)}
+															{state.servers.map(server => (
+																<option key={server.id} value={server.id}>
+																	{server.name}
+																</option>
+															))}
+														</SelectInput>
+													</Field>
+												) : (
+													<Field label="Working directory">
 														<span className="flex gap-1">
 															<TextInput
 																required
-																value={step.localPath}
+																value={step.cwd}
 																onChange={event =>
-																	updateStep(index, { ...step, localPath: event.target.value })
+																	updateStep(index, { ...step, cwd: event.target.value })
 																}
 															/>
 															<IconButton
-																title="Choose file"
+																title="Choose directory"
 																onClick={() =>
 																	vscode.postMessage({
 																		type: 'browse',
-																		field: 'localPath',
+																		field: 'cwd',
 																		index,
 																		draftId: draft.id,
 																	})
@@ -426,54 +455,82 @@ function App() {
 															</IconButton>
 														</span>
 													</Field>
-													<Field label="Remote file path">
-														<TextInput
-															required
-															value={step.remotePath}
-															onChange={event =>
-																updateStep(index, { ...step, remotePath: event.target.value })
-															}
-														/>
-													</Field>
-												</>
-											) : (
-												<div className="sm:col-span-2">
-													<Field label="Command">
-														<TextArea
-															required
-															value={step.command}
-															onChange={event =>
-																updateStep(index, { ...step, command: event.target.value })
-															}
-														/>
-													</Field>
-												</div>
-											)}
-										</div>
-									</section>
-								))}
-							</fieldset>
-						</form>
-					) : (
-						<div className="flex min-h-64 flex-col items-center justify-center gap-4">
-							<ListOrdered size={32} className="text-(--vscode-descriptionForeground)" />
-							<h2 className="text-sm">
-								{state.workflows.length ? 'Select a workflow' : 'No workflows'}
-							</h2>
-							<button
-								className={buttonClass}
-								disabled={locked}
-								onClick={() => select({ id: crypto.randomUUID(), name: 'New Workflow', steps: [] })}
-							>
-								<Plus size={16} />
-								New Workflow
-							</button>
-						</div>
-					)}
-				</main>
+												)}
+												{step.type === 'sftp' ? (
+													<>
+														<Field label="Local file">
+															<span className="flex gap-1">
+																<TextInput
+																	required
+																	value={step.localPath}
+																	onChange={event =>
+																		updateStep(index, { ...step, localPath: event.target.value })
+																	}
+																/>
+																<IconButton
+																	title="Choose file"
+																	onClick={() =>
+																		vscode.postMessage({
+																			type: 'browse',
+																			field: 'localPath',
+																			index,
+																			draftId: draft.id,
+																		})
+																	}
+																>
+																	<FolderOpen size={16} />
+																</IconButton>
+															</span>
+														</Field>
+														<Field label="Remote file path">
+															<TextInput
+																required
+																value={step.remotePath}
+																onChange={event =>
+																	updateStep(index, { ...step, remotePath: event.target.value })
+																}
+															/>
+														</Field>
+													</>
+												) : (
+													<div className="sm:col-span-2">
+														<Field label="Command">
+															<TextArea
+																required
+																value={step.command}
+																onChange={event =>
+																	updateStep(index, { ...step, command: event.target.value })
+																}
+															/>
+														</Field>
+													</div>
+												)}
+											</div>
+										</section>
+									))}
+								</fieldset>
+							</form>
+						) : (
+							<div className="flex min-h-64 flex-col items-center justify-center gap-4">
+								<ListOrdered size={32} className="text-(--vscode-descriptionForeground)" />
+								<h2 className="text-sm">
+									{state.workflows.length ? 'Select a workflow' : 'No workflows'}
+								</h2>
+								<button
+									className={buttonClass}
+									disabled={locked}
+									onClick={() =>
+										select({ id: crypto.randomUUID(), name: 'New Workflow', steps: [] })
+									}
+								>
+									<Plus size={16} />
+									New Workflow
+								</button>
+							</div>
+						)}
+					</Dialog>
+				)}
 			</div>
 		</div>
 	);
 }
-
-createRoot(document.getElementById('root')!).render(<App />);

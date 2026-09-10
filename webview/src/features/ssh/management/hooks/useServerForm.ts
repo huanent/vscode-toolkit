@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ServerFormValues } from '../types';
-import { vscode } from '../../../../vscodeApi';
+import { sshApi as vscode, subscribe } from '../../../dashboard/channel';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
@@ -37,7 +37,11 @@ export function useServerForm(sessionId: number, onClose: () => void) {
 	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		const handleMessage = (event: MessageEvent<(ServerFormExtensionMessage | { type: 'saved' }) & { sessionId?: number }>) => {
+		const handleMessage = (
+			event: MessageEvent<
+				(ServerFormExtensionMessage | { type: 'saved' }) & { sessionId?: number }
+			>,
+		) => {
 			const message = event.data;
 			if (message.sessionId !== sessionId) return;
 			switch (message.type) {
@@ -93,9 +97,9 @@ export function useServerForm(sessionId: number, onClose: () => void) {
 					break;
 			}
 		};
-		window.addEventListener('message', handleMessage);
+		const unsubscribe = subscribe('ssh', handleMessage);
 		vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'ready' } });
-		return () => window.removeEventListener('message', handleMessage);
+		return unsubscribe;
 	}, [sessionId, onClose]);
 
 	const update = <Key extends keyof ServerFormValues>(key: Key, value: ServerFormValues[Key]) => {
@@ -115,8 +119,14 @@ export function useServerForm(sessionId: number, onClose: () => void) {
 		saving,
 		update,
 		save,
-		selectPrivateKey: () => vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectPrivateKey' } }),
-		selectProxyPrivateKey: () => vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectProxyPrivateKey' } }),
+		selectPrivateKey: () =>
+			vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectPrivateKey' } }),
+		selectProxyPrivateKey: () =>
+			vscode.postMessage({
+				type: 'formMessage',
+				sessionId,
+				message: { type: 'selectProxyPrivateKey' },
+			}),
 	};
 }
 
