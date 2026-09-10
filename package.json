@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",

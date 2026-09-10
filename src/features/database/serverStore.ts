@@ -1,6 +1,7 @@
 import { watch, FSWatcher } from 'node:fs';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../storagePath';
+import { CredentialStorage } from '../../credentialStorage';
 import { ExportedServer, parseServer, Server, ServerType, usesPrivateKey } from './server';
 
 const serverOrderFileName = 'order.json';
@@ -22,6 +23,7 @@ class ConnectionStore {
 	readonly onDidChange = this.changeEmitter.event;
 	private readonly storageDirectoryUri: vscode.Uri;
 	private readonly serversDirectoryUri: vscode.Uri;
+	private readonly credentialStorage: CredentialStorage;
 	private servers: Server[] = [];
 	private readonly credentials = new Map<string, ServerCredentials>();
 	private watcher: FSWatcher | undefined;
@@ -34,6 +36,7 @@ class ConnectionStore {
 		private readonly serverType: ServerType = 'mysql',
 	) {
 		this.storageDirectoryUri = getStorageUri(context, 'database');
+		this.credentialStorage = new CredentialStorage(context, 'database');
 		this.serversDirectoryUri = vscode.Uri.joinPath(this.storageDirectoryUri, 'connections');
 	}
 
@@ -248,6 +251,9 @@ class ConnectionStore {
 				}),
 			)
 		).filter((storedServer): storedServer is StoredServer => storedServer !== undefined);
+		for (const stored of storedServers) {
+			stored.credentials = await this.credentialStorage.resolve(stored.credentials);
+		}
 		const storedServersById = new Map(
 			storedServers.map(storedServer => [storedServer.server.id, storedServer]),
 		);
@@ -285,7 +291,7 @@ class ConnectionStore {
 				servers.map(async server => {
 					const fileName = serverFileName(server);
 					const serverUri = vscode.Uri.joinPath(this.serversDirectoryUri, fileName);
-					const credentials = this.credentials.get(server.id) ?? {};
+					const credentials = await this.credentialStorage.store(server.id, this.credentials.get(server.id) ?? {});
 					const contents = Buffer.from(
 						JSON.stringify(
 							{
