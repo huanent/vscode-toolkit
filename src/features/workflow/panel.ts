@@ -1,9 +1,9 @@
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { dashboardFeaturePanel } from '../dashboard/panel';
 import { listSshConnections } from '../ssh/connectionService';
 import { parseWorkflow, Workflow } from './workflow';
 import { WorkflowStore } from './store';
+import { hasWorkflowVariables, validateWorkflowPaths } from './variables';
 
 export function registerWorkflowPanel(
 	context: vscode.ExtensionContext,
@@ -76,18 +76,11 @@ export function registerWorkflowPanel(
 							if (busy) throw new Error('Wait for the running workflow to finish.');
 							if (request.type === 'save' || request.type === 'run') {
 								const workflow = parseWorkflow(request.workflow);
+								validateWorkflowPaths(workflow, true);
 								for (const step of workflow.steps) {
-									if (step.type === 'command' && !path.isAbsolute(step.cwd))
-										throw new Error('Working directory must be absolute.');
-									if (
-										step.type === 'sftp' &&
-										(!path.isAbsolute(step.localPath) ||
-											!path.posix.isAbsolute(step.remotePath) ||
-											step.remotePath.endsWith('/'))
-									)
-										throw new Error('Upload requires absolute local and remote file paths.');
 									if (
 										step.type !== 'command' &&
+										!hasWorkflowVariables(step.serverId) &&
 										!listSshConnections().some(server => server.id === step.serverId)
 									)
 										throw new Error('Select an existing SSH connection.');

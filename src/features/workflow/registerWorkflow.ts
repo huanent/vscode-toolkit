@@ -9,6 +9,7 @@ import { executeWorkflow, Workflow, WorkflowStep } from './workflow';
 import { registerWorkflowPanel } from './panel';
 import { registerWorkflowTools } from './tools';
 import { WorkflowStore } from './store';
+import { hasWorkflowVariables, resolveWorkflowVariables, validateWorkflowPaths } from './variables';
 
 export function registerWorkflow(context: vscode.ExtensionContext): void {
 	const output = vscode.window.createOutputChannel('Toolkit Workflow');
@@ -16,12 +17,14 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	let running = false;
 	const store = new WorkflowStore(context);
 
-	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken, confirm = true): Promise<boolean> {
+	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken, confirm = true, resolved = false): Promise<boolean> {
 		if (toolToken?.isCancellationRequested) return false;
 		if (!vscode.workspace.isTrusted)
 			throw new Error('Trust the workspace before running workflows.');
 		if (running) throw new Error('A workflow is already running.');
 		if (!workflow.steps.length) throw new Error('Add at least one step before running.');
+		if (!resolved) workflow = resolveWorkflowVariables(workflow, store.getLocation(workflow.id));
+		validateWorkflowPaths(workflow);
 		if (confirm) {
 			const confirmed = await vscode.window.showWarningMessage(
 				`Run "${workflow.name}"?`,
@@ -191,7 +194,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		output,
-		registerWorkflowTools(store, (workflow, token) => run(workflow, token, false)),
+		registerWorkflowTools(store, (workflow, token) => run(workflow, token, false, true)),
 		vscode.commands.registerCommand('vscode-toolkit.openWorkflowQuickPick', async () => {
 			if (managing) return;
 			managing = true;
@@ -258,7 +261,7 @@ async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefin
 				existing?.type === 'command'
 					? existing.cwd
 					: (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ''),
-			validateInput: value => (path.isAbsolute(value) ? undefined : 'Enter an absolute path'),
+			validateInput: value => (path.isAbsolute(value) || hasWorkflowVariables(value) ? undefined : 'Enter an absolute path or VS Code variable'),
 			ignoreFocusOut: true,
 		});
 		return cwd ? { type: 'command', name, command, cwd } : undefined;
@@ -298,7 +301,7 @@ async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefin
 		value: existing?.type === 'sftp' ? existing.remotePath : '',
 		ignoreFocusOut: true,
 		validateInput: value =>
-			path.posix.isAbsolute(value) && !value.endsWith('/')
+			(path.posix.isAbsolute(value) || hasWorkflowVariables(value)) && !value.endsWith('/')
 				? undefined
 				: 'Enter an absolute remote file path',
 	});

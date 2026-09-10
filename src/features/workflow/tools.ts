@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { listSshConnections } from '../ssh/connectionService';
 import { parseWorkflow, Workflow } from './workflow';
 import { WorkflowStore } from './store';
+import { hasWorkflowVariables, resolveWorkflowVariables, validateWorkflowPaths } from './variables';
 
 interface UpsertWorkflowInput {
 	id?: string;
@@ -21,19 +21,12 @@ export function registerWorkflowTools(
 		new vscode.LanguageModelToolResult([
 			new vscode.LanguageModelTextPart(JSON.stringify(value, undefined, 2)),
 		]);
-	const validate = (workflow: Workflow) => {
+	const validate = (workflow: Workflow, allowVariables = false) => {
+		validateWorkflowPaths(workflow, allowVariables);
 		for (const step of workflow.steps) {
-			if (step.type === 'command' && !path.isAbsolute(step.cwd))
-				throw new Error('Working directory must be absolute.');
-			if (
-				step.type === 'sftp' &&
-				(!path.isAbsolute(step.localPath) ||
-					!path.posix.isAbsolute(step.remotePath) ||
-					step.remotePath.endsWith('/'))
-			)
-				throw new Error('Upload requires absolute local and remote file paths.');
 			if (
 				step.type !== 'command' &&
+				!(allowVariables && hasWorkflowVariables(step.serverId)) &&
 				!listSshConnections().some(server => server.id === step.serverId && server.aiEnabled)
 			)
 				throw new Error('SSH connection is not enabled for AI. Call listSSHServers first.');
@@ -77,7 +70,7 @@ export function registerWorkflowTools(
 				const workflow = parseWorkflow({ ...options.input, id: options.input.id ?? randomUUID() });
 				const save = mutation.then(async () => {
 					if (token.isCancellationRequested) throw new Error('Workflow save cancelled.');
-					validate(workflow);
+					validate(workflow, true);
 					await store.save(workflow, options.input.location);
 				});
 				mutation = save.catch(() => {});
@@ -89,7 +82,7 @@ export function registerWorkflowTools(
 			async invoke(options, token) {
 				const saved = (await store.list()).find(workflow => workflow.id === options.input.id);
 				if (!saved) throw new Error('Workflow was not found. Call listWorkflows first.');
-				const workflow = parseWorkflow(saved);
+				const workflow = resolveWorkflowVariables(parseWorkflow(saved), store.getLocation(saved.id));
 				validate(workflow);
 				const completed = await run(workflow, token);
 				return result({ id: workflow.id, status: completed ? 'completed' : 'cancelled' });

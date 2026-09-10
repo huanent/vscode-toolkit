@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -594,7 +594,7 @@
         "toolReferenceName": "upsertWorkflow",
         "displayName": "Save Workflow",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Create or fully replace a workflow without running it. Before editing, call getWorkflow and preserve unchanged steps. Remote steps require SSH connections. Use non-interactive commands without embedded credentials. Returns the saved workflow.",
+        "modelDescription": "Create or fully replace a workflow without running it. Before editing, call getWorkflow and preserve unchanged steps. Names, description, commands, paths and step serverId support runtime variables: ${workspaceFolder}, ${workspaceFolder:name}, ${workspaceFolderBasename}, ${userHome}, ${env:NAME}, ${config:setting}, ${cwd}, ${pathSeparator} and ${/}. IDs and storage location are literal. Remote steps require SSH connections. Use non-interactive commands without embedded credentials. Returns the saved workflow.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -638,7 +638,7 @@
                       },
                       "cwd": {
                         "type": "string",
-                        "description": "Absolute local working directory."
+                        "description": "Local working directory; supports VS Code variables such as ${workspaceFolder}. Must resolve to an absolute path."
                       }
                     },
                     "required": [
@@ -696,11 +696,11 @@
                       },
                       "localPath": {
                         "type": "string",
-                        "description": "Absolute local upload path."
+                        "description": "Local upload path; supports VS Code variables. Must resolve to an absolute path."
                       },
                       "remotePath": {
                         "type": "string",
-                        "description": "Absolute remote file path; parent must exist. Overwrites existing file."
+                        "description": "Remote file path; supports VS Code variables resolved locally. Must resolve to an absolute POSIX path; parent must exist. Overwrites existing file."
                       }
                     },
                     "required": [
