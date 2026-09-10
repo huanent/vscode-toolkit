@@ -4,7 +4,7 @@ import { getWebviewHtml } from '../../webview';
 export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container' | 'launchd';
 let panel: vscode.WebviewView | undefined;
 let context: vscode.ExtensionContext;
-let activeTab: DashboardTab = 'ssh';
+let activeTab: DashboardTab = 'workflow';
 const channels = new Map<DashboardTab, vscode.WebviewPanel>();
 const receivers = new Map<DashboardTab, vscode.EventEmitter<unknown>>();
 const editors = new Map<DashboardTab, vscode.WebviewPanel>();
