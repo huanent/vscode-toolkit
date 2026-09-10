@@ -22,7 +22,7 @@ export function registerDatabaseTools(store: ServerStore): vscode.Disposable {
 				);
 			},
 		}),
-		vscode.lm.registerTool('runSQL', new SqlTool(store)),
+		vscode.lm.registerTool('runSQLStatement', new SqlTool(store)),
 	);
 }
 

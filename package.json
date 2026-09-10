@@ -120,7 +120,8 @@
         {
           "id": "vscode-toolkit.dashboard",
           "name": "Toolkit",
-          "type": "webview"
+          "type": "webview",
+          "icon": "$(tools)"
         }
       ],
       "vscode-toolkit-result": [
@@ -767,7 +768,7 @@
         "toolReferenceName": "listDatabaseConnections",
         "displayName": "List Database Connections",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "List saved database connections, including IDs for runSQL; does not list databases or tables.",
+        "modelDescription": "List saved database connections, including IDs for runSQLStatement; does not list databases or tables.",
         "inputSchema": {
           "type": "object",
           "properties": {}
@@ -820,9 +821,9 @@
         ]
       },
       {
-        "name": "runSQL",
-        "toolReferenceName": "runSQL",
-        "displayName": "Run SQL",
+        "name": "runSQLStatement",
+        "toolReferenceName": "runSQLStatement",
+        "displayName": "Run SQL statement",
         "canBeReferencedInPrompt": true,
         "modelDescription": "Run one MySQL statement; database optionally selects the database for this call. Returns rows or result metadata as JSON. Session state and transactions do not persist across calls. Use LIMIT to bound query results.",
         "inputSchema": {
