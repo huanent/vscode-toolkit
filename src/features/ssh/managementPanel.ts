@@ -157,6 +157,9 @@ export function registerManagementFeature(
 							return;
 						}
 						switch (message.type) {
+							case 'copyHost':
+								await vscode.env.clipboard.writeText(server.host);
+								break;
 							case 'up':
 								await store.moveServer(server.id, 'up');
 								break;

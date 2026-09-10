@@ -16,7 +16,7 @@ function load(file, dependencies = {}) {
 	return loaded.exports;
 }
 
-test('Workflow storage uses JSON files and serializes mutations without losing data', async () => {
+test('Workflow storage uses ID files and allows duplicate names', async () => {
 	const files = new Map();
 	let failWrites = false;
 	class FileSystemError extends Error {
@@ -25,9 +25,17 @@ test('Workflow storage uses JSON files and serializes mutations without losing d
 	const { WorkflowStore } = load('src/features/workflow/store.ts', {
 		vscode: {
 			FileSystemError,
+			FileType: { File: 1 },
 			Uri: { joinPath: (...parts) => parts.join('/') },
 			workspace: { fs: {
 				async createDirectory() {},
+				async readDirectory(uri) {
+					return [...files.keys()].filter(file => file.startsWith(`${uri}/`))
+						.map(file => [file.slice(uri.length + 1), 1]);
+				},
+				async delete(uri) {
+					if (!files.delete(uri)) throw new FileSystemError();
+				},
 				async readFile(uri) {
 					if (!files.has(uri)) throw new FileSystemError();
 					return files.get(uri);
@@ -49,19 +57,29 @@ test('Workflow storage uses JSON files and serializes mutations without losing d
 	assert.equal(files.size, 0);
 	failWrites = false;
 	await Promise.all([
-		store.save({ id: 'first', name: 'First', steps: [] }),
-		store.save({ id: 'second', name: 'Second', steps: [] }),
+		store.save({ id: 'first', name: 'Same name', steps: [] }),
+		store.save({ id: 'second', name: 'Same name', steps: [] }),
 	]);
-	assert.ok(files.has('/configured/workflow/workflows.json'));
+	assert.deepEqual([...files.keys()], ['/configured/workflow/first.json', '/configured/workflow/second.json']);
+	assert.deepEqual((await store.list()).map(workflow => workflow.name), ['Same name', 'Same name']);
+	const firstContent = files.get('/configured/workflow/first.json');
 	await store.save({ id: 'second', name: 'Updated', steps: [] });
+	assert.equal(files.size, 2);
+	assert.equal(files.get('/configured/workflow/first.json'), firstContent);
+	await store.delete('first');
 	await store.delete('first');
 	assert.deepEqual(await new WorkflowStore(context).list(), [
 		{ id: 'second', name: 'Updated', description: '', steps: [] },
 	]);
-	files.set('/configured/workflow/workflows.json', Buffer.from('{invalid'));
+	await assert.rejects(store.save({ id: '../outside', name: 'Invalid', steps: [] }), /Invalid workflow ID/);
+	await assert.rejects(store.delete('../outside'), /Invalid workflow ID/);
+	files.set('/configured/workflow/broken.json', Buffer.from('{invalid'));
 	await assert.rejects(store.list(), SyntaxError);
-	await assert.rejects(store.save({ id: 'new', name: 'New', steps: [] }), SyntaxError);
-	assert.equal(files.get('/configured/workflow/workflows.json').toString(), '{invalid');
+	await store.save({ id: 'new', name: 'New', steps: [] });
+	assert.equal(files.get('/configured/workflow/broken.json').toString(), '{invalid');
+	await store.delete('broken');
+	files.set('/configured/workflow/wrong.json', Buffer.from(JSON.stringify({ id: 'other', name: 'Other', steps: [] })));
+	await assert.rejects(store.list(), /Workflow ID does not match file/);
 });
 
 test('Dashboard sidebar routes editing to tabs and isolates credentials', async () => {

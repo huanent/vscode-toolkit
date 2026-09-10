@@ -4,12 +4,10 @@ import { parseWorkflow, Workflow } from './workflow';
 
 export class WorkflowStore {
 	private readonly directory: vscode.Uri;
-	private readonly file: vscode.Uri;
 	private mutation: Promise<void> = Promise.resolve();
 
 	constructor(context: vscode.ExtensionContext) {
 		this.directory = getStorageUri(context, 'workflow');
-		this.file = vscode.Uri.joinPath(this.directory, 'workflows.json');
 	}
 
 	list(): Promise<Workflow[]> {
@@ -19,17 +17,22 @@ export class WorkflowStore {
 	save(workflow: Workflow): Promise<void> {
 		const saved = parseWorkflow(workflow);
 		return this.enqueue(async () => {
-			const workflows = await this.read();
-			const index = workflows.findIndex(candidate => candidate.id === saved.id);
-			if (index < 0) workflows.push(saved);
-			else workflows[index] = saved;
-			await this.write(workflows);
+			const file = this.uriForId(saved.id);
+			await vscode.workspace.fs.createDirectory(this.directory);
+			await vscode.workspace.fs.writeFile(
+				file,
+				Buffer.from(JSON.stringify(saved, undefined, 2), 'utf8'),
+			);
 		});
 	}
 
 	delete(id: string): Promise<void> {
 		return this.enqueue(async () => {
-			await this.write((await this.read()).filter(workflow => workflow.id !== id));
+			try {
+				await vscode.workspace.fs.delete(this.uriForId(id), { recursive: false, useTrash: false });
+			} catch (error) {
+				if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') throw error;
+			}
 		});
 	}
 
@@ -43,23 +46,29 @@ export class WorkflowStore {
 	}
 
 	private async read(): Promise<Workflow[]> {
-		let content: Uint8Array;
+		let entries: [string, vscode.FileType][];
 		try {
-			content = await vscode.workspace.fs.readFile(this.file);
+			entries = await vscode.workspace.fs.readDirectory(this.directory);
 		} catch (error) {
 			if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') throw error;
 			return [];
 		}
-		const workflows: unknown = JSON.parse(Buffer.from(content).toString('utf8'));
-		if (!Array.isArray(workflows)) throw new Error('Invalid workflow storage.');
-		return workflows.map(parseWorkflow);
+		return Promise.all(
+			entries
+				.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.json'))
+				.sort(([left], [right]) => left.localeCompare(right))
+				.map(async ([name]) => {
+					const id = name.slice(0, -5);
+					const content = await vscode.workspace.fs.readFile(this.uriForId(id));
+					const workflow = parseWorkflow(JSON.parse(Buffer.from(content).toString('utf8')));
+					if (workflow.id !== id) throw new Error(`Workflow ID does not match file: ${name}`);
+					return workflow;
+				}),
+		);
 	}
 
-	private async write(workflows: Workflow[]): Promise<void> {
-		await vscode.workspace.fs.createDirectory(this.directory);
-		await vscode.workspace.fs.writeFile(
-			this.file,
-			Buffer.from(JSON.stringify(workflows, undefined, 2), 'utf8'),
-		);
+	private uriForId(id: string): vscode.Uri {
+		if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error('Invalid workflow ID.');
+		return vscode.Uri.joinPath(this.directory, `${id}.json`);
 	}
 }

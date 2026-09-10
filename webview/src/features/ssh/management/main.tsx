@@ -88,6 +88,9 @@ export function ConnectionCard({
 	const actions = customActions ?? [
 		{ type: 'edit', label: 'Edit', icon: Pencil },
 		{ type: 'duplicate', label: 'Duplicate', icon: Copy },
+		...(server.kind === 'SSH' || server.kind === 'MySQL'
+			? [{ type: 'copyHost', label: 'Copy Host', icon: Copy }]
+			: []),
 		{ type: 'up', label: 'Move Up', icon: ArrowUp, disabled: filtered },
 		{ type: 'down', label: 'Move Down', icon: ArrowDown, disabled: filtered },
 		{ type: 'export', label: 'Export', icon: Download },

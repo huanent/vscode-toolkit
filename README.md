@@ -105,9 +105,3 @@ Search for `Toolkit` in VS Code Settings.
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `toolkit.storagePath` | Data directory. Supports `~`; leave empty to use extension storage. Reload the extension after changing it. |
 | `toolkit.chat.prompt` | Custom prompt for Chat.                                                                                     |
-
-Workflows are saved in `workflow/workflows.json` under `toolkit.storagePath`, or under the extension storage directory when the setting is empty. Data previously saved in VS Code's extension global state is not migrated.
-
-SSH, Database, and Container store connections separately. Import or export connections from the corresponding management tab. Storage directories and exported files may contain credentials; keep them secure and do not embed passwords in workflow commands.
-
-Script execution, database connections, and container management require the corresponding runtimes, services, and access permissions.
