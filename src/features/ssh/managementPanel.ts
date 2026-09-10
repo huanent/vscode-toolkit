@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { dashboardFeaturePanel } from '../dashboard/panel';
+import { dashboardFeaturePanel, openDashboardEditor } from '../dashboard/panel';
 import { openServerConnection } from './editor';
 import { Server } from './server';
 import { ServerCredentials, ServerStore } from './serverStore';
@@ -122,17 +122,25 @@ export function registerManagementFeature(
 						if (message.type === 'ready' || message.type === 'refresh') {
 							await publish();
 							if (message.type === 'ready') {
-								requestForm = openForm;
+								requestForm = async request => {
+									pendingForm = request;
+									openDashboardEditor('ssh', { type: 'openRequestedForm' });
+								};
 								if (pendingForm) {
 									const request = pendingForm;
 									pendingForm = undefined;
-									await openForm(request);
+									await requestForm(request);
 								}
 							}
 							return;
 						}
 						if (message.type === 'add') {
 							await openForm({});
+							return;
+						}
+						if (message.type === 'openRequestedForm') {
+							await openForm(pendingForm ?? {});
+							pendingForm = undefined;
 							return;
 						}
 						if (message.type === 'import') {

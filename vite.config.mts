@@ -34,6 +34,7 @@ export default defineConfig({
 			input: {
 				styles: 'webview/src/styles.css',
 				dashboard: 'webview/src/features/dashboard/main.tsx',
+				dashboardEditor: 'webview/src/features/dashboard/editor.tsx',
 				databaseForm: 'webview/src/features/database/serverForm/main.tsx',
 				containerForm: 'webview/src/features/container/serverForm/main.tsx',
 				containerEditor: 'webview/src/features/container/editor/main.tsx',

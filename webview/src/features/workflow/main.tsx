@@ -58,13 +58,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 	);
 }
 
-export function App({
-	favorites,
-	onFavorite,
-}: {
-	favorites: string[];
-	onFavorite: (id: string) => void;
-}) {
+export function App() {
+	const editorMode = document.body.dataset.toolkitEditor === 'true';
+	const [editRequest, setEditRequest] = useState<{ workflow?: Workflow; id?: string }>();
 	const [state, setState] = useState<State>({ workflows: [], servers: [], cwd: '', busy: false });
 	const [draft, setDraft] = useState<Workflow>();
 	const [dirty, setDirty] = useState(false);
@@ -116,6 +112,10 @@ export function App({
 		setError('');
 	};
 	const select = (next: Workflow) => {
+		if (!editorMode) {
+			vscode.postMessage({ type: 'openEditor', workflow: next });
+			return;
+		}
 		if (dirty) {
 			setNextDraft(next);
 			return;
@@ -148,6 +148,18 @@ export function App({
 		vscode.postMessage({ type, workflow: draft });
 	};
 	useEffect(() => {
+		const edit = (event: Event) => setEditRequest((event as CustomEvent).detail);
+		window.addEventListener('toolkitEdit', edit);
+		return () => window.removeEventListener('toolkitEdit', edit);
+	}, []);
+	useEffect(() => {
+		if (!editRequest || !loaded) return;
+		const next = editRequest.workflow ?? state.workflows.find(item => item.id === editRequest.id);
+		if (next) select(next);
+		else setError('The workflow no longer exists.');
+		setEditRequest(undefined);
+	}, [editRequest, loaded, state.workflows]);
+	useEffect(() => {
 		const open = (event: Event) => {
 			const detail = (event as CustomEvent).detail;
 			const workflow = state.workflows.find(item => item.id === detail.id);
@@ -158,7 +170,7 @@ export function App({
 	}, [state.workflows, dirty, locked]);
 	return (
 		<div className="flex flex-col py-4 text-(--vscode-foreground)">
-			<header className="flex h-12 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-4">
+			<header className="flex min-h-9 flex-wrap items-center gap-1 border-b border-(--vscode-panel-border)">
 				<ListOrdered size={18} />
 				<h1 className="text-sm font-semibold">Workflow</h1>
 				<span className="ml-auto text-xs text-(--vscode-descriptionForeground)" role="status">
@@ -169,7 +181,7 @@ export function App({
 				</IconButton>
 			</header>
 			<div>
-				<section className="py-3">
+				<section className="py-3" hidden={editorMode}>
 					<div className="mb-3 flex items-center gap-2">
 						<TextInput
 							aria-label="Search workflows"
@@ -185,15 +197,13 @@ export function App({
 							<Plus size={16} />
 						</IconButton>
 					</div>
-					<ul
-						className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,180px),1fr))] gap-2 p-0"
-						aria-label="Workflows"
-					>
+					<ul className="m-0 grid list-none grid-cols-1 gap-1 p-0" aria-label="Workflows">
 						{state.workflows
 							.filter(workflow => workflow.name.toLowerCase().includes(search.toLowerCase()))
 							.map(workflow => (
 								<ConnectionCard
 									key={workflow.id}
+									compact
 									server={{
 										id: workflow.id,
 										name: workflow.name,
@@ -201,8 +211,6 @@ export function App({
 										group: '',
 										kind: 'Workflow',
 									}}
-									favorite={favorites.includes(workflow.id)}
-									onFavorite={() => onFavorite(workflow.id)}
 									actions={[
 										{ type: 'edit', label: 'Edit', icon: ListOrdered, disabled: locked },
 										{ type: 'run', label: 'Run', icon: Play, disabled: locked },

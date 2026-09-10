@@ -16,11 +16,26 @@ function load(file, dependencies = {}) {
 	return loaded.exports;
 }
 
-test('Dashboard is a singleton with isolated channels, favorites and reopen support', async () => {
+test('Dashboard sidebar routes editing to tabs and isolates credentials', async () => {
 	const commands = new Map();
 	const panels = [];
 	const saved = new Map();
+	let provider;
+	let view;
 	const vscode = {
+		EventEmitter: class {
+			listeners = new Set();
+			event = listener => {
+				this.listeners.add(listener);
+				return { dispose: () => this.listeners.delete(listener) };
+			};
+			fire(value) {
+				for (const listener of this.listeners) listener(value);
+			}
+			dispose() {
+				this.listeners.clear();
+			}
+		},
 		ThemeIcon: class {
 			constructor(id) {
 				this.id = id;
@@ -34,10 +49,19 @@ test('Dashboard is a singleton with isolated channels, favorites and reopen supp
 				return { dispose() {} };
 			},
 			async executeCommand(name, request) {
+				if (name === 'vscode-toolkit.dashboard.focus' && !view) {
+					view = vscode.window.createWebviewPanel();
+					panels.pop();
+					await provider.resolveWebviewView(view);
+				}
 				return commands.get(name)?.(request);
 			},
 		},
 		window: {
+			registerWebviewViewProvider(_id, value) {
+				provider = value;
+				return { dispose() {} };
+			},
 			createWebviewPanel() {
 				const listeners = new Set();
 				const disposeListeners = [];
@@ -45,6 +69,9 @@ test('Dashboard is a singleton with isolated channels, favorites and reopen supp
 				const panel = {
 					messages,
 					reveals: 0,
+					show() {
+						this.reveals++;
+					},
 					webview: {
 						html: '',
 						postMessage: async message => {
@@ -92,37 +119,50 @@ test('Dashboard is a singleton with isolated channels, favorites and reopen supp
 	await vscode.commands.executeCommand('vscode-toolkit.openDashboard');
 	const ssh = dashboard.dashboardFeaturePanel('ssh', true);
 	const database = dashboard.dashboardFeaturePanel('database', true);
-	assert.equal(panels.length, 1);
+	assert.equal(panels.length, 0);
 	assert.equal(dashboard.dashboardFeaturePanel('ssh', true), ssh);
-	ssh.webview.html = 'old-html';
-	assert.equal(panels[0].webview.html, 'dashboard-html');
+	assert.equal(view.webview.html, 'dashboard-html');
 	const received = [];
 	ssh.webview.onDidReceiveMessage(message => received.push(message));
-	await panels[0].receive({ channel: 'database', type: 'delete', id: 'same-id' });
+	await view.receive({ channel: 'database', type: 'delete', id: 'same-id' });
 	assert.equal(received.length, 0);
-	await panels[0].receive({ channel: 'ssh', type: 'connect', id: 'same-id' });
+	await view.receive({ channel: 'ssh', type: 'connect', id: 'same-id' });
 	assert.equal(received.length, 1);
 	await database.webview.postMessage({ type: 'state', servers: [] });
-	assert.equal(panels[0].messages.at(-1).channel, 'database');
-	database.reveal();
-	assert.deepEqual(panels[0].messages.at(-1), { type: 'dashboardTab', tab: 'database' });
-	await panels[0].receive({
+	assert.equal(view.messages.at(-1).channel, 'database');
+	await view.receive({ channel: 'ssh', type: 'edit', id: 'same-id' });
+	assert.equal(panels.length, 1);
+	assert.equal(received.length, 1);
+	await panels[0].receive({ type: 'editorReady' });
+	assert.equal(panels[0].messages.at(-1).request.id, 'same-id');
+	await panels[0].receive({ channel: 'ssh', type: 'edit', id: 'same-id' });
+	assert.equal(received.length, 2);
+	await ssh.webview.postMessage({ type: 'initialize', credentials: { password: 'private' } });
+	assert.equal(panels[0].messages.at(-1).type, 'initialize');
+	assert.equal(
+		view.messages.some(message => message.type === 'initialize'),
+		false,
+	);
+	await ssh.webview.postMessage({ type: 'state', servers: [] });
+	assert.equal(view.messages.at(-1).type, 'state');
+	await view.receive({
 		type: 'dashboardFavorites',
 		favorites: [
 			{ tab: 'ssh', id: 'same-id', password: 'must-not-persist' },
 			{ tab: 'database', id: 'same-id' },
 		],
 	});
-	assert.deepEqual(saved.get('toolkit.dashboard.favorites'), [
-		{ tab: 'ssh', id: 'same-id' },
-		{ tab: 'database', id: 'same-id' },
-	]);
-	panels[0].dispose();
+	assert.equal(saved.has('toolkit.dashboard.favorites'), false);
+	view.dispose();
+	view = undefined;
 	await vscode.commands.executeCommand('vscode-toolkit.openDashboard');
-	assert.equal(panels.length, 2);
-	assert.notEqual(dashboard.dashboardFeaturePanel('ssh', true), ssh);
-	await panels[1].receive({ type: 'dashboardReady' });
-	assert.equal(panels[1].messages[0].favorites.length, 2);
+	assert.equal(panels.length, 1);
+	assert.equal(dashboard.dashboardFeaturePanel('ssh', true), ssh);
+	await view.receive({ type: 'dashboardReady' });
+	assert.equal(
+		Object.hasOwn(view.messages.find(message => message.type === 'dashboardState'), 'favorites'),
+		false,
+	);
 });
 
 test('form sessions reject stale messages and preserve a save in progress', async () => {
@@ -161,8 +201,8 @@ test('form sessions reject stale messages and preserve a save in progress', asyn
 
 test('Dashboard owns navigation and management build entry', () => {
 	const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-	assert.equal(manifest.contributes.viewsContainers.activitybar, undefined);
-	assert.equal(manifest.contributes.views['vscode-toolkit'], undefined);
+	assert.equal(manifest.contributes.viewsContainers.activitybar[0].id, 'vscode-toolkit');
+	assert.equal(manifest.contributes.views['vscode-toolkit'][0].type, 'webview');
 	assert.equal(
 		manifest.contributes.keybindings.find(binding => binding.key === 'ctrl+shift+.').command,
 		'vscode-toolkit.openDashboard',

@@ -14,6 +14,18 @@ export function LaunchdDetails({
 	details?: LaunchAgentDetails;
 	onClose(): void;
 }) {
+	if (document.body.dataset.toolkitEditor === 'true') {
+		return (
+			<section aria-label="LaunchAgent runtime details">
+				<h2 className="mb-3 text-sm font-semibold">{details?.label ?? 'Runtime details'}</h2>
+				{loading ? (
+					<p role="status">Loading...</p>
+				) : (
+					details && <DetailsContent details={details} />
+				)}
+			</section>
+		);
+	}
 	return (
 		<div
 			className="fixed inset-0 z-20 flex justify-end bg-black/30 backdrop-blur-[1px]"

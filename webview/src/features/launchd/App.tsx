@@ -3,23 +3,52 @@ import { useEffect, useState } from 'react';
 import { FolderOpen, Plus, RefreshCw, Play, Square, Info, Pencil, Trash2 } from 'lucide-react';
 import { IconButton, PrimaryButton } from '../../components';
 import { launchdApi as vscode } from '../dashboard/channel';
-import { ConnectionCard } from '../ssh/management/main';
+import { ConnectionCard, ConnectionGroup } from '../ssh/management/main';
 import { Dialog } from '../../components/dialog';
 import { AgentEditor } from './components/AgentEditor';
 import { LaunchdDetails } from './components/LaunchdDetails';
 import { useLaunchd } from './hooks/useLaunchd';
+import type { LaunchAgent } from './types';
 
-export function App({
-	favorites = [],
-	onFavorite = () => {},
-}: {
-	favorites?: string[];
-	onFavorite?: (id: string) => void;
-}) {
+export function App() {
+	const editorMode = document.body.dataset.toolkitEditor === 'true';
+	const [editRequest, setEditRequest] = useState<{
+		type: string;
+		agent?: LaunchAgent;
+		id?: string;
+		label?: string;
+	}>();
 	const launchd = useLaunchd();
 	const [query, setQuery] = useState('');
 	const [editing, setEditing] = useState(false);
 	const [dirty, setDirty] = useState(false);
+	useEffect(() => {
+		const edit = (event: Event) => setEditRequest((event as CustomEvent).detail);
+		window.addEventListener('toolkitEdit', edit);
+		return () => window.removeEventListener('toolkitEdit', edit);
+	}, []);
+	useEffect(() => {
+		if (!editRequest || launchd.busy) return;
+		if (dirty && !window.confirm('Discard unsaved changes?')) {
+			setEditRequest(undefined);
+			return;
+		}
+		const agent =
+			editRequest.agent ??
+			launchd.agents.find(
+				item => item.fileName === editRequest.id || item.label === editRequest.label,
+			);
+		if (editRequest.type === 'details' && agent) {
+			launchd.showDetails(agent);
+			setEditing(false);
+		} else if (agent || editRequest.type === 'add') {
+			if (agent) launchd.selectAgent(agent);
+			else launchd.createNew();
+			setEditing(true);
+			setDirty(false);
+		}
+		setEditRequest(undefined);
+	}, [editRequest, launchd.busy, launchd.agents]);
 	useEffect(() => {
 		const open = (event: Event) => {
 			const detail = (event as CustomEvent).detail;
@@ -38,12 +67,12 @@ export function App({
 	);
 	return (
 		<section className="py-4">
-			<header className="mb-4 flex flex-wrap items-center gap-2">
+			<header className="mb-2 flex flex-wrap items-center gap-1" hidden={editorMode}>
 				<h2 className="mr-auto text-sm font-semibold">Launchd</h2>
 				<input
 					aria-label="Search agents"
 					placeholder="Search agents"
-					className="h-8 min-w-0 rounded-xs bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground)"
+					className="order-last h-8 w-full min-w-0 rounded-xs bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground)"
 					value={query}
 					onChange={event => setQuery(event.target.value)}
 				/>
@@ -71,9 +100,7 @@ export function App({
 						aria-label="New agent"
 						disabled={launchd.busy}
 						onClick={() => {
-							launchd.createNew();
-							setEditing(true);
-							setDirty(false);
+							vscode.postMessage({ type: 'add' });
 						}}
 					>
 						<Plus size={16} />
@@ -95,67 +122,61 @@ export function App({
 					{query ? 'No matching agents.' : 'No agents yet.'}
 				</p>
 			)}
-			{['running', 'loaded', 'unloaded', 'error'].map(state => {
-				const group = agents.filter(agent => agent.state === state);
-				return (
-					group.length > 0 && (
-						<section key={state} className="mb-4">
-							<h3 className="mb-1.5 text-xs font-semibold capitalize text-(--vscode-descriptionForeground)">
-								{state}
-							</h3>
-							<ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,180px),1fr))] gap-2 p-0">
-								{group.map(agent => (
-									<ConnectionCard
-										key={agent.fileName}
-										server={{
-											id: agent.fileName,
-											name: agent.label,
-											address: agent.program || agent.programArguments[0] || agent.fileName,
-											group: state,
-											kind: 'Launchd',
-										}}
-										favorite={favorites.includes(agent.fileName)}
-										onFavorite={() => onFavorite(agent.fileName)}
-										actions={[
-											{ type: 'edit', label: 'Edit', icon: Pencil, disabled: launchd.busy },
-											{
-												type: 'start',
-												label: 'Start',
-												icon: Play,
-												disabled: launchd.busy || state === 'running',
-											},
-											{
-												type: 'stop',
-												label: 'Stop',
-												icon: Square,
-												disabled: launchd.busy || state === 'unloaded',
-											},
-											{
-												type: 'details',
-												label: 'Details',
-												icon: Info,
-												disabled: launchd.detailsLoading,
-											},
-											{ type: 'delete', label: 'Delete', icon: Trash2, disabled: launchd.busy },
-										]}
-										onAction={type => {
-											if (launchd.busy) return;
-											if (type === 'connect' || type === 'edit') {
-												launchd.selectAgent(agent);
-												setEditing(true);
-												setDirty(false);
-											} else if (type === 'details') launchd.showDetails(agent);
-											else if (type === 'delete') launchd.remove(agent);
-											else
-												launchd.runAction({ type, fileName: agent.fileName, label: agent.label });
-										}}
-									/>
-								))}
-							</ul>
-						</section>
-					)
-				);
-			})}
+			{!editorMode &&
+				['running', 'loaded', 'unloaded', 'error'].map(state => {
+					const group = agents.filter(agent => agent.state === state);
+					return (
+						group.length > 0 && (
+							<ConnectionGroup key={state} name={state} count={group.length}>
+									{group.map(agent => (
+										<ConnectionCard
+											key={agent.fileName}
+											compact
+											server={{
+												id: agent.fileName,
+												name: agent.label,
+												address: agent.program || agent.programArguments[0] || agent.fileName,
+												group: state,
+												kind: 'Launchd',
+											}}
+											actions={[
+												{ type: 'edit', label: 'Edit', icon: Pencil, disabled: launchd.busy },
+												{
+													type: 'start',
+													label: 'Start',
+													icon: Play,
+													disabled: launchd.busy || state === 'running',
+												},
+												{
+													type: 'stop',
+													label: 'Stop',
+													icon: Square,
+													disabled: launchd.busy || state === 'unloaded',
+												},
+												{
+													type: 'details',
+													label: 'Details',
+													icon: Info,
+													disabled: launchd.detailsLoading,
+												},
+												{ type: 'delete', label: 'Delete', icon: Trash2, disabled: launchd.busy },
+											]}
+											onAction={type => {
+												if (launchd.busy) return;
+												if (type === 'connect' || type === 'edit') {
+													vscode.postMessage({ type: 'openEditor', agent });
+												} else if (type === 'details')
+													vscode.postMessage({ type: 'details', agent, label: agent.label });
+												else if (type === 'delete') launchd.remove(agent);
+												else
+													launchd.runAction({ type, fileName: agent.fileName, label: agent.label });
+											}}
+										/>
+									))}
+							</ConnectionGroup>
+						)
+					);
+				})}
 			{editing && (
 				<Dialog
 					title="LaunchAgent"

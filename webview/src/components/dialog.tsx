@@ -16,6 +16,17 @@ export function Dialog({
 	onClose: () => void;
 	wide?: boolean;
 }) {
+	if (document.body.dataset.toolkitEditor === 'true') {
+		return (
+			<section aria-label={title} className="min-w-0">
+				<header className="mb-4 border-b border-(--vscode-panel-border) pb-3">
+					<h2 className="text-sm font-semibold">{title}</h2>
+				</header>
+				{children}
+				{actions && <footer className="mt-4 flex justify-end gap-2">{actions}</footer>}
+			</section>
+		);
+	}
 	return (
 		<div
 			className="fixed inset-0 z-30 grid place-items-center bg-black/45 p-4"

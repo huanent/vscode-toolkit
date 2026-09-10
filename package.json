@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -100,6 +100,13 @@
       }
     ],
     "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vscode-toolkit",
+          "title": "Toolkit",
+          "icon": "$(tools)"
+        }
+      ],
       "panel": [
         {
           "id": "vscode-toolkit-result",
@@ -109,6 +116,13 @@
       ]
     },
     "views": {
+      "vscode-toolkit": [
+        {
+          "id": "vscode-toolkit.dashboard",
+          "name": "Toolkit",
+          "type": "webview"
+        }
+      ],
       "vscode-toolkit-result": [
         {
           "id": "vscode-toolkit.httpResult",
@@ -129,7 +143,7 @@
       {
         "command": "vscode-toolkit.openDashboard",
         "title": "Open Dashboard",
-        "icon": "$(dashboard)",
+        "icon": "$(tools)",
         "category": "Toolkit"
       },
       {

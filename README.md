@@ -11,9 +11,10 @@ Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard
 ### Dashboard
 
 - Open Chat, Explorer, and HTTP Client from the quick navigation bar.
-- Pin SSH, Workflow, Database, Container, and Launchd items to Favorites using their star buttons.
-- Manage tools in five tabs, with searchable card lists, context menus, and inline editor dialogs.
-- Favorites persist across sessions; existing tool commands select the corresponding Dashboard tab.
+- Open Toolkit from the Activity Bar to browse five compact tool tabs and searchable lists in a webview sidebar.
+- Connection groups and Launchd status groups are collapsed by default; expand a group to browse its items.
+- Create and edit connections, workflows, and LaunchAgents in separate editor tabs. LaunchAgent runtime details also open in an editor tab.
+- Existing tool commands and the Dashboard shortcut focus the corresponding sidebar tab.
 - Launchd is available on macOS only. Active connections and resource editors still open in separate editor tabs.
 
 ### Chat

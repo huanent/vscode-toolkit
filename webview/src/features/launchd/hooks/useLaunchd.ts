@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { launchdApi as vscode, subscribe } from '../../dashboard/channel';
 import type {
 	LaunchAgent,
@@ -9,6 +9,7 @@ import type {
 import { blankConfig, cloneConfig, parseEnvironment } from '../utils';
 
 export function useLaunchd() {
+	const loadedSelection = useRef<string | undefined>(undefined);
 	const [agents, setAgents] = useState<LaunchAgent[]>([]);
 	const [selectedFileName, setSelectedFileName] = useState<string>();
 	const [draft, setDraft] = useState<LaunchAgentConfig>(() => cloneConfig(blankConfig));
@@ -57,8 +58,10 @@ export function useLaunchd() {
 	useEffect(() => {
 		if (!selectedFileName) return;
 		const selected = agents.find(agent => agent.fileName === selectedFileName);
-		if (selected) setEditor(selected);
-		else {
+		if (selected) {
+			if (loadedSelection.current !== selectedFileName) setEditor(selected);
+			loadedSelection.current = selectedFileName;
+		} else {
 			setSelectedFileName(undefined);
 			setEditor(blankConfig);
 		}
@@ -70,12 +73,14 @@ export function useLaunchd() {
 	};
 
 	const selectAgent = (agent: LaunchAgent) => {
+		loadedSelection.current = agent.fileName;
 		setSelectedFileName(agent.fileName);
 		setEditor(agent);
 		clearMessages();
 	};
 
 	const createNew = () => {
+		loadedSelection.current = undefined;
 		setSelectedFileName(undefined);
 		setEditor(blankConfig);
 		clearMessages();
