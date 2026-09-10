@@ -24,14 +24,17 @@ export class WorkflowStore {
 	save(workflow: Workflow, location?: string): Promise<void> {
 		const saved = parseWorkflow(workflow);
 		return this.enqueue(async () => {
-			await this.read();
-			this.locations.select(saved.id, location);
+			const workflows = await this.read();
+			if (location !== undefined) this.locations.resolve(location);
+			if (!workflows.some(candidate => candidate.id === saved.id)) this.locations.select(saved.id, location);
 			const file = this.uriForId(saved.id);
-			await vscode.workspace.fs.createDirectory(this.locations.directory(saved.id));
+			const directory = this.locations.directory(saved.id);
+			await vscode.workspace.fs.createDirectory(directory);
 			await vscode.workspace.fs.writeFile(
 				file,
 				Buffer.from(JSON.stringify(saved, undefined, 2), 'utf8'),
 			);
+			await this.locations.move(saved.id, `${saved.id}.json`, location);
 		});
 	}
 

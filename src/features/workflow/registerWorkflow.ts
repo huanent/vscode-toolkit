@@ -16,23 +16,24 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	let running = false;
 	const store = new WorkflowStore(context);
 
-	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken): Promise<boolean> {
+	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken, confirm = true): Promise<boolean> {
 		if (toolToken?.isCancellationRequested) return false;
 		if (!vscode.workspace.isTrusted)
 			throw new Error('Trust the workspace before running workflows.');
 		if (running) throw new Error('A workflow is already running.');
 		if (!workflow.steps.length) throw new Error('Add at least one step before running.');
-		const confirmed = await vscode.window.showWarningMessage(
-			`Run "${workflow.name}"? Commands execute with your permissions; uploads may overwrite remote files.`,
-			{
-				modal: true,
-				detail: workflow.steps
-					.map((step, index) => `${index + 1}. ${step.name}: ${describeStep(step)}`)
-					.join('\n'),
-			},
-			'Run',
-		);
-		if (confirmed !== 'Run' || toolToken?.isCancellationRequested) return false;
+		if (confirm) {
+			const confirmed = await vscode.window.showWarningMessage(
+				`Run "${workflow.name}"?`,
+				{
+					modal: true,
+					detail: `${workflow.steps.length} steps. Commands run with your permissions.${workflow.steps.some(step => step.type === 'sftp') ? ' Uploads may overwrite remote files.' : ''}`,
+				},
+				'Run',
+			);
+			if (confirmed !== 'Run') return false;
+		}
+		if (toolToken?.isCancellationRequested) return false;
 		if (running) throw new Error('A workflow is already running.');
 		running = true;
 		output.show(true);
@@ -190,7 +191,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		output,
-		registerWorkflowTools(store, run),
+		registerWorkflowTools(store, (workflow, token) => run(workflow, token, false)),
 		vscode.commands.registerCommand('vscode-toolkit.openWorkflowQuickPick', async () => {
 			if (managing) return;
 			managing = true;

@@ -7,6 +7,7 @@ import { WorkflowStore } from './store';
 
 interface UpsertWorkflowInput {
 	id?: string;
+	location?: string;
 	name: string;
 	description?: string;
 	steps: Workflow['steps'];
@@ -48,6 +49,7 @@ export function registerWorkflowTools(
 						name: workflow.name,
 						description: workflow.description ?? '',
 						stepCount: workflow.steps.length,
+						location: store.getLocation(workflow.id),
 					})),
 				);
 			},
@@ -56,7 +58,7 @@ export function registerWorkflowTools(
 			async invoke(options) {
 				const workflow = (await store.list()).find(candidate => candidate.id === options.input.id);
 				if (!workflow) throw new Error('Workflow was not found. Call listWorkflows first.');
-				return result(parseWorkflow(workflow));
+				return result({ ...parseWorkflow(workflow), location: store.getLocation(workflow.id) });
 			},
 		}),
 		vscode.lm.registerTool<UpsertWorkflowInput>('upsertWorkflow', {
@@ -70,15 +72,17 @@ export function registerWorkflowTools(
 				};
 			},
 			async invoke(options, token) {
+				if (options.input.location !== undefined && typeof options.input.location !== 'string')
+					throw new Error('location must be a string.');
 				const workflow = parseWorkflow({ ...options.input, id: options.input.id ?? randomUUID() });
 				const save = mutation.then(async () => {
 					if (token.isCancellationRequested) throw new Error('Workflow save cancelled.');
 					validate(workflow);
-					await store.save(workflow);
+					await store.save(workflow, options.input.location);
 				});
 				mutation = save.catch(() => {});
 				await save;
-				return result(workflow);
+				return result({ ...workflow, location: store.getLocation(workflow.id) });
 			},
 		}),
 		vscode.lm.registerTool<{ id: string }>('runWorkflow', {

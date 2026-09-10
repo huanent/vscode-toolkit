@@ -79,14 +79,17 @@ class ConnectionStore {
 	async saveServer(server: Server, credentials: ServerCredentials = {}, location?: string): Promise<void> {
 		this.assertServerType(server);
 		await this.enqueueMutation(async () => {
-			this.locations.select(server.id, location);
+			if (location !== undefined) this.locations.resolve(location);
 			const servers = this.getServers();
 			const exists = servers.some(current => current.id === server.id);
+			if (!exists) this.locations.select(server.id, location);
 			const updatedServers = exists
 				? servers.map(current => (current.id === server.id ? server : current))
 				: [...servers, server];
 			this.saveCredentials(server, credentials, false);
 			await this.writeServers(updatedServers);
+			await this.locations.move(server.id, serverFileName(server), location);
+			this.changeEmitter.fire();
 		});
 	}
 

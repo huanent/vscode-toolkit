@@ -27,12 +27,30 @@ export class ConnectionLocations {
 
 	select(id: string, location?: string): void {
 		if (location === undefined) return;
-		const directory = location ? this.workspaceDirectory(location) : this.globalDirectory;
+		const directory = this.resolve(location);
 		const existing = this.locations.get(id);
 		if (existing && existing.toString() !== directory.toString()) {
 			throw new Error('The storage location of an existing connection cannot be changed.');
 		}
 		this.locations.set(id, directory);
+	}
+
+	resolve(location: string): vscode.Uri {
+		return location ? this.workspaceDirectory(location) : this.globalDirectory;
+	}
+
+	async move(id: string, fileName: string, location?: string): Promise<void> {
+		if (location === undefined) return;
+		const target = this.resolve(location);
+		const source = this.directory(id);
+		if (target.toString() === source.toString()) return;
+		await vscode.workspace.fs.createDirectory(target);
+		await vscode.workspace.fs.rename(
+			vscode.Uri.joinPath(source, fileName),
+			vscode.Uri.joinPath(target, fileName),
+			{ overwrite: false },
+		);
+		this.remember(id, target);
 	}
 
 	directory(id: string): vscode.Uri {

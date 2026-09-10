@@ -125,6 +125,7 @@ export function App() {
 			return;
 		}
 		setDraft(structuredClone(next));
+		setDraftLocations({});
 		setDirty(false);
 		setError('');
 	};
@@ -149,7 +150,7 @@ export function App() {
 	const submit = (type: 'save' | 'run') => {
 		setError('');
 		setPending(true);
-		vscode.postMessage({ type, workflow: draft, location: draft ? (state.locations[draft.id] ?? draftLocations[draft.id] ?? '') : '' });
+		vscode.postMessage({ type, workflow: draft, location: draft ? (draftLocations[draft.id] ?? state.locations[draft.id] ?? '') : '' });
 	};
 	useEffect(() => {
 		const edit = (event: Event) => setEditRequest((event as CustomEvent).detail);
@@ -255,6 +256,7 @@ export function App() {
 						onClose={() => {
 							if (locked || (dirty && !window.confirm('Discard unsaved changes?'))) return;
 							setDraft(undefined);
+							setDraftLocations({});
 							setDirty(false);
 						}}
 					>
@@ -268,6 +270,7 @@ export function App() {
 									className={buttonClass}
 									onClick={() => {
 										setDraft(structuredClone(nextDraft));
+										setDraftLocations({});
 										setNextDraft(undefined);
 										setDirty(false);
 										setError('');
@@ -297,9 +300,9 @@ export function App() {
 							>
 								<fieldset disabled={locked} className="min-w-0">
 									<StorageLocation
-										value={state.locations[draft.id] ?? draftLocations[draft.id] ?? ''}
+										value={draftLocations[draft.id] ?? state.locations[draft.id] ?? ''}
 										folders={state.workspaceFolders}
-										disabled={locked || state.workflows.some(workflow => workflow.id === draft.id)}
+										disabled={locked}
 										onChange={location => {
 											setDraftLocations(current => ({ ...current, [draft.id]: location }));
 											setDirty(true);

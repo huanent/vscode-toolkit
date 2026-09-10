@@ -70,7 +70,7 @@ export async function handleMessage(
 				credentials,
 				groups: store.getGroups(),
 				location: existingServer ? store.getLocation(existingServer.id) : '',
-				locationLocked: Boolean(existingServer && !duplicate),
+				locationLocked: false,
 				workspaceFolders: vscode.workspace.isTrusted ? store.getWorkspaceFolders() : [],
 			},
 		});
@@ -147,9 +147,7 @@ export async function handleMessage(
 		return;
 	}
 	try {
-		await store.saveServer(server, nextCredentials, existingServer && !duplicate
-			? undefined
-			: typeof message.location === 'string' ? message.location : '');
+		await store.saveServer(server, nextCredentials, typeof message.location === 'string' ? message.location : undefined);
 		onSaved();
 	} catch (error) {
 		saveState.inProgress = false;
