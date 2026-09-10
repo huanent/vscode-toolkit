@@ -7,6 +7,7 @@ import { executeSshCommand } from '../ssh/sshCommand';
 import { writeSftpFile } from '../ssh/sftp';
 import { executeWorkflow, Workflow, WorkflowStep } from './workflow';
 import { registerWorkflowPanel } from './panel';
+import { registerWorkflowTools } from './tools';
 
 const storageKey = 'toolkit.workflows';
 
@@ -16,7 +17,8 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	let running = false;
 	const save = (workflows: Workflow[]) => context.globalState.update(storageKey, workflows);
 
-	async function run(workflow: Workflow): Promise<void> {
+	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken): Promise<boolean> {
+		if (toolToken?.isCancellationRequested) return false;
 		if (!vscode.workspace.isTrusted)
 			throw new Error('Trust the workspace before running workflows.');
 		if (running) throw new Error('A workflow is already running.');
@@ -31,7 +33,8 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 			},
 			'Run',
 		);
-		if (confirmed !== 'Run') return;
+		if (confirmed !== 'Run' || toolToken?.isCancellationRequested) return false;
+		if (running) throw new Error('A workflow is already running.');
 		running = true;
 		output.show(true);
 		output.appendLine(`\nWorkflow: ${workflow.name}`);
@@ -76,7 +79,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 								output.appendLine(`\nCompleted: ${step.name}`);
 								progress.report({ increment: 100 / workflow.steps.length });
 							},
-							() => token.isCancellationRequested,
+							() => token.isCancellationRequested || !!toolToken?.isCancellationRequested,
 						);
 					} finally {
 						cancellation.dispose();
@@ -85,6 +88,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 			);
 			output.appendLine('Workflow completed.');
 			void vscode.window.showInformationMessage(`Workflow "${workflow.name}" completed.`);
+			return true;
 		} catch (error) {
 			output.appendLine(`Stopped: ${error instanceof Error ? error.message : String(error)}`);
 			throw error;
@@ -122,6 +126,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 						{ label: '$(play) Run', action: 'run', index: -1 },
 						{ label: '$(add) Add Step', action: 'add', index: -1 },
 						{ label: '$(edit) Rename', action: 'rename', index: -1 },
+						{ label: '$(edit) Edit Description', action: 'description', index: -1 },
 						{ label: '$(trash) Delete Workflow', action: 'delete', index: -1 },
 						...workflow.steps.map((step, index) => ({
 							label: `${index + 1}. ${step.name}`,
@@ -143,6 +148,13 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 				} else if (action.action === 'rename') {
 					const name = await input('Workflow name', workflow.name);
 					if (name) workflow.name = name;
+				} else if (action.action === 'description') {
+					const description = await vscode.window.showInputBox({
+						prompt: 'Workflow description',
+						value: workflow.description ?? '',
+						ignoreFocusOut: true,
+					});
+					if (description !== undefined) workflow.description = description;
 				} else if (action.action === 'delete') {
 					if (
 						(await vscode.window.showWarningMessage(
@@ -181,6 +193,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 
 	context.subscriptions.push(
 		output,
+		registerWorkflowTools(context, run),
 		vscode.commands.registerCommand('vscode-toolkit.openWorkflowQuickPick', async () => {
 			if (managing) return;
 			managing = true;
@@ -193,7 +206,13 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 			}
 		}),
 	);
-	registerWorkflowPanel(context, run, () => output.show());
+	registerWorkflowPanel(
+		context,
+		async workflow => {
+			await run(workflow);
+		},
+		() => output.show(),
+	);
 }
 
 function input(prompt: string, value = ''): Thenable<string | undefined> {

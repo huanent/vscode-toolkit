@@ -28,7 +28,7 @@ interface ExecuteSshCommandInput {
 
 export function registerSshTools(store: ServerStore): vscode.Disposable {
 	return vscode.Disposable.from(
-		vscode.lm.registerTool('ssh_list_connections', {
+		vscode.lm.registerTool('listSSHServers', {
 			async invoke() {
 				return textResult(
 					JSON.stringify(
@@ -39,8 +39,8 @@ export function registerSshTools(store: ServerStore): vscode.Disposable {
 				);
 			},
 		}),
-		vscode.lm.registerTool('servers_sftp', new SftpTool(store)),
-		vscode.lm.registerTool('servers_ssh', new ExecuteSshCommandTool(store)),
+		vscode.lm.registerTool('manageSFTPFiles', new SftpTool(store)),
+		vscode.lm.registerTool('runSSHCommand', new ExecuteSshCommandTool(store)),
 	);
 }
 
@@ -71,7 +71,7 @@ class SftpTool implements vscode.LanguageModelTool<SftpInput> {
 	): Promise<vscode.LanguageModelToolResult> {
 		const input = options.input;
 		const server = this.findSshServer(input.serverId);
-		if (!server) throw new Error('SSH server was not found. Call ssh_list_connections first.');
+		if (!server) throw new Error('SSH server was not found. Call listSSHServers first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		switch (input.action) {
 			case 'list':
@@ -142,7 +142,7 @@ class ExecuteSshCommandTool implements vscode.LanguageModelTool<ExecuteSshComman
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findSshServer(options.input.serverId);
 		if (!server) {
-			throw new Error('SSH server was not found. Call ssh_list_connections first.');
+			throw new Error('SSH server was not found. Call listSSHServers first.');
 		}
 
 		const credentials = await this.serverStore.getCredentials(server.id);

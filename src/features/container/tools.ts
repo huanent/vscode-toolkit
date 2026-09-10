@@ -10,7 +10,7 @@ interface ExecuteContainerInput {
 
 export function registerContainerTools(store: ServerStore): vscode.Disposable {
 	return vscode.Disposable.from(
-		vscode.lm.registerTool('container_list_connections', {
+		vscode.lm.registerTool('listContainerConnections', {
 			async invoke() {
 				return textResult(
 					JSON.stringify(
@@ -21,7 +21,7 @@ export function registerContainerTools(store: ServerStore): vscode.Disposable {
 				);
 			},
 		}),
-		vscode.lm.registerTool('servers_container', new ContainerTool(store)),
+		vscode.lm.registerTool('runContainerCommand', new ContainerTool(store)),
 	);
 }
 
@@ -50,7 +50,7 @@ class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findContainerServer(options.input.serverId);
 		if (!server)
-			throw new Error('Container server was not found. Call container_list_connections first.');
+			throw new Error('Container server was not found. Call listContainerConnections first.');
 		const output = await executeContainerCommand(server, this.serverStore, options.input.args);
 		return textResult(output.slice(0, 20_000));
 	}

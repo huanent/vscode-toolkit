@@ -1,150 +1,104 @@
 # Toolkit
 
-Focused developer tools for VS Code.
+A developer toolbox for VS Code: AI chat, file browsing, HTTP requests, SSH, databases, containers, and automated workflows.
+
+## Getting Started
+
+Click **Toolkit** in the Activity Bar to open a tool, or search for `Toolkit` in the Command Palette. Script runners, package scripts, and Git actions are also available from the VS Code Explorer context menu.
 
 ## Features
 
-- A dedicated Toolkit item in the Activity Bar.
-- Notebook uses a Milkdown WYSIWYG Markdown editor and restores the last opened note.
-- Note history, search, creation, switching, renaming, and deletion are available inside the Notebook Webview.
-- Notes remain Markdown files in extension storage and save automatically after editing.
-- .gitignore Generator creates or updates `.gitignore` files from 185 curated operating system, language, editor, framework, and tool templates while preserving custom rules. Generation works fully offline.
-- LaunchAgents on macOS lists user startup items from `~/Library/LaunchAgents`, shows launch status, and supports starting, stopping, creating, editing, and deleting agents.
-- LaunchAgent configuration includes `RunAtLoad`, `KeepAlive`, `ThrottleInterval`, program arguments, environment variables, working directory, and output paths.
-- Run Script executes and debugs JavaScript and TypeScript files, including untitled editors, runs single-file C# programs with `dotnet run --file`, and runs shell scripts from the Explorer or Toolkit view.
-- Run npm Script discovers folders with package scripts and provides an Explorer menu for choosing a script to run.
-- HTTP Client is available from the Toolkit Activity Bar and opens the last visited request, or creates one when storage is empty. Requests use editable `toolkit-http:` virtual URIs backed by extension storage, save automatically, and provide new, rename, and delete actions in the editor title. Deleting a request opens the previously visited file. Its language service provides syntax highlighting, precise method replacement, request and header completion, hover details, live request-line and variable diagnostics, formatting, CodeLens actions, and real request execution for `.http` and `.rest` files. Valid JSON request bodies are detected and formatted with the editor's indentation settings even without a `Content-Type` header, and responses are shown in the Toolkit HTTP output channel.
-- XML formatting supports VS Code's Format Document command and follows the editor's indentation and line-ending settings.
+### Chat
 
-## Development
+- Chat with language models available in VS Code and switch between models.
+- Open multiple chat tabs, save conversations, and search and manage chat history.
+- View Markdown responses and edit messages to send them again.
+- Set a custom chat prompt in settings.
 
-### UI Guidelines
+Requires an available language model provider in VS Code.
 
-See the [Toolkit UI guide](docs/ui-guide.md) for the VS Code visual baseline,
-theme tokens, component conventions, migration priorities, and review checklist.
-The guide distinguishes official UX guidance from experimental UI changes and
-project-specific recommendations.
+### Explorer
+
+- Browse folders in editor tabs with navigation history and favorites.
+- Create, rename, copy, move, and delete files and folders.
+- Compress and extract files, and preview ZIP contents.
+- Preview spreadsheets and browse and manage SQLite databases.
+
+### HTTP Client
+
+- Create, rename, and delete requests with automatic saving and restoration of the last opened request.
+- Work with `.http` and `.rest` files. Separate requests with `###`, define variables with `@name = value`, and reference them with `{{name}}`.
+- Get syntax highlighting, request and header completion, hover details, diagnostics, and formatting.
+- Automatically format valid JSON bodies, even without a `Content-Type` header.
+- Send requests directly from the editor, inspect responses in the Result panel, and cancel requests from the status bar.
+
+Requests require absolute HTTP(S) URLs. Put credentials in headers, not URLs. CONNECT, TRACE, and request bodies on GET or HEAD are not supported.
+
+### SSH
+
+- Connect using passwords or private keys, with support for jump hosts and proxy commands.
+- Open remote terminals in editor tabs, save frequently used commands, and view remote metrics.
+- Browse, upload, download, and edit remote files over SFTP.
+
+### Database
+
+- Connect to MySQL directly or through an SSH tunnel.
+- Browse databases, table definitions, and data, and edit table rows.
+- Write and execute SQL with completion, and export query results.
+- Import and export databases.
+
+For SQLite files, use **Explorer**.
+
+### Container
+
+- Manage local or SSH-based Docker, Podman, and Apple Container environments.
+- Browse and manage container resources in editor tabs.
+- Reuse saved SSH connections for remote environments without entering credentials again.
+
+SSH, Database, and Container each support connection search, creation, editing, ordering, duplication, deletion, and import/export.
 
 ### Workflow
 
-Open **Toolkit > Workflow** (or **Toolkit: Open Workflow**) to create and manage
-saved workflows in an editor tab. Search workflows in the sidebar and edit step
-types, commands, connections and paths inline. Add, reorder or delete named steps;
-Save persists changes, while Run saves and executes them sequentially after confirmation.
-The toolbar shows running state and opens Toolkit Workflow output. Cancellation is
-available in the VS Code progress notification. Unsaved edits prompt before switching workflows.
-Steps support non-interactive local shell commands with an absolute working
-directory, SSH commands using a saved SSH connection, and single-file SFTP uploads
-to an absolute remote file path. Upload parent directories must already exist;
-existing remote files are overwritten. Credentials are resolved from SSH at run time.
+- Create, search, and save named workflows with descriptions.
+- Add, edit, reorder, and delete steps for local shell commands, SSH commands, and single-file SFTP uploads.
+- Save and run steps sequentially after confirmation, with logs in the Toolkit Workflow output channel.
 
-Workflows are saved in VS Code extension global state on this machine, independently
-of `toolkit.storagePath`. Do not embed passwords in commands. Execution requires a
-trusted workspace and stops on the first error. Cancel stops after the current step
-finishes; it does not interrupt a running command or transfer. Only one workflow
-can run at a time. Directory uploads, parallel steps and interactive commands are
-not supported.
+Execution requires a trusted workspace. Only one workflow can run at a time, and execution stops on the first error. Cancellation takes effect after the current step finishes; it does not interrupt a running command or transfer. Interactive commands, parallel steps, and directory uploads are not supported. Uploads overwrite existing files and require the remote parent directory to exist.
 
-### Structure
+### Launchd (macOS)
 
-- `src/features`: extension-host features; editors coordinate UI and call feature services.
-- `webview/src/features`: React views, hooks, and feature-local components.
-- `shared/protocol`: platform-independent message and data types shared by both sides.
-- `tests`: offline behavior tests and manifest/build integration checks.
+- View user LaunchAgents in `~/Library/LaunchAgents` and check their status.
+- Start, stop, create, edit, and delete agents.
+- Configure run-at-load behavior, keep-alive behavior, restart intervals, program arguments, environment variables, working directories, and log paths.
 
-Container command execution is shared by editors and Copilot tools. MySQL overview,
-table preview, and table definition logic are separate modules. Keep shared protocols
-free of VS Code, Node.js, and React dependencies; validate incoming messages at runtime.
+### Scripts and Developer Utilities
 
-Run `npm run build` followed by `npm test` and `npm run lint` to verify changes.
-The integration tests require the generated Webview bundles from the build.
+- **Script runners**: Run JavaScript, TypeScript, single-file C#, shell scripts, and Windows batch files. JavaScript and TypeScript support debugging and untitled editors. Uses Node.js, Bun, .NET, or the appropriate shell.
+- **Package scripts**: Discover and run npm or Bun package scripts from the Explorer context menu.
+- **Git actions**: Pull, push, fetch, and switch branches from the Explorer context menu.
+- **.gitignore generator**: Create or update ignore rules from 185 operating system, language, editor, framework, and tool templates. Preserves custom rules and works fully offline.
+- **XML formatting**: Use VS Code's Format Document command with the editor's indentation and line-ending settings.
+- **Debug timing**: See execution-time hints when the debugger pauses.
 
-### SSH, Database And Container
+### Copilot Integration
 
-Toolkit has three independent entries: SSH, Database and Container. Each opens
-its own editor management tab with search, connection creation, editing, ordering,
-duplication, deletion and type-specific import/export. Connections open their
-terminal, database browser or container manager in editor tabs.
+Give Copilot access to authorized connections and saved workflows:
 
-- SSH: password/private-key authentication, jump hosts and proxy commands, terminal,
-  saved commands, remote metrics, and SFTP browsing, transfer and file editing.
-- MySQL: database and table browsing, data editing, SQL completion and execution,
-  result export, and database import/export.
-- Containers: local or SSH-based Docker, Podman and Apple Container management.
-- Copilot connection lists: `ssh_list_connections`, `database_list_connections`,
-  and `container_list_connections`. Execution tools retain their names:
-  `servers_ssh`, `servers_sql`, `servers_container` and `servers_sftp`.
-- Tool visibility is configured independently with `toolkit.ssh.enableLanguageModelTools`,
-  `toolkit.database.enableLanguageModelTools`, and `toolkit.container.enableLanguageModelTools`.
-  The previous unified setting is no longer used; set the new switches explicitly
-  if tools were previously disabled. Individual connections retain their AI access setting.
+- List SSH, database, and container connections; run remote commands, SQL, container commands, and SFTP file operations.
+- Find and read workflows, create or update them, and run them after confirmation.
+- Tools are enabled by default. Control AI access per connection.
 
-Each extension-host feature owns its registration, connection model, store, form,
-management panel, custom editor and tools. Form protocols are separate under
-`shared/protocol/ssh`, `shared/protocol/database` and `shared/protocol/container`.
-There is no shared server feature or form implementation. Container SSH references
-use the SSH connection service; database tunnels use the SSH transport.
-Previously open `.servers` tabs must be reopened from their feature management tab.
+## Settings and Data
 
-Each feature uses `toolkit.storagePath`, falling back to Toolkit global storage.
-Connection files and credentials are stored independently under `ssh/connections`,
-`database/connections` and `container/connections`, with a separate `order.json`
-in each feature directory. Temporary SQL documents are under `database/mysql-sql`.
-Container connections can reference SSH connections without copying their credentials. Storage path expansion
-and validation follow Toolkit, including support for `~` and absolute paths.
-Reload the extension after changing the storage location.
+Search for `Toolkit` in VS Code Settings.
 
-Existing exports can be imported from the corresponding management tab; other
-connection types in the file are ignored. There is no runtime migration or fallback
-to the old `servers` directory. To migrate old data, close VS Code and run:
+| Setting               | Purpose                                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `toolkit.storagePath` | Data directory. Supports `~`; leave empty to use extension storage. Reload the extension after changing it. |
+| `toolkit.chat.prompt` | Custom prompt for Chat.                                                                                     |
 
-```bash
-node scripts/migrate-servers.mjs /absolute/path/to/toolkit-data
-```
+Workflows are saved separately in VS Code's extension global state on this machine, independently of `toolkit.storagePath`.
 
-Run this before opening the new extension for the first time. The script refuses
-to overwrite any existing `ssh`, `database` or `container` destination directory.
-It copies connection files, credentials, IDs and ordering, preserving SSH references
-and leaving the original `servers` directory untouched. Old temporary SQL documents
-are not migrated. Connection files
-and exports can contain credentials; protect the storage directory and exported files.
+SSH, Database, and Container store connections separately. Import or export connections from the corresponding management tab. Storage directories and exported files may contain credentials; keep them secure and do not embed passwords in workflow commands.
 
-Run `npm run build` then `npm run test:features` for connection parsing and feature
-isolation regression tests. Live SSH, MySQL and container operations require configured services.
-
-### HTTP Files
-
-Separate requests with `###` lines. Define file-wide variables with `@name = value`
-before a request line; reference them with `{{name}}` in URLs, headers, and bodies.
-Variables can reference other variables, with diagnostics for missing definitions
-and circular references. Definitions inside a request body are treated as body text.
-
-Standalone `#` and `//` comment lines, including indented ones, are excluded from
-request bodies. These prefixes inside JSON strings are preserved. A raw text line
-starting with either prefix is therefore reserved for comments.
-
-Formatting preserves non-JSON body whitespace and formats valid JSON, including
-JSON surrounded by comments. JSON with internal comments is left unchanged by the
-formatter. Requests require absolute HTTP(S) URLs; use `Authorization` headers
-instead of URL credentials. The fetch transport does not support CONNECT or TRACE,
-or request bodies on GET and HEAD. The HTTP version suffix is descriptive and does
-not force the negotiated transport version. Responses appear in the Toolkit HTTP
-result panel; the status bar provides request cancellation.
-
-Run `npm run test:http` for offline parser, variable, diagnostic, and formatter tests.
-
-### Build
-
-```bash
-npm install
-npm run build
-```
-
-Press `F5` in VS Code to build and open an Extension Development Host.
-
-- `npm run lint`: check code with Oxlint; warnings fail the check.
-- `npm run lint:fix`: apply automatic Oxlint fixes.
-- `npm run format`: format source code, configuration, and documentation with Oxfmt.
-- `npm run format:check`: verify formatting without modifying files.
-
-Formatting uses tabs, single quotes, semicolons, and a 100-column print width. JSON, YAML, and Markdown use spaces. Generated output, dependencies, coverage output, bundled gitignore templates, and the lockfile are excluded. Import and package key sorting are disabled to keep formatting changes focused.
+Script execution, database connections, and container management require the corresponding runtimes, services, and access permissions.

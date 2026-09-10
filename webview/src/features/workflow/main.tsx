@@ -266,6 +266,15 @@ function App() {
 										<Trash2 size={16} />
 									</IconButton>
 								</div>
+								<div className="mb-5">
+									<Field label="Workflow description">
+										<TextArea
+											rows={2}
+											value={draft.description ?? ''}
+											onChange={event => change({ ...draft, description: event.target.value })}
+										/>
+									</Field>
+								</div>
 								<div className="flex items-center justify-between border-b border-(--vscode-panel-border) pb-2">
 									<h2 className="text-xs font-semibold">Steps ({draft.steps.length})</h2>
 									<button

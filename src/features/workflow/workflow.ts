@@ -6,6 +6,7 @@ export type WorkflowStep =
 export interface Workflow {
 	id: string;
 	name: string;
+	description?: string;
 	steps: WorkflowStep[];
 }
 
@@ -18,15 +19,26 @@ export function parseWorkflow(value: unknown): Workflow {
 		return field;
 	};
 	if (!Array.isArray(record.steps)) throw new Error('Invalid steps.');
+	const description = (source: Record<string, unknown>): string => {
+		if (source.description === undefined) return '';
+		if (typeof source.description !== 'string') throw new Error('description must be a string.');
+		return source.description;
+	};
 	return {
 		id: text(record, 'id'),
 		name: text(record, 'name'),
+		description: description(record),
 		steps: record.steps.map((value): WorkflowStep => {
 			if (!value || typeof value !== 'object') throw new Error('Invalid step.');
 			const step = value as Record<string, unknown>;
 			const name = text(step, 'name');
 			if (step.type === 'command')
-				return { name, type: 'command', command: text(step, 'command'), cwd: text(step, 'cwd') };
+				return {
+					name,
+					type: 'command',
+					command: text(step, 'command'),
+					cwd: text(step, 'cwd'),
+				};
 			if (step.type === 'ssh')
 				return {
 					name,

@@ -11,7 +11,7 @@ interface ExecuteSqlInput {
 
 export function registerDatabaseTools(store: ServerStore): vscode.Disposable {
 	return vscode.Disposable.from(
-		vscode.lm.registerTool('database_list_connections', {
+		vscode.lm.registerTool('listDatabaseConnections', {
 			async invoke() {
 				return textResult(
 					JSON.stringify(
@@ -22,7 +22,7 @@ export function registerDatabaseTools(store: ServerStore): vscode.Disposable {
 				);
 			},
 		}),
-		vscode.lm.registerTool('servers_sql', new SqlTool(store)),
+		vscode.lm.registerTool('runSQL', new SqlTool(store)),
 	);
 }
 
@@ -52,7 +52,7 @@ class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findMysqlServer(options.input.serverId);
-		if (!server) throw new Error('DB server was not found. Call database_list_connections first.');
+		if (!server) throw new Error('DB server was not found. Call listDatabaseConnections first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		const connection = await createMysqlConnection(server, credentials, options.input.database);
 		try {
