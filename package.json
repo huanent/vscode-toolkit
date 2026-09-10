@@ -340,6 +340,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "vscode-toolkit.openLaunchd",
+          "when": "view == vscode-toolkit.dashboard && isMac",
+          "group": "tools@1"
+        },
+        {
           "command": "vscode-toolkit.openExplorer",
           "when": "view == vscode-toolkit.dashboard",
           "group": "navigation@1"
@@ -352,7 +357,7 @@
         {
           "command": "vscode-toolkit.openHttpClient",
           "when": "view == vscode-toolkit.dashboard",
-          "group": "navigation@3"
+          "group": "tools@2"
         }
       ],
       "editor/title": [

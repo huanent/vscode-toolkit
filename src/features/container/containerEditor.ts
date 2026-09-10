@@ -21,7 +21,7 @@ export function configureContainerEditor(
 ): void {
 	const postMessage = (message: ContainerExtensionMessage) => panel.webview.postMessage(message);
 	panel.title = server.name;
-	panel.iconPath = new vscode.ThemeIcon('server-process');
+	panel.iconPath = new vscode.ThemeIcon('symbol-method');
 	panel.webview.options = {
 		enableScripts: true,
 		localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'media')],

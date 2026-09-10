@@ -11,7 +11,6 @@ import { useLaunchd } from './hooks/useLaunchd';
 import type { LaunchAgent } from './types';
 
 export function App() {
-	const editorMode = document.body.dataset.toolkitEditor === 'true';
 	const [editRequest, setEditRequest] = useState<{
 		type: string;
 		agent?: LaunchAgent;
@@ -67,7 +66,7 @@ export function App() {
 	);
 	return (
 		<section className="py-4">
-			<header className="mb-2 flex flex-wrap items-center gap-1" hidden={editorMode}>
+			<header className="mb-2 flex flex-wrap items-center gap-1">
 				<h2 className="mr-auto text-sm font-semibold">Launchd</h2>
 				<input
 					aria-label="Search agents"
@@ -100,7 +99,7 @@ export function App() {
 						aria-label="New agent"
 						disabled={launchd.busy}
 						onClick={() => {
-							vscode.postMessage({ type: 'add' });
+							setEditRequest({ type: 'add' });
 						}}
 					>
 						<Plus size={16} />
@@ -122,8 +121,7 @@ export function App() {
 					{query ? 'No matching agents.' : 'No agents yet.'}
 				</p>
 			)}
-			{!editorMode &&
-				['running', 'loaded', 'unloaded', 'error'].map(state => {
+			{['running', 'loaded', 'unloaded', 'error'].map(state => {
 					const group = agents.filter(agent => agent.state === state);
 					return (
 						group.length > 0 && (
@@ -164,9 +162,9 @@ export function App() {
 											onAction={type => {
 												if (launchd.busy) return;
 												if (type === 'connect' || type === 'edit') {
-													vscode.postMessage({ type: 'openEditor', agent });
+													setEditRequest({ type: 'edit', agent });
 												} else if (type === 'details')
-													vscode.postMessage({ type: 'details', agent, label: agent.label });
+													setEditRequest({ type: 'details', agent });
 												else if (type === 'delete') launchd.remove(agent);
 												else
 													launchd.runAction({ type, fileName: agent.fileName, label: agent.label });

@@ -4,14 +4,12 @@ import {
 	CircuitBoard,
 	Database,
 	Container,
-	Rocket,
 	Terminal,
 } from '../../components/icons';
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
 import { Connections } from '../ssh/management/main';
 import { App as Workflow } from '../workflow/main';
-import { App as Launchd } from '../launchd/App';
 import { type Tab } from './channel';
 
 document.body.classList.add('min-w-0');
@@ -20,18 +18,15 @@ const tabs = [
 	{ id: 'ssh', label: 'SSH', icon: Terminal },
 	{ id: 'database', label: 'Database', icon: Database },
 	{ id: 'container', label: 'Container', icon: Container },
-	{ id: 'launchd', label: 'Launchd', icon: Rocket },
 ] as const;
 function App() {
 	const [active, setActive] = useState<Tab>('workflow');
 	const [connected, setConnected] = useState(false);
-	const [isMac, setIsMac] = useState(false);
 	useEffect(() => {
 		const receive = (event: MessageEvent) => {
 			const message = event.data;
 			if (message.type === 'dashboardState') {
 				setActive(message.tab);
-				setIsMac(message.isMac);
 			}
 			if (message.type === 'dashboardTab') setActive(message.tab);
 			if (message.type === 'dashboardConnected') setConnected(true);
@@ -49,7 +44,7 @@ function App() {
 			<div
 				role="tablist"
 				aria-label="Tools"
-				className="grid grid-cols-5 border-b border-(--vscode-panel-border)"
+				className="grid grid-cols-4 border-b border-(--vscode-panel-border)"
 			>
 				{tabs.map(({ id, label, icon: Icon }, index) => (
 					<button
@@ -102,12 +97,6 @@ function App() {
 					>
 						{id === 'workflow' ? (
 							<Workflow />
-						) : id === 'launchd' ? (
-							isMac ? (
-								<Launchd />
-							) : (
-								<p className="py-6 text-xs">Launchd is only available on macOS.</p>
-							)
 						) : (
 							<Connections tab={id} />
 						)}

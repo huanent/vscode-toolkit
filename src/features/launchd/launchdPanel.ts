@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { dashboardFeaturePanel } from '../dashboard/panel';
+import { dashboardFeaturePanel, openDashboardEditor } from '../dashboard/panel';
 import { homedir } from 'node:os';
 import { LaunchAgentConfig, LaunchdService } from './launchdService';
 
@@ -24,12 +24,13 @@ export class LaunchdPanel {
 			return;
 		}
 		if (LaunchdPanel.currentPanel) {
-			if (!background) LaunchdPanel.currentPanel.panel.reveal(vscode.ViewColumn.One);
+			if (!background) openDashboardEditor('launchd', {});
 			return;
 		}
 
-		const panel = dashboardFeaturePanel('launchd', background);
+		const panel = dashboardFeaturePanel('launchd', true);
 		LaunchdPanel.currentPanel = new LaunchdPanel(panel);
+		if (!background) openDashboardEditor('launchd', {});
 	}
 
 	private constructor(private readonly panel: vscode.WebviewPanel) {

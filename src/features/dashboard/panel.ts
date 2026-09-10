@@ -67,7 +67,7 @@ function configureDashboard(current: vscode.WebviewView): void {
 				isMac: process.platform === 'darwin',
 			});
 			for (const [channel, command] of Object.entries(commands)) {
-				if (channel !== 'launchd' || process.platform === 'darwin')
+				if (channel !== 'launchd')
 					await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
 			}
 			await current.webview.postMessage({ type: 'dashboardConnected' });
@@ -158,7 +158,7 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 		workflow: 'circuit-board',
 		ssh: 'terminal',
 		database: 'database',
-		container: 'server-process',
+		container: 'symbol-method',
 		launchd: 'rocket',
 	};
 	editor.iconPath = new vscode.ThemeIcon(icons[tab]);
