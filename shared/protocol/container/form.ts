@@ -64,6 +64,9 @@ export interface ServerCredentials {
 }
 
 export interface ServerFormModel {
+	location: string;
+	locationLocked: boolean;
+	workspaceFolders: { name: string; uri: string }[];
 	serverType: ServerType;
 	server?: Server;
 	credentials: ServerCredentials;

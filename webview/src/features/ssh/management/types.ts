@@ -5,6 +5,7 @@ import type {
 } from '../../../../../shared/protocol/ssh/form';
 
 export interface ServerFormValues {
+	location: string;
 	name: string;
 	group: string;
 	host: string;

@@ -6,6 +6,7 @@ import type {
 } from '../../../../../shared/protocol/container/form';
 
 export interface ServerFormValues {
+	location: string;
 	name: string;
 	group: string;
 	host: string;

@@ -39,6 +39,7 @@ export type ExportedServer = Server & {
 };
 
 export interface ServerFormMessage {
+	location?: unknown;
 	type: 'save' | 'selectPrivateKey' | 'selectProxyPrivateKey' | 'selectExecutable';
 	name?: unknown;
 	group?: unknown;

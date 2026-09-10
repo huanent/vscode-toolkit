@@ -15,9 +15,12 @@ export function registerWorkflowPanel(
 	let busy = false;
 	const sendState = async () => {
 		try {
+			const workflows = await store.list();
 			await panel?.webview.postMessage({
 				type: 'state',
-				workflows: await store.list(),
+				workflows,
+				locations: Object.fromEntries(workflows.map(workflow => [workflow.id, store.getLocation(workflow.id)])),
+				workspaceFolders: store.getWorkspaceFolders(),
 				busy,
 				servers: listSshConnections().map(server => ({
 					id: server.id,
@@ -89,7 +92,7 @@ export function registerWorkflowPanel(
 									)
 										throw new Error('Select an existing SSH connection.');
 								}
-								await store.save(workflow);
+								await store.save(workflow, typeof request.location === 'string' ? request.location : undefined);
 								await current.webview.postMessage({ type: 'saved', workflow });
 								await sendState();
 								if (request.type === 'run') {

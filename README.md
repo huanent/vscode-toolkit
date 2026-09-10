@@ -106,6 +106,3 @@ Search for `Toolkit` in VS Code Settings.
 | `toolkit.storagePath` | Data directory. Supports `~`; leave empty to use extension storage. Reload the extension after changing it. |
 | `toolkit.chat.prompt` | Custom prompt for Chat.                                                                                     |
 
-SSH, Database, and Container connection credentials are stored in `secret.json` at the storage root. On loading existing connections, passwords, private keys, passphrases, and their proxy equivalents are automatically moved there before connection files are rewritten with references such as `${toolkit:ssh.<id>.password}`. Database and Container references use the `database` and `container` namespaces. Subsequent saves use the same format; connection names do not affect references.
-
-`secret.json` is plaintext, not encrypted, and is written with owner-only permissions on POSIX systems. Back it up together with the connection files and keep it out of Git. Missing references or invalid secret data stop credential loading instead of replacing secrets with empty values. Exported connections still include actual credentials. Workflow commands and HTTP document contents are not scanned or rewritten.

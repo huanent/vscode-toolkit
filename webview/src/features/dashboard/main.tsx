@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client';
 import {
 	CircuitBoard,
 	Database,
-	FolderOpen,
+	Folder,
 	Globe,
 	MessageSquare,
-	Package,
+	Container,
 	Rocket,
 	Terminal,
 } from '../../components/icons';
@@ -22,7 +22,7 @@ const tabs = [
 	{ id: 'workflow', label: 'Workflow', icon: CircuitBoard },
 	{ id: 'ssh', label: 'SSH', icon: Terminal },
 	{ id: 'database', label: 'Database', icon: Database },
-	{ id: 'container', label: 'Container', icon: Package },
+	{ id: 'container', label: 'Container', icon: Container },
 	{ id: 'launchd', label: 'Launchd', icon: Rocket },
 ] as const;
 function App() {
@@ -52,7 +52,7 @@ function App() {
 			<header className="border-b border-(--vscode-panel-border) pb-2">
 				<nav aria-label="Quick navigation" className="grid grid-cols-3 gap-1">
 					{[
-						{ command: 'openExplorer', label: 'File Explorer', icon: FolderOpen },
+						{ command: 'openExplorer', label: 'File Explorer', icon: Folder },
 						{ command: 'openChat', label: 'Chat', icon: MessageSquare },
 						{ command: 'openHttpClient', label: 'HTTP Client', icon: Globe },
 					].map(({ command, label, icon: Icon }) => (

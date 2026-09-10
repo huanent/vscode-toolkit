@@ -1,4 +1,5 @@
 import { cn } from 'cn';
+import { StorageLocation } from '../../../components/storage-location';
 import { useState } from 'react';
 import { Save } from '../../../components/icons';
 import { PrimaryButton } from '../../../components/button';
@@ -40,6 +41,7 @@ export function App({ sessionId, onClose }: { sessionId?: number; onClose?: () =
 			}}
 		>
 			<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) py-3.5">
+				<StorageLocation value={values.location} folders={model.workspaceFolders ?? []} disabled={form.saving || model.locationLocked} onChange={value => form.update('location', value)} />
 				<div className="mx-auto grid w-[min(880px,calc(100%-44px))] grid-cols-[minmax(160px,1.25fr)_minmax(140px,1fr)_auto] items-end gap-3 max-[680px]:w-[calc(100%-28px)] max-[520px]:grid-cols-[minmax(0,1fr)_auto]">
 					<Field label="Name" required>
 						<TextInput

@@ -1,6 +1,7 @@
 import { watch, FSWatcher } from 'node:fs';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../storagePath';
+import { ConnectionLocations } from '../../connectionLocations';
 import { CredentialStorage } from '../../credentialStorage';
 import { ExportedServer, parseServer, Server, ServerType, usesPrivateKey } from './server';
 
@@ -24,6 +25,8 @@ class ConnectionStore {
 	private readonly storageDirectoryUri: vscode.Uri;
 	private readonly serversDirectoryUri: vscode.Uri;
 	private readonly credentialStorage: CredentialStorage;
+	private readonly locations: ConnectionLocations;
+	private workspaceWatcher: vscode.FileSystemWatcher | undefined;
 	private servers: Server[] = [];
 	private readonly credentials = new Map<string, ServerCredentials>();
 	private watcher: FSWatcher | undefined;
@@ -38,6 +41,7 @@ class ConnectionStore {
 		this.storageDirectoryUri = getStorageUri(context, 'database');
 		this.credentialStorage = new CredentialStorage(context, 'database');
 		this.serversDirectoryUri = vscode.Uri.joinPath(this.storageDirectoryUri, 'connections');
+		this.locations = new ConnectionLocations(this.serversDirectoryUri, 'database');
 	}
 
 	static async create(
@@ -54,6 +58,10 @@ class ConnectionStore {
 		}
 	}
 
+	getWorkspaceFolders() { return this.locations.folders; }
+
+	getLocation(id: string): string { return this.locations.location(id); }
+
 	getServers(): Server[] {
 		return this.servers;
 	}
@@ -68,9 +76,10 @@ class ConnectionStore {
 		].sort((left, right) => left.localeCompare(right));
 	}
 
-	async saveServer(server: Server, credentials: ServerCredentials = {}): Promise<void> {
+	async saveServer(server: Server, credentials: ServerCredentials = {}, location?: string): Promise<void> {
 		this.assertServerType(server);
 		await this.enqueueMutation(async () => {
+			this.locations.select(server.id, location);
 			const servers = this.getServers();
 			const exists = servers.some(current => current.id === server.id);
 			const updatedServers = exists
@@ -142,8 +151,9 @@ class ConnectionStore {
 	async deleteServers(serverIds: string[]): Promise<void> {
 		await this.enqueueMutation(async () => {
 			const deletedIds = new Set(serverIds);
-			serverIds.forEach(serverId => this.credentials.delete(serverId));
 			await this.writeServers(this.getServers().filter(server => !deletedIds.has(server.id)));
+			serverIds.forEach(serverId => this.credentials.delete(serverId));
+			await this.credentialStorage.delete(serverIds);
 		});
 	}
 
@@ -203,6 +213,10 @@ class ConnectionStore {
 				this.scheduleReload();
 			}
 		});
+		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/database/connections/*.json');
+		this.workspaceWatcher.onDidCreate(() => this.scheduleReload());
+		this.workspaceWatcher.onDidChange(() => this.scheduleReload());
+		this.workspaceWatcher.onDidDelete(() => this.scheduleReload());
 		await this.reloadServers();
 		await this.enqueueMutation(() => this.writeServers(this.servers));
 	}
@@ -222,20 +236,19 @@ class ConnectionStore {
 	}
 
 	private async reloadServers(): Promise<void> {
-		const entries = await vscode.workspace.fs.readDirectory(this.serversDirectoryUri);
+		const entries = await this.locations.entries();
 		const serverFiles = entries
 			.filter(
-				([name, type]) =>
+				({ name, type }) =>
 					type === vscode.FileType.File && name.endsWith('.json') && name !== serverOrderFileName,
 			)
-			.map(([name]) => name)
-			.sort();
+			.sort((left, right) => left.name.localeCompare(right.name));
 		const storedServers = (
 			await Promise.all(
-				serverFiles.map(async name => {
+				serverFiles.map(async ({ name, directory }) => {
 					try {
 						const content = await vscode.workspace.fs.readFile(
-							vscode.Uri.joinPath(this.serversDirectoryUri, name),
+							vscode.Uri.joinPath(directory, name),
 						);
 						const storedServer = parseStoredServer(
 							JSON.parse(Buffer.from(content).toString('utf8')),
@@ -243,15 +256,19 @@ class ConnectionStore {
 						return storedServer &&
 							(!this.serverType || storedServer.server.type === this.serverType) &&
 							name === serverFileName(storedServer.server)
-							? storedServer
+							? { ...storedServer, directory }
 							: undefined;
 					} catch {
 						return undefined;
 					}
 				}),
 			)
-		).filter((storedServer): storedServer is StoredServer => storedServer !== undefined);
+		).filter((storedServer): storedServer is StoredServer & { directory: vscode.Uri } => storedServer !== undefined);
+		const ids = new Set<string>();
 		for (const stored of storedServers) {
+			if (ids.has(stored.server.id)) throw new Error('Duplicate connection ID across storage locations.');
+			ids.add(stored.server.id);
+			this.locations.remember(stored.server.id, stored.directory);
 			stored.credentials = await this.credentialStorage.resolve(stored.credentials);
 		}
 		const storedServersById = new Map(
@@ -285,12 +302,14 @@ class ConnectionStore {
 		servers.forEach(server => this.assertServerType(server));
 		this.writeInProgress = true;
 		try {
-			const existingEntries = await vscode.workspace.fs.readDirectory(this.serversDirectoryUri);
+			const existingEntries = await this.locations.entries();
 			const expectedFiles = new Set(servers.map(serverFileName));
 			await Promise.all(
 				servers.map(async server => {
 					const fileName = serverFileName(server);
-					const serverUri = vscode.Uri.joinPath(this.serversDirectoryUri, fileName);
+					const directory = this.locations.directory(server.id);
+					await vscode.workspace.fs.createDirectory(directory);
+					const serverUri = vscode.Uri.joinPath(directory, fileName);
 					const credentials = await this.credentialStorage.store(server.id, this.credentials.get(server.id) ?? {});
 					const contents = Buffer.from(
 						JSON.stringify(
@@ -310,7 +329,7 @@ class ConnectionStore {
 					if (await fileContentsEqual(serverUri, contents)) {
 						return;
 					}
-					await writeFileAtomically(this.serversDirectoryUri, fileName, contents);
+					await writeFileAtomically(directory, fileName, contents);
 				}),
 			);
 			await writeFileAtomically(
@@ -326,7 +345,6 @@ class ConnectionStore {
 			);
 			await Promise.all(
 				existingEntries
-					.map(([name, type]) => ({ name, type }))
 					.filter(
 						({ name, type }) =>
 							type === vscode.FileType.File &&
@@ -335,8 +353,8 @@ class ConnectionStore {
 							!expectedFiles.has(name) &&
 							this.servers.some(server => serverFileName(server) === name),
 					)
-					.map(({ name }) =>
-						vscode.workspace.fs.delete(vscode.Uri.joinPath(this.serversDirectoryUri, name)),
+					.map(({ name, directory }) =>
+						vscode.workspace.fs.delete(vscode.Uri.joinPath(directory, name)),
 					),
 			);
 			this.servers = servers;
@@ -408,6 +426,7 @@ class ConnectionStore {
 
 	dispose(): void {
 		this.watcher?.close();
+		this.workspaceWatcher?.dispose();
 		if (this.reloadTimer) {
 			clearTimeout(this.reloadTimer);
 		}

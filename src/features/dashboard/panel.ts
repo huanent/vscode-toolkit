@@ -154,7 +154,14 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 			localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 		},
 	);
-	editor.iconPath = new vscode.ThemeIcon(tab === 'ssh' ? 'terminal' : 'tools');
+	const icons: Record<DashboardTab, string> = {
+		workflow: 'circuit-board',
+		ssh: 'terminal',
+		database: 'database',
+		container: 'server-process',
+		launchd: 'rocket',
+	};
+	editor.iconPath = new vscode.ThemeIcon(icons[tab]);
 	editors.set(tab, editor);
 	const messages = editor.webview.onDidReceiveMessage(message => {
 		if (message.type === 'editorReady') {

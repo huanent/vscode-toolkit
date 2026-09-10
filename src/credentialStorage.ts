@@ -68,16 +68,36 @@ export class CredentialStorage {
 				values[key] = value;
 				references[field] = '${' + key + '}';
 			}
-			await mkdir(path.dirname(this.file), { recursive: true });
-			const temporary = `${this.file}.${randomUUID()}.tmp`;
-			try {
-				await writeFile(temporary, JSON.stringify(values, undefined, 2), { mode: 0o600, flag: 'wx' });
-				await rename(temporary, this.file);
-				await chmod(this.file, 0o600);
-			} finally {
-				await rm(temporary, { force: true });
-			}
+			await this.write(values);
 			return references;
 		});
+	}
+
+	delete(serverIds: string[]): Promise<void> {
+		return this.enqueue(async () => {
+			const values = await this.read();
+			let changed = false;
+			for (const id of serverIds) {
+				for (const field of fields) {
+					const key = `toolkit:${this.namespace}.${id}.${field}`;
+					if (!Object.hasOwn(values, key)) continue;
+					delete values[key];
+					changed = true;
+				}
+			}
+			if (changed) await this.write(values);
+		});
+	}
+
+	private async write(values: Record<string, string>): Promise<void> {
+		await mkdir(path.dirname(this.file), { recursive: true });
+		const temporary = `${this.file}.${randomUUID()}.tmp`;
+		try {
+			await writeFile(temporary, JSON.stringify(values, undefined, 2), { mode: 0o600, flag: 'wx' });
+			await rename(temporary, this.file);
+			await chmod(this.file, 0o600);
+		} finally {
+			await rm(temporary, { force: true });
+		}
 	}
 }

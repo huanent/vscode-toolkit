@@ -7,6 +7,7 @@ import type {
 } from '../../../../../../shared/protocol/container/form';
 
 const emptyValues: ServerFormValues = {
+	location: '',
 	name: '',
 	group: '',
 	aiEnabled: false,
@@ -57,6 +58,7 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 					setModel(nextModel);
 					setValues({
 						...emptyValues,
+						location: nextModel.location ?? '',
 						name: server?.name ?? '',
 						group: server?.group ?? '',
 						aiEnabled: server?.aiEnabled ?? false,

@@ -1,6 +1,7 @@
 import type { AuthType, ProxyMode } from '../../../../../shared/protocol/database/form';
 
 export interface ServerFormValues {
+	location: string;
 	name: string;
 	group: string;
 	host: string;

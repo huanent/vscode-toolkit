@@ -15,9 +15,12 @@ import { TextInput, TextArea, SelectInput } from '../../components/input';
 import { workflowApi as vscode, subscribe } from '../dashboard/channel';
 import { ConnectionCard } from '../ssh/management/main';
 import { Dialog } from '../../components/dialog';
+import { StorageLocation } from '../../components/storage-location';
 import type { Workflow, WorkflowStep } from '../../../../src/features/workflow/workflow';
 
 type State = {
+	locations: Record<string, string>;
+	workspaceFolders: { name: string; uri: string }[];
 	workflows: Workflow[];
 	servers: { id: string; name: string }[];
 	cwd: string;
@@ -61,7 +64,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function App() {
 	const editorMode = document.body.dataset.toolkitEditor === 'true';
 	const [editRequest, setEditRequest] = useState<{ workflow?: Workflow; id?: string }>();
-	const [state, setState] = useState<State>({ workflows: [], servers: [], cwd: '', busy: false });
+	const [state, setState] = useState<State>({ workflows: [], servers: [], cwd: '', busy: false, locations: {}, workspaceFolders: [] });
+	const [draftLocations, setDraftLocations] = useState<Record<string, string>>({});
 	const [draft, setDraft] = useState<Workflow>();
 	const [dirty, setDirty] = useState(false);
 	const [pending, setPending] = useState(false);
@@ -145,7 +149,7 @@ export function App() {
 	const submit = (type: 'save' | 'run') => {
 		setError('');
 		setPending(true);
-		vscode.postMessage({ type, workflow: draft });
+		vscode.postMessage({ type, workflow: draft, location: draft ? (state.locations[draft.id] ?? draftLocations[draft.id] ?? '') : '' });
 	};
 	useEffect(() => {
 		const edit = (event: Event) => setEditRequest((event as CustomEvent).detail);
@@ -292,6 +296,15 @@ export function App() {
 								}}
 							>
 								<fieldset disabled={locked} className="min-w-0">
+									<StorageLocation
+										value={state.locations[draft.id] ?? draftLocations[draft.id] ?? ''}
+										folders={state.workspaceFolders}
+										disabled={locked || state.workflows.some(workflow => workflow.id === draft.id)}
+										onChange={location => {
+											setDraftLocations(current => ({ ...current, [draft.id]: location }));
+											setDirty(true);
+										}}
+									/>
 									<div className="mb-5 flex flex-wrap items-end gap-2">
 										<div className="min-w-40 flex-1">
 											<Field label="Workflow name">
