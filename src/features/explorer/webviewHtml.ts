@@ -14,7 +14,7 @@ export function getExplorerWebviewHtml(
 		entry: 'explorer',
 		styleEntry: 'explorer',
 		title,
-		useStyleNonce: true,
+		stylePolicy: 'external-only',
 		rootData: {
 			rootUri: rootUri.toString(),
 			currentUri: initialViewState.currentUri,
@@ -34,7 +34,7 @@ export function getExplorerPreviewWebviewHtml(
 		entry,
 		styleEntry: 'explorer',
 		title,
-		useStyleNonce: true,
+		stylePolicy: 'external-only',
 		rootData: { name: title },
 	});
 }

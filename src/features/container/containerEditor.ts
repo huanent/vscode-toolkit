@@ -29,7 +29,6 @@ export function configureContainerEditor(
 	panel.webview.html = getWebviewHtml(panel.webview, extensionUri, {
 		entry: 'containerEditor',
 		title: server.name,
-		allowImages: true,
 	});
 
 	panel.webview.onDidReceiveMessage(async (message: ContainerRequest) => {

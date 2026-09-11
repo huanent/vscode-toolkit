@@ -1,9 +1,10 @@
+import { MessageSquare } from '../../../../components/icons';
 import { cn } from 'cn';
 import { useState } from 'react';
 import { useMessageNavigation } from '../../hooks/useMessageNavigation';
 import { getRandomQuote } from '../../lib/quotes';
 import type { StoredMessage } from '../../types';
-import { EmptyState } from '../ui/EmptyState';
+import { Empty } from '../../../../components/empty';
 import { MessageAnchors } from './MessageAnchors';
 import { MessageItem } from './MessageItem';
 
@@ -41,12 +42,9 @@ export function MessageList({
 				onScroll={navigation.handleScroll}
 			>
 				{messages.length === 0 && (
-					<EmptyState
+					<Empty
 						icon={
-							<span
-								className="codicon codicon-comment-discussion text-[32px]! leading-none text-(--vscode-icon-foreground)"
-								aria-hidden="true"
-							/>
+							<MessageSquare size="2xl" className="text-(--vscode-icon-foreground)" />
 						}
 						title={greeting}
 						titleAs="h1"
@@ -81,14 +79,14 @@ export function MessageList({
 			</main>
 			<div
 				className={cn(
-					'message-list-fade message-list-fade-top',
+					'pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-linear-to-b from-(--vscode-editor-background) to-transparent transition-opacity duration-100',
 					navigation.scrollOverflow.top ? 'opacity-100' : 'opacity-0',
 				)}
 				aria-hidden="true"
 			/>
 			<div
 				className={cn(
-					'message-list-fade message-list-fade-bottom',
+					'pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-linear-to-t from-(--vscode-editor-background) to-transparent transition-opacity duration-100',
 					navigation.scrollOverflow.bottom ? 'opacity-100' : 'opacity-0',
 				)}
 				aria-hidden="true"

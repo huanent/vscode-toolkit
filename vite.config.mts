@@ -42,7 +42,7 @@ export default defineConfig({
 				mysqlOverview: 'webview/src/features/database/mysql/overview/main.tsx',
 				mysqlTablePreview: 'webview/src/features/database/mysql/tablePreview/main.tsx',
 				sshTerminal: 'webview/src/features/ssh/terminal/main.tsx',
-				chat: 'webview/src/features/chat/main.tsx',
+				chat: 'webview/src_new/features/chat/main.tsx',
 				explorer: 'webview/src/features/explorer/main/main.tsx',
 				archive: 'webview/src/features/explorer/previews/archive/main.tsx',
 				sqlite: 'webview/src/features/explorer/previews/sqlite/main.tsx',

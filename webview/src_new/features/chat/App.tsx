@@ -1,7 +1,8 @@
+import { Menu } from '../../components/icons';
 import { ChatInput } from './components/ChatInput';
 import { HistoryPanel } from './components/HistoryPanel';
 import { MessageList } from './components/message/MessageList';
-import { IconButton, IconButtonSize } from './components/ui/IconButton';
+import { IconButton } from '../../components/button';
 import { useChat } from './hooks/useChat';
 
 export function App() {
@@ -13,9 +14,9 @@ export function App() {
 					ref={chat.historyButtonRef}
 					label="Show chat history"
 					icon={
-						<span className="codicon codicon-menu text-[14px] leading-none" aria-hidden="true" />
+						<Menu size="sm" />
 					}
-					size={IconButtonSize.Large}
+					size="md"
 					aria-expanded={chat.historyVisible}
 					onClick={() => chat.setHistoryVisible(value => !value)}
 				/>

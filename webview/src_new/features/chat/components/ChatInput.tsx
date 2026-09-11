@@ -1,8 +1,9 @@
+import { Square, Send } from '../../../components/icons';
 import { cn } from 'cn';
 import type { RefObject } from 'react';
 import type { ModelItem } from '../types';
 import { ModelPicker } from './ModelPicker';
-import { IconButton, IconButtonSize } from './ui/IconButton';
+import { IconButton } from '../../../components/button';
 
 type ChatInputProps = {
 	inputRef: RefObject<HTMLDivElement | null>;
@@ -70,18 +71,12 @@ export function ChatInput({
 						label={busy ? 'Stop generating' : 'Send'}
 						icon={
 							busy ? (
-								<span
-									className="codicon codicon-debug-stop text-[14px] leading-none"
-									aria-hidden="true"
-								/>
+								<Square size="sm" />
 							) : (
-								<span
-									className="codicon codicon-send text-[14px] leading-none"
-									aria-hidden="true"
-								/>
+								<Send size="sm" />
 							)
 						}
-						size={IconButtonSize.Medium}
+						size="md"
 						disabled={!busy && (!input.trim() || !selectedModelId)}
 						onClick={onSend}
 					/>

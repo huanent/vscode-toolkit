@@ -1,5 +1,6 @@
+import { Pencil, RefreshCw, CircleCheck, Copy } from '../../../../components/icons';
 import type { StoredMessage } from '../../types';
-import { IconButton, IconButtonVariant } from '../ui/IconButton';
+import { IconButton } from '../../../../components/button';
 
 type MessageActionsProps = {
 	message: StoredMessage;
@@ -24,9 +25,9 @@ export function MessageActions({
 				<IconButton
 					label="Edit message"
 					icon={
-						<span className="codicon codicon-edit text-[14px] leading-none" aria-hidden="true" />
+						<Pencil size="sm" />
 					}
-					variant={IconButtonVariant.Ghost}
+					size="sm"
 					disabled={busy}
 					onClick={onEdit}
 				/>
@@ -35,9 +36,9 @@ export function MessageActions({
 				<IconButton
 					label="Regenerate response"
 					icon={
-						<span className="codicon codicon-refresh text-[14px] leading-none" aria-hidden="true" />
+						<RefreshCw size="sm" />
 					}
-					variant={IconButtonVariant.Ghost}
+					size="sm"
 					disabled={busy}
 					onClick={onRegenerate}
 				/>
@@ -46,12 +47,12 @@ export function MessageActions({
 				label={copied ? 'Copied' : 'Copy message'}
 				icon={
 					copied ? (
-						<span className="codicon codicon-check text-[14px] leading-none" aria-hidden="true" />
+						<CircleCheck size="sm" />
 					) : (
-						<span className="codicon codicon-copy text-[14px] leading-none" aria-hidden="true" />
+						<Copy size="sm" />
 					)
 				}
-				variant={IconButtonVariant.Ghost}
+				size="sm"
 				onClick={onCopy}
 			/>
 		</>

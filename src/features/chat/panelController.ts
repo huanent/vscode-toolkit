@@ -38,8 +38,7 @@ export class ChatPanelController implements vscode.Disposable {
 			entry: 'chat',
 			styleEntry: 'chat',
 			title: 'New Chat',
-			useStyleNonce: true,
-			allowInlineStyleAttributes: true,
+			stylePolicy: 'inline-attributes',
 		});
 		this.disposables.push(
 			panel.onDidDispose(() => this.dispose()),

@@ -1,9 +1,10 @@
+import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../../components/icons';
 import { cn } from 'cn';
 import { useEffect, useState, type Ref, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
-import { EmptyState } from './ui/EmptyState';
-import { IconButton, IconButtonSize } from './ui/IconButton';
-import { TextButton } from './ui/TextButton';
+import { Empty } from '../../../components/empty';
+import { Button, IconButton } from '../../../components/button';
+import { Input } from '../../../components/input';
 
 const pageSize = 30;
 
@@ -52,45 +53,34 @@ export function HistoryPanel({
 			aria-label="Chat history"
 		>
 			<div className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-(--vscode-widget-border,var(--vscode-panel-border)) p-2">
-				<label className="grid h-8 min-w-0 grid-cols-[22px_minmax(0,1fr)] items-center rounded border border-transparent bg-(--vscode-input-background,rgba(127,127,127,.08)) px-2 text-(--vscode-input-foreground) focus-within:border-(--vscode-focusBorder)">
-					<span
-						className="codicon codicon-search text-[14px] leading-none text-(--vscode-descriptionForeground)"
-						aria-hidden="true"
-					/>
-					<input
-						className="h-full min-w-0 border-0 bg-transparent p-0 text-sm text-inherit outline-none placeholder:text-(--vscode-input-placeholderForeground)"
+					<Input
+						left={<Search size="sm" />}
+						variant="plain"
 						type="search"
 						value={query}
 						onChange={event => onQueryChange(event.target.value)}
 						placeholder="Search history"
 						aria-label="Search history"
 					/>
-				</label>
 				<IconButton
 					label="Close chat history"
 					title="Close history"
 					icon={
-						<span className="codicon codicon-close text-[14px] leading-none" aria-hidden="true" />
+						<X size="sm" />
 					}
-					size={IconButtonSize.Large}
+					size="md"
 					onClick={onClose}
 				/>
 			</div>
 			<ul className="m-0 min-h-0 list-none overflow-y-auto p-2" onScroll={loadNextPage}>
 				{filtered.length === 0 && (
 					<li>
-						<EmptyState
+						<Empty
 							icon={
 								normalizedQuery ? (
-									<span
-										className="codicon codicon-search text-[20px] leading-none"
-										aria-hidden="true"
-									/>
+									<Search size="lg" />
 								) : (
-									<span
-										className="codicon codicon-comment-discussion text-[20px] leading-none"
-										aria-hidden="true"
-									/>
+									<MessageSquare size="lg" />
 								)
 							}
 							title={normalizedQuery ? 'No matching chats' : 'No chats yet'}
@@ -118,27 +108,21 @@ export function HistoryPanel({
 									)}
 									key={session.id}
 								>
-									<TextButton
-										className="grid min-h-8 min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-2 px-2 py-1 text-left text-sm text-inherit"
+									<Button variant="text"
+										className="min-w-0 justify-start text-left text-inherit"
+										left={<MessageCircle size="sm" />}
 										onClick={() => onSelect(session.id)}
 									>
-										<span
-											className="codicon codicon-comment text-[14px] leading-none"
-											aria-hidden="true"
-										/>
-										<span className="truncate">
+										<span className="block truncate">
 											{session.summary}
 										</span>
-									</TextButton>
+									</Button>
 									<IconButton
 										label="Delete chat"
 										icon={
-											<span
-												className="codicon codicon-trash text-[14px] leading-none"
-												aria-hidden="true"
-											/>
+											<Trash2 size="sm" />
 										}
-										size={IconButtonSize.Medium}
+										size="md"
 										className={cn(
 											'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
 											session.id === currentSessionId && 'opacity-100',

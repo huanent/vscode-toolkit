@@ -11,6 +11,5 @@ export function getWebviewHtml(
 		entry,
 		styleEntry: entry === 'sshTerminal' ? entry : 'styles',
 		title,
-		allowImages: true,
 	});
 }

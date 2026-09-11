@@ -1,4 +1,35 @@
-@layer components {
+@import 'tailwindcss' source(none);
+@import '@vscode/codicons/dist/codicon.css';
+
+@source '.';
+@source '../../components';
+
+@theme {
+	--radius-xs: 4px;
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--text-xs: calc(12rem / 13);
+	--text-sm: 1rem;
+	--text-base: calc(14rem / 13);
+	--text-lg: calc(16rem / 13);
+	--text-xl: calc(18rem / 13);
+	--text-2xl: calc(22rem / 13);
+}
+
+@layer base {
+	:root {
+		font-family: var(--vscode-font-family);
+		font-size: var(--vscode-font-size, 13px);
+		color: var(--vscode-foreground);
+		background: var(--vscode-editor-background);
+		letter-spacing: 0;
+	}
+
+	button:not(:disabled) {
+		cursor: pointer;
+	}
+
 	body[data-webview='chat'],
 	body[data-webview='chat'] #root {
 		width: 100%;
@@ -7,36 +38,12 @@
 		padding: 0;
 		overflow: hidden;
 	}
-	body[data-webview='chat'] button:disabled {
-		opacity: 0.5;
-	}
-	body[data-webview='chat'] .codicon[class*='codicon-'] {
-		font-size: inherit;
-		line-height: 1;
-	}
 }
 
 .message-input:empty::before {
 	color: var(--vscode-input-placeholderForeground);
 	content: attr(data-placeholder);
 	pointer-events: none;
-}
-.message-list-fade {
-	position: absolute;
-	right: 0;
-	left: 0;
-	z-index: 10;
-	height: 24px;
-	pointer-events: none;
-	transition: opacity 100ms ease-out;
-}
-.message-list-fade-top {
-	top: 0;
-	background: linear-gradient(to bottom, var(--vscode-editor-background), transparent);
-}
-.message-list-fade-bottom {
-	bottom: 0;
-	background: linear-gradient(to top, var(--vscode-editor-background), transparent);
 }
 .markdown-content > :first-child {
 	margin-top: 0;
@@ -159,42 +166,4 @@
 		#000 calc(100% - 18px),
 		transparent 100%
 	);
-}
-.message-loading {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-	height: 24px;
-	padding: 0 3px;
-}
-.message-loading span {
-	width: 5px;
-	height: 5px;
-	border-radius: 50%;
-	background: var(--vscode-descriptionForeground);
-	animation: loading-dot 1.2s ease-in-out infinite;
-}
-.message-loading span:nth-child(2) {
-	animation-delay: 120ms;
-}
-.message-loading span:nth-child(3) {
-	animation-delay: 240ms;
-}
-@keyframes loading-dot {
-	0%,
-	60%,
-	100% {
-		opacity: 0.35;
-		transform: translateY(0);
-	}
-	30% {
-		opacity: 1;
-		transform: translateY(-3px);
-	}
-}
-@media (prefers-reduced-motion: reduce) {
-	.message-loading span {
-		animation: none;
-		opacity: 0.65;
-	}
 }

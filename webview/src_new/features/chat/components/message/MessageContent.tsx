@@ -15,10 +15,10 @@ type MessageContentProps = {
 export function MessageContent({ content, isUser, isEditing, isLoading }: MessageContentProps) {
 	if (isLoading) {
 		return (
-			<div className="message-loading" role="status" aria-label="Waiting for response">
-				<span />
-				<span />
-				<span />
+			<div className="flex h-6 items-center gap-1 px-1" role="status" aria-label="Waiting for response">
+				{[0, 120, 240].map(delay => (
+					<span key={delay} className="size-1 rounded-full bg-(--vscode-descriptionForeground) motion-safe:animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+				))}
 			</div>
 		);
 	}

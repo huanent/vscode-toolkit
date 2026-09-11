@@ -1,4 +1,5 @@
 import { cn } from 'cn';
+import { Button } from '../../../../components/button';
 import type { StoredMessage } from '../../types';
 
 type MessageAnchorsProps = {
@@ -20,8 +21,8 @@ export function MessageAnchors({ messages, indexes, activeIndex, onSelect }: Mes
 				const active = messageIndex === activeIndex;
 				const label = message.content.trim().replace(/\s+/g, ' ') || `Message ${anchorIndex + 1}`;
 				return (
-					<button
-						className="group/anchor grid size-4 shrink-0 place-items-center border-0 bg-transparent p-0"
+						<Button variant="text" size="sm"
+							className="group/anchor grid size-4 min-h-0 shrink-0 place-items-center border-0 bg-transparent p-0"
 						key={messageIndex}
 						title={label}
 						aria-label={`Go to message ${anchorIndex + 1}: ${label}`}
@@ -36,7 +37,7 @@ export function MessageAnchors({ messages, indexes, activeIndex, onSelect }: Mes
 									: 'size-1 bg-(--vscode-descriptionForeground) opacity-45 group-hover/anchor:h-2 group-hover/anchor:w-1 group-hover/anchor:bg-(--vscode-foreground) group-hover/anchor:opacity-80',
 							)}
 						/>
-					</button>
+						</Button>
 				);
 			})}
 		</nav>

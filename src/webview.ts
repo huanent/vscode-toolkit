@@ -3,12 +3,9 @@ import * as vscode from 'vscode';
 interface WebviewHtmlOptions {
 	entry: string;
 	styleEntry?: string;
-	additionalStyleEntries?: string[];
 	title: string;
 	rootData?: Record<string, string>;
-	allowImages?: boolean;
-	useStyleNonce?: boolean;
-	allowInlineStyleAttributes?: boolean;
+	stylePolicy?: 'external-only' | 'inline-attributes' | 'inline';
 }
 
 export function getWebviewHtml(
@@ -24,11 +21,11 @@ export function getWebviewHtml(
 	const scriptUri = webview.asWebviewUri(
 		vscode.Uri.joinPath(extensionUri, 'media', `${options.entry}.js`),
 	);
-	const imagePolicy = options.allowImages ? ` img-src ${webview.cspSource} https: data:;` : '';
-	const stylePolicy = options.useStyleNonce
-		? `style-src ${webview.cspSource} 'nonce-${nonce}';`
-		: `style-src ${webview.cspSource} 'unsafe-inline';`;
-	const styleAttributePolicy = options.allowInlineStyleAttributes
+	const stylePolicy = options.stylePolicy ?? 'inline';
+	const styleSourcePolicy = stylePolicy === 'inline'
+		? `style-src ${webview.cspSource} 'unsafe-inline';`
+		: `style-src ${webview.cspSource};`;
+	const styleAttributePolicy = stylePolicy === 'inline-attributes'
 		? " style-src-attr 'unsafe-inline';"
 		: '';
 	const rootDataAttributes = Object.entries(options.rootData ?? {})
@@ -40,10 +37,9 @@ export function getWebviewHtml(
 <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none';${imagePolicy} font-src ${webview.cspSource}; ${stylePolicy}${styleAttributePolicy} script-src ${webview.cspSource} 'nonce-${nonce}';">
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; font-src ${webview.cspSource}; ${styleSourcePolicy}${styleAttributePolicy} script-src ${webview.cspSource} 'nonce-${nonce}';">
 		${styleEntry !== 'styles' ? `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'))}">` : ''}
 		<link rel="stylesheet" href="${styleUri}">
-		${(options.additionalStyleEntries ?? []).map(entry => `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', `${entry}.css`))}">`).join('\n')}
         <title>${escapeHtml(options.title)}</title>
 </head>
 <body data-webview="${escapeHtml(options.entry)}">

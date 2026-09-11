@@ -30,7 +30,6 @@ export async function configureServerForm(
 	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, {
 		entry: 'containerForm',
 		title,
-		allowImages: true,
 	});
 	const saveState = { inProgress: false };
 	panel.webview.onDidReceiveMessage(
