@@ -31,10 +31,10 @@ export function ChatInput({
 	onSend,
 }: ChatInputProps) {
 	return (
-		<section className="w-[calc(100%-40px)] max-w-210 justify-self-center bg-(--vscode-editor-background) py-2 max-[620px]:w-[calc(100%-20px)]">
+		<section className="w-[calc(100%-40px)] max-w-210 justify-self-center bg-(--vscode-editor-background) pt-2 pb-3 max-[620px]:w-[calc(100%-24px)]">
 			<div
 				className={cn(
-					'relative rounded-lg border bg-(--vscode-input-background,rgba(127,127,127,.08)) transition-colors duration-75 focus-within:border-(--vscode-focusBorder)',
+					'relative rounded-lg border bg-(--vscode-input-background) transition-colors duration-75 focus-within:border-(--vscode-focusBorder)',
 					editingIndex !== undefined
 						? 'border-(--vscode-focusBorder) shadow-[0_0_0_1px_var(--vscode-focusBorder)]'
 						: 'border-(--vscode-panel-border)',
@@ -42,7 +42,7 @@ export function ChatInput({
 			>
 				<div
 					ref={inputRef}
-					className="message-input min-h-9 max-h-45 w-full overflow-y-auto px-4 py-2 text-sm text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
+					className="message-input min-h-11 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-2 text-sm text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
 					role="textbox"
 					aria-label="Message"
 					aria-multiline="true"
@@ -58,7 +58,7 @@ export function ChatInput({
 						}
 					}}
 				/>
-				<div className="flex min-h-8 flex-wrap items-center gap-2 px-2 pb-2">
+				<div className="flex min-h-10 flex-wrap items-end gap-2 px-2 pt-2 pb-2">
 					<ModelPicker
 						models={models}
 						selectedModelId={selectedModelId}

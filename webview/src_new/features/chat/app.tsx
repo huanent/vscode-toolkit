@@ -4,35 +4,33 @@ import { HistoryPanel } from './components/historyPanel';
 import { MessageList } from './components/message/messageList';
 import { IconButton } from '../../components/button';
 import { useChat } from './hooks/useChat';
+import { Popover } from '../../components/popover';
 
 export function App() {
 	const chat = useChat();
 	return (
 		<div className="relative h-full">
 			<div className="absolute top-1 left-1 z-20 flex gap-1">
-				<IconButton
-					ref={chat.historyButtonRef}
-					label="Show chat history"
-					icon={
-						<Menu size="sm" />
-					}
-					size="md"
-					aria-expanded={chat.historyVisible}
-					onClick={() => chat.setHistoryVisible(value => !value)}
-				/>
+				<Popover
+					open={chat.historyVisible}
+					onOpenChange={chat.setHistoryVisible}
+					label="Chat history"
+					className="w-85 overflow-hidden"
+					trigger={props => (
+						<IconButton {...props} label="Show chat history" icon={<Menu size="sm" />} size="md" />
+					)}
+				>
+					<HistoryPanel
+						sessions={chat.sessions}
+						currentSessionId={chat.currentSessionId}
+						query={chat.historyQuery}
+						onQueryChange={chat.setHistoryQuery}
+						onClose={() => chat.setHistoryVisible(false)}
+						onSelect={chat.selectSession}
+						onDelete={chat.deleteSession}
+					/>
+				</Popover>
 			</div>
-			{chat.historyVisible && (
-				<HistoryPanel
-					panelRef={chat.historyPanelRef}
-					sessions={chat.sessions}
-					currentSessionId={chat.currentSessionId}
-					query={chat.historyQuery}
-					onQueryChange={chat.setHistoryQuery}
-					onClose={() => chat.setHistoryVisible(false)}
-					onSelect={chat.selectSession}
-					onDelete={chat.deleteSession}
-				/>
-			)}
 			<div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto]">
 				<MessageList
 					messages={chat.messages}

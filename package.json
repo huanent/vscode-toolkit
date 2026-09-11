@@ -993,6 +993,7 @@
     "publish": "vsce publish --no-yarn"
   },
   "devDependencies": {
+    "@floating-ui/react": "^0.27.20",
     "@tailwindcss/vite": "^4.3.3",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "24.x",

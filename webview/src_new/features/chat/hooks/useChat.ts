@@ -17,8 +17,6 @@ export function useChat() {
 	const [busy, setBusy] = useState(false);
 	const pendingRequestRef = useRef<PendingRequest | undefined>(undefined);
 	const inputRef = useRef<HTMLDivElement>(null);
-	const historyButtonRef = useRef<HTMLButtonElement>(null);
-	const historyPanelRef = useRef<HTMLElement>(null);
 
 	useEffect(() => {
 		if (inputRef.current && inputRef.current.textContent !== input) {
@@ -124,7 +122,6 @@ export function useChat() {
 			inputRef.current?.focus();
 		};
 		const blur = () => {
-			setHistoryVisible(false);
 			postMessage({ type: 'focusChanged', focused: false });
 		};
 		window.addEventListener('focus', focus);
@@ -142,28 +139,14 @@ export function useChat() {
 	useEffect(() => {
 		const close = (event: KeyboardEvent) => {
 			if (event.key !== 'Escape') return;
-			setHistoryVisible(false);
 			if (editingIndex !== undefined) {
 				setEditingIndex(undefined);
 				setInput('');
 			}
 		};
-		document.addEventListener('keydown', close);
-		return () => document.removeEventListener('keydown', close);
+		window.addEventListener('keydown', close);
+		return () => window.removeEventListener('keydown', close);
 	}, [editingIndex]);
-
-	useEffect(() => {
-		if (!historyVisible) return;
-		const closeHistory = (event: PointerEvent) => {
-			const target = event.target;
-			if (!(target instanceof Node)) return;
-			if (historyButtonRef.current?.contains(target) || historyPanelRef.current?.contains(target))
-				return;
-			setHistoryVisible(false);
-		};
-		document.addEventListener('pointerdown', closeHistory);
-		return () => document.removeEventListener('pointerdown', closeHistory);
-	}, [historyVisible]);
 
 	const selectModel = (modelId: string) => {
 		setSelectedModelId(modelId);
@@ -271,8 +254,6 @@ export function useChat() {
 		editingIndex,
 		busy,
 		inputRef,
-		historyButtonRef,
-		historyPanelRef,
 		setHistoryVisible,
 		setHistoryQuery,
 		setInput,

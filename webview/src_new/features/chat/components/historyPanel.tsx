@@ -1,6 +1,6 @@
 import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../../components/icons';
 import { cn } from 'cn';
-import { useEffect, useState, type Ref, type UIEvent } from 'react';
+import { useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
 import { Empty } from '../../../components/empty';
 import { Button, IconButton } from '../../../components/button';
@@ -9,7 +9,6 @@ import { Input } from '../../../components/input';
 const pageSize = 30;
 
 type HistoryPanelProps = {
-	panelRef: Ref<HTMLElement>;
 	sessions: SessionItem[];
 	currentSessionId?: string;
 	query: string;
@@ -20,7 +19,6 @@ type HistoryPanelProps = {
 };
 
 export function HistoryPanel({
-	panelRef,
 	sessions,
 	currentSessionId,
 	query,
@@ -48,8 +46,7 @@ export function HistoryPanel({
 	};
 	return (
 		<aside
-			ref={panelRef}
-			className="absolute top-11 left-2 z-115 grid max-h-[min(500px,calc(100vh-56px))] w-[min(340px,calc(100%-16px))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-menu-background,var(--vscode-editorWidget-background)) shadow-[0_8px_24px_var(--vscode-widget-shadow)]"
+			className="grid max-h-[min(500px,calc(100dvh-56px))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden"
 			aria-label="Chat history"
 		>
 			<div className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-(--vscode-widget-border,var(--vscode-panel-border)) p-2">
