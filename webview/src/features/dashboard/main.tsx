@@ -56,7 +56,7 @@ function App() {
 							'flex h-10 min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 text-xs focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-(--vscode-focusBorder)',
 							active === id
 								? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
-								: 'border-transparent text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground)',
+								: 'border-transparent text-(--vscode-descriptionForeground)',
 						)}
 						onClick={() => select(id)}
 						onKeyDown={event => {
