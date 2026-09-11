@@ -106,3 +106,16 @@ Search for `Toolkit` in VS Code Settings.
 | `toolkit.storagePath` | Data directory. Supports `~`; leave empty to use extension storage. Reload the extension after changing it. |
 | `toolkit.chat.prompt` | Custom prompt for Chat.                                                                                     |
 
+## Development
+
+- `npm test`: Run the Vitest unit tests once.
+- `npm run test:watch`: Run the tests in watch mode.
+- `npm test -- src/features/xml/xmlFormatter.test.ts`: Run only the XML formatter tests.
+- `npm run test:typecheck`: Type-check the tests and Vitest configuration.
+- `npm run build`: Type-check and build the extension and webviews.
+- `npm run lint`: Check code quality.
+
+XML formatter tests run in Node.js with a mocked VS Code API and the real XML formatter, without launching an extension host.
+
+Keep unit tests next to their implementation as `*.test.ts`. Reserve `tests/` for integration and end-to-end tests.
+

@@ -2,6 +2,13 @@ import { SshServer } from './server';
 import { ServerCredentials } from './serverStore';
 import { connectSshClient, SshConnection } from './sshConnection';
 
+function buildRemoteCommand(command: string): string {
+	const quote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`;
+	const shell = '"${SHELL:-/bin/sh}"';
+	const script = `exec ${shell} -c ${quote(command)}`;
+	return `exec ${shell} -ilc ${quote(script)}`;
+}
+
 export function executeSshCommand(
 	server: SshServer,
 	credentials: ServerCredentials,
@@ -29,7 +36,7 @@ export function executeSshCommand(
 			credentials,
 			nextConnection => {
 				connection = nextConnection;
-				nextConnection.client.exec(command, (error, stream) => {
+				nextConnection.client.exec(buildRemoteCommand(command), (error, stream) => {
 					if (error) {
 						finish(error);
 						return;
@@ -42,7 +49,8 @@ export function executeSshCommand(
 					stream.stderr.on('data', data => (stderr += data));
 					stream.on('close', (code: number | undefined) => {
 						if (code && code !== 0) {
-							finish(new Error(stderr.trim() || `Remote command exited with code ${code}.`));
+							const output = [stdout.trim(), stderr.trim()].filter(Boolean).join('\n');
+							finish(new Error(`Remote command exited with code ${code}.${output ? `\n${output}` : ''}`));
 							return;
 						}
 						finish(undefined, stdout);

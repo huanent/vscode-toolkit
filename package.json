@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -975,6 +975,9 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:typecheck": "tsc -p tsconfig.test.json",
     "test:dashboard": "node --test tests/dashboard.test.cjs",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
@@ -1010,7 +1013,8 @@
     "rimraf": "^6.1.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "exceljs": {

@@ -14,6 +14,7 @@ export function registerXmlFormatter(): vscode.Disposable {
 					lineSeparator,
 					collapseContent: true,
 					strictMode: true,
+					whiteSpaceAtEndOfSelfclosingTag: true,
 				});
 
 				if (formatted === source) {
