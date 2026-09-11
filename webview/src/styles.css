@@ -2,17 +2,22 @@
 @import 'tailwindcss';
 
 @theme {
-	--text-xs: 0.923077rem;
+	--radius-xs: 4px;
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 12px;
+	--text-xs: calc(12rem / 13);
 	--text-xs--line-height: 1.4;
 	--text-sm: 1rem;
 	--text-sm--line-height: 1.5;
-	--text-base: 1.076923rem;
+	--text-base: calc(14rem / 13);
 	--text-base--line-height: 1.5;
-	--text-lg: 1.230769rem;
+	--text-lg: calc(16rem / 13);
 	--text-lg--line-height: 1.4;
-	--text-xl: 1.384615rem;
+	--text-xl: calc(18rem / 13);
 	--text-xl--line-height: 1.4;
-	--text-2xl: 1.692308rem;
+	--text-2xl: calc(22rem / 13);
 	--text-2xl--line-height: 1.3;
 }
 

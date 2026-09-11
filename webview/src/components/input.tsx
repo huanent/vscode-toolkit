@@ -33,7 +33,7 @@ export function PasswordInput({
 				aria-pressed={visible}
 				disabled={disabled}
 				onClick={() => setVisible(current => !current)}
-				className="absolute inset-y-px right-px grid w-8 place-items-center rounded-md border-0 bg-transparent text-(--vscode-icon-foreground) hover:bg-(--vscode-toolbar-hoverBackground) disabled:opacity-50"
+				className="absolute inset-y-px right-px grid w-8 place-items-center rounded-sm border-0 bg-transparent text-(--vscode-icon-foreground) hover:bg-(--vscode-toolbar-hoverBackground) disabled:opacity-50"
 			>
 				<Codicon name={visible ? 'eye-closed' : 'eye'} />
 			</button>

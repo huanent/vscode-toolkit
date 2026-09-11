@@ -135,7 +135,7 @@ export function ConnectionCard({
 			</button>
 			<IconButton
 				type="button"
-				className="pointer-events-none mr-1 size-7 shrink-0 rounded-xs opacity-0 group-hover/item:pointer-events-auto group-hover/item:opacity-100 group-focus-within/item:pointer-events-auto group-focus-within/item:opacity-100 focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
+				className="mr-1 hidden size-7 shrink-0 rounded-xs group-hover/item:grid group-focus-within/item:grid focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
 				title={`${primaryActionLabel} ${server.name}`}
 				aria-label={`${primaryActionLabel} ${server.name}`}
 				disabled={disabled}
@@ -154,7 +154,7 @@ export function ConnectionCard({
 					role="group"
 					aria-label={`Actions for ${server.name}`}
 					style={position}
-					className="fixed z-50 max-h-[calc(100vh-8px)] w-44 overflow-y-auto rounded-sm border border-(--vscode-menu-border,var(--vscode-panel-border)) bg-(--vscode-menu-background,var(--vscode-editor-background)) p-1 text-(--vscode-menu-foreground,var(--vscode-foreground)) shadow-sm"
+					className="fixed z-50 max-h-[calc(100vh-8px)] w-44 overflow-y-auto rounded-lg border border-(--vscode-menu-border,var(--vscode-panel-border)) bg-(--vscode-menu-background,var(--vscode-editor-background)) p-1 text-(--vscode-menu-foreground,var(--vscode-foreground)) shadow-sm"
 				>
 					{actions.map(({ type, label, icon: Icon, disabled }) => (
 						<button

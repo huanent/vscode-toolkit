@@ -36,7 +36,7 @@ export function Dialog({
 		>
 			<section
 				className={cn(
-					'grid max-h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]',
+					'grid max-h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]',
 					wide ? 'max-w-245' : 'max-w-180',
 				)}
 				role="dialog"

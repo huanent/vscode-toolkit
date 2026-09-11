@@ -26,7 +26,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 			}}
 		>
 			<form
-				className="grid h-[min(780px,100%)] w-[min(760px,100%)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-sm border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
+				className="grid h-[min(780px,100%)] w-[min(760px,100%)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) shadow-[0_4px_16px_var(--vscode-widget-shadow)]"
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="container-edit-title"

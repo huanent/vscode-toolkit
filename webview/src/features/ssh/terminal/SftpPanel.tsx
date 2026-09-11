@@ -29,7 +29,7 @@ interface ContextMenuState {
 }
 
 const popupClassName =
-	'rounded-sm border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
+	'rounded-lg border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
 
 export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 	const [menu, setMenu] = useState<ContextMenuState>();

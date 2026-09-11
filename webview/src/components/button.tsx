@@ -17,7 +17,7 @@ export function IconButton({ className = '', ...props }: ButtonHTMLAttributes<HT
 	return (
 		<button
 			className={cn(
-				'grid size-8 shrink-0 place-items-center rounded-md border border-transparent bg-transparent text-(--vscode-icon-foreground) transition-colors duration-100 hover:bg-(--vscode-toolbar-hoverBackground) active:bg-(--vscode-toolbar-activeBackground,var(--vscode-toolbar-hoverBackground)) disabled:cursor-default disabled:opacity-45',
+				'grid size-8 shrink-0 place-items-center rounded-sm border border-transparent bg-transparent text-(--vscode-icon-foreground) transition-colors duration-100 hover:bg-(--vscode-toolbar-hoverBackground) active:bg-(--vscode-toolbar-activeBackground,var(--vscode-toolbar-hoverBackground)) disabled:cursor-default disabled:opacity-45',
 				className,
 			)}
 			{...props}
