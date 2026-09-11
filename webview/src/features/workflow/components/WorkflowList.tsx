@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ListOrdered, Play, Trash2 } from '../../../components/icons';
+import { ListOrdered, Trash2 } from '../../../components/icons';
 import { DashboardEmpty, DashboardSearch } from '../../dashboard/components';
 import { ConnectionCard } from '../../../components/ConnectionCard';
 import type { Workflow } from '../../../../../src/features/workflow/workflow';
@@ -26,6 +26,7 @@ export function WorkflowList({
 	onCreate,
 }: Props) {
 	const [search, setSearch] = useState('');
+	const [selectedId, setSelectedId] = useState<string>();
 	const filtered = workflows.filter(workflow =>
 		`${workflow.name} ${workflow.description}`.toLowerCase().includes(search.trim().toLowerCase()),
 	);
@@ -36,8 +37,11 @@ export function WorkflowList({
 				{filtered.map(workflow => (
 					<ConnectionCard
 						key={workflow.id}
+						selected={selectedId === workflow.id}
+						onSelect={setSelectedId}
 						compact
 						disabled={locked}
+						primaryActionLabel="Run"
 						server={{
 							id: workflow.id,
 							name: workflow.name,
@@ -47,14 +51,13 @@ export function WorkflowList({
 						}}
 						actions={[
 							{ type: 'edit', label: 'Edit', icon: ListOrdered, disabled: locked },
-							{ type: 'run', label: 'Run', icon: Play, disabled: locked },
 							{ type: 'delete', label: 'Delete', icon: Trash2, disabled: locked },
 						]}
 						onAction={type => {
 							if (locked) return;
-							if (type === 'run') onRun(workflow);
+							if (type === 'connect') onRun(workflow);
 							else if (type === 'delete') onDelete(workflow.id);
-							else onSelect(workflow);
+							else if (type === 'edit') onSelect(workflow);
 						}}
 					/>
 				))}

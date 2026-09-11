@@ -20,6 +20,7 @@ export function App() {
 	}>();
 	const launchd = useLaunchd();
 	const [query, setQuery] = useState('');
+	const [selectedId, setSelectedId] = useState<string>();
 	const [editing, setEditing] = useState(false);
 	const [dirty, setDirty] = useState(false);
 	useEffect(() => {
@@ -130,6 +131,9 @@ export function App() {
 									{group.map(agent => (
 										<ConnectionCard
 											key={agent.fileName}
+											selected={selectedId === agent.fileName}
+											onSelect={setSelectedId}
+											disabled={launchd.busy}
 											compact
 											server={{
 												id: agent.fileName,

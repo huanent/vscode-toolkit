@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Download, Plus, RefreshCw, Upload } from './icons';
 import { IconButton } from './button';
 import { ConnectionCard, type Connection } from './ConnectionCard';
@@ -22,6 +23,7 @@ export function ConnectionList({
 	onQueryChange: (query: string) => void;
 	onAction: (type: string, id?: string) => void;
 }) {
+	const [selectedId, setSelectedId] = useState<string>();
 	const search = query.trim().toLowerCase();
 	const servers =
 		state?.servers.filter(server =>
@@ -90,6 +92,8 @@ export function ConnectionList({
 								<ConnectionCard
 									key={server.id}
 									server={server}
+									selected={selectedId === server.id}
+									onSelect={setSelectedId}
 									compact
 									filtered={!!search}
 									onAction={onAction}

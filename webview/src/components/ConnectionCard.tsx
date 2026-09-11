@@ -6,7 +6,7 @@ import {
 	Copy,
 	Download,
 	Pencil,
-	MoreHorizontal,
+	Play,
 	Trash2,
 	type IconComponent,
 } from './icons';
@@ -31,6 +31,9 @@ export function ConnectionCard({
 	filtered = false,
 	compact = false,
 	disabled = false,
+	primaryActionLabel = 'Open',
+	selected,
+	onSelect,
 	onAction,
 	actions: customActions,
 }: {
@@ -38,6 +41,9 @@ export function ConnectionCard({
 	filtered?: boolean;
 	compact?: boolean;
 	disabled?: boolean;
+	primaryActionLabel?: string;
+	selected: boolean;
+	onSelect: (id: string) => void;
 	onAction: (type: string, id: string) => void;
 	actions?: ItemAction[];
 }) {
@@ -92,7 +98,10 @@ export function ConnectionCard({
 		<li
 			ref={container}
 			className={cn(
-				'relative flex min-w-0 items-center hover:bg-(--vscode-list-hoverBackground) focus-within:outline focus-within:outline-(--vscode-focusBorder)',
+				'group/item relative flex min-w-0 items-center focus-within:outline focus-within:outline-(--vscode-focusBorder)',
+				selected
+					? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
+					: 'hover:bg-(--vscode-list-hoverBackground)',
 				compact ? 'rounded-xs' : 'rounded-sm border border-(--vscode-panel-border)',
 			)}
 			onBlur={event => {
@@ -113,32 +122,30 @@ export function ConnectionCard({
 			<button
 				type="button"
 				disabled={disabled}
-				className={cn(
-					'flex min-w-0 flex-1 flex-col gap-1 rounded-xs bg-transparent text-left disabled:opacity-45',
-					compact ? 'px-2 py-2' : 'p-2',
-				)}
-				title={`Open ${server.name}\n${server.address}`}
-				aria-label={`Open ${server.name}`}
-				onClick={() => onAction('connect', server.id)}
+				className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xs bg-transparent px-2 text-left disabled:opacity-45"
+				title={`${server.name}\n${server.address}`}
+				aria-label={`Select ${server.name}`}
+				aria-pressed={selected}
+				onClick={() => onSelect(server.id)}
 			>
-				<span className="w-full truncate text-sm font-medium">{server.name}</span>
-				<span className="w-full truncate text-xs text-(--vscode-descriptionForeground)">
+				<span className="min-w-0 max-w-[60%] shrink-0 truncate text-sm font-medium">{server.name}</span>
+				<span className={cn('min-w-0 flex-1 truncate text-xs', !selected && 'text-(--vscode-descriptionForeground)')}>
 					{server.address}
 				</span>
 			</button>
 			<IconButton
 				type="button"
-				className="mr-1 size-7 rounded-xs focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
-				title={`Actions for ${server.name}`}
-				aria-label={`Actions for ${server.name}`}
-				aria-expanded={open}
-				aria-controls={open ? `actions-${server.id}` : undefined}
-				onClick={event => {
-					const bounds = event.currentTarget.getBoundingClientRect();
-					setPosition(open ? undefined : { left: bounds.right - 176, top: bounds.bottom });
+				className="pointer-events-none mr-1 size-7 shrink-0 rounded-xs opacity-0 group-hover/item:pointer-events-auto group-hover/item:opacity-100 group-focus-within/item:pointer-events-auto group-focus-within/item:opacity-100 focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
+				title={`${primaryActionLabel} ${server.name}`}
+				aria-label={`${primaryActionLabel} ${server.name}`}
+				disabled={disabled}
+				onClick={() => {
+					setPosition(undefined);
+					onSelect(server.id);
+					onAction('connect', server.id);
 				}}
 			>
-				<MoreHorizontal size={16} />
+				<Play size={16} />
 			</IconButton>
 			{open && (
 				<div
