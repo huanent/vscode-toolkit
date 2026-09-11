@@ -562,6 +562,12 @@
     "configuration": {
       "title": "Toolkit",
       "properties": {
+        "toolkit.perftips.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show debug interval annotations while debugging. Changes apply to new debug sessions.",
+          "scope": "window"
+        },
         "toolkit.storagePath": {
           "type": "string",
           "default": "",
