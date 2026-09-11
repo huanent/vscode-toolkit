@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ListOrdered, Play, Trash2 } from '../../../components/icons';
 import { DashboardEmpty, DashboardSearch } from '../../dashboard/components';
-import { ConnectionCard } from '../../ssh/management/main';
+import { ConnectionCard } from '../../../components/ConnectionCard';
 import type { Workflow } from '../../../../../src/features/workflow/workflow';
 
 type Props = {

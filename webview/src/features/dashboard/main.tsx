@@ -3,17 +3,19 @@ import { createRoot } from 'react-dom/client';
 import { CircuitBoard, Database, Container, Terminal } from '../../components/icons';
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
-import { Connections } from '../ssh/management/main';
+import { SshConnections } from '../ssh/management/main';
+import { DatabaseConnections } from '../database/management/main';
+import { ContainerConnections } from '../container/management/main';
 import { App as Workflow } from '../workflow/main';
 import { type Tab } from './channel';
 import { DashboardEmpty } from './components';
 
 document.body.classList.add('min-w-0');
 const tabs = [
-	{ id: 'workflow', label: 'Workflow', icon: CircuitBoard },
-	{ id: 'ssh', label: 'SSH', icon: Terminal },
-	{ id: 'database', label: 'Database', icon: Database },
-	{ id: 'container', label: 'Container', icon: Container },
+	{ id: 'workflow', label: 'Workflow', icon: CircuitBoard, component: Workflow },
+	{ id: 'ssh', label: 'SSH', icon: Terminal, component: SshConnections },
+	{ id: 'database', label: 'Database', icon: Database, component: DatabaseConnections },
+	{ id: 'container', label: 'Container', icon: Container, component: ContainerConnections },
 ] as const;
 function App() {
 	const [active, setActive] = useState<Tab>('workflow');
@@ -83,7 +85,7 @@ function App() {
 				))}
 			</div>
 			{connected ? (
-				tabs.map(({ id }) => (
+				tabs.map(({ id, component: Feature }) => (
 					<div
 						key={id}
 						id={`panel-${id}`}
@@ -92,7 +94,7 @@ function App() {
 						className="min-w-0 px-3"
 						hidden={active !== id}
 					>
-						{id === 'workflow' ? <Workflow /> : <Connections tab={id} />}
+						<Feature />
 					</div>
 				))
 			) : (
