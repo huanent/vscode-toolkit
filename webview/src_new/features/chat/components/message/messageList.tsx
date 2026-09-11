@@ -5,8 +5,8 @@ import { useMessageNavigation } from '../../hooks/useMessageNavigation';
 import { getRandomQuote } from '../../lib/quotes';
 import type { StoredMessage } from '../../types';
 import { Empty } from '../../../../components/empty';
-import { MessageAnchors } from './MessageAnchors';
-import { MessageItem } from './MessageItem';
+import { MessageAnchors } from './messageAnchors';
+import { MessageItem } from './messageItem';
 
 type MessageListProps = {
 	messages: StoredMessage[];

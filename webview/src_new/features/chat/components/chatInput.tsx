@@ -2,7 +2,7 @@ import { Square, Send } from '../../../components/icons';
 import { cn } from 'cn';
 import type { RefObject } from 'react';
 import type { ModelItem } from '../types';
-import { ModelPicker } from './ModelPicker';
+import { ModelPicker } from './modelPicker';
 import { IconButton } from '../../../components/button';
 
 type ChatInputProps = {

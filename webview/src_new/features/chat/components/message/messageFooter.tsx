@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import type { StoredMessage, TokenUsage } from '../../types';
-import { MessageActions } from './MessageActions';
+import { MessageActions } from './messageActions';
 
 type MessageFooterProps = {
 	message: StoredMessage;

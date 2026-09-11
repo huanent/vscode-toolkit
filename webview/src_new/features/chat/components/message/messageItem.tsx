@@ -1,9 +1,9 @@
 import { cn } from 'cn';
 import { useEffect, useRef, useState } from 'react';
 import type { StoredMessage } from '../../types';
-import { MessageContent } from './MessageContent';
-import { MessageError } from './MessageError';
-import { MessageFooter } from './MessageFooter';
+import { MessageContent } from './messageContent';
+import { MessageError } from './messageError';
+import { MessageFooter } from './messageFooter';
 
 type MessageItemProps = {
 	message: StoredMessage;

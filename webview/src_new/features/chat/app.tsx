@@ -1,7 +1,7 @@
 import { Menu } from '../../components/icons';
-import { ChatInput } from './components/ChatInput';
-import { HistoryPanel } from './components/HistoryPanel';
-import { MessageList } from './components/message/MessageList';
+import { ChatInput } from './components/chatInput';
+import { HistoryPanel } from './components/historyPanel';
+import { MessageList } from './components/message/messageList';
 import { IconButton } from '../../components/button';
 import { useChat } from './hooks/useChat';
 

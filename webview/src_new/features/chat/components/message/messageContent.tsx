@@ -2,7 +2,7 @@ import { cn } from 'cn';
 import { lazy, Suspense } from 'react';
 
 const MarkdownContent = lazy(() =>
-	import('../MarkdownContent').then(module => ({ default: module.MarkdownContent })),
+	import('../markdownContent').then(module => ({ default: module.MarkdownContent })),
 );
 
 type MessageContentProps = {
