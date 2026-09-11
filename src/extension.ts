@@ -7,7 +7,7 @@ import { LaunchdPanel } from './features/launchd/launchdPanel';
 import { registerChat } from './features/chat/registerChat';
 import { registerExplorer } from './features/explorer/registerExplorer';
 import { createPerfTipsTracker } from './features/perftips/perftips';
-import { registerNpmScriptWatcher, runNpmScript } from './features/scripts/npmScripts';
+import { registerPackageScriptWatcher, runPackageScript } from './features/scripts/packageScripts';
 import { runScript } from './features/scripts/runScript';
 import { registerScriptRuntimeWatcher } from './features/scripts/scriptRuntime';
 import { registerXmlFormatter } from './features/xml/xmlFormatter';
@@ -34,11 +34,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 					runScript(context, uri, selectedUris),
 				),
 		),
-		vscode.commands.registerCommand('vscode-toolkit.runNpmScript', runNpmScript),
-		vscode.commands.registerCommand('vscode-toolkit.runBunPackageScript', runNpmScript),
+		vscode.commands.registerCommand('vscode-toolkit.runNpmScript', runPackageScript),
+		vscode.commands.registerCommand('vscode-toolkit.runBunPackageScript', runPackageScript),
 		registerXmlFormatter(),
 	);
-	registerNpmScriptWatcher(context);
+	registerPackageScriptWatcher(context);
 	registerScriptRuntimeWatcher(context);
 	registerSourceControl(context);
 	registerHttpClient(context);

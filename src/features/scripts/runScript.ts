@@ -1,13 +1,12 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { getTypeScriptRuntimeArgs } from './nodeRuntime';
 import {
 	getRunnableFileUri,
 	isNodeScriptUri,
 	isTypeScriptDocument,
 	resolveNodeDocument,
 } from './scriptDocument';
-import { getScriptRuntime } from './scriptRuntime';
+import { getScriptRuntime, getTypeScriptRuntimeArgs } from './scriptRuntime';
 
 const terminalName = 'Toolkit';
 

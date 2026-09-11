@@ -8,7 +8,7 @@ type PackageJson = {
 	scripts?: Record<string, unknown>;
 };
 
-export async function runNpmScript(folderUri: vscode.Uri | undefined): Promise<void> {
+export async function runPackageScript(folderUri: vscode.Uri | undefined): Promise<void> {
 	if (!folderUri) {
 		return;
 	}
@@ -17,7 +17,7 @@ export async function runNpmScript(folderUri: vscode.Uri | undefined): Promise<v
 	const scripts = await getScripts(folderUri);
 	if (scripts.length === 0) {
 		void vscode.window.showInformationMessage('No package scripts found in this folder.');
-		await refreshNpmScriptFolders();
+		await refreshPackageScriptFolders();
 		return;
 	}
 
@@ -37,22 +37,22 @@ export async function runNpmScript(folderUri: vscode.Uri | undefined): Promise<v
 	terminal.sendText(`${runtime === 'bun' ? 'bun' : 'npm'} run ${quoteArgument(selected.label)}`);
 }
 
-export function registerNpmScriptWatcher(context: vscode.ExtensionContext): void {
+export function registerPackageScriptWatcher(context: vscode.ExtensionContext): void {
 	const packageJsonWatcher = vscode.workspace.createFileSystemWatcher('**/package.json');
-	packageJsonWatcher.onDidCreate(refreshNpmScriptFolders, undefined, context.subscriptions);
-	packageJsonWatcher.onDidChange(refreshNpmScriptFolders, undefined, context.subscriptions);
-	packageJsonWatcher.onDidDelete(refreshNpmScriptFolders, undefined, context.subscriptions);
+	packageJsonWatcher.onDidCreate(refreshPackageScriptFolders, undefined, context.subscriptions);
+	packageJsonWatcher.onDidChange(refreshPackageScriptFolders, undefined, context.subscriptions);
+	packageJsonWatcher.onDidDelete(refreshPackageScriptFolders, undefined, context.subscriptions);
 
 	const bunMarkerWatcher = vscode.workspace.createFileSystemWatcher('**/{bun.lock,bunfig.toml}');
-	bunMarkerWatcher.onDidCreate(refreshNpmScriptFolders, undefined, context.subscriptions);
-	bunMarkerWatcher.onDidDelete(refreshNpmScriptFolders, undefined, context.subscriptions);
+	bunMarkerWatcher.onDidCreate(refreshPackageScriptFolders, undefined, context.subscriptions);
+	bunMarkerWatcher.onDidDelete(refreshPackageScriptFolders, undefined, context.subscriptions);
 
 	context.subscriptions.push(
 		packageJsonWatcher,
 		bunMarkerWatcher,
-		vscode.workspace.onDidChangeWorkspaceFolders(refreshNpmScriptFolders),
+		vscode.workspace.onDidChangeWorkspaceFolders(refreshPackageScriptFolders),
 	);
-	void refreshNpmScriptFolders();
+	void refreshPackageScriptFolders();
 }
 
 async function getScripts(folderUri: vscode.Uri): Promise<Array<[string, string]>> {
@@ -73,7 +73,7 @@ async function getScripts(folderUri: vscode.Uri): Promise<Array<[string, string]
 	}
 }
 
-async function refreshNpmScriptFolders(): Promise<void> {
+async function refreshPackageScriptFolders(): Promise<void> {
 	const packageJsonUris = await vscode.workspace.findFiles('**/package.json', '**/node_modules/**');
 	const npmFolders: Record<string, boolean> = {};
 	const bunFolders: Record<string, boolean> = {};
