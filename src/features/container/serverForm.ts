@@ -7,7 +7,7 @@ import {
 	usesPrivateKey,
 } from './server';
 import { ServerCredentials, ServerStore } from './serverStore';
-import { getWebviewHtml } from './webview';
+import { getWebviewHtml } from '../../webview';
 import { listSshConnections } from '../ssh/connectionService';
 
 export type ServerFormWebviewMessage = ServerFormMessage | { type: 'ready' };
@@ -27,7 +27,11 @@ export async function configureServerForm(
 		enableScripts: true,
 		localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 	};
-	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, 'containerForm', title);
+	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, {
+		entry: 'containerForm',
+		title,
+		allowImages: true,
+	});
 	const saveState = { inProgress: false };
 	panel.webview.onDidReceiveMessage(
 		(message: ServerFormWebviewMessage) =>

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ContainerServer } from './server';
 import { ServerStore } from './serverStore';
 import { executeContainerCommand } from './containerCommand';
-import { getWebviewHtml } from './webview';
+import { getWebviewHtml } from '../../webview';
 
 import type {
 	ContainerRequest,
@@ -26,7 +26,11 @@ export function configureContainerEditor(
 		enableScripts: true,
 		localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'media')],
 	};
-	panel.webview.html = getWebviewHtml(panel.webview, extensionUri, 'containerEditor', server.name);
+	panel.webview.html = getWebviewHtml(panel.webview, extensionUri, {
+		entry: 'containerEditor',
+		title: server.name,
+		allowImages: true,
+	});
 
 	panel.webview.onDidReceiveMessage(async (message: ContainerRequest) => {
 		if (message.type === 'ready') {

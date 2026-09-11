@@ -4,7 +4,8 @@ import { getStorageUri } from '../../storagePath';
 import type { StoredSession } from './session';
 
 export class SessionStorage {
-	private readonly persistedSessionIds = new Set<string>();
+	private readonly sessionFiles = new Map<string, string>();
+	private readonly reservedNames = new Set<string>();
 
 	private constructor(private readonly storageUri: vscode.Uri) {}
 
@@ -22,51 +23,79 @@ export class SessionStorage {
 		const currentIds = new Set(sessions.map(session => session.id));
 		await Promise.all([
 			...sessions.map(session => this.writeSession(session)),
-			...[...this.persistedSessionIds]
+			...[...this.sessionFiles.keys()]
 				.filter(id => !currentIds.has(id))
 				.map(id => this.deleteSession(id)),
 		]);
-		this.persistedSessionIds.clear();
-		currentIds.forEach(id => this.persistedSessionIds.add(id));
 	}
 
 	private async loadFromDirectory(): Promise<StoredSession[]> {
 		const entries = await vscode.workspace.fs.readDirectory(this.storageUri);
-		const sessions = await Promise.all(
-			entries.map(async ([name, type]) => {
+		entries.forEach(([name]) => this.reservedNames.add(name));
+		const sessions: StoredSession[] = [];
+		for (const [name, type] of entries) {
 				if (type !== vscode.FileType.File || path.extname(name).toLowerCase() !== '.json') {
-					return undefined;
+					continue;
 				}
+				let session: unknown;
 				try {
 					const content = await vscode.workspace.fs.readFile(
 						vscode.Uri.joinPath(this.storageUri, name),
 					);
-					const session = JSON.parse(new TextDecoder().decode(content));
-					if (isStoredSession(session) && name === `${session.id}.json`) {
-						this.persistedSessionIds.add(session.id);
-						return session;
-					}
-				} catch {}
-				return undefined;
-			}),
-		);
-		return sessions.filter(session => session !== undefined);
+					session = JSON.parse(new TextDecoder().decode(content));
+				} catch {
+					continue;
+				}
+				if (!isStoredSession(session) || (!/^\d+\.json$/.test(name) && name !== `${session.id}.json`)) {
+					continue;
+				}
+				let filename = name;
+				if (!/^\d+\.json$/.test(name)) {
+					filename = this.reserveFilename(session.updatedAt);
+					await vscode.workspace.fs.rename(
+						vscode.Uri.joinPath(this.storageUri, name),
+						vscode.Uri.joinPath(this.storageUri, filename),
+						{ overwrite: false },
+					);
+				}
+				this.sessionFiles.set(session.id, filename);
+				sessions.push(session);
+		}
+		return sessions;
+	}
+
+	private reserveFilename(updatedAt: number): string {
+		let timestamp = Number.isSafeInteger(updatedAt) && updatedAt >= 0 && updatedAt < Number.MAX_SAFE_INTEGER
+			? updatedAt : Date.now();
+		while (this.reservedNames.has(`${timestamp}.json`)) {
+			timestamp += 1;
+		}
+		const filename = `${timestamp}.json`;
+		this.reservedNames.add(filename);
+		return filename;
 	}
 
 	private async writeSession(session: StoredSession): Promise<void> {
-		const uri = vscode.Uri.joinPath(this.storageUri, `${session.id}.json`);
+		const filename = this.sessionFiles.get(session.id) ?? this.reserveFilename(session.updatedAt);
+		this.sessionFiles.set(session.id, filename);
+		const uri = vscode.Uri.joinPath(this.storageUri, filename);
 		const content = new TextEncoder().encode(`${JSON.stringify(session, undefined, 2)}\n`);
 		await vscode.workspace.fs.writeFile(uri, content);
 	}
 
 	private async deleteSession(id: string): Promise<void> {
+		const filename = this.sessionFiles.get(id);
+		if (!filename) {
+			return;
+		}
 		try {
-			await vscode.workspace.fs.delete(vscode.Uri.joinPath(this.storageUri, `${id}.json`));
+			await vscode.workspace.fs.delete(vscode.Uri.joinPath(this.storageUri, filename));
 		} catch (error) {
 			if (!(error instanceof vscode.FileSystemError && error.code === 'FileNotFound')) {
 				throw error;
 			}
 		}
+		this.sessionFiles.delete(id);
 	}
 }
 
