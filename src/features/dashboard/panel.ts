@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from '../../webview';
 
-export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container' | 'launchd';
+export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container';
 let panel: vscode.WebviewView | undefined;
 let context: vscode.ExtensionContext;
 let activeTab: DashboardTab = 'workflow';
@@ -15,7 +15,6 @@ const commands: Record<DashboardTab, string> = {
 	workflow: 'openWorkflow',
 	database: 'openDatabase',
 	container: 'openContainer',
-	launchd: 'openLaunchd',
 };
 
 export function registerDashboard(extensionContext: vscode.ExtensionContext): void {
@@ -64,11 +63,9 @@ function configureDashboard(current: vscode.WebviewView): void {
 			await current.webview.postMessage({
 				type: 'dashboardState',
 				tab: activeTab,
-				isMac: process.platform === 'darwin',
 			});
-			for (const [channel, command] of Object.entries(commands)) {
-				if (channel !== 'launchd')
-					await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
+			for (const command of Object.values(commands)) {
+				await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
 			}
 			await current.webview.postMessage({ type: 'dashboardConnected' });
 		} else if (message.type === 'dashboardTab' && message.tab in commands) {
@@ -110,7 +107,6 @@ export function dashboardFeaturePanel(tab: DashboardTab, background = false): vs
 						'formClosed',
 						'privateKeySelected',
 						'proxyPrivateKeySelected',
-						'launchdDetails',
 					].includes(message.type ?? '')
 				) {
 					await panel?.webview.postMessage(response);
@@ -159,7 +155,6 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 		ssh: 'terminal',
 		database: 'database',
 		container: 'symbol-method',
-		launchd: 'rocket',
 	};
 	editor.iconPath = new vscode.ThemeIcon(icons[tab]);
 	editors.set(tab, editor);

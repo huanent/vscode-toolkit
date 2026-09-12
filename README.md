@@ -11,11 +11,11 @@ Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard
 ### Dashboard
 
 - Open Chat, Explorer, and HTTP Client from the quick navigation bar.
-- Open Toolkit from the Activity Bar to browse five compact tool tabs and searchable lists in a webview sidebar.
-- Connection groups and Launchd status groups are collapsed by default; expand a group to browse its items.
-- Create and edit connections, workflows, and LaunchAgents in separate editor tabs. LaunchAgent runtime details also open in an editor tab.
+- Open Toolkit from the Activity Bar to browse four compact tool tabs and searchable lists in a webview sidebar.
+- Connection groups are collapsed by default; expand a group to browse its items.
+- Create and edit connections and workflows in separate editor tabs.
 - Existing tool commands and the Dashboard shortcut focus the corresponding sidebar tab.
-- Launchd is available on macOS only. Active connections and resource editors still open in separate editor tabs.
+- Active connections and resource editors still open in separate editor tabs.
 
 ### Chat
 
@@ -73,12 +73,6 @@ SSH, Database, and Container each support connection search, creation, editing, 
 - Save and run steps sequentially after confirmation, with logs in the Toolkit Workflow output channel.
 
 Execution requires a trusted workspace. Only one workflow can run at a time, and execution stops on the first error. Cancellation takes effect after the current step finishes; it does not interrupt a running command or transfer. Interactive commands, parallel steps, and directory transfers are not supported. Transfers overwrite destination files. Uploads require the remote parent directory to exist; downloads create local parent directories. Use SSH command steps for other remote file operations.
-
-### Launchd (macOS)
-
-- View user LaunchAgents in `~/Library/LaunchAgents` and check their status.
-- Start, stop, create, edit, and delete agents.
-- Configure run-at-load behavior, keep-alive behavior, restart intervals, program arguments, environment variables, working directories, and log paths.
 
 ### Scripts and Developer Utilities
 

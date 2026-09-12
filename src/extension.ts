@@ -3,7 +3,6 @@ import { registerDashboard } from './features/dashboard/panel';
 import { registerSourceControl } from './features/git/sourceControl';
 import { generateGitignore } from './features/git/gitignoreService';
 import { registerHttpClient } from './features/http/httpClient';
-import { LaunchdPanel } from './features/launchd/launchdPanel';
 import { registerChat } from './features/chat/registerChat';
 import { registerExplorer } from './features/explorer/registerExplorer';
 import { createPerfTipsTracker } from './features/perftips/perftips';
@@ -20,11 +19,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	registerDashboard(context);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(
-			'vscode-toolkit.openLaunchd',
-			(request?: { background?: boolean }) =>
-				LaunchdPanel.show(context.extensionUri, request?.background),
-		),
 		vscode.commands.registerCommand('vscode-toolkit.generateGitignore', () =>
 			generateGitignore(context.extensionUri),
 		),

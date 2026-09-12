@@ -1,6 +1,6 @@
 import { vscode } from '../../vscodeApi';
 
-export type Tab = 'ssh' | 'workflow' | 'database' | 'container' | 'launchd';
+export type Tab = 'ssh' | 'workflow' | 'database' | 'container';
 export const send = (channel: Tab, message: object) => vscode.postMessage({ ...message, channel });
 export function subscribe(channel: Tab, listener: (event: MessageEvent) => void) {
 	const receive = (event: MessageEvent) => {
@@ -11,5 +11,4 @@ export function subscribe(channel: Tab, listener: (event: MessageEvent) => void)
 }
 
 export const workflowApi = { postMessage: (message: object) => send('workflow', message) };
-export const launchdApi = { postMessage: (message: object) => send('launchd', message) };
 export const sshApi = { postMessage: (message: object) => send('ssh', message) };

@@ -6,7 +6,6 @@ import { ServerDialog } from '../ssh/management/ServerDialog';
 import { App as DatabaseForm } from '../database/serverForm/App';
 import { App as ContainerForm } from '../container/serverForm/App';
 import { App as Workflow } from '../workflow/main';
-import { App as Launchd } from '../launchd/App';
 
 const tab = document.getElementById('root')!.dataset.tab as Tab;
 document.body.dataset.toolkitEditor = 'true';
@@ -52,8 +51,6 @@ function Editor() {
 		>
 			{tab === 'workflow' ? (
 				<Workflow />
-			) : tab === 'launchd' ? (
-				<Launchd />
 			) : sessionId === undefined ? (
 				<p role="status">Loading...</p>
 			) : tab === 'ssh' ? (
