@@ -49,7 +49,7 @@ export function Button({
 		<button
 			type={htmlType}
 			className={cn(
-				'inline-flex max-w-full items-center justify-center rounded-sm border font-medium transition-colors duration-100 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-(--vscode-focusBorder) disabled:cursor-default disabled:opacity-45',
+				'inline-flex max-w-full items-center justify-center rounded-sm border font-medium transition-colors duration-100 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-(--vscode-focusBorder) enabled:cursor-pointer disabled:cursor-default disabled:opacity-45',
 				buttonSizes[size],
 				buttonVariants[variant],
 				active && activeVariants[variant],

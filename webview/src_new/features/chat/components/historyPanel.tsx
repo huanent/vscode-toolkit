@@ -3,7 +3,7 @@ import { cn } from 'cn';
 import { useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
 import { Empty } from '../../../components/empty';
-import { Button, IconButton } from '../../../components/button';
+import { IconButton } from '../../../components/button';
 import { Input } from '../../../components/input';
 
 const pageSize = 30;
@@ -98,32 +98,37 @@ export function HistoryPanel({
 							{group.items.map(session => (
 								<li
 									className={cn(
-										'group grid grid-cols-[minmax(0,1fr)_32px] items-center rounded p-1',
+										'group grid grid-cols-[minmax(0,1fr)_24px] items-center rounded-sm',
 										session.id === currentSessionId
-											? 'bg-(--vscode-list-hoverBackground) text-(--vscode-list-activeSelectionForeground)'
-											: 'hover:bg-(--vscode-list-activeSelectionBackground)',
+											? 'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground,var(--vscode-foreground))'
+											: 'hover:bg-(--vscode-list-hoverBackground) focus-within:bg-(--vscode-list-hoverBackground)',
 									)}
 									key={session.id}
 								>
-									<Button variant="text"
-										className="min-w-0 justify-start text-left text-inherit"
-										left={<MessageCircle size="sm" />}
+									<span
+										className="flex min-h-8 min-w-0 cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+										role="button"
+										tabIndex={0}
+										aria-current={session.id === currentSessionId ? 'true' : undefined}
 										onClick={() => onSelect(session.id)}
+										onKeyDown={event => {
+											if (event.key !== 'Enter' && event.key !== ' ') return;
+											event.preventDefault();
+											if (!event.repeat) onSelect(session.id);
+										}}
 									>
-										<span className="block truncate">
+										<MessageCircle size="sm" className="shrink-0" />
+										<span className="min-w-0 truncate">
 											{session.summary}
 										</span>
-									</Button>
+									</span>
 									<IconButton
 										label="Delete chat"
 										icon={
 											<Trash2 size="sm" />
 										}
-										size="md"
-										className={cn(
-											'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
-											session.id === currentSessionId && 'opacity-100',
-										)}
+										size="sm"
+										className="text-inherit opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
 										onClick={() => onDelete(session.id)}
 									/>
 								</li>

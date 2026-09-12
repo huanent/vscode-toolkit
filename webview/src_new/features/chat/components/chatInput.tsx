@@ -42,7 +42,7 @@ export function ChatInput({
 			>
 				<div
 					ref={inputRef}
-					className="message-input min-h-11 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-2 text-sm text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
+					className="message-input min-h-9 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-1 text-sm text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
 					role="textbox"
 					aria-label="Message"
 					aria-multiline="true"
@@ -58,7 +58,7 @@ export function ChatInput({
 						}
 					}}
 				/>
-				<div className="flex min-h-10 flex-wrap items-end gap-2 px-2 pt-2 pb-2">
+				<div className="flex min-h-10 flex-wrap items-end gap-2 px-2 pb-2">
 					<ModelPicker
 						models={models}
 						selectedModelId={selectedModelId}

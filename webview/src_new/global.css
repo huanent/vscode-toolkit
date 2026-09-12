@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import '@vscode/codicons/dist/codicon.css';
+
+@layer base {
+	:root {
+		font-family: var(--vscode-font-family);
+		font-size: var(--vscode-font-size);
+		color: var(--vscode-foreground);
+		background: var(--vscode-editor-background);
+		letter-spacing: 0;
+	}
+
+	body,
+	#root {
+		width: 100%;
+		height: 100vh;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+	}
+}
