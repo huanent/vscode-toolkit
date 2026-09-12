@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Popover } from '../../../components/popover';
 import type { ModelItem } from '../types';
 import { Button } from '../../../components/button';
+import { List, ListGroup, ListItem } from '../../../components/list';
 
 type ModelPickerProps = {
 	models: ModelItem[];
@@ -51,36 +52,32 @@ export function ModelPicker({
 					</Button>
 				)}
 			>
-				{[...providers].map(([providerName, providerModels]) => (
-					<div key={providerName}>
-						<div className="px-2 pt-2 pb-1 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)">
-							{providerName}
-						</div>
-						{providerModels.map(model => (
-							<Button
-								variant="text"
-								className="w-full justify-start text-left text-(--vscode-menu-foreground,var(--vscode-foreground)) aria-selected:[&_.model-check]:visible"
-								left={<CircleCheck size="sm" className="model-check invisible" />}
-								key={model.id}
-								role="option"
-								aria-selected={model.id === selectedModelId}
-								onClick={() => {
-									onSelect(model.id);
-									setOpen(false);
-								}}
-							>
-								<span className="grid min-w-0 gap-1">
-									<span className="wrap-anywhere">{model.name}</span>
-									{model.family !== model.name && (
-										<small className="text-xs wrap-anywhere text-(--vscode-descriptionForeground)">
-											{model.family}
-										</small>
-									)}
-								</span>
-							</Button>
-						))}
-					</div>
-				))}
+				<List role="presentation">
+					{[...providers].map(([providerName, providerModels]) => (
+						<ListGroup key={providerName} label={providerName} options>
+							{providerModels.map(model => (
+								<ListItem
+									icon={
+										<CircleCheck
+											size="sm"
+											className={model.id === selectedModelId ? 'visible' : 'invisible'}
+										/>
+									}
+									key={model.id}
+									role="option"
+									selected={model.id === selectedModelId}
+									description={model.family !== model.name ? model.family : undefined}
+									onSelect={() => {
+										onSelect(model.id);
+										setOpen(false);
+									}}
+								>
+									{model.name}
+								</ListItem>
+							))}
+						</ListGroup>
+					))}
+				</List>
 			</Popover>
 		</div>
 	);

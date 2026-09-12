@@ -1,5 +1,5 @@
 import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../../components/icons';
-import { cn } from 'cn';
+import { List, ListGroup, ListItem } from '../../../components/list';
 import { useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
 import { Empty } from '../../../components/empty';
@@ -50,93 +50,60 @@ export function HistoryPanel({
 			aria-label="Chat history"
 		>
 			<div className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-(--vscode-widget-border,var(--vscode-panel-border)) p-2">
-					<Input
-						left={<Search size="sm" />}
-						variant="plain"
-						type="search"
-						value={query}
-						onChange={event => onQueryChange(event.target.value)}
-						placeholder="Search history"
-						aria-label="Search history"
-					/>
+				<Input
+					left={<Search size="sm" />}
+					variant="plain"
+					type="search"
+					value={query}
+					onChange={event => onQueryChange(event.target.value)}
+					placeholder="Search history"
+					aria-label="Search history"
+				/>
 				<IconButton
 					label="Close chat history"
 					title="Close history"
-					icon={
-						<X size="sm" />
-					}
+					icon={<X size="sm" />}
 					size="md"
 					onClick={onClose}
 				/>
 			</div>
-			<ul className="m-0 min-h-0 list-none overflow-y-auto p-2" onScroll={loadNextPage}>
+			<List className="overflow-y-auto p-2" onScroll={loadNextPage}>
 				{filtered.length === 0 && (
 					<li>
 						<Empty
-							icon={
-								normalizedQuery ? (
-									<Search size="lg" />
-								) : (
-									<MessageSquare size="lg" />
-								)
-							}
+							icon={normalizedQuery ? <Search size="lg" /> : <MessageSquare size="lg" />}
 							title={normalizedQuery ? 'No matching chats' : 'No chats yet'}
 							description={
 								normalizedQuery ? 'Try a different keyword.' : 'Your recent chats will appear here.'
 							}
-							className="min-h-40 gap-2 p-4 text-xs text-(--vscode-descriptionForeground)"
-							titleClassName="text-sm text-(--vscode-foreground)"
 						/>
 					</li>
 				)}
 				{groupSessions(visibleSessions).map(group => (
-					<li key={group.label}>
-						<div className="px-2 pt-3 pb-2 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)">
-							{group.label}
-						</div>
-						<ul className="m-0 list-none p-0">
-							{group.items.map(session => (
-								<li
-									className={cn(
-										'group grid grid-cols-[minmax(0,1fr)_24px] items-center rounded-sm',
-										session.id === currentSessionId
-											? 'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground,var(--vscode-foreground))'
-											: 'hover:bg-(--vscode-list-hoverBackground) focus-within:bg-(--vscode-list-hoverBackground)',
-									)}
-									key={session.id}
-								>
-									<span
-										className="flex min-h-8 min-w-0 cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
-										role="button"
-										tabIndex={0}
-										aria-current={session.id === currentSessionId ? 'true' : undefined}
-										onClick={() => onSelect(session.id)}
-										onKeyDown={event => {
-											if (event.key !== 'Enter' && event.key !== ' ') return;
-											event.preventDefault();
-											if (!event.repeat) onSelect(session.id);
-										}}
-									>
-										<MessageCircle size="sm" className="shrink-0" />
-										<span className="min-w-0 truncate">
-											{session.summary}
-										</span>
-									</span>
+					<ListGroup key={group.label} label={group.label}>
+						{group.items.map(session => (
+							<ListItem
+								key={session.id}
+								icon={<MessageCircle size="sm" />}
+								selected={session.id === currentSessionId}
+								truncate
+								onSelect={() => onSelect(session.id)}
+								actions={
 									<IconButton
 										label="Delete chat"
-										icon={
-											<Trash2 size="sm" />
-										}
+										icon={<Trash2 size="sm" />}
 										size="sm"
-										className="text-inherit opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+										className="text-inherit"
 										onClick={() => onDelete(session.id)}
 									/>
-								</li>
-							))}
-						</ul>
-					</li>
+								}
+							>
+								{session.summary}
+							</ListItem>
+						))}
+					</ListGroup>
 				))}
-			</ul>
+			</List>
 		</aside>
 	);
 }

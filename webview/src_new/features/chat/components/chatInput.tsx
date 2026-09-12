@@ -42,7 +42,7 @@ export function ChatInput({
 			>
 				<div
 					ref={inputRef}
-					className="message-input min-h-9 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-1 text-sm text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
+					className="message-input min-h-9 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-1 text-md text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
 					role="textbox"
 					aria-label="Message"
 					aria-multiline="true"
