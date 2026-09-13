@@ -1,19 +1,17 @@
 import { cn } from 'cn';
-import { StorageLocation } from '../../../components/storage-location';
+import { StorageLocation } from './storageLocation';
 import { useState } from 'react';
-import { Save } from '../../../components/icons';
-import { PrimaryButton } from '../../../components/button';
-import { Field } from '../../../components/field';
-import { TextInput } from '../../../components/input';
-import { AuthenticationFields } from './components/AuthenticationFields';
-import { CommandFields } from './components/CommandFields';
-import { NetworkFields } from './components/NetworkFields';
-import { ProxyFields } from './components/ProxyFields';
-import { useServerForm } from './hooks/useServerForm';
-import { Dialog } from '../../../components/dialog';
+import { Save } from '../../../../components/icons';
+import { Button } from '../../../../components/button';
+import { Field } from '../../../../components/field';
+import { Input } from '../../../../components/input';
+import { AuthenticationFields } from './authenticationFields';
+import { CommandFields } from './commandFields';
+import { NetworkFields } from './networkFields';
+import { ProxyFields } from './proxyFields';
+import type { ConnectionFormState } from '../hooks/useConnectionForm';
 
-export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClose: () => void }) {
-	const form = useServerForm(sessionId, onClose);
+export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(
 		'connection',
 	);
@@ -36,7 +34,6 @@ export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClos
 	const selectedTab = tabs.some(tab => tab.value === activeTab) ? activeTab : 'connection';
 
 	return (
-		<Dialog title={model.server?.host ? 'Edit SSH connection' : 'New SSH connection'} wide onClose={() => { if (!form.saving) onClose(); }}>
 		<form
 			onSubmit={event => {
 				event.preventDefault();
@@ -44,38 +41,53 @@ export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClos
 			}}
 		>
 			<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) py-3.5">
-				<StorageLocation value={values.location} folders={model.workspaceFolders ?? []} disabled={form.saving || model.locationLocked} onChange={value => form.update('location', value)} />
+				<StorageLocation
+					value={values.location}
+					folders={model.workspaceFolders ?? []}
+					disabled={form.saving || model.locationLocked}
+					onChange={value => form.update('location', value)}
+				/>
 				<div className="mx-auto grid w-[min(880px,calc(100%-44px))] grid-cols-[minmax(160px,1.25fr)_minmax(140px,1fr)_auto] items-end gap-3 max-[680px]:w-[calc(100%-28px)] max-[520px]:grid-cols-[minmax(0,1fr)_auto]">
 					<Field label="Name" required>
-						<TextInput
-							autoFocus
-							required
-							placeholder="Production"
-							value={values.name}
-							onChange={event => form.update('name', event.target.value)}
-						/>
+						{control => (
+							<>
+								<Input
+									{...control}
+									autoFocus
+									required
+									placeholder="Production"
+									value={values.name}
+									onChange={event => form.update('name', event.target.value)}
+								/>
+							</>
+						)}
 					</Field>
 					<Field label="Group" className="max-[520px]:col-start-1 max-[520px]:row-start-2">
-						<TextInput
-							list="server-groups"
-							placeholder="No group"
-							value={values.group}
-							onChange={event => form.update('group', event.target.value)}
-						/>
-						<datalist id="server-groups">
-							{model.groups.map(group => (
-								<option key={group} value={group} />
-							))}
-						</datalist>
+						{control => (
+							<>
+								<Input
+									{...control}
+									list="connection-groups"
+									placeholder="No group"
+									value={values.group}
+									onChange={event => form.update('group', event.target.value)}
+								/>
+								<datalist id="connection-groups">
+									{model.groups.map(group => (
+										<option key={group} value={group} />
+									))}
+								</datalist>
+							</>
+						)}
 					</Field>
-					<PrimaryButton
+					<Button
+						left={<Save size="md" />}
 						className="max-[520px]:col-start-2 max-[520px]:row-span-2 max-[520px]:row-start-1 max-[520px]:self-start"
-						type="submit"
+						htmlType="submit"
 						disabled={form.saving}
 					>
-						<Save size={15} />
 						{form.saving ? 'Saving...' : 'Save'}
-					</PrimaryButton>
+					</Button>
 				</div>
 			</header>
 
@@ -90,7 +102,7 @@ export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClos
 				{tabs.length > 1 && (
 					<nav
 						className="sticky top-24 min-w-0 border-r border-(--vscode-panel-border,var(--vscode-widget-border)) pr-3 max-[680px]:static max-[680px]:overflow-x-auto max-[680px]:border-r-0 max-[680px]:border-b max-[680px]:pr-0"
-						aria-label="Server settings"
+						aria-label="Connection settings"
 					>
 						<div
 							className="flex flex-col gap-0.5 max-[680px]:min-w-max max-[680px]:flex-row"
@@ -157,6 +169,5 @@ export function ServerDialog({ sessionId, onClose }: { sessionId: number; onClos
 				</div>
 			</main>
 		</form>
-		</Dialog>
 	);
 }

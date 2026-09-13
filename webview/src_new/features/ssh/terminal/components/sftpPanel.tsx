@@ -1,9 +1,9 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { FolderOpen, LoaderCircle } from '../../../components/icons';
-import { fileGridClassName, SftpFileRow } from './SftpFileRow';
-import { SftpToolbar } from './SftpToolbar';
-import type { SftpEntry } from './types';
+import { FolderOpen, LoaderCircle } from '../../../../components/icons';
+import { fileGridClassName, SftpFileRow } from './sftpFileRow';
+import { SftpToolbar } from './sftpToolbar';
+import type { SftpEntry } from '../types';
 
 interface SftpActions {
 	sftpPath: string;
@@ -95,14 +95,14 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 				</div>
 				{sftp.loading ? (
 					<Status
-						icon={<LoaderCircle className="codicon-modifier-spin" size={18} />}
+						icon={<LoaderCircle className="codicon-modifier-spin" size="md" />}
 						title="Loading directory"
 						detail={sftp.sftpPath}
 					/>
 				) : (
 					sftp.entries.length === 0 && (
 						<Status
-							icon={<FolderOpen size={20} />}
+							icon={<FolderOpen size="lg" />}
 							title="This folder is empty"
 							detail="Upload a file or create a new folder."
 						/>
@@ -192,9 +192,7 @@ function Status({ icon, title, detail }: { icon: React.ReactNode; title: string;
 		<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-auto bg-[color-mix(in_srgb,var(--vscode-editor-background)_90%,transparent)] p-4 text-center text-(--vscode-descriptionForeground)">
 			<span className="text-(--vscode-icon-foreground)">{icon}</span>
 			<strong className="text-sm font-medium text-(--vscode-foreground)">{title}</strong>
-			<span className="max-w-full text-xs wrap-anywhere">
-				{detail}
-			</span>
+			<span className="max-w-full text-xs wrap-anywhere">{detail}</span>
 		</div>
 	);
 }

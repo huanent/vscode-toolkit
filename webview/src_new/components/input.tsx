@@ -1,5 +1,7 @@
 import { cn } from 'cn';
-import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { useState, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { IconButton } from './button';
+import { Eye, EyeOff } from './icons';
 
 const inputSizes = {
 	sm: 'h-6 gap-1 px-2 text-xs',
@@ -48,6 +50,7 @@ export function Input({
 			<input
 				className={cn(
 					'h-full w-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-inherit leading-normal outline-none placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden',
+					'aria-invalid:outline-1 aria-invalid:outline-(--vscode-inputValidation-errorBorder)',
 					inputClassName,
 				)}
 				disabled={disabled}
@@ -58,4 +61,41 @@ export function Input({
 			)}
 		</div>
 	);
+}
+
+export type PasswordInputProps = Omit<InputProps, 'type' | 'right'>;
+
+export function PasswordInput({ disabled, ...props }: PasswordInputProps) {
+	const [visible, setVisible] = useState(false);
+	return (
+		<Input
+			{...props}
+			disabled={disabled}
+			type={visible ? 'text' : 'password'}
+			right={
+				<IconButton
+					size="sm"
+					icon={visible ? <EyeOff /> : <Eye />}
+					label={visible ? 'Hide password' : 'Show password'}
+					aria-pressed={visible}
+					disabled={disabled}
+					onClick={() => setVisible(current => !current)}
+				/>
+			}
+		/>
+	);
+}
+
+const controlClassName = 'w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) text-sm text-(--vscode-input-foreground) outline-none focus:border-(--vscode-focusBorder) placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default disabled:opacity-45 aria-invalid:border-(--vscode-inputValidation-errorBorder)';
+
+export type TextareaProps = ComponentPropsWithRef<'textarea'>;
+
+export function Textarea({ className, ...props }: TextareaProps) {
+	return <textarea className={cn(controlClassName, 'min-h-20 resize-y px-2 py-2', className)} {...props} />;
+}
+
+export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'size'> & { size?: InputSize };
+
+export function Select({ size = 'md', className, ...props }: SelectProps) {
+	return <select className={cn(controlClassName, inputSizes[size], className)} {...props} />;
 }

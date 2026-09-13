@@ -1,8 +1,8 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { IconButton } from '../../../components/button';
-import { ArrowUp, FolderPlus, RefreshCw, Star, Upload, X } from '../../../components/icons';
-import { TextInput } from '../../../components/input';
+import { IconButton } from '../../../../components/button';
+import { ArrowUp, FolderPlus, RefreshCw, Star, Upload, X } from '../../../../components/icons';
+import { Input } from '../../../../components/input';
 
 interface SftpToolbarProps {
 	sftpPath: string;
@@ -49,19 +49,17 @@ export function SftpToolbar({
 			<IconButton
 				className="size-7 border-0"
 				disabled={!parentPath || loading}
-				title="Parent directory"
+				label="Parent directory"
 				onClick={() => parentPath && list(parentPath)}
-			>
-				<ArrowUp size={15} />
-			</IconButton>
+				icon={<ArrowUp size="md" />}
+			/>
 			<IconButton
 				className="size-7 border-0"
 				disabled={loading}
-				title="Refresh"
+				label="Refresh"
 				onClick={() => list(sftpPath)}
-			>
-				<RefreshCw className={cn(loading ? 'codicon-modifier-spin' : '')} size={15} />
-			</IconButton>
+				icon={<RefreshCw className={cn(loading ? 'codicon-modifier-spin' : '')} size="md" />}
+			/>
 			<div
 				className="relative flex min-w-0 flex-1 items-center overflow-visible rounded-xs border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]"
 				onClick={event => event.stopPropagation()}
@@ -69,7 +67,7 @@ export function SftpToolbar({
 					if (!event.currentTarget.contains(event.relatedTarget)) setShowFavorites(false);
 				}}
 			>
-				<TextInput
+				<Input
 					aria-label="Remote path"
 					className="min-w-0 border-0 bg-transparent px-2 font-(family-name:--vscode-editor-font-family) text-sm shadow-none focus:border-transparent"
 					disabled={loading}
@@ -93,14 +91,13 @@ export function SftpToolbar({
 						'size-5 border-0',
 						favorite ? 'text-(--vscode-charts-yellow)' : 'text-(--vscode-descriptionForeground)',
 					)}
-					title={favorite ? 'Remove from favorites' : 'Add to favorites'}
+					label={favorite ? 'Remove from favorites' : 'Add to favorites'}
 					onClick={event => {
 						event.stopPropagation();
 						toggleFavorite();
 					}}
-				>
-					<Star size={12} fill={favorite ? 'currentColor' : 'none'} />
-				</IconButton>
+					icon={<Star size="xs" fill={favorite ? 'currentColor' : 'none'} />}
+				/>
 				{showFavorites && favorites.length > 0 && (
 					<Favorites
 						paths={favorites}
@@ -116,19 +113,17 @@ export function SftpToolbar({
 			<IconButton
 				className="size-7 border-0"
 				disabled={loading}
-				title="New folder"
+				label="New folder"
 				onClick={() => createDirectory()}
-			>
-				<FolderPlus size={15} />
-			</IconButton>
+				icon={<FolderPlus size="md" />}
+			/>
 			<IconButton
 				className="size-7 border-0"
 				disabled={loading}
-				title="Upload files"
+				label="Upload files"
 				onClick={() => upload()}
-			>
-				<Upload size={15} />
-			</IconButton>
+				icon={<Upload size="md" />}
+			/>
 		</header>
 	);
 }
@@ -178,7 +173,7 @@ function Favorites({
 							onRemove(path);
 						}}
 					>
-						<X size={12} />
+						<X size="xs" />
 					</button>
 				</div>
 			))}

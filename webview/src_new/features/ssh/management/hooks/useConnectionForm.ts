@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { ServerFormValues } from '../types';
-import { sshApi as vscode, subscribe } from '../../../dashboard/channel';
+import type { ConnectionFormValues } from '../types';
+import { sshApi as vscode, subscribe } from '../../services/vscode';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
 } from '../../../../../../src/features/ssh/formProtocol';
 
-const emptyValues: ServerFormValues = {
+const emptyValues: ConnectionFormValues = {
 	location: '',
 	name: '',
 	group: '',
@@ -31,7 +31,7 @@ const emptyValues: ServerFormValues = {
 	commands: [],
 };
 
-export function useServerForm(sessionId: number, onClose: () => void) {
+export function useConnectionForm(sessionId: number, onClose: () => void) {
 	const [model, setModel] = useState<ServerFormModel>();
 	const [values, setValues] = useState(emptyValues);
 	const [error, setError] = useState('');
@@ -99,12 +99,12 @@ export function useServerForm(sessionId: number, onClose: () => void) {
 					break;
 			}
 		};
-		const unsubscribe = subscribe('ssh', handleMessage);
+		const unsubscribe = subscribe(handleMessage);
 		vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'ready' } });
 		return unsubscribe;
 	}, [sessionId, onClose]);
 
-	const update = <Key extends keyof ServerFormValues>(key: Key, value: ServerFormValues[Key]) => {
+	const update = <Key extends keyof ConnectionFormValues>(key: Key, value: ConnectionFormValues[Key]) => {
 		setError('');
 		setValues(current => ({ ...current, [key]: value }));
 	};
@@ -132,4 +132,4 @@ export function useServerForm(sessionId: number, onClose: () => void) {
 	};
 }
 
-export type ServerFormState = ReturnType<typeof useServerForm>;
+export type ConnectionFormState = ReturnType<typeof useConnectionForm>;

@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import type { RemoteMetricsDisplay } from './types';
+import type { RemoteMetricsDisplay } from '../types';
 
 const metricColorClassNames = [
 	'before:bg-(--vscode-charts-blue)',
@@ -26,9 +26,7 @@ export function RemoteMetrics({ metrics }: RemoteMetricsProps) {
 						metricColorClassNames[index],
 					)}
 				>
-					<span className="text-xs font-medium text-(--vscode-descriptionForeground)">
-						{label}
-					</span>
+					<span className="text-xs font-medium text-(--vscode-descriptionForeground)">{label}</span>
 					<span className="min-w-0 font-(family-name:--vscode-editor-font-family) text-sm tabular-nums wrap-anywhere">
 						{value}
 					</span>

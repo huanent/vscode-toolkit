@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ConnectionList, type ConnectionListState } from '../../../components/ConnectionList';
-import { send as sendChannel, subscribe } from '../../dashboard/channel';
-import { ServerDialog } from './ServerDialog';
+import { ConnectionList, type ConnectionListState } from './components/connectionList';
+import { sshApi, subscribe } from '../services/vscode';
+import { ConnectionDialog } from './components/connectionDialog';
 
 export function SshConnections() {
-	const send = (type: string, id?: string) => sendChannel('ssh', { type, id });
+	const send = (type: string, id?: string) => sshApi.postMessage({ type, id });
 	const [formSession, setFormSession] = useState<number>();
 	const [closeForm] = useState(() => () => {
 		send('closeForm');
@@ -17,21 +17,15 @@ export function SshConnections() {
 			if (event.data.type === 'openForm') setFormSession(event.data.sessionId);
 			if (event.data.type === 'formClosed') setFormSession(undefined);
 		};
-		const unsubscribe = subscribe('ssh', receive);
+		const unsubscribe = subscribe(receive);
 		send('ready');
 		return unsubscribe;
 	}, []);
 	return (
 		<section className="py-3 text-(--vscode-foreground)">
-			<ConnectionList
-				title="SSH"
-				state={state}
-				query={query}
-				onQueryChange={setQuery}
-				onAction={send}
-			/>
+			<ConnectionList state={state} query={query} onQueryChange={setQuery} onAction={send} />
 			{formSession !== undefined && (
-				<ServerDialog key={formSession} sessionId={formSession} onClose={closeForm} />
+				<ConnectionDialog key={formSession} sessionId={formSession} onClose={closeForm} />
 			)}
 		</section>
 	);

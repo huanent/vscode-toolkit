@@ -2,7 +2,7 @@ import { cn } from 'cn';
 import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 
 export function List({ className, ...props }: ComponentPropsWithoutRef<'ul'>) {
-	return <ul className={cn('m-0 min-h-0 list-none p-0', className)} {...props} />;
+	return <ul className={cn('m-0 flex min-h-0 list-none flex-col gap-0.5 p-0', className)} {...props} />;
 }
 
 type ListGroupProps = {
@@ -36,7 +36,10 @@ type ListItemProps = {
 	selected?: boolean;
 	role?: 'button' | 'option';
 	truncate?: boolean;
+	inline?: boolean;
 	onSelect(): void;
+	onContextMenu?: ComponentPropsWithoutRef<'li'>['onContextMenu'];
+	onKeyDown?: ComponentPropsWithoutRef<'li'>['onKeyDown'];
 };
 
 export function ListItem({
@@ -47,17 +50,22 @@ export function ListItem({
 	selected = false,
 	role = 'button',
 	truncate = false,
+	inline = false,
 	onSelect,
+	onContextMenu,
+	onKeyDown,
 }: ListItemProps) {
 	const isOption = role === 'option';
 
 	return (
 		<li
+			onContextMenu={onContextMenu}
+			onKeyDown={onKeyDown}
 			role={isOption ? 'presentation' : undefined}
 			className={cn(
-				'group flex items-center rounded-sm p-2',
+				'group flex items-center rounded-sm px-2 py-1',
 				selected
-					? 'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground,var(--vscode-foreground))'
+					? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground,var(--vscode-foreground))'
 					: 'hover:bg-(--vscode-list-hoverBackground)',
 			)}
 		>
@@ -79,10 +87,16 @@ export function ListItem({
 						{icon}
 					</div>
 				)}
-				<div className="grid min-w-0 gap-1">
-					<span className={truncate ? 'truncate' : 'wrap-anywhere'}>{children}</span>
+				<div className={cn('min-w-0', inline ? 'flex items-baseline gap-2' : 'grid gap-1')}>
+					<span className={truncate || inline ? 'truncate' : 'wrap-anywhere'}>{children}</span>
 					{description && (
-						<small className="text-xs wrap-anywhere text-(--vscode-descriptionForeground)">
+						<small
+							className={cn(
+								'text-xs',
+								selected ? 'text-inherit' : 'text-(--vscode-descriptionForeground)',
+								inline ? 'truncate' : 'wrap-anywhere',
+							)}
+						>
 							{description}
 						</small>
 					)}

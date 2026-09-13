@@ -13,12 +13,13 @@ import {
 	type Placement,
 } from '@floating-ui/react';
 import { cn } from 'cn';
-import { useEffect, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, type ComponentPropsWithRef, type ReactNode } from 'react';
 
 type PopoverProps = {
 	open: boolean;
 	onOpenChange(open: boolean): void;
-	trigger(props: ComponentPropsWithRef<'button'>): ReactNode;
+	trigger?(props: ComponentPropsWithRef<'button'>): ReactNode;
+	anchorPosition?: { x: number; y: number };
 	children: ReactNode;
 	label: string;
 	placement?: Placement;
@@ -31,6 +32,7 @@ export function Popover({
 	open,
 	onOpenChange,
 	trigger,
+	anchorPosition,
 	children,
 	label,
 	placement = 'bottom-start',
@@ -51,6 +53,13 @@ export function Popover({
 	const semantics = useRole(context, { role });
 	const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, semantics]);
 
+	useLayoutEffect(() => {
+		if (!anchorPosition) return;
+		refs.setPositionReference({
+			getBoundingClientRect: () => new DOMRect(anchorPosition.x, anchorPosition.y, 0, 0),
+		});
+	}, [anchorPosition, refs]);
+
 	useEffect(() => {
 		if (disabled && open) onOpenChange(false);
 	}, [disabled, open, onOpenChange]);
@@ -64,7 +73,7 @@ export function Popover({
 
 	return (
 		<>
-			{trigger({ ...getReferenceProps(), ref: refs.setReference, disabled })}
+			{trigger?.({ ...getReferenceProps(), ref: refs.setReference, disabled })}
 			{open && !disabled && (
 				<FloatingPortal>
 					<FloatingFocusManager context={context} modal={false}>

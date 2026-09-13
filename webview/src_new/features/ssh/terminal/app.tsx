@@ -1,10 +1,10 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
-import { Codicon } from '../../../components/codicon';
-import { RemoteMetrics } from './RemoteMetrics';
-import { SftpPanel } from './SftpPanel';
-import { TerminalView, type TerminalViewHandle } from './TerminalView';
-import { useSshTerminal } from './useSshTerminal';
+import { CircleAlert, LoaderCircle } from '../../../components/icons';
+import { RemoteMetrics } from './components/remoteMetrics';
+import { SftpPanel } from './components/sftpPanel';
+import { TerminalView, type TerminalViewHandle } from './components/terminalView';
+import { useSshTerminal } from './hooks/useSshTerminal';
 
 export function App() {
 	const terminalRef = useRef<TerminalViewHandle>(null);
@@ -45,15 +45,11 @@ export function App() {
 						>
 							<div className="grid max-w-[min(520px,calc(100%-32px))] grid-cols-[18px_auto] items-center gap-x-3 gap-y-1">
 								<span className="row-span-2">
-									<Codicon
-										name={ssh.status === 'connecting' ? 'loading' : 'warning'}
-										className={cn(
-											ssh.status === 'connecting'
-												? 'codicon-modifier-spin text-(--vscode-progressBar-background)'
-												: '',
-										)}
-										size={17}
-									/>
+									{ssh.status === 'connecting' ? (
+										<LoaderCircle className="codicon-modifier-spin text-(--vscode-progressBar-background)" />
+									) : (
+										<CircleAlert />
+									)}
 								</span>
 								<strong className="text-sm">
 									{ssh.status === 'connecting'

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { IconButton } from '../../../../components/button';
 import { Pencil, Plus, Trash2 } from '../../../../components/icons';
-import type { ServerFormState } from '../hooks/useServerForm';
-import { CommandDialog } from './CommandDialog';
+import type { ConnectionFormState } from '../hooks/useConnectionForm';
+import { CommandDialog } from './commandDialog';
 
-export function CommandFields({ form }: { form: ServerFormState }) {
+export function CommandFields({ form }: { form: ConnectionFormState }) {
 	const commands = form.values.commands;
 	const [editingIndex, setEditingIndex] = useState<number | 'new'>();
 	const saveCommand = (command: (typeof commands)[number]) => {
@@ -23,13 +23,12 @@ export function CommandFields({ form }: { form: ServerFormState }) {
 					Commands
 				</h2>
 				<IconButton
-					type="button"
-					title="Add command"
-					aria-label="Add command"
+					htmlType="button"
+					label="Add command"
+
 					onClick={() => setEditingIndex('new')}
-				>
-					<Plus size={16} />
-				</IconButton>
+					icon={<Plus size="md" />}
+				/>
 			</div>
 			{commands.length === 0 ? (
 				<div className="border border-dashed border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-8 text-center text-sm text-(--vscode-descriptionForeground)">
@@ -55,27 +54,25 @@ export function CommandFields({ form }: { form: ServerFormState }) {
 							<span className="flex gap-1">
 								<IconButton
 									className="border-0"
-									type="button"
-									title="Edit command"
-									aria-label="Edit command"
+									htmlType="button"
+									label="Edit command"
+
 									onClick={() => setEditingIndex(index)}
-								>
-									<Pencil size={15} />
-								</IconButton>
+									icon={<Pencil size="md" />}
+								/>
 								<IconButton
 									className="border-0"
-									type="button"
-									title="Remove command"
-									aria-label="Remove command"
+									htmlType="button"
+									label="Remove command"
+
 									onClick={() =>
 										form.update(
 											'commands',
 											commands.filter((_, commandIndex) => commandIndex !== index),
 										)
 									}
-								>
-									<Trash2 size={15} />
-								</IconButton>
+									icon={<Trash2 size="md" />}
+								/>
 							</span>
 						</div>
 					))}

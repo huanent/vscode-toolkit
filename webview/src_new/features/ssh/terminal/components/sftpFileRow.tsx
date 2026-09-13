@@ -1,6 +1,6 @@
 import { cn } from 'cn';
-import { File, Folder } from '../../../components/icons';
-import type { SftpEntry } from './types';
+import { File, Folder } from '../../../../components/icons';
+import type { SftpEntry } from '../types';
 
 export const fileGridClassName =
 	'grid grid-cols-[minmax(0,1fr)_5.5rem_11rem] items-center gap-2 @max-[32rem]:grid-cols-[minmax(0,1fr)_5.5rem]';
@@ -42,17 +42,15 @@ export function SftpFileRow({ entry, active, onSelect, onOpen, onContextMenu }: 
 				{entry.isDirectory ? (
 					<Folder
 						className="shrink-0 text-(--vscode-symbolIcon-folderForeground,var(--vscode-icon-foreground))"
-						size={15}
+						size="md"
 					/>
 				) : (
 					<File
 						className="shrink-0 text-(--vscode-symbolIcon-fileForeground,var(--vscode-icon-foreground))"
-						size={15}
+						size="md"
 					/>
 				)}
-				<span className="min-w-0 truncate text-sm">
-					{entry.name}
-				</span>
+				<span className="min-w-0 truncate text-sm">{entry.name}</span>
 			</span>
 			<span className="truncate text-right font-(family-name:--vscode-editor-font-family) text-xs tabular-nums text-(--vscode-descriptionForeground)">
 				{entry.isDirectory ? '-' : formatFileSize(entry.size)}

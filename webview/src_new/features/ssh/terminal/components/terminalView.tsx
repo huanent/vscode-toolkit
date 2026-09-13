@@ -141,8 +141,13 @@ export function TerminalView({
 			layoutFrame = requestAnimationFrame(() => {
 				layoutFrame = undefined;
 				const element = elementRef.current;
-				if (document.visibilityState !== 'visible' || !element?.getClientRects().length ||
-					!element.clientWidth || !element.clientHeight) return;
+				if (
+					document.visibilityState !== 'visible' ||
+					!element?.getClientRects().length ||
+					!element.clientWidth ||
+					!element.clientHeight
+				)
+					return;
 				fit.fit();
 				terminal.refresh(0, terminal.rows - 1);
 				if (focusPending) terminal.focus();

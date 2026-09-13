@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+## File Naming
+
+- Use lower camelCase for source file names, including React components, hooks, and utilities (for example, `connectionForm.tsx`, `useConnectionForm.ts`, and `formTransport.ts`). Preserve conventional names required by tooling, such as `AGENTS.md` and configuration files.
+- Keep React component names in PascalCase for JSX, even when their file names use lower camelCase.
+- When renaming files, update all import paths to match the exact filename casing.
+
 ## React Component Organization
 
 - Keep React components focused on a single responsibility. Page and container components should compose smaller components rather than contain all rendering, state, and business logic.

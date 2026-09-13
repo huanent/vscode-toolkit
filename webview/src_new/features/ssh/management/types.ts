@@ -4,7 +4,7 @@ import type {
 	ServerCommand,
 } from '../../../../../src/features/ssh/formProtocol';
 
-export interface ServerFormValues {
+export interface ConnectionFormValues {
 	location: string;
 	name: string;
 	group: string;

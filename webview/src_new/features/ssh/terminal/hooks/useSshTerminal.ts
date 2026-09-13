@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { vscode } from '../../../vscodeApi';
+import { terminalApi as vscode } from '../../services/vscode';
 import type {
 	ConnectionStatus,
 	RemoteMetricsDisplay,
 	SftpEntry,
 	SshExtensionMessage,
-} from './types';
+} from '../types';
 
 const emptyMetrics = { cpu: '--', memory: '--', disk: '--', network: '--' };
 

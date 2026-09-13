@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { CircuitBoard, Database, Container, Terminal } from '../../components/icons';
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
-import { SshConnections } from '../ssh/management/main';
+import { SshConnections } from '../../../src_new/features/ssh/management/app';
 import { DatabaseConnections } from '../database/management/main';
 import { ContainerConnections } from '../container/management/main';
 import { App as Workflow } from '../workflow/main';
