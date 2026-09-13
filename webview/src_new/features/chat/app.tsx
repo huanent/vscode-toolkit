@@ -1,10 +1,10 @@
-import { Menu } from '../../components/icons';
+import { Menu } from '../../components/ui/icons';
 import { ChatInput } from './components/chatInput';
 import { HistoryPanel } from './components/historyPanel';
 import { MessageList } from './components/message/messageList';
-import { IconButton } from '../../components/button';
+import { IconButton } from '../../components/ui/button';
 import { useChat } from './hooks/useChat';
-import { Popover } from '../../components/popover';
+import { Popover } from '../../components/ui/popover';
 
 export function App() {
 	const chat = useChat();

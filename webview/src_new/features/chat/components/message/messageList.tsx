@@ -1,10 +1,10 @@
-import { MessageSquare } from '../../../../components/icons';
+import { MessageSquare } from '../../../../components/ui/icons';
 import { cn } from 'cn';
 import { useState } from 'react';
 import { useMessageNavigation } from '../../hooks/useMessageNavigation';
 import { getRandomQuote } from '../../lib/quotes';
 import type { StoredMessage } from '../../types';
-import { Empty } from '../../../../components/empty';
+import { Empty } from '../../../../components/ui/empty';
 import { MessageAnchors } from './messageAnchors';
 import { MessageItem } from './messageItem';
 

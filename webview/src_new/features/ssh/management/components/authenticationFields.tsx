@@ -1,8 +1,8 @@
-import { IconButton } from '../../../../components/button';
-import { Field } from '../../../../components/field';
-import { KeyRound } from '../../../../components/icons';
-import { PasswordInput, Textarea } from '../../../../components/input';
-import { Segmented } from '../../../../components/segmented';
+import { IconButton } from '../../../../components/ui/button';
+import { Field } from '../../../../components/ui/field';
+import { KeyRound } from '../../../../components/ui/icons';
+import { PasswordInput, Textarea } from '../../../../components/ui/input';
+import { Segmented } from '../../../../components/ui/segmented';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 
 export function AuthenticationFields({ form }: { form: ConnectionFormState }) {

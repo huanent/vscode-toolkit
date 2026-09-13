@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
-import { CircleAlert, LoaderCircle } from '../../../components/icons';
+import { CircleAlert, LoaderCircle } from '../../../components/ui/icons';
 import { RemoteMetrics } from './components/remoteMetrics';
 import { SftpPanel } from './components/sftpPanel';
 import { TerminalView, type TerminalViewHandle } from './components/terminalView';

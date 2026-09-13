@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from '../../../../components/button';
-import { Dialog } from '../../../../components/dialog';
-import { Field } from '../../../../components/field';
-import { Textarea, Input } from '../../../../components/input';
+import { Button } from '../../../../components/ui/button';
+import { Dialog } from '../../../../components/ui/dialog';
+import { Field } from '../../../../components/ui/field';
+import { Textarea, Input } from '../../../../components/ui/input';
 import type { ServerCommand } from '../../../../../../src/features/ssh/formProtocol';
 
 export function CommandDialog({

@@ -1,5 +1,5 @@
 import type { ComponentType, HTMLAttributes } from 'react';
-import { Codicon } from '../../src/components/codicon';
+import { Codicon } from '../../../src/components/codicon';
 
 const iconSizes = {
 	xs: 12,

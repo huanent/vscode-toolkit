@@ -1,5 +1,5 @@
-import { CircleAlert } from '../../../../components/icons';
-import { Button } from '../../../../components/button';
+import { CircleAlert } from '../../../../components/ui/icons';
+import { Button } from '../../../../components/ui/button';
 
 type MessageErrorProps = { message: string; details?: string; busy: boolean; onRetry(): void };
 

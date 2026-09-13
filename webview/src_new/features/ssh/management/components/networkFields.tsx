@@ -1,5 +1,5 @@
-import { Field } from '../../../../components/field';
-import { Input } from '../../../../components/input';
+import { Field } from '../../../../components/ui/field';
+import { Input } from '../../../../components/ui/input';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 
 export function NetworkFields({ form }: { form: ConnectionFormState }) {

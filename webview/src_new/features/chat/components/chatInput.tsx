@@ -1,9 +1,9 @@
-import { Square, Send } from '../../../components/icons';
+import { Square, Send } from '../../../components/ui/icons';
 import { cn } from 'cn';
 import type { RefObject } from 'react';
 import type { ModelItem } from '../types';
 import { ModelPicker } from './modelPicker';
-import { IconButton } from '../../../components/button';
+import { IconButton } from '../../../components/ui/button';
 
 type ChatInputProps = {
 	inputRef: RefObject<HTMLDivElement | null>;

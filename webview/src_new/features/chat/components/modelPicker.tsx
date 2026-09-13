@@ -1,9 +1,9 @@
-import { Sparkles, CircleCheck } from '../../../components/icons';
+import { Sparkles, CircleCheck } from '../../../components/ui/icons';
 import { useState } from 'react';
-import { Popover } from '../../../components/popover';
+import { Popover } from '../../../components/ui/popover';
 import type { ModelItem } from '../types';
-import { Button } from '../../../components/button';
-import { List, ListGroup, ListItem } from '../../../components/list';
+import { Button } from '../../../components/ui/button';
+import { List, ListGroup, ListItem } from '../../../components/ui/list';
 
 type ModelPickerProps = {
 	models: ModelItem[];

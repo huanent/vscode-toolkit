@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { IconButton, Button } from '../../../../components/button';
-import { Empty } from '../../../../components/empty';
+import { IconButton, Button } from '../../../../components/ui/button';
+import { Empty } from '../../../../components/ui/empty';
 import {
 	Download,
 	Upload,
@@ -8,9 +8,9 @@ import {
 	RefreshCw,
 	Search,
 	Terminal,
-} from '../../../../components/icons';
-import { Input } from '../../../../components/input';
-import { List } from '../../../../components/list';
+} from '../../../../components/ui/icons';
+import { Input } from '../../../../components/ui/input';
+import { List } from '../../../../components/ui/list';
 import { ConnectionItem, type Connection } from './connectionItem';
 import { ConnectionGroup } from './connectionGroup';
 

@@ -1,6 +1,6 @@
-import { Pencil, RefreshCw, CircleCheck, Copy } from '../../../../components/icons';
+import { Pencil, RefreshCw, CircleCheck, Copy } from '../../../../components/ui/icons';
 import type { StoredMessage } from '../../types';
-import { IconButton } from '../../../../components/button';
+import { IconButton } from '../../../../components/ui/button';
 
 type MessageActionsProps = {
 	message: StoredMessage;

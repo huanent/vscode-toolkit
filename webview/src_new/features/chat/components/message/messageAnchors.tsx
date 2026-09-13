@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { Button } from '../../../../components/button';
+import { Button } from '../../../../components/ui/button';
 import type { StoredMessage } from '../../types';
 
 type MessageAnchorsProps = {

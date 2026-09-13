@@ -1,6 +1,6 @@
-import { Field } from '../../../../components/field';
-import { Select } from '../../../../components/input';
-import { Segmented } from '../../../../components/segmented';
+import { Field } from './ui/field';
+import { Select } from './ui/input';
+import { Segmented } from './ui/segmented';
 
 export function StorageLocation({
 	value,

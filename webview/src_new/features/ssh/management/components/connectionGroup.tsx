@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { ChevronRight } from '../../../../components/icons';
-import { Popover } from '../../../../components/popover';
+import { ChevronRight } from '../../../../components/ui/icons';
+import { Popover } from '../../../../components/ui/popover';
 
 export function ConnectionGroup({ name, count, filtered, first, last, onAction, children }: {
 	name: string;

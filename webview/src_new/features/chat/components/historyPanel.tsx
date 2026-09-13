@@ -1,10 +1,10 @@
-import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../../components/icons';
-import { List, ListGroup, ListItem } from '../../../components/list';
+import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../../components/ui/icons';
+import { List, ListGroup, ListItem } from '../../../components/ui/list';
 import { useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
-import { Empty } from '../../../components/empty';
-import { IconButton } from '../../../components/button';
-import { Input } from '../../../components/input';
+import { Empty } from '../../../components/ui/empty';
+import { IconButton } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
 
 const pageSize = 30;
 

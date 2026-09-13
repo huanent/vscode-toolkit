@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { IconButton } from '../../../../components/button';
-import { Pencil, Plus, Trash2 } from '../../../../components/icons';
+import { IconButton } from '../../../../components/ui/button';
+import { Pencil, Plus, Trash2 } from '../../../../components/ui/icons';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 import { CommandDialog } from './commandDialog';
 

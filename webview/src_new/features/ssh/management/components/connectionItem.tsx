@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { IconButton } from '../../../../components/button';
-import { Play } from '../../../../components/icons';
-import { ListItem } from '../../../../components/list';
-import { Popover } from '../../../../components/popover';
+import { IconButton } from '../../../../components/ui/button';
+import { Play } from '../../../../components/ui/icons';
+import { ListItem } from '../../../../components/ui/list';
+import { Popover } from '../../../../components/ui/popover';
 
 export type Connection = { id: string; name: string; group: string; address: string; kind: string };
 

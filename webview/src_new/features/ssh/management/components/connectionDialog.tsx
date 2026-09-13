@@ -1,5 +1,5 @@
 import { useConnectionForm } from '../hooks/useConnectionForm';
-import { Dialog } from '../../../../components/dialog';
+import { Dialog } from '../../../../components/ui/dialog';
 import { ConnectionForm } from './connectionForm';
 
 export function ConnectionDialog({

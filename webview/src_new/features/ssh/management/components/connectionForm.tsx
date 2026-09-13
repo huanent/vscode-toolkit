@@ -1,10 +1,10 @@
 import { cn } from 'cn';
-import { StorageLocation } from './storageLocation';
+import { StorageLocation } from '../../../../components/storageLocation';
 import { useState } from 'react';
-import { Save } from '../../../../components/icons';
-import { Button } from '../../../../components/button';
-import { Field } from '../../../../components/field';
-import { Input } from '../../../../components/input';
+import { Save } from '../../../../components/ui/icons';
+import { Button } from '../../../../components/ui/button';
+import { Field } from '../../../../components/ui/field';
+import { Input } from '../../../../components/ui/input';
 import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
 import { NetworkFields } from './networkFields';
