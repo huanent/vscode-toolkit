@@ -17,7 +17,7 @@ export function ListGroup({ label, children, options = false }: ListGroupProps) 
 		<li role={options ? 'presentation' : undefined}>
 			<div
 				id={labelId}
-				className="px-2 pt-3 pb-2 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)"
+				className="p-2 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)"
 			>
 				{label}
 			</div>
@@ -63,7 +63,7 @@ export function ListItem({
 			onKeyDown={onKeyDown}
 			role={isOption ? 'presentation' : undefined}
 			className={cn(
-				'group flex items-center rounded-sm px-2 py-1',
+				'group flex items-center rounded-sm p-1',
 				selected
 					? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground,var(--vscode-foreground))'
 					: 'hover:bg-(--vscode-list-hoverBackground)',

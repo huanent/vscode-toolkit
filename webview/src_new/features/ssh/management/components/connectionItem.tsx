@@ -86,7 +86,7 @@ export function ConnectionItem({
 				</>
 			}
 		>
-			{server.name}
+			<span className='p-1'>{server.name}</span>
 		</ListItem>
 	);
 }

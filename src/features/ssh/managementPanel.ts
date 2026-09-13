@@ -148,6 +148,30 @@ export function registerManagementFeature(
 							return;
 						}
 						const servers = store.getServers().filter(server => server.type === serverType);
+						if (['groupUp', 'groupDown', 'groupDelete', 'groupRename'].includes(message.type ?? '')) {
+							const group = message.id;
+							if (!group) return;
+							const members = servers.filter(connection => connection.group.trim() === group);
+							if (!members.length) return;
+							if (message.type === 'groupUp' || message.type === 'groupDown') {
+								await store.moveGroup(group, message.type === 'groupUp' ? 'up' : 'down');
+							} else if (message.type === 'groupRename') {
+								const name = await vscode.window.showInputBox({
+									title: 'Rename connection group',
+									value: group,
+									validateInput: value => !value.trim() ? 'Enter a group name.' :
+										value.trim() !== group && servers.some(connection => connection.group.trim() === value.trim())
+											? 'A group with this name already exists.' : undefined,
+								});
+								if (name?.trim() && name.trim() !== group) await store.renameGroup(group, name.trim());
+							} else if (await vscode.window.showWarningMessage(
+								`Delete group "${group}" and its ${members.length} connections?`,
+								{ modal: true }, 'Delete',
+							) === 'Delete') {
+								await store.deleteServers(members.map(connection => connection.id));
+							}
+							return;
+						}
 						if (message.type === 'exportAll') {
 							await exportServer(store, servers);
 							return;

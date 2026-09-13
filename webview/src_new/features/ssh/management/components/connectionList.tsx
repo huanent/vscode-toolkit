@@ -7,12 +7,12 @@ import {
 	Plus,
 	RefreshCw,
 	Search,
-	ChevronRight,
 	Terminal,
 } from '../../../../components/icons';
 import { Input } from '../../../../components/input';
 import { List } from '../../../../components/list';
 import { ConnectionItem, type Connection } from './connectionItem';
+import { ConnectionGroup } from './connectionGroup';
 
 export type ConnectionListState = { name: string; servers: Connection[] };
 
@@ -111,16 +111,12 @@ export function ConnectionList({
 						</List>
 					);
 					return group ? (
-						<details key={`${group}-${!!search}`} open={!!search || undefined} className="group">
-							<summary className="flex cursor-pointer list-none items-center gap-1 rounded-xs p-1 text-xs font-semibold hover:bg-(--vscode-list-hoverBackground) [&::-webkit-details-marker]:hidden">
-								<ChevronRight className="group-open:rotate-90" size="sm" />
-								<span className="min-w-0 flex-1 wrap-anywhere">{group}</span>
-								<span>{connections.length}</span>
-							</summary>
-							<div className="ml-2.5 border-l border-(--vscode-tree-indentGuidesStroke) pl-2">
-								{items}
-							</div>
-						</details>
+						<ConnectionGroup key={`${group}-${!!search}`} name={group} count={connections.length}
+							filtered={!!search} onAction={onAction}
+							first={group === Array.from(groups.keys()).filter(Boolean)[0]}
+							last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
+							{items}
+						</ConnectionGroup>
 					) : (
 						<div key="ungrouped">{items}</div>
 					);
