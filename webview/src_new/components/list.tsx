@@ -2,7 +2,7 @@ import { cn } from 'cn';
 import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 
 export function List({ className, ...props }: ComponentPropsWithoutRef<'ul'>) {
-	return <ul className={cn('m-0 flex min-h-0 list-none flex-col gap-0.5 p-0', className)} {...props} />;
+	return <ul className={cn('m-0 flex min-h-0 list-none flex-col p-0', className)} {...props} />;
 }
 
 type ListGroupProps = {
@@ -17,7 +17,7 @@ export function ListGroup({ label, children, options = false }: ListGroupProps) 
 		<li role={options ? 'presentation' : undefined}>
 			<div
 				id={labelId}
-				className="p-2 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)"
+				className="py-1 text-xs font-medium wrap-anywhere text-(--vscode-descriptionForeground)"
 			>
 				{label}
 			</div>
@@ -83,7 +83,7 @@ export function ListItem({
 				}}
 			>
 				{icon && (
-					<div className="inline-flex shrink-0" aria-hidden="true">
+					<div className="inline-flex shrink-0 p-1" aria-hidden="true">
 						{icon}
 					</div>
 				)}

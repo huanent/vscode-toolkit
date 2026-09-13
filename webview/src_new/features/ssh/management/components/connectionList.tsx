@@ -94,7 +94,7 @@ export function ConnectionList({
 					</div>
 				</div>
 			) : (
-				<div className="grid min-w-0 gap-0.5">
+				<div className="grid min-w-0">
 				{Array.from(groups, ([group, connections]) => {
 					const items = (
 						<List>
