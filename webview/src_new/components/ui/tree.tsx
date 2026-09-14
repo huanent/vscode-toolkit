@@ -22,7 +22,7 @@ export function Tree({ label, count, summaryProps, className, children, ...props
 				)}
 				{...summaryAttributes}
 			>
-				<ChevronRight size="sm" />
+				<ChevronRight />
 				<span className="min-w-0 flex-1 wrap-anywhere">{label}</span>
 				{count !== undefined && <span className="p-1 text-xs font-normal text-(--vscode-descriptionForeground)">{count}</span>}
 			</summary>

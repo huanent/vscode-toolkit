@@ -70,7 +70,7 @@ export function ListItem({
 			)}
 		>
 			<div
-				className={cn('flex min-h-4 min-w-0 flex-1 items-center gap-2 rounded-sm text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)', onSelect && 'cursor-pointer')}
+				className={cn('flex min-h-4 min-w-0 flex-1 items-center gap-2 rounded-sm text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder) cursor-default')}
 				role={onSelect || isOption ? role : undefined}
 				tabIndex={0}
 				aria-selected={isOption ? selected : undefined}
