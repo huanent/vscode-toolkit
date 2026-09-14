@@ -34,7 +34,7 @@ export function Favorites({
                 {paths.map(path => (
                     <ListItem
                         key={path}
-                        icon={<Folder />}
+                        icon={<Folder size='sm' />}
                         selected={path === activePath}
                         onSelect={() => onSelect(path)}
                         actions={

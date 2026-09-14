@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -720,7 +720,10 @@
                       },
                       "action": {
                         "type": "string",
-                        "enum": ["upload", "download"],
+                        "enum": [
+                          "upload",
+                          "download"
+                        ],
                         "description": "Transfer direction; defaults to upload. Transfers overwrite destination files. Downloads create local parent directories."
                       },
                       "remotePath": {
@@ -976,6 +979,8 @@
     "test:dashboard": "node --test tests/dashboard.test.cjs",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
+    "watch:extension": "vite build --config vite.extension.config.mts --watch",
+    "watch:webview": "vite build --watch",
     "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.mts",
     "compile:webview": "tsc -p webview/tsconfig.json && vite build",
     "package": "vsce package --no-yarn",

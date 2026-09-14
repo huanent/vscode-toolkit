@@ -14,9 +14,9 @@ export function registerManagementFeature(
 	let panel: vscode.WebviewPanel | undefined;
 	let pendingForm:
 		| {
-				server?: Server;
-				duplicate?: boolean;
-		  }
+			server?: Server;
+			duplicate?: boolean;
+		}
 		| undefined;
 	let requestForm:
 		| ((request: { server?: Server; duplicate?: boolean }) => Promise<void>)
@@ -40,12 +40,12 @@ export function registerManagementFeature(
 			let sequence = 0;
 			let form:
 				| {
-						sessionId: number;
-						server?: Server;
-						duplicate: boolean;
-						credentials: ServerCredentials;
-						inProgress: boolean;
-				  }
+					sessionId: number;
+					server?: Server;
+					duplicate: boolean;
+					credentials: ServerCredentials;
+					inProgress: boolean;
+				}
 				| undefined;
 			const openForm = async (request: { server?: Server; duplicate?: boolean }) => {
 				if (form?.inProgress) return;

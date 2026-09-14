@@ -4,9 +4,74 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "watch",
+      "dependsOn": [
+        "watch:extension",
+        "watch:webview",
+        "watch:types",
+        "watch:webview-types"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "watch:extension",
+      "type": "npm",
+      "script": "watch:extension",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite-extension",
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "message": 2
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "build started",
+          "endsPattern": "built in [0-9]+ms\\."
+        }
+      }
+    },
+    {
+      "label": "watch:webview",
+      "type": "npm",
+      "script": "watch:webview",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite-webview",
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "message": 2
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "build started",
+          "endsPattern": "built in [0-9]+ms\\."
+        }
+      }
+    },
+    {
+      "label": "watch:types",
+      "type": "shell",
+      "command": "npx tsc -p ./ --noEmit --watch --preserveWatchOutput",
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "label": "watch:webview-types",
+      "type": "shell",
+      "command": "npx tsc -p webview/tsconfig.json --noEmit --watch --preserveWatchOutput",
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch"
+    },
+    {
       "type": "npm",
       "script": "build",
-      "problemMatcher": ["$tsc"],
+      "problemMatcher": [
+        "$tsc"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
