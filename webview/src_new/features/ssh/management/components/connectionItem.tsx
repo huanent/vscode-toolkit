@@ -8,15 +8,11 @@ export type Connection = { id: string; name: string; group: string; address: str
 
 export function ConnectionItem({
 	server,
-	selected,
 	filtered,
-	onSelect,
 	onAction,
 }: {
 	server: Connection;
-	selected: boolean;
 	filtered: boolean;
-	onSelect(id: string): void;
 	onAction(type: string, id: string): void;
 }) {
 	const [open, setOpen] = useState(false);
@@ -36,9 +32,7 @@ export function ConnectionItem({
 					setOpen(true);
 				}
 			}}
-			selected={selected}
 			inline
-			onSelect={() => onSelect(server.id)}
 			description={server.address}
 			actions={
 				<>
@@ -47,7 +41,6 @@ export function ConnectionItem({
 						icon={<Play />}
 						label={`Open ${server.name}`}
 						onClick={() => {
-							onSelect(server.id);
 							onAction('connect', server.id);
 						}}
 					/>

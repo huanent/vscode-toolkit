@@ -37,7 +37,7 @@ type ListItemProps = {
 	role?: 'button' | 'option';
 	truncate?: boolean;
 	inline?: boolean;
-	onSelect(): void;
+	onSelect?(): void;
 	onContextMenu?: ComponentPropsWithoutRef<'li'>['onContextMenu'];
 	onKeyDown?: ComponentPropsWithoutRef<'li'>['onKeyDown'];
 };
@@ -70,14 +70,14 @@ export function ListItem({
 			)}
 		>
 			<div
-				className="flex min-h-4 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-sm text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
-				role={role}
+				className={cn('flex min-h-4 min-w-0 flex-1 items-center gap-2 rounded-sm text-sm font-normal focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)', onSelect && 'cursor-pointer')}
+				role={onSelect || isOption ? role : undefined}
 				tabIndex={0}
 				aria-selected={isOption ? selected : undefined}
 				aria-current={!isOption && selected ? 'true' : undefined}
 				onClick={onSelect}
 				onKeyDown={event => {
-					if (event.key !== 'Enter' && event.key !== ' ') return;
+					if (!onSelect || (event.key !== 'Enter' && event.key !== ' ')) return;
 					event.preventDefault();
 					if (!event.repeat) onSelect();
 				}}

@@ -24,7 +24,7 @@ export function Tree({ label, count, summaryProps, className, children, ...props
 			>
 				<ChevronRight size="sm" />
 				<span className="min-w-0 flex-1 wrap-anywhere">{label}</span>
-				{count !== undefined && <span className="p-1">{count}</span>}
+				{count !== undefined && <span className="p-1 text-xs font-normal text-(--vscode-descriptionForeground)">{count}</span>}
 			</summary>
 			<div className="ml-2.5 border-l border-(--vscode-tree-indentGuidesStroke) pl-2">
 				{children}

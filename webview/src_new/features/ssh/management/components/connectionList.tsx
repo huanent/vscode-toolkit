@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { IconButton, Button } from '../../../../components/ui/button';
 import { Empty } from '../../../../components/ui/empty';
 import {
-	Download,
-	Upload,
+	MoreHorizontal,
 	Plus,
 	RefreshCw,
 	Search,
@@ -11,6 +10,7 @@ import {
 } from '../../../../components/ui/icons';
 import { Input } from '../../../../components/ui/input';
 import { List } from '../../../../components/ui/list';
+import { Popover } from '../../../../components/ui/popover';
 import { ConnectionItem, type Connection } from './connectionItem';
 import { ConnectionGroup } from './connectionGroup';
 
@@ -27,7 +27,7 @@ export function ConnectionList({
 	onQueryChange(value: string): void;
 	onAction(type: string, id?: string): void;
 }) {
-	const [selectedId, setSelectedId] = useState<string>();
+	const [moreOpen, setMoreOpen] = useState(false);
 	const search = query.trim().toLowerCase();
 	const servers =
 		state?.servers.filter(server =>
@@ -52,19 +52,35 @@ export function ConnectionList({
 					)}
 				</h1>
 				<div className="flex items-center gap-0.5">
-					<IconButton
-						icon={<Upload />}
-						label="Import connections"
-						onClick={() => onAction('import')}
-					/>
-					<IconButton
-						icon={<Download />}
-						label="Export connections"
-						disabled={!state?.servers.length}
-						onClick={() => onAction('exportAll')}
-					/>
 					<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
 					<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
+					<Popover
+						open={moreOpen}
+						onOpenChange={setMoreOpen}
+						label="More connection actions"
+						placement="bottom-end"
+						trigger={props => <IconButton {...props} icon={<MoreHorizontal />} label="More actions" />}
+					>
+						<div className="grid min-w-40 p-1">
+							{[
+								{ type: 'import', label: 'Import', disabled: false },
+								{ type: 'exportAll', label: 'Export', disabled: !state?.servers.length },
+							].map(action => (
+								<Button
+									key={action.type}
+									variant="text"
+									disabled={action.disabled}
+									className="w-full justify-start"
+									onClick={() => {
+										setMoreOpen(false);
+										onAction(action.type);
+									}}
+								>
+									{action.label}
+								</Button>
+							))}
+						</div>
+					</Popover>
 				</div>
 			</header>
 			<Input
@@ -104,15 +120,13 @@ export function ConnectionList({
 				</div>
 			) : (
 				<div className="grid min-w-0">
-					{Array.from(groups, ([group, connections]) => {
+					{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup)).map(([group, connections]) => {
 						const items = (
 							<List>
 								{connections.map(server => (
 									<ConnectionItem
 										key={server.id}
 										server={server}
-										selected={selectedId === server.id}
-										onSelect={setSelectedId}
 										onAction={onAction}
 										filtered={!!search}
 									/>
