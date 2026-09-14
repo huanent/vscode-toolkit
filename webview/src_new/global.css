@@ -6,6 +6,7 @@
 		font-family: var(--vscode-font-family);
 		font-size: var(--vscode-font-size);
 		color: var(--vscode-foreground);
+		font-weight: var(--vscode-font-weight, 400);
 		background: var(--vscode-editor-background);
 		letter-spacing: 0;
 	}

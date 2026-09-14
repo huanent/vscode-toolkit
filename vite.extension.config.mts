@@ -1,4 +1,5 @@
 import { builtinModules } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 const externalModules = new Set([
@@ -10,6 +11,12 @@ const externalModules = new Set([
 ]);
 
 export default defineConfig({
+	resolve: {
+		alias: {
+			'@': fileURLToPath(new URL('./src', import.meta.url)),
+			'@webview': fileURLToPath(new URL('./webview/src_new', import.meta.url)),
+		},
+	},
 	build: {
 		lib: {
 			entry: 'src/extension.ts',

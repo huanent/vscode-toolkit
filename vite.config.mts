@@ -20,6 +20,8 @@ export default defineConfig({
 	],
 	resolve: {
 		alias: [
+			{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+			{ find: '@webview', replacement: fileURLToPath(new URL('./webview/src_new', import.meta.url)) },
 			{
 				find: /^katex$/,
 				replacement: fileURLToPath(new URL('./node_modules/katex/dist/katex.mjs', import.meta.url)),

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { Popover } from '../../../../components/ui/popover';
-import { Tree } from '../../../../components/ui/tree';
+import { Popover } from '@webview/components/ui/popover';
+import { Tree } from '@webview/components/ui/tree';
 
 export function ConnectionGroup({ name, count, filtered, first, last, onAction, children }: {
 	name: string;
