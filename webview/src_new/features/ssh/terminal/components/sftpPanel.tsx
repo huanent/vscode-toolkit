@@ -61,7 +61,7 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 			>
 				<span>Name</span>
 				<span className="text-right">Size</span>
-				<span className="text-right @max-[32rem]:hidden">Modified</span>
+				<span className="text-right">Modified</span>
 			</div>
 
 			<div className="relative min-h-0 overflow-hidden">

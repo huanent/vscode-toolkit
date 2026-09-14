@@ -15,7 +15,7 @@ interface RemoteMetricsProps {
 export function RemoteMetrics({ metrics }: RemoteMetricsProps) {
 	return (
 		<header
-			className="grid grid-cols-4 gap-x-4 gap-y-2 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-2 text-sm max-[760px]:grid-cols-2"
+			className="grid grid-cols-4 gap-x-4 gap-y-2 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-2 py-2 text-sm max-[760px]:grid-cols-2"
 			aria-label="Remote server metrics"
 		>
 			{Object.entries(metrics).map(([label, value], index) => (

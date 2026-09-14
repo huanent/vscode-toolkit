@@ -35,7 +35,7 @@ export function SftpToolbar({
 	const favorite = favorites.includes(sftpPath);
 
 	return (
-		<header className="flex min-w-0 items-center gap-1 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-1">
+		<header className="flex min-w-0 items-center gap-1 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-2">
 			<IconButton
 				disabled={!parentPath || loading}
 				label="Parent directory"

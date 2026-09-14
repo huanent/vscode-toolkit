@@ -3,7 +3,7 @@ import { File, Folder } from '../../../../components/ui/icons';
 import type { SftpEntry } from '../types';
 
 export const fileGridClassName =
-	'grid grid-cols-[minmax(0,1fr)_5.5rem_11rem] items-center gap-2 @max-[32rem]:grid-cols-[minmax(0,1fr)_5.5rem]';
+	'grid grid-cols-[minmax(0,1fr)_4.5rem_9rem] items-center gap-2';
 
 interface SftpFileRowProps {
 	entry: SftpEntry;
@@ -55,7 +55,7 @@ export function SftpFileRow({ entry, active, onSelect, onOpen, onContextMenu }: 
 			<span className="truncate text-right font-(family-name:--vscode-editor-font-family) text-xs tabular-nums text-(--vscode-descriptionForeground)">
 				{entry.isDirectory ? '-' : formatFileSize(entry.size)}
 			</span>
-			<span className="truncate text-right text-xs tabular-nums text-(--vscode-descriptionForeground) @max-[32rem]:hidden">
+			<span className="truncate text-right text-xs tabular-nums text-(--vscode-descriptionForeground)">
 				{formatModifiedAt(entry.modifiedAt)}
 			</span>
 		</div>
