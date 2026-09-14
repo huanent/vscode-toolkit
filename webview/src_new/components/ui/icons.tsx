@@ -20,7 +20,7 @@ export type IconProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
 export type IconComponent = ComponentType<IconProps>;
 
 function icon(name: string) {
-	return function Icon({ size = 'md', fill: _fill, ...props }: IconProps) {
+	return function Icon({ size = 'sm', fill: _fill, ...props }: IconProps) {
 		return <Codicon name={name} size={iconSizes[size]} {...props} />;
 	};
 }

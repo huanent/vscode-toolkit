@@ -41,7 +41,7 @@ export function ConnectionList({
 		groups.set(group, [...(groups.get(group) ?? []), server]);
 	}
 	return (
-		<div className="grid min-w-0 gap-3">
+		<div className="grid min-w-0 gap-2">
 			<header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
 				<h1 className="m-0 min-w-0 text-base font-semibold wrap-anywhere">
 					{state?.name ?? 'SSH'}

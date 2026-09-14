@@ -22,7 +22,7 @@ export function SshConnections() {
 		return unsubscribe;
 	}, []);
 	return (
-		<section className="py-3 text-(--vscode-foreground)">
+		<section className="py-2 text-(--vscode-foreground)">
 			<ConnectionList state={state} query={query} onQueryChange={setQuery} onAction={send} />
 			{formSession !== undefined && (
 				<ConnectionDialog key={formSession} sessionId={formSession} onClose={closeForm} />
