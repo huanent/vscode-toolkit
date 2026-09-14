@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import { dashboardFeaturePanel } from '../dashboard/panel';
-import { openServerConnection } from './editor';
-import { createFormSession } from '../dashboard/formSession';
+import { openServerConnection, openServerForm } from './editor';
 import { ServerStore } from './serverStore';
-import { handleMessage, ServerFormWebviewMessage } from './serverForm';
 import { exportServer, importServers } from './serverTransfer';
 export function registerManagementFeature(
 	context: vscode.ExtensionContext,
@@ -21,32 +19,6 @@ export function registerManagementFeature(
 			}
 			const current = dashboardFeaturePanel('database', request?.background);
 			panel = current;
-			const form = createFormSession(
-				current,
-				(server: ReturnType<ServerStore['getServers']>[number]) => store.getCredentials(server.id),
-				{},
-				(
-					message: ServerFormWebviewMessage,
-					server,
-					credentials,
-					duplicate,
-					state,
-					saved,
-					sessionId,
-				) =>
-					handleMessage(
-						message,
-						context,
-						current,
-						store,
-						server,
-						credentials,
-						duplicate,
-						state,
-						saved,
-						sessionId,
-					),
-			);
 			const publish = () =>
 				current.webview.postMessage({
 					type: 'state',
@@ -67,17 +39,14 @@ export function registerManagementFeature(
 				async (message: {
 					type?: string;
 					id?: string;
-					sessionId?: number;
-					message?: ServerFormWebviewMessage;
 				}) => {
 					try {
-						if (await form.receive(message)) return;
 						if (message.type === 'ready' || message.type === 'refresh') {
 							await publish();
 							return;
 						}
 						if (message.type === 'add') {
-							await form.open();
+							await openServerForm(serverType);
 							return;
 						}
 						if (message.type === 'import') {
@@ -107,10 +76,10 @@ export function registerManagementFeature(
 								await openServerConnection(server);
 								break;
 							case 'edit':
-								await form.open(server);
+								await openServerForm(serverType, server);
 								break;
 							case 'duplicate':
-								await form.open(server, true);
+								await openServerForm(serverType, server, true);
 								break;
 							case 'export':
 								await exportServer(store, [server]);
@@ -135,7 +104,6 @@ export function registerManagementFeature(
 				},
 			);
 			current.onDidDispose(() => {
-				form.dispose();
 				changes.dispose();
 				messages.dispose();
 				panel = undefined;

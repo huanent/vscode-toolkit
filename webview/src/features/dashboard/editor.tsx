@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { vscode } from '../../vscodeApi';
 import { send, subscribe, type Tab } from './channel';
 import { ConnectionEditor } from '../../../src_new/features/ssh/management/components/connectionEditor';
-import { App as DatabaseForm } from '../database/serverForm/App';
 import { App as ContainerForm } from '../container/serverForm/App';
 import { App as Workflow } from '../workflow/main';
 
@@ -26,7 +25,7 @@ function Editor() {
 		});
 		const receive = (event: MessageEvent) => {
 			if (event.data.type !== 'editorRequest') return;
-			if (['ssh', 'database', 'container'].includes(tab)) {
+			if (['ssh', 'container'].includes(tab)) {
 				if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?')))
 					return;
 				send(tab, event.data.request);
@@ -59,8 +58,6 @@ function Editor() {
 					sessionId={sessionId}
 					onClose={() => send(tab, { type: 'closeForm' })}
 				/>
-			) : tab === 'database' ? (
-				<DatabaseForm key={sessionId} sessionId={sessionId} onClose={close} />
 			) : (
 				<ContainerForm key={sessionId} sessionId={sessionId} onClose={close} />
 			)}

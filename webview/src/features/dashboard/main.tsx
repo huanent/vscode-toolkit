@@ -4,7 +4,7 @@ import { CircuitBoard, Database, Container, Terminal } from '../../components/ic
 import { cn } from 'cn';
 import { vscode } from '../../vscodeApi';
 import { SshConnections } from '../../../src_new/features/ssh/management/app';
-import { DatabaseConnections } from '../database/management/main';
+import { DatabaseConnections } from '../../../src_new/features/database/management/main';
 import { ContainerConnections } from '../container/management/main';
 import { App as Workflow } from '../workflow/main';
 import { type Tab } from './channel';

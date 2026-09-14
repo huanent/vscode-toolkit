@@ -136,6 +136,10 @@ export function dashboardFeaturePanel(tab: DashboardTab, background = false): vs
 }
 
 export function openDashboardEditor(tab: DashboardTab, request: Record<string, unknown>): void {
+	if (tab === 'database') {
+		receivers.get(tab)?.fire(request);
+		return;
+	}
 	const existing = editors.get(tab);
 	if (existing) {
 		existing.reveal();

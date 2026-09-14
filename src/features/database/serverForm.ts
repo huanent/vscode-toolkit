@@ -54,10 +54,8 @@ export async function handleMessage(
 	credentials: ServerCredentials,
 	duplicate: boolean,
 	saveState: { inProgress: boolean },
-	onSaved: () => void = () => panel.dispose(),
-	sessionId?: number,
 ): Promise<void> {
-	const postMessage = (response: object) => panel.webview.postMessage({ ...response, sessionId });
+	const postMessage = (response: object) => panel.webview.postMessage(response);
 	if (message.type === 'ready') {
 		await postMessage({
 			type: 'initialize',
@@ -148,7 +146,7 @@ export async function handleMessage(
 	}
 	try {
 		await store.saveServer(server, nextCredentials, typeof message.location === 'string' ? message.location : undefined);
-		onSaved();
+		panel.dispose();
 	} catch (error) {
 		saveState.inProgress = false;
 		await postMessage({
