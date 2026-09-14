@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, IconButton } from '../../../../components/ui/button';
-import { Play } from '../../../../components/ui/icons';
+import { Play, Terminal } from '../../../../components/ui/icons';
 import { ListItem } from '../../../../components/ui/list';
 import { Popover } from '../../../../components/ui/popover';
 
@@ -19,6 +19,7 @@ export function ConnectionItem({
 	const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 });
 	return (
 		<ListItem
+			icon={<Terminal />}
 			onContextMenu={event => {
 				event.preventDefault();
 				setAnchorPosition({ x: event.clientX, y: event.clientY });
@@ -79,7 +80,7 @@ export function ConnectionItem({
 				</>
 			}
 		>
-			<span className="p-1">{server.name}</span>
+			{server.name}
 		</ListItem>
 	);
 }

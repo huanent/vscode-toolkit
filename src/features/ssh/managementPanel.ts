@@ -72,7 +72,7 @@ export function registerManagementFeature(
 							id: server.id,
 							name: server.name,
 							group: server.group,
-							address: `${server.host}:${server.port}`,
+							address: `${server.username}@${server.host}:${server.port}`,
 							kind: 'SSH',
 						})),
 				});

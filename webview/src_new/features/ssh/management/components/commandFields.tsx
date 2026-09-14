@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { IconButton } from '../../../../components/ui/button';
 import { Empty } from '../../../../components/ui/empty';
 import { List, ListItem } from '../../../../components/ui/list';
-import { Pencil, Plus, Trash2 } from '../../../../components/ui/icons';
+import { Pencil, Plus, Terminal, Trash2 } from '../../../../components/ui/icons';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 import { CommandDialog } from './commandDialog';
 
@@ -39,6 +39,7 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 					{commands.map((command, index) => (
 						<ListItem
 							key={index}
+							icon={<Terminal />}
 							onSelect={() => setEditingIndex(index)}
 							inline
 							description={command.value.replace(/\s+/g, ' ')}

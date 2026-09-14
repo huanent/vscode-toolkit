@@ -1,5 +1,5 @@
 import { IconButton } from '../../../../components/ui/button';
-import { X } from '../../../../components/ui/icons';
+import { Folder, X } from '../../../../components/ui/icons';
 import { List, ListItem } from '../../../../components/ui/list';
 import { Popover } from '../../../../components/ui/popover';
 
@@ -34,6 +34,7 @@ export function Favorites({
                 {paths.map(path => (
                     <ListItem
                         key={path}
+                        icon={<Folder />}
                         selected={path === activePath}
                         onSelect={() => onSelect(path)}
                         actions={
