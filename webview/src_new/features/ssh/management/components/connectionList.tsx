@@ -7,7 +7,7 @@ import {
 	Plus,
 	RefreshCw,
 	Search,
-	Terminal,
+	X,
 } from '../../../../components/ui/icons';
 import { Input } from '../../../../components/ui/input';
 import { List } from '../../../../components/ui/list';
@@ -69,6 +69,14 @@ export function ConnectionList({
 			</header>
 			<Input
 				left={<Search />}
+				right={query ? (
+					<IconButton
+						size="sm"
+						icon={<X />}
+						label="Clear search"
+						onClick={() => onQueryChange('')}
+					/>
+				) : undefined}
 				type="search"
 				aria-label="Search connections"
 				placeholder="Search connections"
@@ -84,43 +92,44 @@ export function ConnectionList({
 			) : servers.length === 0 ? (
 				<div>
 					<Empty
-						icon={<Terminal />}
 						title={search ? 'No matching connections' : 'No connections'}
 					/>
-					<div className="flex justify-center">
-						<Button onClick={() => (search ? onQueryChange('') : onAction('add'))}>
-							{search ? 'Clear search' : 'New connection'}
-						</Button>
-					</div>
+					{!search && (
+						<div className="flex justify-center">
+							<Button onClick={() => onAction('add')}>
+								New connection
+							</Button>
+						</div>
+					)}
 				</div>
 			) : (
 				<div className="grid min-w-0">
-				{Array.from(groups, ([group, connections]) => {
-					const items = (
-						<List>
-							{connections.map(server => (
-								<ConnectionItem
-									key={server.id}
-									server={server}
-									selected={selectedId === server.id}
-									onSelect={setSelectedId}
-									onAction={onAction}
-									filtered={!!search}
-								/>
-							))}
-						</List>
-					);
-					return group ? (
-						<ConnectionGroup key={`${group}-${!!search}`} name={group} count={connections.length}
-							filtered={!!search} onAction={onAction}
-							first={group === Array.from(groups.keys()).filter(Boolean)[0]}
-							last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
-							{items}
-						</ConnectionGroup>
-					) : (
-						<div key="ungrouped">{items}</div>
-					);
-				})}
+					{Array.from(groups, ([group, connections]) => {
+						const items = (
+							<List>
+								{connections.map(server => (
+									<ConnectionItem
+										key={server.id}
+										server={server}
+										selected={selectedId === server.id}
+										onSelect={setSelectedId}
+										onAction={onAction}
+										filtered={!!search}
+									/>
+								))}
+							</List>
+						);
+						return group ? (
+							<ConnectionGroup key={`${group}-${!!search}`} name={group} count={connections.length}
+								filtered={!!search} onAction={onAction}
+								first={group === Array.from(groups.keys()).filter(Boolean)[0]}
+								last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
+								{items}
+							</ConnectionGroup>
+						) : (
+							<div key="ungrouped">{items}</div>
+						);
+					})}
 				</div>
 			)}
 		</div>

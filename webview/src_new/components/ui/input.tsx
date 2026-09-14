@@ -39,6 +39,7 @@ export function Input({
 					? 'border-0 bg-transparent'
 					: 'border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder)',
 				inputSizes[size],
+				right != null && '[&:has(>span:last-child>button)]:pr-0',
 				disabled && 'cursor-default opacity-45',
 				className,
 			)}
@@ -57,7 +58,7 @@ export function Input({
 				{...props}
 			/>
 			{right != null && (
-				<span className="inline-flex h-full shrink-0 items-center justify-center leading-none text-(--vscode-descriptionForeground) [&_.codicon]:block [&_.codicon]:leading-none">{right}</span>
+				<span className="inline-flex h-full shrink-0 items-center justify-center leading-none text-(--vscode-descriptionForeground) [&:has(>button)]:aspect-square [&_.codicon]:block [&_.codicon]:leading-none">{right}</span>
 			)}
 		</div>
 	);
