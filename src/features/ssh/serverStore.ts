@@ -1,7 +1,7 @@
 import { watch, FSWatcher } from 'node:fs';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../storagePath';
-import { ConnectionLocations } from '../../connectionLocations';
+import { StorageLocation } from '../../storageLocation';
 import { CredentialStorage } from '../../credentialStorage';
 import { ExportedServer, parseServer, Server, ServerType, usesPrivateKey } from './server';
 
@@ -25,7 +25,7 @@ class ConnectionStore {
 	private readonly storageDirectoryUri: vscode.Uri;
 	private readonly serversDirectoryUri: vscode.Uri;
 	private readonly credentialStorage: CredentialStorage;
-	private readonly locations: ConnectionLocations;
+	private readonly locations: StorageLocation;
 	private workspaceWatcher: vscode.FileSystemWatcher | undefined;
 	private servers: Server[] = [];
 	private readonly credentials = new Map<string, ServerCredentials>();
@@ -40,8 +40,8 @@ class ConnectionStore {
 	) {
 		this.storageDirectoryUri = getStorageUri(context, 'ssh');
 		this.credentialStorage = new CredentialStorage(context, 'ssh');
-		this.serversDirectoryUri = vscode.Uri.joinPath(this.storageDirectoryUri, 'connections');
-		this.locations = new ConnectionLocations(this.serversDirectoryUri, 'ssh');
+		this.serversDirectoryUri = this.storageDirectoryUri;
+		this.locations = new StorageLocation(this.serversDirectoryUri, 'ssh');
 	}
 
 	static async create(
@@ -210,13 +210,12 @@ class ConnectionStore {
 
 	private async initialize(): Promise<void> {
 		await vscode.workspace.fs.createDirectory(this.storageDirectoryUri);
-		await vscode.workspace.fs.createDirectory(this.serversDirectoryUri);
 		this.watcher = watch(this.serversDirectoryUri.fsPath, (_eventType, fileName) => {
 			if (fileName?.endsWith('.json')) {
 				this.scheduleReload();
 			}
 		});
-		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/ssh/connections/*.json');
+		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/ssh/*.json');
 		this.workspaceWatcher.onDidCreate(() => this.scheduleReload());
 		this.workspaceWatcher.onDidChange(() => this.scheduleReload());
 		this.workspaceWatcher.onDidDelete(() => this.scheduleReload());

@@ -59,6 +59,7 @@ export function registerManagementFeature(
 					credentials,
 					inProgress: false,
 				};
+				current.title = request.server && !request.duplicate ? `Edit ${request.server.name}` : 'New SSH';
 				await current.webview.postMessage({ type: 'openForm', sessionId });
 			};
 			const publish = () =>

@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
-export class ConnectionLocations {
+export class StorageLocation {
 	private readonly locations = new Map<string, vscode.Uri>();
-	constructor(private readonly globalDirectory: vscode.Uri, private readonly feature: string, private readonly subdirectory = 'connections') {}
+	constructor(private readonly globalDirectory: vscode.Uri, private readonly feature: string) { }
 
 	get folders() {
 		return (vscode.workspace.workspaceFolders ?? []).map(folder => ({
@@ -15,13 +15,13 @@ export class ConnectionLocations {
 		const folder = vscode.workspace.workspaceFolders?.find(candidate => candidate.uri.toString() === uri);
 		if (!folder) throw new Error('Select an open workspace folder.');
 		if (!vscode.workspace.isTrusted) throw new Error('Trust the workspace before saving connections.');
-		return vscode.Uri.joinPath(folder.uri, '.vscode', 'toolkit', this.feature, this.subdirectory);
+		return vscode.Uri.joinPath(folder.uri, '.vscode', 'toolkit', this.feature);
 	}
 
 	location(id: string): string {
 		const directory = this.directory(id).toString();
 		return this.folders.find(folder =>
-			vscode.Uri.joinPath(vscode.Uri.parse(folder.uri), '.vscode', 'toolkit', this.feature, this.subdirectory).toString() === directory,
+			vscode.Uri.joinPath(vscode.Uri.parse(folder.uri), '.vscode', 'toolkit', this.feature).toString() === directory,
 		)?.uri ?? '';
 	}
 

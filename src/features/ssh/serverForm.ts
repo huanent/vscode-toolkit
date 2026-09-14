@@ -19,7 +19,7 @@ export async function configureServerForm(
 	duplicate = false,
 ): Promise<void> {
 	const title =
-		existingServer && !duplicate ? `Edit ${existingServer.name} Server` : 'Add SSH Server';
+		existingServer && !duplicate ? `Edit ${existingServer.name}` : 'New SSH';
 	const credentials = existingServer ? await store.getCredentials(existingServer.id) : {};
 	panel.title = title;
 	panel.webview.options = {

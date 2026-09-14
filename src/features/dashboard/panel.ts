@@ -95,6 +95,10 @@ export function dashboardFeaturePanel(tab: DashboardTab, background = false): vs
 	const disposed = new vscode.EventEmitter<void>();
 	receivers.set(tab, receiver);
 	const scoped = {
+		set title(value: string) {
+			const editor = editors.get(tab);
+			if (editor) editor.title = value;
+		},
 		webview: {
 			postMessage: async (message: { type?: string; sessionId?: number }) => {
 				const response = { ...message, channel: tab };

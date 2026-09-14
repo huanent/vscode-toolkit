@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../storagePath';
-import { ConnectionLocations } from '../../connectionLocations';
+import { StorageLocation } from '../../storageLocation';
 import { parseWorkflow, Workflow } from './workflow';
 
 export class WorkflowStore {
 	private readonly directory: vscode.Uri;
-	private readonly locations: ConnectionLocations;
+	private readonly locations: StorageLocation;
 	private mutation: Promise<void> = Promise.resolve();
 
 	constructor(context: vscode.ExtensionContext) {
 		this.directory = getStorageUri(context, 'workflow');
-		this.locations = new ConnectionLocations(this.directory, 'workflow', '');
+		this.locations = new StorageLocation(this.directory, 'workflow');
 	}
 
 	getWorkspaceFolders() { return vscode.workspace.isTrusted ? this.locations.folders : []; }
@@ -52,8 +52,8 @@ export class WorkflowStore {
 	private enqueue<Result>(operation: () => Promise<Result>): Promise<Result> {
 		const pending = this.mutation.then(operation);
 		this.mutation = pending.then(
-			() => {},
-			() => {},
+			() => { },
+			() => { },
 		);
 		return pending;
 	}
