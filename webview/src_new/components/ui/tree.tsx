@@ -17,7 +17,7 @@ export function Tree({ label, count, summaryProps, className, children, ...props
 		>
 			<summary
 				className={cn(
-					'flex cursor-pointer list-none items-center gap-1 rounded-xs p-1 text-xs font-semibold hover:bg-(--vscode-list-hoverBackground) [&::-webkit-details-marker]:hidden',
+					'flex cursor-pointer list-none items-center gap-1 rounded-xs px-1 text-sm font-semibold hover:bg-(--vscode-list-hoverBackground) [&::-webkit-details-marker]:hidden',
 					summaryClassName,
 				)}
 				{...summaryAttributes}
