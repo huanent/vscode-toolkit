@@ -3,7 +3,7 @@ import { Button } from '@webview/components/ui/button';
 import { Popover } from '@webview/components/ui/popover';
 import { Tree } from '@webview/components/ui/tree';
 
-export function ConnectionGroup({
+export function ConnectionGroupNode({
 	name,
 	count,
 	filtered,

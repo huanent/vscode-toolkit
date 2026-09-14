@@ -5,6 +5,7 @@ import { Save } from '../../../../components/ui/icons';
 import { Button } from '../../../../components/ui/button';
 import { Field } from '../../../../components/ui/field';
 import { Input } from '../../../../components/ui/input';
+import { Switch } from '../../../../components/ui/switch';
 import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
 import { NetworkFields } from './networkFields';
@@ -152,8 +153,7 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 							</h2>
 							<label className="flex items-center justify-between gap-3 border-y border-(--vscode-panel-border,var(--vscode-widget-border)) py-3.5 text-sm">
 								<span>Enable AI features</span>
-								<input
-									type="checkbox"
+								<Switch
 									checked={values.aiEnabled}
 									onChange={event => form.update('aiEnabled', event.target.checked)}
 								/>

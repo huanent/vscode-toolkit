@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { vscode } from '../../vscodeApi';
 import { send, subscribe, type Tab } from './channel';
-import { ConnectionDialog } from '../../../src_new/features/ssh/management/components/connectionDialog';
+import { ConnectionEditor } from '../../../src_new/features/ssh/management/components/connectionEditor';
 import { App as DatabaseForm } from '../database/serverForm/App';
 import { App as ContainerForm } from '../container/serverForm/App';
 import { App as Workflow } from '../workflow/main';
@@ -54,8 +54,7 @@ function Editor() {
 			) : sessionId === undefined ? (
 				<p role="status">Loading...</p>
 			) : tab === 'ssh' ? (
-				<ConnectionDialog
-					presentation="editor"
+				<ConnectionEditor
 					key={sessionId}
 					sessionId={sessionId}
 					onClose={() => send(tab, { type: 'closeForm' })}

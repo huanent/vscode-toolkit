@@ -52,7 +52,7 @@ export function Dialog({ open, onClose, title, description, children, actions, s
 						<h2 id={titleId} className="m-0 text-base font-semibold wrap-anywhere">{title}</h2>
 						{description && <p id={descriptionId} className="mt-1 mb-0 text-sm wrap-anywhere text-(--vscode-descriptionForeground)">{description}</p>}
 					</div>
-					<IconButton icon={<X />} label="Close" size="sm" disabled={closeDisabled} onClick={onClose} />
+					<IconButton icon={<X />} label="Close" disabled={closeDisabled} onClick={onClose} />
 				</header>
 				<div className="min-h-0 overflow-auto p-4">{children}</div>
 				{actions && <footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-(--vscode-panel-border) px-4 py-3">{actions}</footer>}

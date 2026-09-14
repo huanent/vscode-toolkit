@@ -12,7 +12,7 @@ import { Input } from '../../../../components/ui/input';
 import { List } from '../../../../components/ui/list';
 import { Popover } from '../../../../components/ui/popover';
 import { ConnectionItem, type Connection } from './connectionItem';
-import { ConnectionGroup } from './connectionGroup';
+import { ConnectionGroupNode } from './connectionGroupNode';
 
 export type ConnectionListState = { name: string; servers: Connection[] };
 
@@ -134,12 +134,12 @@ export function ConnectionList({
 							</List>
 						);
 						return group ? (
-							<ConnectionGroup key={`${group}-${!!search}`} name={group} count={connections.length}
+							<ConnectionGroupNode key={`${group}-${!!search}`} name={group} count={connections.length}
 								filtered={!!search} onAction={onAction}
 								first={group === Array.from(groups.keys()).filter(Boolean)[0]}
 								last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
 								{items}
-							</ConnectionGroup>
+							</ConnectionGroupNode>
 						) : (
 							<div key="ungrouped">{items}</div>
 						);
