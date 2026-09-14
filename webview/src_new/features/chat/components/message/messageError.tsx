@@ -11,11 +11,7 @@ export function MessageError({ message, details, busy, onRetry }: MessageErrorPr
 		>
 			<CircleAlert size="md" className="mt-0.5 shrink-0" />
 			<span className="min-w-0 flex-1 wrap-break-word">{message}</span>
-			<Button variant="text"
-				className="shrink-0 px-1.5 py-0.5 text-(--vscode-textLink-foreground) hover:bg-(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground))"
-				disabled={busy}
-				onClick={onRetry}
-			>
+			<Button variant="text" size="sm" className="shrink-0" disabled={busy} onClick={onRetry}>
 				Retry
 			</Button>
 			{details && (

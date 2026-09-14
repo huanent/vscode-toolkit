@@ -42,7 +42,7 @@ export function AuthenticationFields({ form }: { form: ConnectionFormState }) {
 						required={credentialRequired}
 						action={
 							<IconButton
-								className="size-6 border-0"
+								size="sm"
 								htmlType="button"
 								label="Select private key"
 

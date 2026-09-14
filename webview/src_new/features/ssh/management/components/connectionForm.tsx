@@ -8,7 +8,7 @@ import { Input } from '../../../../components/ui/input';
 import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
 import { NetworkFields } from './networkFields';
-import { ProxyFields } from './proxyFields';
+import { ProxyFields } from '../../../../components/proxyFields';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 
 export function ConnectionForm({ form }: { form: ConnectionFormState }) {
@@ -110,21 +110,17 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 							aria-orientation="vertical"
 						>
 							{tabs.map(tab => (
-								<button
+								<Button
 									key={tab.value}
-									type="button"
+									variant="text"
+									active={selectedTab === tab.value}
 									role="tab"
 									aria-selected={selectedTab === tab.value}
-									className={cn(
-										'relative min-h-9 border-0 bg-transparent px-3 py-2 text-left text-sm max-[680px]:border-b-2 max-[680px]:text-center',
-										selectedTab === tab.value
-											? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground) before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:bg-(--vscode-focusBorder) max-[680px]:bg-transparent max-[680px]:text-(--vscode-foreground) max-[680px]:before:inset-x-0 max-[680px]:before:top-auto max-[680px]:before:h-0.5 max-[680px]:before:w-auto'
-											: 'text-(--vscode-descriptionForeground) hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-foreground) max-[680px]:border-transparent',
-									)}
+									className="justify-start max-[680px]:justify-center"
 									onClick={() => setActiveTab(tab.value)}
 								>
 									{tab.label}
-								</button>
+								</Button>
 							))}
 						</div>
 					</nav>
@@ -141,7 +137,13 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 							</div>
 						</section>
 					)}
-					{selectedTab === 'proxy' && supportsProxy && <ProxyFields form={form} />}
+					{selectedTab === 'proxy' && supportsProxy && (
+						<ProxyFields
+							values={form.values}
+							onChange={(key, value) => form.update<keyof typeof form.values>(key, value)}
+							onSelectPrivateKey={form.selectProxyPrivateKey}
+						/>
+					)}
 					{selectedTab === 'commands' && <CommandFields form={form} />}
 					{selectedTab === 'other' && (
 						<section aria-labelledby="other-heading">

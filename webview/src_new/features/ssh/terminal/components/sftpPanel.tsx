@@ -1,5 +1,8 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
+import { Button } from '../../../../components/ui/button';
+import { Empty } from '../../../../components/ui/empty';
+import { Popover } from '../../../../components/ui/popover';
 import { FolderOpen, LoaderCircle } from '../../../../components/ui/icons';
 import { fileGridClassName, SftpFileRow } from './sftpFileRow';
 import { SftpToolbar } from './sftpToolbar';
@@ -28,23 +31,11 @@ interface ContextMenuState {
 	y: number;
 }
 
-const popupClassName =
-	'rounded-lg border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
-
 export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 	const [menu, setMenu] = useState<ContextMenuState>();
 	const [selectedPath, setSelectedPath] = useState<string>();
 
 	useEffect(() => setSelectedPath(undefined), [sftp.sftpPath]);
-	useEffect(() => {
-		const closeMenu = () => setMenu(undefined);
-		window.addEventListener('blur', closeMenu);
-		window.addEventListener('click', closeMenu);
-		return () => {
-			window.removeEventListener('blur', closeMenu);
-			window.removeEventListener('click', closeMenu);
-		};
-	}, []);
 
 	return (
 		<aside
@@ -94,17 +85,19 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 					))}
 				</div>
 				{sftp.loading ? (
-					<Status
+					<Empty
+						className="absolute inset-0 overflow-auto bg-(--vscode-editor-background)"
+						role="status"
 						icon={<LoaderCircle className="codicon-modifier-spin" size="md" />}
 						title="Loading directory"
-						detail={sftp.sftpPath}
+						description={sftp.sftpPath}
 					/>
 				) : (
 					sftp.entries.length === 0 && (
-						<Status
+						<Empty
+							className="absolute inset-0 overflow-auto bg-(--vscode-editor-background)"
 							icon={<FolderOpen size="lg" />}
 							title="This folder is empty"
-							detail="Upload a file or create a new folder."
 						/>
 					)
 				)}
@@ -112,18 +105,14 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 
 			{menu && (
 				<Menu
-					className="fixed"
-					style={{
-						left: Math.max(4, Math.min(menu.x, window.innerWidth - 190)),
-						top: Math.max(4, Math.min(menu.y, window.innerHeight - 210)),
-					}}
+					position={menu}
 					onDismiss={() => setMenu(undefined)}
 					items={[
 						...(menu.entry.isDirectory
 							? [
-									{ label: 'New Folder', action: () => sftp.createDirectory(menu.entry.path) },
-									{ label: 'Upload Files', action: () => sftp.upload(menu.entry.path) },
-								]
+								{ label: 'New Folder', action: () => sftp.createDirectory(menu.entry.path) },
+								{ label: 'Upload Files', action: () => sftp.upload(menu.entry.path) },
+							]
 							: [{ label: 'Edit Text', action: () => sftp.edit(menu.entry.path) }]),
 						{ label: 'Download', action: () => sftp.download(menu.entry) },
 						{ label: 'Copy Path', action: () => sftp.copyPath(menu.entry.path) },
@@ -138,42 +127,28 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 
 function Menu({
 	items,
-	className,
-	style,
+	position,
 	onDismiss,
 }: {
 	items: { label: string; danger?: boolean; action: () => void }[];
-	className: string;
-	style?: React.CSSProperties;
+	position: { x: number; y: number };
 	onDismiss: () => void;
 }) {
 	return (
-		<div
-			className={cn(popupClassName, 'z-30 min-w-44', className)}
-			style={style}
-			tabIndex={-1}
-			autoFocus
-			role="menu"
-			onKeyDown={event => {
-				if (event.key === 'Escape') {
-					event.stopPropagation();
-					onDismiss();
-				}
-			}}
-			onBlur={event => {
-				if (!event.currentTarget.contains(event.relatedTarget)) onDismiss();
+		<Popover
+			open
+			label="File actions"
+			anchorPosition={position}
+			className="grid min-w-44 p-1"
+			onOpenChange={open => {
+				if (!open) onDismiss();
 			}}
 		>
 			{items.map(item => (
-				<button
+				<Button
 					key={item.label}
-					className={cn(
-						'block min-h-8 w-full rounded-xs border-0 bg-transparent px-2 py-1 text-left text-sm outline-none hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground) focus:bg-(--vscode-menu-selectionBackground) focus:text-(--vscode-menu-selectionForeground)',
-						item.danger
-							? 'text-(--vscode-errorForeground) hover:text-(--vscode-errorForeground)! focus:text-(--vscode-errorForeground)!'
-							: '',
-					)}
-					role="menuitem"
+					variant="text"
+					className={cn('justify-start', item.danger && 'text-(--vscode-errorForeground)')}
 					onClick={event => {
 						event.stopPropagation();
 						item.action();
@@ -181,18 +156,8 @@ function Menu({
 					}}
 				>
 					{item.label}
-				</button>
+				</Button>
 			))}
-		</div>
-	);
-}
-
-function Status({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) {
-	return (
-		<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-auto bg-[color-mix(in_srgb,var(--vscode-editor-background)_90%,transparent)] p-4 text-center text-(--vscode-descriptionForeground)">
-			<span className="text-(--vscode-icon-foreground)">{icon}</span>
-			<strong className="text-sm font-medium text-(--vscode-foreground)">{title}</strong>
-			<span className="max-w-full text-xs wrap-anywhere">{detail}</span>
-		</div>
+		</Popover>
 	);
 }

@@ -20,6 +20,10 @@
 
 ## Frontend Styling
 
+- Treat shared UI components in `webview/src_new/components/ui` as the source of truth for control appearance. Prefer their default styles and supported sizes and variants over feature-specific styling, even when this changes the old page appearance.
+- Use component slots and composition APIs for embedded controls, such as `Input.left` and `Input.right` for icons and action buttons. Do not recreate an input shell or other control with a styled wrapper around a shared component.
+- Keep feature-level styling focused on page layout, positioning, and necessary domain-specific states. Avoid overriding shared controls' borders, radii, backgrounds, typography, spacing, or focus, hover, and disabled styles merely to preserve a local design.
+- When a shared component lacks a reusable styling or composition capability, extend it with a coherent prop, variant, or slot instead of duplicating styles in consumers. Keep genuinely feature-specific visuals local; do not add abstractions solely to move class names elsewhere.
 - Prefer Tailwind CSS utilities for layout, spacing, typography, colors, responsive behavior, and interaction states in webviews.
 - Use preset Tailwind border-radius utilities such as `rounded-xs`; do not use arbitrary-value radius utilities such as `rounded-[2px]`.
 - Reuse existing UI components and the project's `cn` helper when composing class names. Extract repeated UI into components instead of adding page-specific CSS selectors.

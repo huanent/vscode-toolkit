@@ -1,5 +1,6 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
+import { Empty } from '../../../components/ui/empty';
 import { CircleAlert, LoaderCircle } from '../../../components/ui/icons';
 import { RemoteMetrics } from './components/remoteMetrics';
 import { SftpPanel } from './components/sftpPanel';
@@ -35,34 +36,34 @@ export function App() {
 						onPaste={ssh.paste}
 					/>
 					{ssh.status !== 'connected' && (
-						<div
+						<Empty
+							role="status"
 							className={cn(
-								'pointer-events-none absolute inset-0 z-10 flex items-center justify-center',
+								'pointer-events-none absolute inset-0 z-10',
 								ssh.status === 'error'
 									? 'text-(--vscode-errorForeground)'
 									: 'text-(--vscode-descriptionForeground)',
 							)}
-						>
-							<div className="grid max-w-[min(520px,calc(100%-32px))] grid-cols-[18px_auto] items-center gap-x-3 gap-y-1">
-								<span className="row-span-2">
-									{ssh.status === 'connecting' ? (
-										<LoaderCircle className="codicon-modifier-spin text-(--vscode-progressBar-background)" />
-									) : (
-										<CircleAlert />
-									)}
-								</span>
-								<strong className="text-sm">
-									{ssh.status === 'connecting'
-										? 'Connecting'
-										: ssh.status === 'error'
-											? 'Connection failed'
-											: 'Connection closed'}
-								</strong>
-								<span className="min-w-0 font-(family-name:--vscode-editor-font-family) text-xs wrap-anywhere">
-									{ssh.statusMessage || ssh.server?.address}
-								</span>
-							</div>
-						</div>
+							titleClassName={
+								ssh.status === 'error' ? 'text-(--vscode-errorForeground)' : undefined
+							}
+							icon={
+								ssh.status === 'connecting' ? (
+									<LoaderCircle className="codicon-modifier-spin text-(--vscode-progressBar-background)" />
+								) : (
+									<CircleAlert />
+								)
+							}
+							title={
+								ssh.status === 'connecting'
+									? 'Connecting'
+									: ssh.status === 'error'
+										? 'Connection failed'
+										: 'Connection closed'
+							}
+							description={ssh.statusMessage || ssh.server?.address}
+							descriptionClassName="font-(family-name:--vscode-editor-font-family)"
+						/>
 					)}
 				</section>
 				{ssh.sftpVisible && (

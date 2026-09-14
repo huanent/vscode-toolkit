@@ -1,8 +1,9 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
 import { IconButton } from '../../../../components/ui/button';
-import { ArrowUp, FolderPlus, RefreshCw, Star, Upload, X } from '../../../../components/ui/icons';
+import { ArrowUp, FolderPlus, RefreshCw, Star, Upload } from '../../../../components/ui/icons';
 import { Input } from '../../../../components/ui/input';
+import { Favorites } from './favorites';
 
 interface SftpToolbarProps {
 	sftpPath: string;
@@ -14,9 +15,6 @@ interface SftpToolbarProps {
 	createDirectory: (path?: string) => void;
 	upload: (path?: string) => void;
 }
-
-const popupClassName =
-	'rounded-lg border border-(--vscode-menu-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-menu-background) p-1 text-(--vscode-menu-foreground) shadow-[0_4px_14px_var(--vscode-widget-shadow)]';
 
 export function SftpToolbar({
 	sftpPath,
@@ -30,46 +28,29 @@ export function SftpToolbar({
 }: SftpToolbarProps) {
 	const [pathValue, setPathValue] = useState(sftpPath);
 	const [showFavorites, setShowFavorites] = useState(false);
+	const [anchorElement, setAnchorElement] = useState<HTMLDivElement | null>(null);
 
 	useEffect(() => setPathValue(sftpPath), [sftpPath]);
-	useEffect(() => {
-		const closeFavorites = () => setShowFavorites(false);
-		window.addEventListener('blur', closeFavorites);
-		window.addEventListener('click', closeFavorites);
-		return () => {
-			window.removeEventListener('blur', closeFavorites);
-			window.removeEventListener('click', closeFavorites);
-		};
-	}, []);
 
 	const favorite = favorites.includes(sftpPath);
 
 	return (
 		<header className="flex min-w-0 items-center gap-1 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) p-2">
 			<IconButton
-				className="size-7 border-0"
 				disabled={!parentPath || loading}
 				label="Parent directory"
 				onClick={() => parentPath && list(parentPath)}
 				icon={<ArrowUp size="md" />}
 			/>
 			<IconButton
-				className="size-7 border-0"
 				disabled={loading}
 				label="Refresh"
 				onClick={() => list(sftpPath)}
 				icon={<RefreshCw className={cn(loading ? 'codicon-modifier-spin' : '')} size="md" />}
 			/>
-			<div
-				className="relative flex min-w-0 flex-1 items-center overflow-visible rounded-xs border border-(--vscode-input-border,var(--vscode-widget-border,var(--vscode-panel-border))) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]"
-				onClick={event => event.stopPropagation()}
-				onBlur={event => {
-					if (!event.currentTarget.contains(event.relatedTarget)) setShowFavorites(false);
-				}}
-			>
+			<div ref={setAnchorElement} className="min-w-0 flex-1">
 				<Input
 					aria-label="Remote path"
-					className="min-w-0 border-0 bg-transparent px-2 font-(family-name:--vscode-editor-font-family) text-sm shadow-none focus:border-transparent"
 					disabled={loading}
 					spellCheck={false}
 					value={pathValue}
@@ -85,21 +66,22 @@ export function SftpToolbar({
 							setShowFavorites(false);
 						}
 					}}
+					right={
+						<IconButton
+							size="sm"
+							className={favorite ? 'text-(--vscode-charts-yellow)' : undefined}
+							label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+							aria-pressed={favorite}
+							onClick={() => toggleFavorite()}
+							icon={<Star size="xs" fill={favorite ? 'currentColor' : 'none'} />}
+						/>
+					}
 				/>
-				<IconButton
-					className={cn(
-						'size-5 border-0',
-						favorite ? 'text-(--vscode-charts-yellow)' : 'text-(--vscode-descriptionForeground)',
-					)}
-					label={favorite ? 'Remove from favorites' : 'Add to favorites'}
-					onClick={event => {
-						event.stopPropagation();
-						toggleFavorite();
-					}}
-					icon={<Star size="xs" fill={favorite ? 'currentColor' : 'none'} />}
-				/>
-				{showFavorites && favorites.length > 0 && (
+				{favorites.length > 0 && (
 					<Favorites
+						open={showFavorites && !loading}
+						onOpenChange={setShowFavorites}
+						anchorElement={anchorElement}
 						paths={favorites}
 						activePath={sftpPath}
 						onSelect={path => {
@@ -111,72 +93,17 @@ export function SftpToolbar({
 				)}
 			</div>
 			<IconButton
-				className="size-7 border-0"
 				disabled={loading}
 				label="New folder"
 				onClick={() => createDirectory()}
 				icon={<FolderPlus size="md" />}
 			/>
 			<IconButton
-				className="size-7 border-0"
 				disabled={loading}
 				label="Upload files"
 				onClick={() => upload()}
 				icon={<Upload size="md" />}
 			/>
 		</header>
-	);
-}
-
-function Favorites({
-	paths,
-	activePath,
-	onSelect,
-	onRemove,
-}: {
-	paths: string[];
-	activePath: string;
-	onSelect: (path: string) => void;
-	onRemove: (path: string) => void;
-}) {
-	return (
-		<div
-			className={cn(
-				popupClassName,
-				'absolute top-[calc(100%+5px)] right-0 left-0 z-20 max-h-56 min-w-52 overflow-auto',
-			)}
-			role="listbox"
-		>
-			{paths.map(path => (
-				<div
-					key={path}
-					className={cn(
-						'group flex min-h-8 items-center rounded-xs hover:bg-(--vscode-list-hoverBackground) focus-within:bg-(--vscode-list-hoverBackground)',
-						path === activePath ? 'text-(--vscode-textLink-foreground)' : '',
-					)}
-					role="option"
-					aria-selected={path === activePath}
-				>
-					<button
-						className="min-w-0 flex-1 truncate border-0 bg-transparent px-2 py-1 text-left font-(family-name:--vscode-editor-font-family) text-sm outline-none"
-						title={path}
-						onClick={() => onSelect(path)}
-					>
-						{path}
-					</button>
-					<button
-						className="mr-1 grid size-5 shrink-0 place-items-center rounded-xs border-0 bg-transparent text-(--vscode-icon-foreground) opacity-0 outline-none hover:bg-(--vscode-toolbar-hoverBackground) focus:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
-						title="Remove from favorites"
-						aria-label={`Remove ${path} from favorites`}
-						onClick={event => {
-							event.stopPropagation();
-							onRemove(path);
-						}}
-					>
-						<X size="xs" />
-					</button>
-				</div>
-			))}
-		</div>
 	);
 }

@@ -34,7 +34,7 @@ export function Input({
 	return (
 		<div
 			className={cn(
-				'flex w-full min-w-0 items-center rounded-sm text-(--vscode-input-foreground) transition-colors duration-100',
+				'flex w-full min-w-0 items-center text-(--vscode-input-foreground) transition-colors duration-100',
 				variant === 'plain'
 					? 'border-0 bg-transparent'
 					: 'border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder)',
@@ -42,7 +42,7 @@ export function Input({
 				disabled && 'cursor-default opacity-45',
 				className,
 			)}
-			style={style}
+			style={{ borderRadius: 4, ...style }}
 		>
 			{left != null && (
 				<span className="inline-flex h-full shrink-0 items-center justify-center leading-none text-(--vscode-descriptionForeground) [&_.codicon]:block [&_.codicon]:leading-none">{left}</span>
@@ -86,16 +86,16 @@ export function PasswordInput({ disabled, ...props }: PasswordInputProps) {
 	);
 }
 
-const controlClassName = 'w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) text-sm text-(--vscode-input-foreground) outline-none focus:border-(--vscode-focusBorder) placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default disabled:opacity-45 aria-invalid:border-(--vscode-inputValidation-errorBorder)';
+const controlClassName = 'w-full min-w-0 border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) text-sm text-(--vscode-input-foreground) outline-none focus:border-(--vscode-focusBorder) placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default disabled:opacity-45 aria-invalid:border-(--vscode-inputValidation-errorBorder)';
 
 export type TextareaProps = ComponentPropsWithRef<'textarea'>;
 
-export function Textarea({ className, ...props }: TextareaProps) {
-	return <textarea className={cn(controlClassName, 'min-h-20 resize-y px-2 py-2', className)} {...props} />;
+export function Textarea({ className, style, ...props }: TextareaProps) {
+	return <textarea className={cn(controlClassName, 'min-h-20 resize-y px-2 py-2', className)} style={{ borderRadius: 4, ...style }} {...props} />;
 }
 
 export type SelectProps = Omit<ComponentPropsWithRef<'select'>, 'size'> & { size?: InputSize };
 
-export function Select({ size = 'md', className, ...props }: SelectProps) {
-	return <select className={cn(controlClassName, inputSizes[size], className)} {...props} />;
+export function Select({ size = 'md', className, style, ...props }: SelectProps) {
+	return <select className={cn(controlClassName, inputSizes[size], className)} style={{ borderRadius: 4, ...style }} {...props} />;
 }

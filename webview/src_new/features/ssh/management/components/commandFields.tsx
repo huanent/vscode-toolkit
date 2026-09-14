@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { IconButton } from '../../../../components/ui/button';
+import { Empty } from '../../../../components/ui/empty';
+import { List, ListItem } from '../../../../components/ui/list';
 import { Pencil, Plus, Trash2 } from '../../../../components/ui/icons';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 import { CommandDialog } from './commandDialog';
@@ -31,52 +33,45 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 				/>
 			</div>
 			{commands.length === 0 ? (
-				<div className="border border-dashed border-(--vscode-panel-border,var(--vscode-widget-border)) px-4 py-8 text-center text-sm text-(--vscode-descriptionForeground)">
-					No commands configured.
-				</div>
+				<Empty title="No commands configured." />
 			) : (
-				<div className="divide-y divide-(--vscode-panel-border,var(--vscode-widget-border)) border-y border-(--vscode-panel-border,var(--vscode-widget-border))">
+				<List>
 					{commands.map((command, index) => (
-						<div
-							className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5"
+						<ListItem
 							key={index}
+							onSelect={() => setEditingIndex(index)}
+							inline
+							description={command.value.replace(/\s+/g, ' ')}
+							actions={
+								<>
+									<IconButton
+										size="sm"
+										htmlType="button"
+										label="Edit command"
+
+										onClick={() => setEditingIndex(index)}
+										icon={<Pencil size="md" />}
+									/>
+									<IconButton
+										size="sm"
+										htmlType="button"
+										label="Remove command"
+
+										onClick={() =>
+											form.update(
+												'commands',
+												commands.filter((_, commandIndex) => commandIndex !== index),
+											)
+										}
+										icon={<Trash2 size="md" />}
+									/>
+								</>
+							}
 						>
-							<button
-								className="flex min-w-0 items-baseline gap-3 overflow-hidden border-0 bg-transparent px-1 text-left"
-								type="button"
-								onClick={() => setEditingIndex(index)}
-							>
-								<strong className="shrink-0 text-sm whitespace-nowrap">{command.name}</strong>
-								<span className="min-w-0 overflow-hidden font-(family-name:--vscode-editor-font-family) text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
-									{command.value.replace(/\s+/g, ' ')}
-								</span>
-							</button>
-							<span className="flex gap-1">
-								<IconButton
-									className="border-0"
-									htmlType="button"
-									label="Edit command"
-
-									onClick={() => setEditingIndex(index)}
-									icon={<Pencil size="md" />}
-								/>
-								<IconButton
-									className="border-0"
-									htmlType="button"
-									label="Remove command"
-
-									onClick={() =>
-										form.update(
-											'commands',
-											commands.filter((_, commandIndex) => commandIndex !== index),
-										)
-									}
-									icon={<Trash2 size="md" />}
-								/>
-							</span>
-						</div>
+							{command.name}
+						</ListItem>
 					))}
-				</div>
+				</List>
 			)}
 			{editingIndex !== undefined && (
 				<CommandDialog

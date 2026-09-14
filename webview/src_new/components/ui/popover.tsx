@@ -5,6 +5,7 @@ import {
 	FloatingPortal,
 	offset,
 	shift,
+	size,
 	useClick,
 	useDismiss,
 	useFloating,
@@ -20,6 +21,9 @@ type PopoverProps = {
 	onOpenChange(open: boolean): void;
 	trigger?(props: ComponentPropsWithRef<'button'>): ReactNode;
 	anchorPosition?: { x: number; y: number };
+	anchorElement?: HTMLElement | null;
+	autoFocus?: boolean;
+	matchAnchorWidth?: boolean;
 	children: ReactNode;
 	label: string;
 	placement?: Placement;
@@ -33,6 +37,9 @@ export function Popover({
 	onOpenChange,
 	trigger,
 	anchorPosition,
+	anchorElement,
+	autoFocus = true,
+	matchAnchorWidth = false,
 	children,
 	label,
 	placement = 'bottom-start',
@@ -46,12 +53,29 @@ export function Popover({
 		placement,
 		strategy: 'fixed',
 		whileElementsMounted: autoUpdate,
-		middleware: [offset(5), flip({ padding: 8 }), shift({ padding: 8 })],
+		middleware: [
+			offset(5),
+			flip({ padding: 8 }),
+			shift({ padding: 8 }),
+			size({
+				padding: 8,
+				apply({ rects, elements, availableWidth }) {
+					elements.floating.style.width = matchAnchorWidth
+						? `${Math.max(0, Math.min(rects.reference.width, availableWidth))}px`
+						: '';
+				},
+			}),
+		],
 	});
 	const click = useClick(context, { enabled: !disabled });
 	const dismiss = useDismiss(context, { bubbles: { escapeKey: false } });
 	const semantics = useRole(context, { role });
 	const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, semantics]);
+
+	useLayoutEffect(() => {
+		if (anchorElement === undefined) return;
+		refs.setReference(anchorElement);
+	}, [anchorElement, refs]);
 
 	useLayoutEffect(() => {
 		if (!anchorPosition) return;
@@ -76,12 +100,17 @@ export function Popover({
 			{trigger?.({ ...getReferenceProps(), ref: refs.setReference, disabled })}
 			{open && !disabled && (
 				<FloatingPortal>
-					<FloatingFocusManager context={context} modal={false}>
+					<FloatingFocusManager
+						context={context}
+						modal={false}
+						initialFocus={autoFocus ? 0 : -1}
+						returnFocus={autoFocus}
+					>
 						<div
 							ref={refs.setFloating}
 							style={floatingStyles}
 							className={cn(
-								'z-120 max-h-[calc(100dvh-16px)] max-w-[calc(100vw-16px)] overflow-y-auto rounded-lg border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-menu-background,var(--vscode-editorWidget-background)) text-(--vscode-menu-foreground,var(--vscode-foreground))',
+								'z-120 w-max max-h-[calc(100dvh-16px)] max-w-[calc(100vw-16px)] overflow-y-auto rounded-lg border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-menu-background,var(--vscode-editorWidget-background)) text-(--vscode-menu-foreground,var(--vscode-foreground))',
 								className,
 							)}
 							{...getFloatingProps({ 'aria-label': label })}

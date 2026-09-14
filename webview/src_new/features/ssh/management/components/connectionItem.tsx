@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IconButton } from '../../../../components/ui/button';
+import { Button, IconButton } from '../../../../components/ui/button';
 import { Play } from '../../../../components/ui/icons';
 import { ListItem } from '../../../../components/ui/list';
 import { Popover } from '../../../../components/ui/popover';
@@ -58,7 +58,7 @@ export function ConnectionItem({
 						placement="bottom-start"
 						anchorPosition={anchorPosition}
 					>
-						<div className="min-w-40 p-1">
+						<div className="grid min-w-40 p-1">
 							{[
 								['edit', 'Edit'],
 								['duplicate', 'Duplicate'],
@@ -68,25 +68,25 @@ export function ConnectionItem({
 								['export', 'Export'],
 								['delete', 'Delete'],
 							].map(([type, label]) => (
-								<button
+								<Button
 									key={type}
-									type="button"
+									variant="text"
 									disabled={filtered && (type === 'up' || type === 'down')}
-									className="block w-full rounded-xs px-2 py-1.5 text-left text-sm hover:bg-(--vscode-menu-selectionBackground) hover:text-(--vscode-menu-selectionForeground) disabled:opacity-45"
+									className="w-full justify-start"
 									onClick={() => {
 										setOpen(false);
 										onAction(type, server.id);
 									}}
 								>
 									{label}
-								</button>
+								</Button>
 							))}
 						</div>
 					</Popover>
 				</>
 			}
 		>
-			<span className='p-1'>{server.name}</span>
+			<span className="p-1">{server.name}</span>
 		</ListItem>
 	);
 }
