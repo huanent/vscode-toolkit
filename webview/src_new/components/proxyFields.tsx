@@ -35,9 +35,6 @@ export function ProxyFields({ values, onChange, onSelectPrivateKey }: ProxyField
 	};
 	return (
 		<section aria-labelledby="proxy-heading">
-			<h2 className="mt-0 mb-3.5 text-sm font-semibold" id="proxy-heading">
-				Proxy settings
-			</h2>
 			<div className="grid gap-3.5">
 				<Segmented
 					label="Proxy type"

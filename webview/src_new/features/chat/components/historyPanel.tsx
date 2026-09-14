@@ -86,7 +86,6 @@ export function HistoryPanel({
 								key={session.id}
 								icon={<MessageCircle size="sm" />}
 								selected={session.id === currentSessionId}
-								truncate
 								onSelect={() => onSelect(session.id)}
 								actions={
 									<IconButton

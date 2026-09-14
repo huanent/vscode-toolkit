@@ -57,6 +57,7 @@ export function AuthenticationFields({ form }: { form: ConnectionFormState }) {
 									{...control}
 									required={credentialRequired}
 									spellCheck={false}
+									rows={5}
 									placeholder="Paste the PEM or OpenSSH private key"
 									value={values.privateKey}
 									onChange={event => form.update('privateKey', event.target.value)}

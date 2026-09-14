@@ -35,7 +35,6 @@ type ListItemProps = {
 	actions?: ReactNode;
 	selected?: boolean;
 	role?: 'button' | 'option';
-	truncate?: boolean;
 	inline?: boolean;
 	onSelect?(): void;
 	onContextMenu?: ComponentPropsWithoutRef<'li'>['onContextMenu'];
@@ -49,7 +48,6 @@ export function ListItem({
 	actions,
 	selected = false,
 	role = 'button',
-	truncate = false,
 	inline = false,
 	onSelect,
 	onContextMenu,
@@ -88,7 +86,7 @@ export function ListItem({
 					</div>
 				)}
 				<div className={cn('min-w-0', inline ? 'flex items-baseline gap-2' : 'grid gap-1')}>
-					<span className={truncate || inline ? 'truncate' : 'wrap-anywhere'}>{children}</span>
+					<span className={inline ? 'max-w-full shrink-0 truncate' : 'wrap-anywhere'}>{children}</span>
 					{description && (
 						<small
 							className={cn(

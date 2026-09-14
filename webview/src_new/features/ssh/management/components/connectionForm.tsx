@@ -18,7 +18,7 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 	);
 	if (!form.model) {
 		return (
-			<main className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">
+			<main role="status" className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">
 				Loading...
 			</main>
 		);
@@ -41,68 +41,73 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 				form.save();
 			}}
 		>
-			<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) py-3.5">
-				<StorageLocation
-					value={values.location}
-					folders={model.workspaceFolders ?? []}
-					disabled={form.saving || model.locationLocked}
-					onChange={value => form.update('location', value)}
-				/>
-				<div className="mx-auto grid w-[min(880px,calc(100%-44px))] grid-cols-[minmax(160px,1.25fr)_minmax(140px,1fr)_auto] items-end gap-3 max-[680px]:w-[calc(100%-28px)] max-[520px]:grid-cols-[minmax(0,1fr)_auto]">
-					<Field label="Name" required>
-						{control => (
-							<>
-								<Input
-									{...control}
-									autoFocus
-									required
-									placeholder="Production"
-									value={values.name}
-									onChange={event => form.update('name', event.target.value)}
-								/>
-							</>
-						)}
-					</Field>
-					<Field label="Group" className="max-[520px]:col-start-1 max-[520px]:row-start-2">
-						{control => (
-							<>
-								<Input
-									{...control}
-									list="connection-groups"
-									placeholder="No group"
-									value={values.group}
-									onChange={event => form.update('group', event.target.value)}
-								/>
-								<datalist id="connection-groups">
-									{model.groups.map(group => (
-										<option key={group} value={group} />
-									))}
-								</datalist>
-							</>
-						)}
-					</Field>
-					<Button
-						left={<Save size="md" />}
-						className="max-[520px]:col-start-2 max-[520px]:row-span-2 max-[520px]:row-start-1 max-[520px]:self-start"
-						htmlType="submit"
-						disabled={form.saving}
-					>
-						{form.saving ? 'Saving...' : 'Save'}
-					</Button>
+			<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) py-3.5 max-[680px]:static">
+				<div className="mx-auto w-[min(880px,calc(100%-44px))] overflow-x-auto max-[680px]:w-[calc(100%-28px)]">
+					<div className="grid grid-cols-[176px_minmax(400px,1fr)] items-end gap-7">
+						<div className="min-w-0 overflow-x-auto border-r border-transparent pr-3">
+							<StorageLocation
+								inline
+								value={values.location}
+								folders={model.workspaceFolders ?? []}
+								disabled={form.saving}
+								onChange={value => form.update('location', value)}
+							/>
+						</div>
+						<div className="grid min-w-0 grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] items-end gap-3">
+							<Field label="Name" required>
+								{control => (
+									<Input
+										{...control}
+										autoFocus
+										required
+										placeholder="Production"
+										value={values.name}
+										onChange={event => form.update('name', event.target.value)}
+									/>
+								)}
+							</Field>
+							<Field label="Group">
+								{control => (
+									<>
+										<Input
+											{...control}
+											list="connection-groups"
+											placeholder="No group"
+											value={values.group}
+											onChange={event => form.update('group', event.target.value)}
+										/>
+										<datalist id="connection-groups">
+											{model.groups.map(group => (
+												<option key={group} value={group} />
+											))}
+										</datalist>
+									</>
+								)}
+							</Field>
+							<Button
+								left={<Save size="md" />}
+								className="min-w-20 whitespace-nowrap"
+								htmlType="submit"
+								disabled={form.saving}
+							>
+								{form.saving ? 'Saving...' : 'Save'}
+							</Button>
+						</div>
+					</div>
 				</div>
 			</header>
 
 			<main
 				className={cn(
-					'mx-auto grid w-[min(880px,calc(100%-44px))] items-start py-8.5 pb-14 max-[680px]:w-[calc(100%-28px)] max-[680px]:pt-5',
+					'mx-auto grid w-[min(880px,calc(100%-44px))] items-start gap-6 pt-6 pb-10 max-[680px]:w-[calc(100%-28px)] max-[680px]:pt-4',
 					tabs.length > 1
-						? 'grid-cols-[148px_minmax(0,1fr)] gap-7 max-[680px]:grid-cols-1 max-[680px]:gap-5'
+						? 'grid-cols-[176px_minmax(0,1fr)] gap-7 max-[680px]:grid-cols-1 max-[680px]:gap-5'
 						: 'grid-cols-[minmax(0,640px)] justify-center',
 				)}
 			>
 				{tabs.length > 1 && (
 					<nav
-						className="sticky top-24 min-w-0 border-r border-(--vscode-panel-border,var(--vscode-widget-border)) pr-3 max-[680px]:static max-[680px]:overflow-x-auto max-[680px]:border-r-0 max-[680px]:border-b max-[680px]:pr-0"
+						className="min-w-0 border-r border-(--vscode-panel-border,var(--vscode-widget-border)) pr-3 max-[680px]:overflow-x-auto max-[680px]:border-r-0 max-[680px]:border-b max-[680px]:pr-0 max-[680px]:pb-2"
 						aria-label="Connection settings"
 					>
 						<div
@@ -129,9 +134,6 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 				<div className="min-w-0">
 					{selectedTab === 'connection' && (
 						<section aria-labelledby="connection-heading">
-							<h2 className="mt-0 mb-3.5 text-sm font-semibold" id="connection-heading">
-								Connection details
-							</h2>
 							<div className="grid gap-3.5">
 								<NetworkFields form={form} />
 								<AuthenticationFields form={form} />
@@ -148,10 +150,7 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 					{selectedTab === 'commands' && <CommandFields form={form} />}
 					{selectedTab === 'other' && (
 						<section aria-labelledby="other-heading">
-							<h2 className="mt-0 mb-3.5 text-sm font-semibold" id="other-heading">
-								Other settings
-							</h2>
-							<label className="flex items-center justify-between gap-3 border-y border-(--vscode-panel-border,var(--vscode-widget-border)) py-3.5 text-sm">
+							<label className="flex items-center justify-between gap-3 py-3.5 text-sm">
 								<span>Enable AI features</span>
 								<Switch
 									checked={values.aiEnabled}

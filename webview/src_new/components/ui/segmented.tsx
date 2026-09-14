@@ -14,14 +14,15 @@ export type SegmentedProps<Value extends string> = {
 	onChange(value: Value): void;
 	disabled?: boolean;
 	className?: string;
+	noWrap?: boolean;
 };
 
-export function Segmented<Value extends string>({ label, value, options, onChange, disabled = false, className }: SegmentedProps<Value>) {
+export function Segmented<Value extends string>({ label, value, options, onChange, disabled = false, className, noWrap = false }: SegmentedProps<Value>) {
 	const name = useId();
 	return (
-		<div role="radiogroup" aria-label={label} aria-disabled={disabled} className={cn('flex min-w-0 flex-wrap gap-1 rounded-sm border border-(--vscode-input-border,transparent) p-0.5', className)}>
+		<div role="radiogroup" aria-label={label} aria-disabled={disabled} className={cn('flex min-w-0 gap-1 rounded-sm border border-(--vscode-input-border,transparent) p-0.5', noWrap ? 'w-max flex-nowrap' : 'flex-wrap', className)}>
 			{options.map(option => (
-				<label key={option.value} className="relative min-w-0 flex-1">
+				<label key={option.value} className={cn('relative flex-1', noWrap ? 'min-w-max whitespace-nowrap' : 'min-w-0')}>
 					<input
 						className="peer sr-only"
 						type="radio"

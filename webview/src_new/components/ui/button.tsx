@@ -57,9 +57,9 @@ export function Button({
 			)}
 			{...props}
 		>
-			{left != null && <span className="inline-flex shrink-0 items-center">{left}</span>}
+			{left != null && <span className="inline-flex shrink-0 items-center leading-none">{left}</span>}
 			{children != null && <span className="min-w-0 wrap-anywhere">{children}</span>}
-			{right != null && <span className="inline-flex shrink-0 items-center">{right}</span>}
+			{right != null && <span className="inline-flex shrink-0 items-center leading-none">{right}</span>}
 		</button>
 	);
 }

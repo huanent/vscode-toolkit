@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { IconButton } from '../../../../components/ui/button';
-import { Empty } from '../../../../components/ui/empty';
+import { Button, IconButton } from '../../../../components/ui/button';
 import { List, ListItem } from '../../../../components/ui/list';
-import { Pencil, Plus, Terminal, Trash2 } from '../../../../components/ui/icons';
+import { Pencil, Plus, Trash2 } from '../../../../components/ui/icons';
 import type { ConnectionFormState } from '../hooks/useConnectionForm';
 import { CommandDialog } from './commandDialog';
 
@@ -20,33 +19,17 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 	};
 	return (
 		<section aria-labelledby="commands-heading">
-			<div className="mb-3.5 flex items-center justify-between gap-3">
-				<h2 className="m-0 text-sm font-semibold" id="commands-heading">
-					Commands
-				</h2>
-				<IconButton
-					htmlType="button"
-					label="Add command"
-
-					onClick={() => setEditingIndex('new')}
-					icon={<Plus size="md" />}
-				/>
-			</div>
-			{commands.length === 0 ? (
-				<Empty title="No commands configured." />
-			) : (
+			{commands.length > 0 && (
 				<List>
 					{commands.map((command, index) => (
 						<ListItem
 							key={index}
-							icon={<Terminal />}
 							onSelect={() => setEditingIndex(index)}
 							inline
 							description={command.value.replace(/\s+/g, ' ')}
 							actions={
 								<>
 									<IconButton
-										size="sm"
 										htmlType="button"
 										label="Edit command"
 
@@ -54,7 +37,6 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 										icon={<Pencil size="md" />}
 									/>
 									<IconButton
-										size="sm"
 										htmlType="button"
 										label="Remove command"
 
@@ -74,6 +56,14 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 					))}
 				</List>
 			)}
+			<Button
+				variant="plain"
+				className="mt-3 w-full"
+				aria-label="Add command"
+				title="Add command"
+				left={<Plus size="md" />}
+				onClick={() => setEditingIndex('new')}
+			/>
 			{editingIndex !== undefined && (
 				<CommandDialog
 					command={editingIndex === 'new' ? undefined : commands[editingIndex]}
