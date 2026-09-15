@@ -25,7 +25,6 @@ export function CommandFields({ form }: { form: ConnectionFormState }) {
 						<ListItem
 							key={index}
 							onSelect={() => setEditingIndex(index)}
-							inline
 							description={command.value.replace(/\s+/g, ' ')}
 							actions={
 								<>

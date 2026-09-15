@@ -4,7 +4,7 @@ import { Database, Play } from '../../../components/ui/icons';
 import { ListItem } from '../../../components/ui/list';
 import { Popover } from '../../../components/ui/popover';
 
-export type Connection={ id: string; name: string; group: string; address: string; kind: string };
+export type Connection = { id: string; name: string; group: string; address: string; kind: string };
 
 export function ConnectionItem({
 	server,
@@ -15,8 +15,8 @@ export function ConnectionItem({
 	filtered: boolean;
 	onAction(type: string, id: string): void;
 }) {
-	const [open, setOpen]=useState(false);
-	const [anchorPosition, setAnchorPosition]=useState({ x: 0, y: 0 });
+	const [open, setOpen] = useState(false);
+	const [anchorPosition, setAnchorPosition] = useState({ x: 0, y: 0 });
 	return (
 		<ListItem
 			icon={<Database />}
@@ -26,14 +26,13 @@ export function ConnectionItem({
 				setOpen(true);
 			}}
 			onKeyDown={event => {
-				if(event.key==='ContextMenu'||(event.shiftKey&&event.key==='F10')) {
+				if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
 					event.preventDefault();
-					const bounds=event.currentTarget.getBoundingClientRect();
+					const bounds = event.currentTarget.getBoundingClientRect();
 					setAnchorPosition({ x: bounds.left, y: bounds.bottom });
 					setOpen(true);
 				}
 			}}
-			inline
 			description={server.address}
 			actions={
 				<>
@@ -65,7 +64,7 @@ export function ConnectionItem({
 								<Button
 									key={type}
 									variant="text"
-									disabled={filtered&&(type==='up'||type==='down')}
+									disabled={filtered && (type === 'up' || type === 'down')}
 									className="w-full justify-start"
 									onClick={() => {
 										setOpen(false);

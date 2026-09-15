@@ -33,7 +33,6 @@ export function ConnectionItem({
 					setOpen(true);
 				}
 			}}
-			inline
 			description={server.address}
 			actions={
 				<>
