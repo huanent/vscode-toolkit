@@ -367,7 +367,7 @@
         {
           "command": "vscode-toolkit.servers.exportMysqlSqlResults",
           "when": "view == vscode-toolkit.httpResult && vscode-toolkit.servers.mysqlSqlResultsExportable",
-          "group": "navigation@1"
+          "group": "navigation@9999"
         }
       ],
       "editor/title": [

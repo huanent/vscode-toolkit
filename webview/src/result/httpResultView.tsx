@@ -4,7 +4,7 @@ import { cn } from 'cn';
 export function HttpResultView({ result }: { result: HttpResult }) {
 	return (
 		<div className="grid h-screen min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-			<header className="flex min-h-10 flex-wrap items-center gap-3 border-b border-(--vscode-panel-border) px-3.5 py-2">
+			<header className=" flex min-h-10 flex-wrap items-center gap-3 border-b border-(--vscode-panel-border) px-4 py-2">
 				<span className="shrink-0 font-semibold text-(--vscode-symbolIcon-functionForeground)">
 					{result.method}
 				</span>
@@ -62,7 +62,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 						<summary className="cursor-pointer text-xs font-semibold text-(--vscode-descriptionForeground) select-none">
 							Response headers ({result.headers?.length ?? 0})
 						</summary>
-						<dl className="mt-2.5 grid grid-cols-1 gap-x-4.5 gap-y-1 font-(family-name:--vscode-editor-font-family) sm:grid-cols-[minmax(120px,max-content)_minmax(0,1fr)]">
+						<dl className="mt-2.5 grid grid-cols-1 gap-x-4.5 gap-y-1 font-(family-name:--vscode-editor-font-family) text-sm sm:grid-cols-[minmax(120px,max-content)_minmax(0,1fr)]">
 							{result.headers?.map(([name, value], index) => (
 								<Header key={index} name={name} value={value} />
 							))}
@@ -83,7 +83,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 function Header({ name, value }: { name: string; value: string }) {
 	return (
 		<>
-			<dt className="wrap-anywhere text-(--vscode-symbolIcon-propertyForeground)">{name}</dt>
+			<dt className="wrap-anywhere">{name}</dt>
 			<dd className="m-0 min-w-0 wrap-anywhere">{value}</dd>
 		</>
 	);
