@@ -19,7 +19,7 @@ export function TableResultView({ result }: { result: TableResult }) {
 								{result.columns.map((column, columnIndex) => (
 									<th
 										key={columnIndex}
-										className="sticky top-0 z-10 h-9 min-w-28 max-w-120 overflow-hidden border-r border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) px-3 py-2 text-left font-semibold text-ellipsis whitespace-pre"
+										className="sticky top-0 z-10 h-9 min-w-28 max-w-120 overflow-hidden border-r border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-2 text-left font-semibold text-ellipsis whitespace-pre"
 										title={column}
 									>
 										{column}

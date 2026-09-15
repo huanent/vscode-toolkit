@@ -7,8 +7,12 @@
 		font-size: var(--vscode-font-size);
 		color: var(--vscode-foreground);
 		font-weight: var(--vscode-font-weight, 400);
-		background: var(--vscode-editor-background);
+		background: transparent;
 		letter-spacing: 0;
+	}
+
+	body {
+		background: transparent;
 	}
 
 	body,

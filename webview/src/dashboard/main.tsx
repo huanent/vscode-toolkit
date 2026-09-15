@@ -42,7 +42,7 @@ function App() {
 			<div
 				role="tablist"
 				aria-label="Tools"
-				className="sticky top-0 z-10 grid grid-cols-4 border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background,var(--vscode-editor-background))"
+				className="sticky top-0 z-10 grid grid-cols-4 border-b border-(--vscode-panel-border) bg-transparent"
 			>
 				{tabs.map(({ id, label, icon: Icon }, index) => (
 					<button

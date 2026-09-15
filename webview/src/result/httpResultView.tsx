@@ -3,7 +3,7 @@ import { cn } from 'cn';
 
 export function HttpResultView({ result }: { result: HttpResult }) {
 	return (
-		<div className="min-w-0">
+		<div className="grid h-screen min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
 			<header className="flex min-h-10 flex-wrap items-center gap-3 border-b border-(--vscode-panel-border) px-3.5 py-2">
 				<span className="shrink-0 font-semibold text-(--vscode-symbolIcon-functionForeground)">
 					{result.method}
@@ -37,7 +37,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 			{result.state === 'loading' && (
 				<div
 					role="status"
-					className="flex items-center gap-2 p-3.5 text-(--vscode-descriptionForeground)"
+					className="flex min-h-0 items-start gap-2 overflow-auto p-3.5 text-(--vscode-descriptionForeground)"
 				>
 					<span className="size-3.5 animate-spin rounded-full border-2 border-(--vscode-progressBar-background) border-r-transparent" />
 					Sending request...
@@ -47,7 +47,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 				<div
 					role="status"
 					className={cn(
-						'p-3.5 wrap-anywhere',
+						'min-h-0 overflow-auto p-3.5 wrap-anywhere',
 						result.state === 'error'
 							? 'text-(--vscode-errorForeground)'
 							: 'text-(--vscode-descriptionForeground)',
@@ -57,7 +57,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 				</div>
 			)}
 			{result.state === 'success' && (
-				<main className="px-3.5 pt-3 pb-4.5">
+				<main className="min-h-0 overflow-auto px-3.5 pt-3 pb-4.5">
 					<details className="mb-3">
 						<summary className="cursor-pointer text-xs font-semibold text-(--vscode-descriptionForeground) select-none">
 							Response headers ({result.headers?.length ?? 0})
