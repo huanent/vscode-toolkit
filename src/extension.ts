@@ -1,19 +1,19 @@
 import * as vscode from 'vscode';
-import { registerDashboard } from './features/dashboard/panel';
-import { registerSourceControl } from './features/git/sourceControl';
-import { generateGitignore } from './features/git/gitignoreService';
-import { registerHttpClient } from './features/http/httpClient';
-import { registerChat } from './features/chat/registerChat';
-import { registerExplorer } from './features/explorer/registerExplorer';
-import { createPerfTipsTracker } from './features/perftips/perftips';
-import { registerPackageScriptWatcher, runPackageScript } from './features/scripts/packageScripts';
-import { runScript } from './features/scripts/runScript';
-import { registerScriptRuntimeWatcher } from './features/scripts/scriptRuntime';
-import { registerXmlFormatter } from './features/xml/xmlFormatter';
-import { registerSsh } from './features/ssh/registerSsh';
-import { registerDatabase } from './features/database/registerDatabase';
-import { registerContainer } from './features/container/registerContainer';
-import { registerWorkflow } from './features/workflow/registerWorkflow';
+import { registerDashboard } from './dashboard/panel';
+import { registerSourceControl } from './git/sourceControl';
+import { generateGitignore } from './git/gitignoreService';
+import { registerHttpClient } from './http/httpClient';
+import { registerChat } from './chat/registerChat';
+import { registerExplorer } from './explorer/registerExplorer';
+import { createPerfTipsTracker } from './perftips/perftips';
+import { registerPackageScriptWatcher, runPackageScript } from './scripts/packageScripts';
+import { runScript } from './scripts/runScript';
+import { registerScriptRuntimeWatcher } from './scripts/scriptRuntime';
+import { registerXmlFormatter } from './xml/xmlFormatter';
+import { registerSsh } from './ssh/registerSsh';
+import { registerDatabase } from './database/registerDatabase';
+import { registerContainer } from './container/registerContainer';
+import { registerWorkflow } from './workflow/registerWorkflow';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	registerDashboard(context);

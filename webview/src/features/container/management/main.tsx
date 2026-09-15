@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ConnectionList, type ConnectionListState } from '../../../components/ConnectionList';
 import { Dialog } from '../../../components/dialog';
-import { send, subscribe } from '../../dashboard/channel';
+import { send, subscribe } from '@webview/dashboard/channel';
 import { App as ContainerForm } from '../serverForm/App';
 
 const action = (type: string, id?: string) => send('container', { type, id });

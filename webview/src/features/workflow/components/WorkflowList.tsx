@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ListOrdered, Trash2 } from '../../../components/icons';
-import { DashboardEmpty, DashboardSearch } from '../../dashboard/components';
+import { DashboardEmpty, DashboardSearch } from '@webview/dashboard/components';
 import { ConnectionCard } from '../../../components/ConnectionCard';
-import type { Workflow } from '../../../../../src/features/workflow/workflow';
+import type { Workflow } from '../../../../../src/workflow/workflow';
 
 type Props = {
 	workflows: Workflow[];

@@ -1,7 +1,7 @@
 import { cn } from 'cn';
 import { Plus, RefreshCw } from '../../components/icons';
 import { IconButton } from '../../components/button';
-import { DashboardHeader } from '../dashboard/components';
+import { DashboardHeader } from '@webview/dashboard/components';
 import { WorkflowEditor } from './components/WorkflowEditor';
 import { WorkflowList } from './components/WorkflowList';
 import { useWorkflow } from './hooks/useWorkflow';

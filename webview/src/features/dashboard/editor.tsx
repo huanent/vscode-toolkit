@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { vscode } from '../../vscodeApi';
-import { send, subscribe, type Tab } from './channel';
-import { ConnectionEditor } from '../../../src_new/features/ssh/management/components/connectionEditor';
+import { send, subscribe, type Tab } from '@webview/dashboard/channel';
+import { ConnectionEditor } from '../../../src_new/ssh/serverForm/components/connectionEditor';
 import { App as ContainerForm } from '../container/serverForm/App';
 import { App as Workflow } from '../workflow/main';
 

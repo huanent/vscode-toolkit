@@ -14,7 +14,7 @@
 - Organize components, hooks, and utilities by feature. Keep feature-specific code close to its consumers; promote code to shared modules only when it is genuinely reusable across features.
 - Put basic, feature-independent UI primitives in `webview/src_new/components/ui` (for example, buttons, inputs, dialogs, and icons).
 - Reserve `webview/src_new/components` outside `ui` for shared components reusable across multiple features. Compose these from UI primitives where appropriate.
-- Keep components specific to one feature in that feature's directory under `webview/src_new/features`, not in the shared components directory.
+- Keep components specific to one feature in that feature's directory directly under `webview/src_new`, not in the shared components directory.
 - Prefer one primary component per file. Small, tightly coupled helper components may remain in the same file; give substantial components their own files and explicit, typed props.
 - When extending an oversized file or component, refactor the touched responsibility before adding more complexity. Avoid unrelated rewrites and trivial abstractions that only scatter code across files.
 

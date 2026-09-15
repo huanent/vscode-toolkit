@@ -1,7 +1,7 @@
 import type {
 	FolderEntry,
 	PersistedExplorerState,
-} from '../../../../../src/features/explorer/protocol';
+} from '../../../../../src/explorer/protocol';
 
 export interface FileEntry extends FolderEntry {
 	calculatedSize?: number;

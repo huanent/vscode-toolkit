@@ -16,7 +16,7 @@
 
 ### SSH 迁移状态
 
-- SSH 管理界面与终端已迁移到 `src_new/features/ssh`，按 components、hooks、services 组织；dashboard、独立编辑器和终端构建入口已切换。
+- SSH 管理界面与终端已迁移到 `src_new/ssh`，按 components、hooks、services 组织；dashboard、独立编辑器和终端构建入口已切换。
 - 管理界面复用新表单、按钮、列表和弹出层组件；编辑器内嵌表单与模态框由调用方显式选择。SFTP 和 xterm 逻辑保留在 SSH 功能内。
 - SSH 消息服务暂时复用 `src/vscodeApi.ts` 单例，待旧入口迁完后将该单例迁入新目录。共享 icons 仍沿用现有 Codicon 过渡依赖。
 - chat 与 SSH 终端共用的新全局样式由构建抽取为 `global.css`，宿主 HTML 显式加载。
@@ -24,7 +24,7 @@
 
 ### Database 迁移状态
 
-- 数据库连接管理、连接表单、MySQL 概览、表数据预览和 SQL 结果页已迁入 `src_new/features/database`；dashboard 和四个独立构建入口已切换，旧 database 源文件已移除。
+- 数据库连接管理、连接表单、MySQL 概览、表数据预览和 SQL 结果页已迁入 `src_new/database`；dashboard 和四个独立构建入口已切换，旧 database 源文件已移除。
 - 页面按 components、hooks、services 拆分，表单和 MySQL 工具栏、输入、对话框复用新 UI；代理字段复用共享实现，窄屏表单头部自动换行。
 - 过渡期仍复用 `src/vscodeApi.ts` 单例与 dashboard 的 `formTransport`，共享 Tailwind 样式继续由现有宿主加载；不再依赖旧 UI 控件。
 - 已通过完整构建、lint、59 个现有测试，以及模拟消息下的表单保存、密码显隐、窄屏保存按钮、建表 SQL 预览与确认、筛选、分页和行编辑预览检查。真实数据库连接、实际 SQL 执行、多主题和扩展宿主完整回归仍需验证。

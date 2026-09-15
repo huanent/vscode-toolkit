@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { ServerFormValues } from '../types';
-import { formTransport } from '../../../dashboard/formTransport';
+import { formTransport } from '@webview/dashboard/formTransport';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
-} from '../../../../../../src/features/container/formProtocol';
+} from '../../../../../../src/container/formProtocol';
 
 const emptyValues: ServerFormValues = {
 	location: '',
@@ -69,7 +69,7 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 						proxyCommand: server && 'proxyCommand' in server ? (server.proxyCommand ?? '') : '',
 						proxyMode:
 							container?.connectionType === 'ssh' ||
-							Boolean(server && 'proxy' in server && server.proxy)
+								Boolean(server && 'proxy' in server && server.proxy)
 								? 'ssh'
 								: server && 'proxyCommand' in server && server.proxyCommand
 									? 'command'
@@ -85,7 +85,7 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 							manualContainerSsh
 								? (container.port ?? 22)
 								: (referencedContainerSsh?.port ??
-										(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22)),
+									(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22)),
 						),
 						proxyUsername: manualContainerSsh
 							? (container.username ?? '')

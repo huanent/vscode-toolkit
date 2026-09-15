@@ -7,7 +7,7 @@ import type {
 	ResourceRow,
 	ResourceType,
 	ServiceState,
-} from '../../../../../../src/features/container/editorProtocol';
+} from '../../../../../../src/container/editorProtocol';
 
 const postMessage = (message: ContainerRequest) => vscode.postMessage(message);
 

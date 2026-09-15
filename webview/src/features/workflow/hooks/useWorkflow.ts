@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { workflowApi as vscode, subscribe } from '../../dashboard/channel';
-import type { Workflow, WorkflowStep } from '../../../../../src/features/workflow/workflow';
+import { workflowApi as vscode, subscribe } from '@webview/dashboard/channel';
+import type { Workflow, WorkflowStep } from '../../../../../src/workflow/workflow';
 
 type State = {
 	locations: Record<string, string>;
@@ -51,11 +51,11 @@ export function useWorkflow(editorMode: boolean) {
 				setDraft(current =>
 					current && current.id === message.draftId
 						? {
-								...current,
-								steps: current.steps.map((step, index) =>
-									index === message.index ? { ...step, [message.field]: message.value } : step,
-								),
-							}
+							...current,
+							steps: current.steps.map((step, index) =>
+								index === message.index ? { ...step, [message.field]: message.value } : step,
+							),
+						}
 						: current,
 				);
 				setDirty(true);
@@ -92,13 +92,13 @@ export function useWorkflow(editorMode: boolean) {
 			: type === 'ssh'
 				? { type, name: 'SSH Command', serverId: state.servers[0]?.id ?? '', command: '' }
 				: {
-						type,
-						name: 'SFTP Upload',
-						action: 'upload',
-						serverId: state.servers[0]?.id ?? '',
-						localPath: '',
-						remotePath: '',
-					};
+					type,
+					name: 'SFTP Upload',
+					action: 'upload',
+					serverId: state.servers[0]?.id ?? '',
+					localPath: '',
+					remotePath: '',
+				};
 	const updateStep = (index: number, step: WorkflowStep) =>
 		draft &&
 		change({

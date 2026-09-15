@@ -3,7 +3,7 @@ import { Download, Plus, RefreshCw, Upload } from './icons';
 import { IconButton } from './button';
 import { ConnectionCard, type Connection } from './ConnectionCard';
 import { ConnectionGroup } from './ConnectionGroup';
-import { DashboardEmpty, DashboardHeader, DashboardSearch } from '../features/dashboard/components';
+import { DashboardEmpty, DashboardHeader, DashboardSearch } from '@webview/dashboard/components';
 
 export interface ConnectionListState {
 	name: string;

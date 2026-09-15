@@ -1,1 +1,1 @@
-import '../../../src_new/features/chat/main';
+import '../../../src_new/chat/main';

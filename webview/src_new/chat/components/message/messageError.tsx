@@ -1,0 +1,29 @@
+import { CircleAlert } from '../../../components/ui/icons';
+import { Button } from '../../../components/ui/button';
+
+type MessageErrorProps = { message: string; details?: string; busy: boolean; onRetry(): void };
+
+export function MessageError({ message, details, busy, onRetry }: MessageErrorProps) {
+	return (
+		<div
+			className="mt-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-2 rounded border border-(--vscode-inputValidation-errorBorder,var(--vscode-errorForeground)) bg-(--vscode-inputValidation-errorBackground,var(--vscode-input-background)) px-2.5 py-2 text-(--vscode-errorForeground)"
+			role="alert"
+		>
+			<CircleAlert size="md" className="mt-0.5 shrink-0" />
+			<span className="min-w-0 flex-1 wrap-break-word">{message}</span>
+			<Button variant="text" size="sm" className="shrink-0" disabled={busy} onClick={onRetry}>
+				Retry
+			</Button>
+			{details && (
+				<details className="col-start-2 col-end-4 mt-1 min-w-0 text-(--vscode-foreground)">
+					<summary className="cursor-pointer select-none text-xs text-(--vscode-textLink-foreground)">
+						Show details
+					</summary>
+					<pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-(--vscode-textCodeBlock-background) p-2 font-mono text-xs text-(--vscode-textPreformat-foreground)">
+						{details}
+					</pre>
+				</details>
+			)}
+		</div>
+	);
+}
