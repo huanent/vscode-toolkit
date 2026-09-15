@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { ExplorerModel } from '../hooks/useExplorer';
-import { formatDate, formatSize, getFileIcon } from '../../shared/formatters';
+import { formatDate, formatSize, getFileIcon } from '../../../lib/fileFormatters';
 import type { FileEntry } from '../types';
 
 type FileListProps = Pick<ExplorerModel, 'state' | 'actions'>;
@@ -376,17 +376,17 @@ function FolderSizeError({
 		setTooltipStyle(
 			rect.top > 72
 				? {
-						...horizontal,
-						bottom: window.innerHeight - rect.top + 4,
-						maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
-						overflowWrap: 'anywhere',
-					}
+					...horizontal,
+					bottom: window.innerHeight - rect.top + 4,
+					maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
+					overflowWrap: 'anywhere',
+				}
 				: {
-						...horizontal,
-						top: rect.bottom + 4,
-						maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
-						overflowWrap: 'anywhere',
-					},
+					...horizontal,
+					top: rect.bottom + 4,
+					maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
+					overflowWrap: 'anywhere',
+				},
 		);
 	}
 

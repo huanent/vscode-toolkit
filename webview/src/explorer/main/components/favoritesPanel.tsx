@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import type { ExplorerModel } from '../hooks/useExplorer';
-import { getRelativePath } from '../../shared/formatters';
+import { getRelativePath } from '../../../lib/fileFormatters';
 import { IconButton } from './iconButton';
 
 type FavoritesPanelProps = Pick<ExplorerModel, 'state' | 'actions'>;

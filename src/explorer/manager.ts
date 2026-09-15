@@ -1,8 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
-import { readArchiveTree } from './archive/service';
 import { getDisplayName } from './shared/fileEntry';
-import { openPreviewPanel } from './shared/previewPanel';
 import { openSqliteEditor } from '../database/sqlite/editor';
 import { ClipboardState } from './filesystem/operations';
 import { ExplorerDocument } from './document';
@@ -113,17 +111,6 @@ export class ExplorerManager implements vscode.Disposable {
 		await vscode.commands.executeCommand('vscode.openWith', resourceUri, explorerViewType, {
 			preview: false,
 			viewColumn,
-		});
-	}
-
-	async openArchivePreview(uri: vscode.Uri): Promise<void> {
-		const name = getDisplayName(uri);
-		await openPreviewPanel(this.context, {
-			viewType: 'vscode-toolkit.explorerArchivePreview',
-			title: name,
-			icon: 'file-zip',
-			entryPoint: 'archive',
-			load: () => readArchiveTree(uri),
 		});
 	}
 

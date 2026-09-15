@@ -9,7 +9,7 @@ import {
 import type { ExplorerModel } from '../hooks/useExplorer';
 import { Button } from '@webview/components/ui/button';
 import { useContextMenuPosition } from '../hooks/useContextMenuPosition';
-import { getFileManagerName, isMac } from '../../shared/formatters';
+import { getFileManagerName, isMac } from '../../../lib/fileFormatters';
 
 type ContextMenuProps = Pick<ExplorerModel, 'state' | 'actions'>;
 

@@ -33,8 +33,16 @@ Image input requires support from the selected provider and model. Attachment co
 
 - Browse folders in editor tabs with navigation history and favorites.
 - Create, rename, copy, move, and delete files and folders.
-- Compress and extract files, and preview ZIP contents.
+- Compress and extract ZIP files. Open archives through VS Code's editor associations.
 - Open spreadsheets in the Excel editor and browse and manage SQLite databases.
+
+### Archive
+
+- Open local `.zip` and `.ZIP` files in the independent read-only Archive editor. 7z and TAR.GZ are not currently supported.
+- Read the ZIP central directory on demand, without loading the whole archive or extracting file contents. Memory use scales with the directory entries, not the archive payload.
+- No fixed file-size limit; directory enumeration retains a 30-second timeout. Damaged archives may not be readable.
+- Remote URIs are currently rejected: archives are never downloaded for preview. Remote preview requires a separate remote directory-reading connection.
+- Archive has no Explorer preview dependency; Explorer ZIP compression and extraction remain separate file operations.
 
 ### Excel
 

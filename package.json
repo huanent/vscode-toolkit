@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -27,6 +27,16 @@
   "main": "./out/extension.js",
   "contributes": {
     "customEditors": [
+      {
+        "viewType": "vscode-toolkit.archiveEditor",
+        "displayName": "Archive",
+        "selector": [
+          {
+            "filenamePattern": "*.zip"
+          }
+        ],
+        "priority": "default"
+      },
       {
         "viewType": "vscode-toolkit.excelEditor",
         "displayName": "Excel",

@@ -23,18 +23,3 @@ export function getExplorerWebviewHtml(
 		},
 	});
 }
-
-export function getExplorerPreviewWebviewHtml(
-	webview: vscode.Webview,
-	extensionUri: vscode.Uri,
-	entry: string,
-	title: string,
-): string {
-	return getWebviewHtml(webview, extensionUri, {
-		entry,
-		styleEntry: 'explorer',
-		title,
-		stylePolicy: 'external-only',
-		rootData: { name: title },
-	});
-}

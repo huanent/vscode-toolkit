@@ -1,7 +1,7 @@
 import { cn } from 'cn';
 import { useMemo, useState } from 'react';
-import type { ArchiveTreeEntry } from '../../../../../src/explorer/archive/protocol';
-import { formatSize, getFileIcon } from '../../shared/formatters';
+import type { ArchiveTreeEntry } from '../../../src/archive/protocol';
+import { formatSize, getFileIcon } from '../lib/fileFormatters';
 
 export function ArchiveContents({ name, entries }: { name: string; entries: ArchiveTreeEntry[] }) {
 	const summary = useMemo(() => summarize(entries), [entries]);

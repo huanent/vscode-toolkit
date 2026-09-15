@@ -47,7 +47,7 @@ export default defineConfig({
 				sshTerminal: 'webview/src/ssh/terminal/main.tsx',
 				chat: 'webview/src/chat/main.tsx',
 				explorer: 'webview/src/explorer/main/main.tsx',
-				archive: 'webview/src/explorer/previews/archive/main.tsx',
+				archive: 'webview/src/archive/main.tsx',
 				sqlite: 'webview/src/database/sqlite/main.tsx',
 				spreadsheet: 'webview/src/excel/main.tsx',
 			},

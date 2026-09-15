@@ -96,8 +96,6 @@ export function useExplorer(rootElement: HTMLElement) {
 		const lowerName = entry.name.toLowerCase();
 		if (entry.type === 'directory') {
 			requestDirectory(entry.uri, true);
-		} else if (lowerName.endsWith('.zip')) {
-			previewArchive(entry);
 		} else if (
 			lowerName.endsWith('.db') ||
 			lowerName.endsWith('.sqlite') ||
@@ -190,11 +188,6 @@ export function useExplorer(rootElement: HTMLElement) {
 				? (contextMenu?.directoryUri ?? entry?.uri ?? currentUri)
 				: (contextMenu?.directoryUri ?? (entry?.type === 'directory' ? entry.uri : currentUri));
 		vscode.postMessage({ type, uri });
-	}
-
-	function previewArchive(entry = contextMenu?.entry) {
-		if (!entry || entry.type !== 'file' || !entry.name.toLowerCase().endsWith('.zip')) return;
-		vscode.postMessage({ type: 'previewArchive', uri: entry.uri });
 	}
 
 	function startArchive(
@@ -507,7 +500,6 @@ export function useExplorer(rootElement: HTMLElement) {
 			createFile,
 			renameSelected,
 			openFolder,
-			previewArchive,
 			startArchive,
 			calculateSize,
 			calculateAllFolderSizes,

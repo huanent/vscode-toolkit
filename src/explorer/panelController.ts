@@ -6,7 +6,7 @@ import {
 	compressEntries,
 	extractArchive,
 	OperationCancelledError,
-} from './archive/service';
+} from './filesystem/archiveOperations';
 import type { ExplorerRequest } from './protocol';
 import { calculateDirectorySize, readDirectory } from './filesystem/directoryService';
 import { getDisplayName } from './shared/fileEntry';
@@ -226,11 +226,6 @@ export class ExplorerPanelController implements vscode.Disposable {
 			case 'openInFileManager':
 				await vscode.commands.executeCommand('revealFileInOS', getSafeUri(rootUri, message.uri));
 				return;
-			case 'previewArchive': {
-				const archiveUri = getSafeUri(rootUri, message.uri);
-				await this.manager.openArchivePreview(archiveUri);
-				return;
-			}
 			case 'compress':
 				await this.compress(message.operationId, message.uris, message.destinationUri);
 				return;
