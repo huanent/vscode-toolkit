@@ -30,7 +30,7 @@ export function ModelPicker({
 		providers.set(model.providerName, [...(providers.get(model.providerName) ?? []), model]);
 
 	return (
-		<div className="relative min-w-0 max-w-[min(60vw,320px)] max-[620px]:max-w-[52vw]">
+		<div className="relative flex min-w-0 max-w-[min(60vw,320px)] max-[620px]:max-w-[52vw]">
 			<Popover
 				open={open}
 				onOpenChange={setOpen}

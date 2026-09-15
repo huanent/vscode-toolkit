@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { type PendingRequest, updateAssistant } from '../components/message/chatMessages';
 import { postMessage } from '../services/vscode';
 import type { InboundMessage, ModelItem, SessionItem, StoredMessage } from '../types';
+import { useAttachments } from './useAttachments';
 
 export function useChat() {
+	const attachmentState = useAttachments();
+	const resetAttachmentsRef = useRef(attachmentState.replaceAttachments);
+	resetAttachmentsRef.current = attachmentState.replaceAttachments;
 	const [messages, setMessages] = useState<StoredMessage[]>([]);
 	const [sessions, setSessions] = useState<SessionItem[]>([]);
 	const [currentSessionId, setCurrentSessionId] = useState<string>();
@@ -33,6 +37,7 @@ export function useChat() {
 					setSessions(message.sessions);
 					return;
 				case 'sessions':
+					resetAttachmentsRef.current();
 					setCurrentSessionId(message.currentSessionId);
 					setMessages(message.messages);
 					setSessions(message.sessions);
@@ -142,6 +147,7 @@ export function useChat() {
 			if (editingIndex !== undefined) {
 				setEditingIndex(undefined);
 				setInput('');
+				resetAttachmentsRef.current();
 			}
 		};
 		window.addEventListener('keydown', close);
@@ -161,6 +167,7 @@ export function useChat() {
 			type: 'send',
 			requestId: pendingRequest.requestId,
 			text: pendingRequest.text,
+			attachments: pendingRequest.attachments,
 			modelId: pendingRequest.modelId,
 			editMessageIndex: pendingRequest.editMessageIndex,
 		});
@@ -172,19 +179,21 @@ export function useChat() {
 			return;
 		}
 		const text = input.trim();
-		if (!text || !selectedModelId) return;
+		if ((!text && !attachmentState.attachments.length) || !selectedModelId || attachmentState.readingAttachments) return;
 		const nextMessages =
 			editingIndex === undefined ? [...messages] : messages.slice(0, editingIndex);
-		nextMessages.push({ role: 'user', content: text }, { role: 'assistant', content: '' });
+		nextMessages.push({ role: 'user', content: text, attachments: attachmentState.attachments }, { role: 'assistant', content: '' });
 		setMessages(nextMessages);
 		setInput('');
 		startRequest({
 			text,
+			attachments: attachmentState.attachments,
 			modelId: selectedModelId,
 			editMessageIndex: editingIndex,
 			assistantIndex: nextMessages.length - 1,
 		});
 		setEditingIndex(undefined);
+		attachmentState.replaceAttachments();
 	};
 
 	const retry = (assistantIndex: number) => {
@@ -200,6 +209,7 @@ export function useChat() {
 		);
 		startRequest({
 			text: failedRequest.text,
+			attachments: failedRequest.attachments,
 			modelId: failedRequest.modelId,
 			editMessageIndex: failedRequest.editMessageIndex,
 			assistantIndex,
@@ -224,6 +234,7 @@ export function useChat() {
 		setMessages(nextMessages);
 		startRequest({
 			text: userMessage.content,
+			attachments: userMessage.attachments,
 			modelId: selectedModelId,
 			editMessageIndex: userIndex,
 			assistantIndex: nextMessages.length - 1,
@@ -231,6 +242,7 @@ export function useChat() {
 	};
 
 	const editMessage = (index: number, text: string) => {
+		attachmentState.replaceAttachments(messages[index]?.attachments);
 		setEditingIndex(index);
 		setInput(text);
 		requestAnimationFrame(() => inputRef.current?.focus());
@@ -242,6 +254,7 @@ export function useChat() {
 	};
 
 	return {
+		...attachmentState,
 		messages,
 		sessions,
 		currentSessionId,

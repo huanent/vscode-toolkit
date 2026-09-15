@@ -41,6 +41,11 @@ export function App() {
 					onRetry={chat.retry}
 				/>
 				<ChatInput
+					attachments={chat.attachments}
+					attachmentError={chat.attachmentError}
+					readingAttachments={chat.readingAttachments}
+					onAddAttachments={files => void chat.addAttachments(files)}
+					onRemoveAttachment={chat.removeAttachment}
 					inputRef={chat.inputRef}
 					input={chat.input}
 					busy={chat.busy}

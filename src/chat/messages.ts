@@ -1,7 +1,9 @@
+import type { ChatAttachment } from './attachments';
+
 export type WebviewMessage =
 	| { type: 'ready' }
 	| { type: 'focusChanged'; focused: boolean }
-	| { type: 'send'; requestId: string; text: string; modelId: string; editMessageIndex?: number }
+	| { type: 'send'; requestId: string; text: string; modelId: string; editMessageIndex?: number; attachments?: ChatAttachment[] }
 	| { type: 'selectModel'; modelId: string }
 	| { type: 'newChat' }
 	| { type: 'selectSession'; sessionId: string }

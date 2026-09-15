@@ -1,8 +1,9 @@
-import type { StoredMessage } from '../../types';
+import type { ChatAttachment, StoredMessage } from '../../types';
 
 export type PendingRequest = {
 	requestId: string;
 	text: string;
+	attachments?: ChatAttachment[];
 	modelId: string;
 	editMessageIndex?: number;
 	assistantIndex: number;

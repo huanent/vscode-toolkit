@@ -14,6 +14,8 @@ import type { ChatDocument } from './document';
 import type { ChatManager } from './manager';
 import type { ModelItem, WebviewMessage } from './messages';
 import type { ModelService } from './modelService';
+import { validateAttachments, type ChatAttachment } from './attachments';
+import { createUserMessage } from './modelMessages';
 
 export class ChatPanelController implements vscode.Disposable {
 	private readonly disposables: vscode.Disposable[] = [];
@@ -97,6 +99,7 @@ export class ChatPanelController implements vscode.Disposable {
 						message.text,
 						message.modelId,
 						message.editMessageIndex,
+						message.attachments,
 					);
 					return;
 				case 'selectModel':
@@ -249,9 +252,13 @@ export class ChatPanelController implements vscode.Disposable {
 		text: string,
 		modelId: string,
 		editMessageIndex?: number,
+		attachments?: ChatAttachment[],
 	): Promise<void> {
 		const userText = text.trim();
-		if (!userText) {
+		const userAttachments = validateAttachments(attachments);
+		const userMessage = { role: 'user' as const, content: userText, attachments: userAttachments };
+		const titleText = userText || userAttachments.map(attachment => attachment.name).join(', ');
+		if (!userText && userAttachments.length === 0) {
 			return;
 		}
 		if (this.cancellation) {
@@ -287,33 +294,31 @@ export class ChatPanelController implements vscode.Disposable {
 			editApplied = true;
 			session.updatedAt = Date.now();
 			if (editMessageIndex === 0) {
-				session.summary = createSummary(userText);
-				this.panel.title = createTabTitle(userText);
+				session.summary = createSummary(titleText);
+				this.panel.title = createTabTitle(titleText);
 			}
 			await this.manager.persist(this.currentSessionId);
 			await this.refreshSessionHistory();
 		}
 		if (!session) {
-			this.panel.title = createTabTitle(userText);
+			this.panel.title = createTabTitle(titleText);
 		}
 
 		const prompt = vscode.workspace
 			.getConfiguration('toolkit.chat')
 			.get<string>('prompt', '')
 			.trim();
-		const requestMessages = [
-			...(prompt ? [vscode.LanguageModelChatMessage.User(prompt, 'instructions')] : []),
-			...(session?.messages ?? []).map(message =>
-				message.role === 'user'
-					? vscode.LanguageModelChatMessage.User(message.content)
-					: vscode.LanguageModelChatMessage.Assistant(message.content),
-			),
-			vscode.LanguageModelChatMessage.User(userText),
-		];
 		let answer = '';
 		let modelName = '';
 
 		try {
+			const requestMessages = [
+				...(prompt ? [vscode.LanguageModelChatMessage.User(prompt, 'instructions')] : []),
+				...(session?.messages ?? []).map(message => message.role === 'user'
+					? createUserMessage(message)
+					: vscode.LanguageModelChatMessage.Assistant(message.content)),
+				createUserMessage(userMessage),
+			];
 			const models = await this.modelService.getModels();
 			const model = models.find(candidate => candidate.id === modelId) ?? models[0];
 			if (!model) {
@@ -323,7 +328,7 @@ export class ChatPanelController implements vscode.Disposable {
 			}
 			const summaryPromise =
 				!session || editMessageIndex === 0
-					? this.generateSummary(model, userText, sessionId)
+					? this.generateSummary(model, titleText, sessionId)
 					: undefined;
 			modelName = model.name;
 			await this.panel.webview.postMessage({ type: 'started', requestId, model: modelName });
@@ -341,9 +346,9 @@ export class ChatPanelController implements vscode.Disposable {
 				cancellation.token,
 			);
 
-			const updatedSession = session ?? createStoredSession(sessionId, userText);
+			const updatedSession = session ?? createStoredSession(sessionId, titleText);
 			updatedSession.messages.push(
-				{ role: 'user', content: userText },
+				userMessage,
 				{ role: 'assistant', content: answer, model: modelName, tokenUsage },
 			);
 			updatedSession.updatedAt = Date.now();
@@ -359,8 +364,8 @@ export class ChatPanelController implements vscode.Disposable {
 		} catch (error) {
 			this.cancelSummary(sessionId);
 			if (error instanceof vscode.CancellationError || cancellation.token.isCancellationRequested) {
-				const updatedSession = session ?? createStoredSession(sessionId, userText);
-				updatedSession.messages.push({ role: 'user', content: userText });
+				const updatedSession = session ?? createStoredSession(sessionId, titleText);
+				updatedSession.messages.push(userMessage);
 				if (answer) {
 					updatedSession.messages.push({ role: 'assistant', content: answer, model: modelName });
 				}
@@ -406,7 +411,7 @@ export class ChatPanelController implements vscode.Disposable {
 				[
 					vscode.LanguageModelChatMessage.User(
 						`Create a concise chat title that captures the user's intent. ` +
-							`Use the same language as the user, no more than 12 words, and output only the title without quotes or punctuation wrappers.\n\nUser input:\n${userText}`,
+						`Use the same language as the user, no more than 12 words, and output only the title without quotes or punctuation wrappers.\n\nUser input:\n${userText}`,
 					),
 				],
 				{},
@@ -515,9 +520,9 @@ async function getReportedTokenUsage(
 	const usage = rawUsage as Record<string, unknown>;
 	const inputDetails = getRecord(
 		usage.inputTokenDetails ??
-			usage.input_tokens_details ??
-			usage.promptTokensDetails ??
-			usage.prompt_tokens_details,
+		usage.input_tokens_details ??
+		usage.promptTokensDetails ??
+		usage.prompt_tokens_details,
 	);
 	const input = getTokenCount(usage, [
 		'input',

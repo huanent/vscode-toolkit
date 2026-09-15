@@ -34,6 +34,29 @@ const createStorage = () => SessionStorage.create({} as vscode.ExtensionContext)
 describe('Chat session filenames', () => {
 	beforeEach(() => { mocks.files.clear(); });
 
+	it('round-trips image and text attachments', async () => {
+		const stored = {
+			...session('attachments'), messages: [{
+				role: 'user' as const, content: '', attachments: [
+					{ id: 'image', name: 'photo.png', mimeType: 'image/png', data: 'aGVsbG8=' },
+					{ id: 'text', name: 'notes.txt', mimeType: 'text/plain', data: 'Notes' },
+				]
+			}]
+		};
+		const storage = await createStorage();
+		await storage.persist([stored]);
+		expect(await (await createStorage()).load()).toEqual([stored]);
+	});
+
+	it('ignores sessions containing malformed attachments', async () => {
+		mocks.files.set('/chat/1700000000000.json', encode({
+			...session('invalid'), messages: [
+				{ role: 'user', content: '', attachments: [{ mimeType: 'image/png', data: false }] },
+			]
+		}));
+		expect(await (await createStorage()).load()).toEqual([]);
+	});
+
 	it('migrates old names without changing bytes and reserves existing timestamps', async () => {
 		const legacy = session('old');
 		const existing = session('existing');

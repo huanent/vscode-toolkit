@@ -2,12 +2,13 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../storagePath';
 import type { StoredSession } from './session';
+import { validateAttachments } from './attachments';
 
 export class SessionStorage {
 	private readonly sessionFiles = new Map<string, string>();
 	private readonly reservedNames = new Set<string>();
 
-	private constructor(private readonly storageUri: vscode.Uri) {}
+	private constructor(private readonly storageUri: vscode.Uri) { }
 
 	static async create(context: vscode.ExtensionContext): Promise<SessionStorage> {
 		const storageUri = getStorageUri(context, 'chat');
@@ -34,32 +35,32 @@ export class SessionStorage {
 		entries.forEach(([name]) => this.reservedNames.add(name));
 		const sessions: StoredSession[] = [];
 		for (const [name, type] of entries) {
-				if (type !== vscode.FileType.File || path.extname(name).toLowerCase() !== '.json') {
-					continue;
-				}
-				let session: unknown;
-				try {
-					const content = await vscode.workspace.fs.readFile(
-						vscode.Uri.joinPath(this.storageUri, name),
-					);
-					session = JSON.parse(new TextDecoder().decode(content));
-				} catch {
-					continue;
-				}
-				if (!isStoredSession(session) || (!/^\d+\.json$/.test(name) && name !== `${session.id}.json`)) {
-					continue;
-				}
-				let filename = name;
-				if (!/^\d+\.json$/.test(name)) {
-					filename = this.reserveFilename(session.updatedAt);
-					await vscode.workspace.fs.rename(
-						vscode.Uri.joinPath(this.storageUri, name),
-						vscode.Uri.joinPath(this.storageUri, filename),
-						{ overwrite: false },
-					);
-				}
-				this.sessionFiles.set(session.id, filename);
-				sessions.push(session);
+			if (type !== vscode.FileType.File || path.extname(name).toLowerCase() !== '.json') {
+				continue;
+			}
+			let session: unknown;
+			try {
+				const content = await vscode.workspace.fs.readFile(
+					vscode.Uri.joinPath(this.storageUri, name),
+				);
+				session = JSON.parse(new TextDecoder().decode(content));
+			} catch {
+				continue;
+			}
+			if (!isStoredSession(session) || (!/^\d+\.json$/.test(name) && name !== `${session.id}.json`)) {
+				continue;
+			}
+			let filename = name;
+			if (!/^\d+\.json$/.test(name)) {
+				filename = this.reserveFilename(session.updatedAt);
+				await vscode.workspace.fs.rename(
+					vscode.Uri.joinPath(this.storageUri, name),
+					vscode.Uri.joinPath(this.storageUri, filename),
+					{ overwrite: false },
+				);
+			}
+			this.sessionFiles.set(session.id, filename);
+			sessions.push(session);
 		}
 		return sessions;
 	}
@@ -114,10 +115,20 @@ function isStoredSession(value: unknown): value is StoredSession {
 				Boolean(message) &&
 				(message.role === 'user' || message.role === 'assistant') &&
 				typeof message.content === 'string' &&
+				isAttachments(message.attachments) &&
 				(message.model === undefined || typeof message.model === 'string') &&
 				(message.tokenUsage === undefined || isTokenUsage(message.tokenUsage)),
 		)
 	);
+}
+
+function isAttachments(value: unknown): boolean {
+	try {
+		validateAttachments(value);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function isTokenUsage(value: unknown): boolean {

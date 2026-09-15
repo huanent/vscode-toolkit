@@ -4,6 +4,7 @@ import type { StoredMessage } from '../../types';
 import { MessageContent } from './messageContent';
 import { MessageError } from './messageError';
 import { MessageFooter } from './messageFooter';
+import { AttachmentList } from '../attachmentList';
 
 type MessageItemProps = {
 	message: StoredMessage;
@@ -41,6 +42,7 @@ export function MessageItem({
 			className={cn('group flex py-2.5', isUser ? 'justify-end' : 'justify-start')}
 		>
 			<div className={cn('flex min-w-0 max-w-full flex-col', isUser ? 'items-end' : 'items-start')}>
+				<AttachmentList attachments={message.attachments} />
 				<MessageContent
 					content={message.content}
 					isUser={isUser}

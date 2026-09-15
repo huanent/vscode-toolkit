@@ -1,3 +1,6 @@
+import type { ChatAttachment } from '../../../src/chat/attachments';
+export type { ChatAttachment } from '../../../src/chat/attachments';
+
 export type TokenUsage = {
 	input: number;
 	output: number;
@@ -7,6 +10,7 @@ export type TokenUsage = {
 export type StoredMessage = {
 	role: 'user' | 'assistant';
 	content: string;
+	attachments?: ChatAttachment[];
 	model?: string;
 	tokenUsage?: TokenUsage;
 	error?: string;
@@ -29,11 +33,11 @@ export type ModelItem = {
 export type InboundMessage =
 	| { type: 'sessionHistory'; sessions: SessionItem[] }
 	| {
-			type: 'sessions';
-			currentSessionId: string;
-			messages: StoredMessage[];
-			sessions: SessionItem[];
-	  }
+		type: 'sessions';
+		currentSessionId: string;
+		messages: StoredMessage[];
+		sessions: SessionItem[];
+	}
 	| { type: 'models'; selectedModelId?: string; models: ModelItem[] }
 	| { type: 'modelsError'; message: string }
 	| { type: 'started'; requestId: string; model: string }
@@ -41,10 +45,10 @@ export type InboundMessage =
 	| { type: 'completed'; requestId: string; tokenUsage?: TokenUsage }
 	| { type: 'cancelled'; requestId: string }
 	| {
-			type: 'error';
-			requestId?: string;
-			message: string;
-			details?: string;
-			retryWithoutEdit?: boolean;
-	  }
+		type: 'error';
+		requestId?: string;
+		message: string;
+		details?: string;
+		retryWithoutEdit?: boolean;
+	}
 	| { type: 'summaryChunk'; sessionId: string; summary: string };

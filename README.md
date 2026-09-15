@@ -22,9 +22,12 @@ Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard
 - Chat with language models available in VS Code and switch between models.
 - Open multiple chat tabs, save conversations, and search and manage chat history.
 - View Markdown responses and edit messages to send them again.
+- Attach PNG, JPEG, GIF, WebP images and UTF-8 text/code files using the attachment button, drag and drop, or clipboard paste. Preview and remove attachments before sending, including messages without text.
+- Attachments are retained in chat history and when editing, retrying, or regenerating messages. Each message supports up to 10 files, at most 5 MB each. PDF, Office documents, and other binary files are not supported.
 - Set a custom chat prompt in settings.
 
 Requires an available language model provider in VS Code.
+Image input requires support from the selected provider and model. Attachment contents are sent to that provider and stored with the conversation locally.
 
 ### Explorer
 

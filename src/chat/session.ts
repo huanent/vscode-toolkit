@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import type { ChatAttachment } from './attachments';
 
 export type TokenUsage = {
 	input: number;
@@ -9,6 +10,7 @@ export type TokenUsage = {
 export type StoredMessage = {
 	role: 'user' | 'assistant';
 	content: string;
+	attachments?: ChatAttachment[];
 	model?: string;
 	tokenUsage?: TokenUsage;
 };
