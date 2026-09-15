@@ -9,7 +9,7 @@
     "rootDir": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@webview/*": ["./webview/src_new/*"]
+      "@webview/*": ["./webview/src/*"]
     },
     "strict": true /* enable all strict type-checking options */,
     "skipLibCheck": true

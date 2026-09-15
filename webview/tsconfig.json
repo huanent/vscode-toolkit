@@ -19,11 +19,10 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["../src/*"],
-      "@webview/*": ["./src_new/*"]
+      "@webview/*": ["./src/*"]
     }
   },
   "include": [
-    "src",
-    "src_new"
+    "src"
   ]
 }

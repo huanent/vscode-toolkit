@@ -21,7 +21,7 @@ export default defineConfig({
 	resolve: {
 		alias: [
 			{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-			{ find: '@webview', replacement: fileURLToPath(new URL('./webview/src_new', import.meta.url)) },
+			{ find: '@webview', replacement: fileURLToPath(new URL('./webview/src', import.meta.url)) },
 			{
 				find: /^katex$/,
 				replacement: fileURLToPath(new URL('./node_modules/katex/dist/katex.mjs', import.meta.url)),
@@ -35,20 +35,20 @@ export default defineConfig({
 		rolldownOptions: {
 			input: {
 				styles: 'webview/src/styles.css',
-				dashboard: 'webview/src_new/dashboard/main.tsx',
-				dashboardEditor: 'webview/src_new/dashboard/editor.tsx',
-				databaseForm: 'webview/src_new/database/serverForm/main.tsx',
-				containerForm: 'webview/src/features/container/serverForm/main.tsx',
-				containerEditor: 'webview/src/features/container/editor/main.tsx',
-				databaseSqlResults: 'webview/src_new/database/sqlResults/main.tsx',
-				mysqlOverview: 'webview/src_new/database/mysql/overview/main.tsx',
-				mysqlTablePreview: 'webview/src_new/database/mysql/tablePreview/main.tsx',
-				sshTerminal: 'webview/src_new/ssh/terminal/main.tsx',
-				chat: 'webview/src_new/chat/main.tsx',
-				explorer: 'webview/src/features/explorer/main/main.tsx',
-				archive: 'webview/src/features/explorer/previews/archive/main.tsx',
-				sqlite: 'webview/src_new/database/sqlite/main.tsx',
-				spreadsheet: 'webview/src/features/explorer/previews/excel/main.tsx',
+				dashboard: 'webview/src/dashboard/main.tsx',
+				dashboardEditor: 'webview/src/dashboard/editor.tsx',
+				databaseForm: 'webview/src/database/serverForm/main.tsx',
+				containerForm: 'webview/src/container/serverForm/main.tsx',
+				containerEditor: 'webview/src/container/editor/main.tsx',
+				databaseSqlResults: 'webview/src/database/sqlResults/main.tsx',
+				mysqlOverview: 'webview/src/database/mysql/overview/main.tsx',
+				mysqlTablePreview: 'webview/src/database/mysql/tablePreview/main.tsx',
+				sshTerminal: 'webview/src/ssh/terminal/main.tsx',
+				chat: 'webview/src/chat/main.tsx',
+				explorer: 'webview/src/explorer/main/main.tsx',
+				archive: 'webview/src/explorer/previews/archive/main.tsx',
+				sqlite: 'webview/src/database/sqlite/main.tsx',
+				spreadsheet: 'webview/src/explorer/previews/excel/main.tsx',
 			},
 			output: {
 				codeSplitting: {
