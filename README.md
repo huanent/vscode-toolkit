@@ -34,7 +34,14 @@ Image input requires support from the selected provider and model. Attachment co
 - Browse folders in editor tabs with navigation history and favorites.
 - Create, rename, copy, move, and delete files and folders.
 - Compress and extract files, and preview ZIP contents.
-- Preview spreadsheets and browse and manage SQLite databases.
+- Open spreadsheets in the Excel editor and browse and manage SQLite databases.
+
+### Excel
+
+- Open `.xlsx` and `.csv` files directly in the read-only Excel editor, including uppercase file extensions.
+- Switch worksheets and preview cell values with row and column headers.
+- File opening uses VS Code's custom editor associations, with no spreadsheet-specific handling in Explorer. Legacy `.xls` files are not supported.
+- Use **Reopen Editor With... > Text Editor** to edit CSV source text.
 
 ### HTTP Client
 

@@ -15,6 +15,7 @@ import { registerDatabase } from './database/registerDatabase';
 import { registerContainer } from './container/registerContainer';
 import { registerWorkflow } from './workflow/registerWorkflow';
 import { ResultView } from './result/resultView';
+import { registerExcelEditor } from './excel/editor';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	const resultView = new ResultView(context.extensionUri);
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		vscode.commands.registerCommand('vscode-toolkit.runNpmScript', runPackageScript),
 		vscode.commands.registerCommand('vscode-toolkit.runBunPackageScript', runPackageScript),
 		registerXmlFormatter(),
+		registerExcelEditor(context),
 	);
 	registerPackageScriptWatcher(context);
 	registerScriptRuntimeWatcher(context);

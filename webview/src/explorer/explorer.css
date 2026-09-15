@@ -1,17 +1,6 @@
 @layer components {
-	body:is(
-		[data-webview='explorer'],
-		[data-webview='archive'],
-		[data-webview='sqlite'],
-		[data-webview='spreadsheet']
-	),
-	body:is(
-			[data-webview='explorer'],
-			[data-webview='archive'],
-			[data-webview='sqlite'],
-			[data-webview='spreadsheet']
-		)
-		#root {
+	body:is([data-webview='explorer'], [data-webview='archive'], [data-webview='sqlite']),
+	body:is([data-webview='explorer'], [data-webview='archive'], [data-webview='sqlite']) #root {
 		width: 100%;
 		min-width: 300px;
 		height: 100vh;
@@ -19,12 +8,7 @@
 		overflow: hidden;
 	}
 
-	body:is(
-		[data-webview='explorer'],
-		[data-webview='archive'],
-		[data-webview='sqlite'],
-		[data-webview='spreadsheet']
-	) {
+	body:is([data-webview='explorer'], [data-webview='archive'], [data-webview='sqlite']) {
 		user-select: none;
 	}
 }

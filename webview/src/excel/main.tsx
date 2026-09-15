@@ -1,8 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { SpreadsheetSheet } from '../../../../../src/explorer/excel/protocol';
-import { PreviewLoader } from '../../shared/components/previewLoader';
-import '../../explorer.css';
+import type { SpreadsheetSheet } from '@/excel/protocol';
+import { PreviewLoader } from '../components/previewLoader';
 import { SpreadsheetPreview } from './spreadsheetPreview';
 
 const root = document.getElementById('root');

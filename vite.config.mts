@@ -35,6 +35,7 @@ export default defineConfig({
 		rolldownOptions: {
 			input: {
 				global: 'webview/src/global.css',
+				explorerStyles: 'webview/src/explorer/explorer.css',
 				dashboard: 'webview/src/dashboard/main.tsx',
 				dashboardEditor: 'webview/src/dashboard/editor.tsx',
 				databaseForm: 'webview/src/database/serverForm/main.tsx',
@@ -48,7 +49,7 @@ export default defineConfig({
 				explorer: 'webview/src/explorer/main/main.tsx',
 				archive: 'webview/src/explorer/previews/archive/main.tsx',
 				sqlite: 'webview/src/database/sqlite/main.tsx',
-				spreadsheet: 'webview/src/explorer/previews/excel/main.tsx',
+				spreadsheet: 'webview/src/excel/main.tsx',
 			},
 			output: {
 				codeSplitting: {
@@ -59,7 +60,7 @@ export default defineConfig({
 				},
 				entryFileNames: '[name].js',
 				assetFileNames: assetInfo =>
-					assetInfo.names?.some(name => name === 'explorer.css')
+					assetInfo.names?.some(name => name === 'explorer.css' || name === 'explorerStyles.css')
 						? 'explorer.css'
 						: assetInfo.names?.some(name => name.endsWith('.css'))
 							? '[name][extname]'

@@ -26,7 +26,6 @@ export type ExplorerRequest =
 	| { type: 'navigateQuickLocation'; location: 'desktop' | 'downloads' | 'documents' | 'tmp' }
 	| { type: 'navigatePath'; path: string; currentUri: string }
 	| { type: 'openFile'; uri: string }
-	| { type: 'previewSpreadsheet'; uri: string }
 	| { type: 'previewSqlite'; uri: string }
 	| { type: 'calculateDirectorySize'; uri: string }
 	| { type: 'setClipboard'; uris: string[]; operation: 'cut' | 'copy' }
@@ -51,19 +50,19 @@ export type ExplorerResponse =
 	| { type: 'directory'; rootUri: string; currentUri: string; entries: FolderEntry[] }
 	| { type: 'archiveProgress'; operationId: string; percent: number; detail: string }
 	| {
-			type: 'pasteProgress';
-			operationId: string;
-			operation: 'cut' | 'copy';
-			percent: number;
-			detail: string;
-	  }
+		type: 'pasteProgress';
+		operationId: string;
+		operation: 'cut' | 'copy';
+		percent: number;
+		detail: string;
+	}
 	| { type: 'createdDirectory' | 'createdFile'; uri: string; parentUri: string }
 	| { type: 'deleted' | 'renamed' }
 	| { type: 'pasted'; operationId: string; uris: string[]; destinationUri: string }
 	| {
-			type: 'compressed' | 'extracted' | 'archiveCancelled' | 'archiveDismissed' | 'pasteCancelled';
-			operationId: string;
-	  }
+		type: 'compressed' | 'extracted' | 'archiveCancelled' | 'archiveDismissed' | 'pasteCancelled';
+		operationId: string;
+	}
 	| { type: 'clipboardChanged'; hasEntry: boolean; operation: 'cut' | 'copy'; uris: string[] }
 	| { type: 'favoritesChanged'; favorites: string[] }
 	| { type: 'directorySize'; uri: string; size: number }

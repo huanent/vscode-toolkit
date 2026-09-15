@@ -98,8 +98,6 @@ export function useExplorer(rootElement: HTMLElement) {
 			requestDirectory(entry.uri, true);
 		} else if (lowerName.endsWith('.zip')) {
 			previewArchive(entry);
-		} else if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.csv')) {
-			vscode.postMessage({ type: 'previewSpreadsheet', uri: entry.uri });
 		} else if (
 			lowerName.endsWith('.db') ||
 			lowerName.endsWith('.sqlite') ||
@@ -203,15 +201,15 @@ export function useExplorer(rootElement: HTMLElement) {
 		kind: 'compress' | 'extract',
 		targets = contextMenu?.directoryUri
 			? [
-					{
-						name: '',
-						uri: contextMenu.directoryUri,
-						type: 'directory' as const,
-						size: 0,
-						created: 0,
-						modified: 0,
-					},
-				]
+				{
+					name: '',
+					uri: contextMenu.directoryUri,
+					type: 'directory' as const,
+					size: 0,
+					created: 0,
+					modified: 0,
+				},
+			]
 			: selection.selectedEntries,
 	) {
 		if (archiveOperation || !targets.length) return;
@@ -238,9 +236,9 @@ export function useExplorer(rootElement: HTMLElement) {
 	function calculateSize(entry: FileEntry, all: boolean) {
 		const targets = all
 			? entries.filter(
-					item =>
-						item.type === 'directory' && item.calculatedSize === undefined && !item.calculating,
-				)
+				item =>
+					item.type === 'directory' && item.calculatedSize === undefined && !item.calculating,
+			)
 			: [entry];
 		const targetUris = new Set(targets.map(item => item.uri));
 		setEntries(current =>
@@ -268,10 +266,10 @@ export function useExplorer(rootElement: HTMLElement) {
 			const pendingSelectionUris = pendingSelectionUrisRef.current;
 			const nextSelectedUris = pendingSelectionUris
 				? new Set(
-						message.entries
-							.filter(entry => pendingSelectionUris.includes(entry.uri))
-							.map(entry => entry.uri),
-					)
+					message.entries
+						.filter(entry => pendingSelectionUris.includes(entry.uri))
+						.map(entry => entry.uri),
+				)
 				: new Set<string>();
 			const scrollUri = message.entries.find(entry =>
 				pendingSelectionUris?.includes(entry.uri),
@@ -290,21 +288,21 @@ export function useExplorer(rootElement: HTMLElement) {
 			setArchiveOperation(current =>
 				current?.id === message.operationId && !current.cancelling
 					? {
-							...current,
-							percent: Math.max(0, Math.min(100, message.percent)),
-							detail: message.detail,
-						}
+						...current,
+						percent: Math.max(0, Math.min(100, message.percent)),
+						detail: message.detail,
+					}
 					: current,
 			);
 		} else if (message.type === 'pasteProgress') {
 			setArchiveOperation(current =>
 				current?.id === message.operationId && !current.cancelling
 					? {
-							...current,
-							kind: message.operation,
-							percent: Math.max(0, Math.min(100, message.percent)),
-							detail: message.detail,
-						}
+						...current,
+						kind: message.operation,
+						percent: Math.max(0, Math.min(100, message.percent)),
+						detail: message.detail,
+					}
 					: current,
 			);
 		} else if (
@@ -341,11 +339,11 @@ export function useExplorer(rootElement: HTMLElement) {
 				current.map(entry =>
 					entry.uri === message.uri
 						? {
-								...entry,
-								calculating: false,
-								calculatedSize: message.size,
-								calculationError: undefined,
-							}
+							...entry,
+							calculating: false,
+							calculatedSize: message.size,
+							calculationError: undefined,
+						}
 						: entry,
 				),
 			);

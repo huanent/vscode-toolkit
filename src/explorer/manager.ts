@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { readArchiveTree } from './archive/service';
-import { readSpreadsheet } from './excel/service';
 import { getDisplayName } from './shared/fileEntry';
 import { openPreviewPanel } from './shared/previewPanel';
 import { openSqliteEditor } from '../database/sqlite/editor';
@@ -114,17 +113,6 @@ export class ExplorerManager implements vscode.Disposable {
 		await vscode.commands.executeCommand('vscode.openWith', resourceUri, explorerViewType, {
 			preview: false,
 			viewColumn,
-		});
-	}
-
-	async openSpreadsheetPreview(uri: vscode.Uri): Promise<void> {
-		const name = getDisplayName(uri);
-		await openPreviewPanel(this.context, {
-			viewType: 'vscode-toolkit.explorerSpreadsheetPreview',
-			title: name,
-			icon: 'table',
-			entryPoint: 'spreadsheet',
-			load: () => readSpreadsheet(uri),
 		});
 	}
 

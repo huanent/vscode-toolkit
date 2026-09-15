@@ -163,15 +163,6 @@ export class ExplorerPanelController implements vscode.Disposable {
 			case 'openFile':
 				await vscode.commands.executeCommand('vscode.open', getSafeUri(rootUri, message.uri));
 				return;
-			case 'previewSpreadsheet': {
-				const spreadsheetUri = getSafeUri(rootUri, message.uri);
-				const extension = path.extname(spreadsheetUri.path).toLowerCase();
-				if (extension !== '.xlsx' && extension !== '.csv') {
-					throw new Error('Only XLSX and CSV files can be previewed.');
-				}
-				await this.manager.openSpreadsheetPreview(spreadsheetUri);
-				return;
-			}
 			case 'previewSqlite': {
 				const sqliteUri = getSafeUri(rootUri, message.uri);
 				const extension = path.extname(sqliteUri.path).toLowerCase();

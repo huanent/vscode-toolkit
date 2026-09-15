@@ -28,6 +28,19 @@
   "contributes": {
     "customEditors": [
       {
+        "viewType": "vscode-toolkit.excelEditor",
+        "displayName": "Excel",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.csv"
+          }
+        ],
+        "priority": "default"
+      },
+      {
         "viewType": "vscode-toolkit.database.sqliteEditor",
         "displayName": "SQLite",
         "selector": [
