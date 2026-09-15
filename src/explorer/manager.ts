@@ -4,7 +4,7 @@ import { readArchiveTree } from './archive/service';
 import { readSpreadsheet } from './excel/service';
 import { getDisplayName } from './shared/fileEntry';
 import { openPreviewPanel } from './shared/previewPanel';
-import { openSqlitePanel } from './sqlite/panel';
+import { openSqliteEditor } from '../database/sqlite/editor';
 import { ClipboardState } from './filesystem/operations';
 import { ExplorerDocument } from './document';
 import { FavoritesStore } from './favoritesStore';
@@ -140,7 +140,7 @@ export class ExplorerManager implements vscode.Disposable {
 	}
 
 	async openSqliteManager(uri: vscode.Uri): Promise<void> {
-		openSqlitePanel(this.context, uri);
+		await openSqliteEditor(uri);
 	}
 
 	private openCustomDocument(uri: vscode.Uri): ExplorerDocument {

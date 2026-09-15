@@ -56,7 +56,7 @@ Requests require absolute HTTP(S) URLs. Put credentials in headers, not URLs. CO
 - Write and execute SQL with completion, and export query results.
 - Import and export databases.
 
-For SQLite files, use **Explorer**.
+Open `.db`, `.sqlite`, or `.sqlite3` files directly with the **SQLite** file editor. The Explorer SQLite action opens the same editor. Database changes are written immediately.
 
 ### Container
 

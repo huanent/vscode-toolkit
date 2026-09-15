@@ -1,11 +1,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { CreateTableDialog, type TableColumn } from './CreateTableDialog';
-import { EditRowDialog } from './EditRowDialog';
-import { NewRowDialog, type NewRowValue } from './NewRowDialog';
-import { DataTable } from './components/DataTable';
-import { DatabaseSidebar } from './components/DatabaseSidebar';
-import { PaginationFooter } from './components/PaginationFooter';
-import { TableContextMenu } from './components/TableContextMenu';
+import { CreateTableDialog, type TableColumn } from './createTableDialog';
+import { EditRowDialog } from './editRowDialog';
+import { NewRowDialog, type NewRowValue } from './newRowDialog';
+import { DataTable } from './components/dataTable';
+import { DatabaseSidebar } from './components/databaseSidebar';
+import { DataToolbar } from './components/dataToolbar';
+import { TableContextMenu } from './components/tableContextMenu';
 import type { DatabaseObject, SqliteRequest, SqliteResponse, SqliteState } from './types';
 
 const vscode = acquireVsCodeApi();
@@ -30,7 +30,7 @@ const initialState: SqliteState = {
 	status: 'Opening database...',
 };
 
-export function SqliteManager({ name }: { name: string }) {
+export function SqliteManager() {
 	const [state, setState] = useState(initialState);
 	const [createTableOpen, setCreateTableOpen] = useState(false);
 	const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -137,14 +137,7 @@ export function SqliteManager({ name }: { name: string }) {
 	const { objects, selectedObject, columns, result, rowIdVisible, totalRows, currentPage } = state;
 
 	return (
-		<main className="grid h-full min-w-0 grid-cols-[220px_minmax(0,1fr)] grid-rows-[44px_minmax(0,1fr)] overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
-			<header className="col-span-2 flex items-center gap-2 border-b border-(--vscode-panel-border) px-3">
-				<i className="codicon codicon-database text-base" aria-hidden="true" />
-				<h1 className="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold">
-					{name}
-				</h1>
-				<span className="text-xs text-(--vscode-descriptionForeground)">{state.status}</span>
-			</header>
+		<main className="grid h-screen min-w-0 grid-cols-[minmax(120px,220px)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
 			<DatabaseSidebar
 				objects={objects}
 				selectedObject={selectedObject}
@@ -157,6 +150,17 @@ export function SqliteManager({ name }: { name: string }) {
 				}}
 			/>
 			<section className="flex min-h-0 min-w-0 flex-col">
+				<DataToolbar
+					totalRows={result ? totalRows : 0}
+					currentPage={currentPage}
+					pageSize={pageSize}
+					canCreate={Boolean(
+						result && selectedObject?.type === 'table' && !isSystemTable(selectedObject),
+					)}
+					onCreate={() => selectedObject && setNewRowTable(selectedObject)}
+					onPrevious={() => selectedObject && openObject(selectedObject, currentPage - 1)}
+					onNext={() => selectedObject && openObject(selectedObject, currentPage + 1)}
+				/>
 				<div className="min-h-0 flex-1 overflow-auto">
 					{result ? (
 						<DataTable
@@ -171,15 +175,6 @@ export function SqliteManager({ name }: { name: string }) {
 						</div>
 					)}
 				</div>
-				{result && (
-					<PaginationFooter
-						totalRows={totalRows}
-						currentPage={currentPage}
-						pageSize={pageSize}
-						onPrevious={() => selectedObject && openObject(selectedObject, currentPage - 1)}
-						onNext={() => selectedObject && openObject(selectedObject, currentPage + 1)}
-					/>
-				)}
 			</section>
 			{createTableOpen && (
 				<CreateTableDialog onCancel={() => setCreateTableOpen(false)} onCreate={createTable} />

@@ -43,7 +43,7 @@ export function ConnectionList({
 	return (
 		<div className="grid min-w-0 gap-2">
 			<header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-				<h1 className="m-0 min-w-0 text-base font-semibold wrap-anywhere">
+				<h1 className="m-0 min-w-0 text-md font-semibold wrap-anywhere">
 					{state?.name ?? 'SSH'}
 					{state && (
 						<span className="ml-2 text-xs font-normal text-(--vscode-descriptionForeground)">

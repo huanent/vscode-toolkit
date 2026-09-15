@@ -1,4 +1,6 @@
 import type { QueryResult } from '../types';
+import { IconButton } from '../../../components/ui/button';
+import { Pencil, Trash2 } from '../../../components/ui/icons';
 
 interface DataTableProps {
 	result: QueryResult;
@@ -48,22 +50,18 @@ export function DataTable({ result, editable, onEdit, onDelete }: DataTableProps
 						{editable && (
 							<td className="sticky right-0 h-8 border-b border-l border-(--vscode-panel-border) bg-(--vscode-editor-background) px-1">
 								<div className="flex justify-center gap-0.5">
-									<button
-										type="button"
-										title="Edit row"
-										className="grid size-6 place-items-center border-0 bg-transparent hover:bg-(--vscode-toolbar-hoverBackground)"
+									<IconButton
+										icon={<Pencil />}
+										label="Edit row"
+										size="sm"
 										onClick={() => onEdit(rowIndex)}
-									>
-										<i className="codicon codicon-edit" aria-hidden="true" />
-									</button>
-									<button
-										type="button"
-										title="Delete row"
-										className="grid size-6 place-items-center border-0 bg-transparent text-(--vscode-errorForeground) hover:bg-(--vscode-toolbar-hoverBackground)"
+									/>
+									<IconButton
+										icon={<Trash2 />}
+										label="Delete row"
+										size="sm"
 										onClick={() => onDelete(rowIndex)}
-									>
-										<i className="codicon codicon-trash" aria-hidden="true" />
-									</button>
+									/>
 								</div>
 							</td>
 						)}

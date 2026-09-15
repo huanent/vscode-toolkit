@@ -5,4 +5,4 @@ export type {
 	SqliteRequest,
 	SqliteResponse,
 	SqliteState,
-} from '../../../../../../src/explorer/sqlite/protocol';
+} from '../../../../src/database/sqlite/protocol';

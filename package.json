@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -27,6 +27,22 @@
   "main": "./out/extension.js",
   "contributes": {
     "customEditors": [
+      {
+        "viewType": "vscode-toolkit.database.sqliteEditor",
+        "displayName": "SQLite",
+        "selector": [
+          {
+            "filenamePattern": "*.db"
+          },
+          {
+            "filenamePattern": "*.sqlite"
+          },
+          {
+            "filenamePattern": "*.sqlite3"
+          }
+        ],
+        "priority": "default"
+      },
       {
         "viewType": "vscode-toolkit.chatEditor",
         "displayName": "Chat",

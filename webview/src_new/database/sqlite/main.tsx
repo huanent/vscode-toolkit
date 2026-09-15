@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '../../explorer.css';
-import { SqliteManager } from './SqliteManager';
+import { SqliteManager } from './sqliteManager';
 
 const root = document.getElementById('root');
 if (!root) {
@@ -10,6 +9,6 @@ if (!root) {
 
 createRoot(root).render(
 	<StrictMode>
-		<SqliteManager name={root.dataset.name ?? ''} />
+		<SqliteManager />
 	</StrictMode>,
 );

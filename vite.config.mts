@@ -47,7 +47,7 @@ export default defineConfig({
 				chat: 'webview/src_new/chat/main.tsx',
 				explorer: 'webview/src/features/explorer/main/main.tsx',
 				archive: 'webview/src/features/explorer/previews/archive/main.tsx',
-				sqlite: 'webview/src/features/explorer/previews/sqlite/main.tsx',
+				sqlite: 'webview/src_new/database/sqlite/main.tsx',
 				spreadsheet: 'webview/src/features/explorer/previews/excel/main.tsx',
 			},
 			output: {

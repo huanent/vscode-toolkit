@@ -4,8 +4,10 @@ import { ServerStore } from './serverStore';
 import { registerDatabaseEditor } from './editor';
 import { registerDatabaseTools } from './tools';
 import { MysqlSqlEditorController } from './mysql/mysqlSqlEditor';
+import { registerSqliteEditor } from './sqlite/editor';
 
 export async function registerDatabase(context: vscode.ExtensionContext): Promise<void> {
+	context.subscriptions.push(registerSqliteEditor(context));
 	const store = await ServerStore.create(context);
 	context.subscriptions.push(store);
 	const sqlEditor = new MysqlSqlEditorController(context, store);
