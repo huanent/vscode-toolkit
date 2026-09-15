@@ -34,13 +34,13 @@ export default defineConfig({
 		assetsInlineLimit: filePath => (/\.(?:woff2?|ttf|otf)$/i.test(filePath) ? false : undefined),
 		rolldownOptions: {
 			input: {
-				styles: 'webview/src/styles.css',
+				global: 'webview/src/global.css',
 				dashboard: 'webview/src/dashboard/main.tsx',
 				dashboardEditor: 'webview/src/dashboard/editor.tsx',
 				databaseForm: 'webview/src/database/serverForm/main.tsx',
 				containerForm: 'webview/src/container/serverForm/main.tsx',
 				containerEditor: 'webview/src/container/editor/main.tsx',
-				databaseSqlResults: 'webview/src/database/sqlResults/main.tsx',
+				result: 'webview/src/result/main.tsx',
 				mysqlOverview: 'webview/src/database/mysql/overview/main.tsx',
 				mysqlTablePreview: 'webview/src/database/mysql/tablePreview/main.tsx',
 				sshTerminal: 'webview/src/ssh/terminal/main.tsx',

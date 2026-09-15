@@ -14,7 +14,7 @@ export function getWebviewHtml(
 	options: WebviewHtmlOptions,
 ): string {
 	const nonce = getNonce();
-	const styleEntry = options.styleEntry ?? 'styles';
+	const styleEntry = options.styleEntry ?? 'global';
 	const styleUri = webview.asWebviewUri(
 		vscode.Uri.joinPath(extensionUri, 'media', `${styleEntry}.css`),
 	);
@@ -38,8 +38,7 @@ export function getWebviewHtml(
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; font-src ${webview.cspSource}; ${styleSourcePolicy}${styleAttributePolicy} script-src ${webview.cspSource} 'nonce-${nonce}';">
-		${styleEntry !== 'styles' ? `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles.css'))}">` : ''}
-		${['chat', 'sshTerminal'].includes(options.entry) ? `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'global.css'))}">` : ''}
+		${styleEntry !== 'global' ? `<link rel="stylesheet" href="${webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'global.css'))}">` : ''}
 		<link rel="stylesheet" href="${styleUri}">
         <title>${escapeHtml(options.title)}</title>
 </head>

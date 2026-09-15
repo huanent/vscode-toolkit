@@ -9,7 +9,7 @@ export function getWebviewHtml(
 ): string {
 	return createWebviewHtml(webview, extensionUri, {
 		entry,
-		styleEntry: entry === 'sshTerminal' ? entry : 'styles',
+		styleEntry: entry === 'sshTerminal' ? entry : 'global',
 		title,
 	});
 }

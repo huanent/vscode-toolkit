@@ -31,7 +31,7 @@ function configureSqlitePanel(context: vscode.ExtensionContext, uri: vscode.Uri,
 	panel.iconPath = new vscode.ThemeIcon('database');
 	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, {
 		entry: 'sqlite',
-		styleEntry: 'styles',
+		styleEntry: 'global',
 		title: name,
 		rootData: { name },
 	});

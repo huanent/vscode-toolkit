@@ -397,11 +397,6 @@
           "group": "navigation@1"
         },
         {
-          "command": "vscode-toolkit.servers.exportMysqlSqlResults",
-          "when": "activeWebviewPanelId == vscode-toolkit.servers.mysqlSqlResults && vscode-toolkit.servers.mysqlSqlResultsExportable",
-          "group": "navigation@1"
-        },
-        {
           "command": "vscode-toolkit.servers.runSshCommand",
           "when": "activeWebviewPanelId == vscode-toolkit.ssh.editor && resourceFilename == sshTerminal.ssh && vscode-toolkit.servers.activeSshHasCommands",
           "group": "navigation@1"
@@ -410,6 +405,13 @@
           "command": "vscode-toolkit.servers.openSftp",
           "when": "activeWebviewPanelId == vscode-toolkit.ssh.editor && resourceFilename == sshTerminal.ssh",
           "group": "navigation@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-toolkit.servers.exportMysqlSqlResults",
+          "when": "view == vscode-toolkit.httpResult && vscode-toolkit.servers.mysqlSqlResultsExportable",
+          "group": "navigation@1"
         }
       ],
       "explorer/context": [

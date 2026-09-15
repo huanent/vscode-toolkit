@@ -1,14 +1,7 @@
+import type { TableResult } from '@/result/protocol';
 import { cn } from 'cn';
-import { useSqlResults } from './hooks/useSqlResults';
 
-export function App() {
-	const result = useSqlResults();
-	if (!result)
-		return (
-			<div className="grid min-h-screen place-items-center text-(--vscode-descriptionForeground)">
-				Run a SQL statement to view results.
-			</div>
-		);
+export function TableResultView({ result }: { result: TableResult }) {
 	return (
 		<div className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
 			<main className="min-h-0 overflow-auto">
@@ -18,7 +11,7 @@ export function App() {
 					</div>
 				) : (
 					<table
-						aria-label="SQL results"
+						aria-label={result.label ?? 'Results'}
 						className="w-max min-w-full border-separate border-spacing-0 font-(family-name:--vscode-editor-font-family) text-xs"
 					>
 						<thead>
@@ -69,12 +62,14 @@ export function App() {
 				role="status"
 				className="flex min-h-7 min-w-0 flex-wrap items-center gap-x-4 gap-y-1 border-t border-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-1 text-xs"
 			>
-				<span
-					className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)"
-					title={`Database ${result.serverName} / ${result.database}`}
-				>
-					Database {result.serverName} / {result.database}
-				</span>
+				{result.source && (
+					<span
+						className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)"
+						title={result.source}
+					>
+						{result.source}
+					</span>
+				)}
 				<span className="ml-auto min-w-0 wrap-break-word">{result.summary}</span>
 			</footer>
 		</div>

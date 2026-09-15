@@ -1,9 +1,10 @@
 import { getStorageUri } from '../../storagePath';
+import type { ResultMessage } from '../../result/protocol';
 import * as vscode from 'vscode';
 import { homedir } from 'node:os';
 import { FieldPacket, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { ServerStore } from '../serverStore';
-import { getWebviewHtml } from '../webview';
+import type { ResultView } from '../../result/resultView';
 import { createMysqlConnection } from './mysqlConnection';
 import { displayMysqlValue } from './tableData';
 import { splitMysqlStatements } from './sqlStatements';
@@ -74,13 +75,12 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 	private readonly documentSaves = new Map<string, Promise<void>>();
 	private readonly connectionStatus: vscode.StatusBarItem;
 	private readonly disposables: vscode.Disposable[];
-	private resultPanel: vscode.WebviewPanel | undefined;
 	private currentResult: SqlResultModel | undefined;
-	private resultWebviewReady = false;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly serverStore: ServerStore,
+		private readonly resultView: ResultView,
 	) {
 		this.connectionStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 		this.connectionStatus.name = 'MySQL SQL Connection';
@@ -137,7 +137,6 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 	dispose(): void {
 		void vscode.commands.executeCommand('setContext', activeContextKey, false);
 		void vscode.commands.executeCommand('setContext', resultsExportableContextKey, false);
-		this.resultPanel?.dispose();
 		for (const disposable of this.disposables) {
 			disposable.dispose();
 		}
@@ -378,54 +377,7 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 
 	private showResult(result: SqlResultModel): void {
 		this.currentResult = result;
-		void vscode.commands.executeCommand(
-			'setContext',
-			resultsExportableContextKey,
-			result.kind === 'rows',
-		);
-		const panel = this.getResultPanel();
-		panel.title = `SQL Results - ${result.database}`;
-		if (this.resultWebviewReady) {
-			void panel.webview.postMessage({ type: 'result', result });
-		}
-		panel.reveal(vscode.ViewColumn.Beside, true);
-	}
-
-	private getResultPanel(): vscode.WebviewPanel {
-		if (this.resultPanel) {
-			return this.resultPanel;
-		}
-		const panel = vscode.window.createWebviewPanel(
-			'vscode-toolkit.servers.mysqlSqlResults',
-			'SQL Results',
-			{ viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
-			{
-				enableScripts: true,
-				localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')],
-			},
-		);
-		panel.iconPath = new vscode.ThemeIcon('table');
-		panel.webview.html = getWebviewHtml(
-			panel.webview,
-			this.context.extensionUri,
-			'databaseSqlResults',
-			'SQL Results',
-		);
-		panel.webview.onDidReceiveMessage(message => {
-			if (message?.type === 'ready') {
-				this.resultWebviewReady = true;
-				if (this.currentResult) {
-					void panel.webview.postMessage({ type: 'result', result: this.currentResult });
-				}
-			}
-		});
-		panel.onDidDispose(() => {
-			this.resultPanel = undefined;
-			this.resultWebviewReady = false;
-			void vscode.commands.executeCommand('setContext', resultsExportableContextKey, false);
-		});
-		this.resultPanel = panel;
-		return panel;
+		void this.resultView.show(toResultMessage(result).result, result.kind === 'rows');
 	}
 
 	private async exportResult(): Promise<void> {
@@ -512,14 +464,28 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 
 type SqlResultModel =
 	| {
-			serverName: string;
-			database: string;
-			summary: string;
-			kind: 'rows';
-			columns: string[];
-			rows: Array<Array<string | null>>;
-	  }
+		serverName: string;
+		database: string;
+		summary: string;
+		kind: 'rows';
+		columns: string[];
+		rows: Array<Array<string | null>>;
+	}
 	| { serverName: string; database: string; summary: string; kind: 'command'; message: string };
+
+function toResultMessage(result: SqlResultModel): ResultMessage {
+	return {
+		type: 'result',
+		result: {
+			type: 'table',
+			data: {
+				...result,
+				label: 'SQL results',
+				source: `Database ${result.serverName} / ${result.database}`,
+			},
+		},
+	};
+}
 
 function safeFileName(value: string): string {
 	const fileName = value.replaceAll(/[\\/:*?"<>|\r\n]/g, '_').trim();

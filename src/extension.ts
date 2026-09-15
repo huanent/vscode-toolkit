@@ -14,8 +14,13 @@ import { registerSsh } from './ssh/registerSsh';
 import { registerDatabase } from './database/registerDatabase';
 import { registerContainer } from './container/registerContainer';
 import { registerWorkflow } from './workflow/registerWorkflow';
+import { ResultView } from './result/resultView';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+	const resultView = new ResultView(context.extensionUri);
+	context.subscriptions.push(vscode.window.registerWebviewViewProvider(ResultView.viewType, resultView, {
+		webviewOptions: { retainContextWhenHidden: true },
+	}));
 	registerDashboard(context);
 
 	context.subscriptions.push(
@@ -35,12 +40,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	registerPackageScriptWatcher(context);
 	registerScriptRuntimeWatcher(context);
 	registerSourceControl(context);
-	registerHttpClient(context);
+	registerHttpClient(context, resultView);
 	await registerChat(context);
 	await registerExplorer(context);
 	await registerSsh(context);
 	registerWorkflow(context);
-	await registerDatabase(context);
+	await registerDatabase(context, resultView);
 	await registerContainer(context);
 
 	context.subscriptions.push(
@@ -52,4 +57,4 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	);
 }
 
-export function deactivate(): void {}
+export function deactivate(): void { }

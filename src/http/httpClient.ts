@@ -8,7 +8,8 @@ import {
 	registerHttpHoverProvider,
 	registerHttpLanguageDiagnostics,
 } from './httpLanguageService';
-import { HttpResultPanel } from './httpResultPanel';
+import type { HttpResult } from '../result/protocol';
+import type { ResultView } from '../result/resultView';
 
 const headers = [
 	['Accept', 'application/json'],
@@ -21,17 +22,14 @@ const languageService = new HttpLanguageService();
 const httpSaveDelay = 500;
 const httpEditorContext = 'vscode-toolkit.httpEditor';
 
-export function registerHttpClient(context: vscode.ExtensionContext): void {
-	const resultPanel = new HttpResultPanel();
+export function registerHttpClient(context: vscode.ExtensionContext, resultView: ResultView): void {
+	const resultPanel = { show: (result: HttpResult) => resultView.show({ type: 'http', data: result }) };
 	const requestStatus = new HttpRequestStatus();
 	const selector: vscode.DocumentSelector = { language: 'http' };
 	const documentStore = new HttpDocumentStore(context);
 	const documentStoreReady = documentStore.initialize();
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(HttpResultPanel.viewType, resultPanel, {
-			webviewOptions: { retainContextWhenHidden: true },
-		}),
 		requestStatus,
 		documentStore,
 		vscode.commands.registerCommand('vscode-toolkit.openHttpClient', async () => {
@@ -311,7 +309,7 @@ class HttpCompletionProvider implements vscode.CompletionItemProvider {
 }
 
 async function sendRequest(
-	resultPanel: HttpResultPanel,
+	resultPanel: { show(result: HttpResult): Promise<void> },
 	requestStatus: HttpRequestStatus,
 	uri?: vscode.Uri,
 	line?: number,
