@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DashboardEmpty, DashboardHeader, DashboardSearch } from '@webview/dashboard/components';
 import { Button, IconButton } from '@webview/components/ui/button';
-import { Popover } from '@webview/components/ui/popover';
 import { List, ListGroup, ListItem } from '@webview/components/ui/list';
+import { Popover } from '@webview/components/ui/popover';
 import { Container, Download, Play, Plus, RefreshCw, Upload } from '@webview/components/ui/icons';
 
 export interface ConnectionListState {
@@ -37,7 +37,7 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
         <DashboardSearch label="Search connections" value={query} onChange={onQueryChange} />
         {!state || !servers.length ? <DashboardEmpty loading={!state} noun="connections" filtered={!!query.trim()} onClear={() => onQueryChange('')} onCreate={() => onAction('add')} /> : <List>
             {Array.from(groups, ([group, connections]) => <ListGroup key={group} label={group || 'Ungrouped'}>
-                {connections.map(server => <ListItem key={server.id} selected={selectedId === server.id} onSelect={() => setSelectedId(server.id)}
+                {connections.map(server => <ListItem key={server.id} selected={selectedId === server.id} onSelect={() => setSelectedId(server.id)} icon={<Container />} description={server.address}
                     onContextMenu={event => {
                         event.preventDefault();
                         setSelectedId(server.id);
@@ -50,12 +50,12 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
                         setSelectedId(server.id);
                         setMenu({ server, x: bounds.left, y: bounds.bottom });
                     }}
-                    icon={<Container />} description={server.address} actions={<>
-                    <IconButton icon={<Play />} label="Open" onClick={() => onAction('connect', server.id)} />
-                </>}>{server.name}</ListItem>)}
+                    actions={<>
+                        <IconButton icon={<Play />} label="Open" onClick={() => onAction('connect', server.id)} />
+                    </>}>{server.name}</ListItem>)}
             </ListGroup>)}
         </List>}
-        {menu && <Popover open onOpenChange={open => { if (!open) setMenu(undefined); }} label={`Actions for ${menu.server.name}`} placement="bottom-start" anchorPosition={menu}>
+        <Popover open={!!menu} onOpenChange={open => { if (!open) setMenu(undefined); }} anchorPosition={menu} label={`Actions for ${menu?.server.name ?? 'connection'}`}>
             <div className="grid min-w-40 p-1">
                 {[
                     ['edit', 'Edit'],
@@ -65,10 +65,11 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
                     ['moveDown', 'Move down'],
                     ['delete', 'Delete'],
                 ].map(([type, label]) => <Button key={type} variant="text" className="w-full justify-start" onClick={() => {
+                    if (!menu) return;
                     setMenu(undefined);
                     onAction(type, menu.server.id);
                 }}>{label}</Button>)}
             </div>
-        </Popover>}
+        </Popover>
     </>;
 }

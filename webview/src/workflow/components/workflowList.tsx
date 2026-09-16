@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ListOrdered, Play } from '@webview/components/ui/icons';
+import { CircuitBoard, Play } from '@webview/components/ui/icons';
 import { Button, IconButton } from '@webview/components/ui/button';
-import { Popover } from '@webview/components/ui/popover';
 import { List, ListItem } from '@webview/components/ui/list';
+import { Popover } from '@webview/components/ui/popover';
 import { DashboardEmpty, DashboardSearch } from '@webview/dashboard/components';
 import type { Workflow } from '../../../../src/workflow/workflow';
 
@@ -54,7 +54,7 @@ export function WorkflowList({
 							setSelectedId(workflow.id);
 							setMenu({ workflow, x: bounds.left, y: bounds.bottom });
 						}}
-						icon={<ListOrdered />}
+						icon={<CircuitBoard />}
 						description={workflow.description || `${workflow.steps.length} steps`}
 						actions={<>
 							<IconButton icon={<Play />} label="Run" disabled={locked} onClick={() => onRun(workflow)} />
@@ -62,14 +62,20 @@ export function WorkflowList({
 					>{workflow.name}</ListItem>
 				))}
 			</List>
-			{menu && (
-				<Popover open onOpenChange={open => { if (!open) setMenu(undefined); }} label={`Actions for ${menu.workflow.name}`} placement="bottom-start" anchorPosition={menu}>
-					<div className="grid min-w-40 p-1">
-						<Button variant="text" className="w-full justify-start" disabled={locked} onClick={() => { setMenu(undefined); onSelect(menu.workflow); }}>Edit</Button>
-						<Button variant="text" className="w-full justify-start" disabled={locked} onClick={() => { setMenu(undefined); onDelete(menu.workflow.id); }}>Delete</Button>
-					</div>
-				</Popover>
-			)}
+			<Popover open={!!menu} onOpenChange={open => { if (!open) setMenu(undefined); }} anchorPosition={menu} label={`Actions for ${menu?.workflow.name ?? 'workflow'}`}>
+				<div className="grid min-w-40 p-1">
+					<Button variant="text" className="w-full justify-start" disabled={locked} onClick={() => {
+						if (!menu) return;
+						setMenu(undefined);
+						onSelect(menu.workflow);
+					}}>Edit</Button>
+					<Button variant="text" className="w-full justify-start" disabled={locked} onClick={() => {
+						if (!menu) return;
+						setMenu(undefined);
+						onDelete(menu.workflow.id);
+					}}>Delete</Button>
+				</div>
+			</Popover>
 			{(!loaded || filtered.length === 0) && (
 				<DashboardEmpty
 					loading={!loaded}
