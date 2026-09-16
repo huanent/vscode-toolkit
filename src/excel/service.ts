@@ -1,4 +1,4 @@
-import { Workbook, type Cell } from 'exceljs';
+import type { Cell } from 'exceljs';
 import { Readable } from 'stream';
 import * as vscode from 'vscode';
 import type { SpreadsheetSheet } from './protocol';
@@ -7,7 +7,8 @@ const maxPreviewColumns = 100;
 
 export async function readSpreadsheet(uri: vscode.Uri): Promise<SpreadsheetSheet[]> {
 	const data = await vscode.workspace.fs.readFile(uri);
-	const workbook = new Workbook();
+	const { default: ExcelJS } = await import('exceljs');
+	const workbook = new ExcelJS.Workbook();
 	if (uri.path.toLowerCase().endsWith('.csv')) {
 		await workbook.csv.read(Readable.from([data]));
 	} else {

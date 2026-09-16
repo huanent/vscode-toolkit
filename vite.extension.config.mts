@@ -25,9 +25,18 @@ export default defineConfig({
 		},
 		outDir: 'out',
 		emptyOutDir: true,
-		minify: false,
+		minify: true,
 		rolldownOptions: {
 			external: id => externalModules.has(id) || id.startsWith('mysql2/') || id.startsWith('ssh2/'),
+			output: {
+				chunkFileNames: 'chunks/[name]-[hash].js',
+				codeSplitting: {
+					groups: [
+						{ name: 'exceljs', test: /[\\/]node_modules[\\/]exceljs[\\/]/, priority: 10 },
+						{ name: 'vendor', test: /[\\/]node_modules[\\/]/ },
+					],
+				},
+			},
 		},
 		target: 'node20',
 	},
