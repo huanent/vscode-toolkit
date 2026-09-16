@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -796,7 +796,7 @@
         "toolReferenceName": "runWorkflow",
         "displayName": "Run Workflow",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Run a workflow by id. Stops on failure; cancellation waits for the current step. Returns execution status only.",
+        "modelDescription": "Run a workflow by id. Stops on failure. Cancellation terminates local commands, requests SSH termination, and closes SFTP transfers; partial destination files may remain. Returns execution status only.",
         "inputSchema": {
           "type": "object",
           "properties": {

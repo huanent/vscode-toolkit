@@ -64,7 +64,7 @@ export function connectSshClient(
 	credentials: ServerCredentials,
 	onReady: (connection: SshConnection) => void,
 	onError: (error: Error) => void,
-): void {
+): () => void {
 	const client = new Client();
 	let proxyClient: Client | undefined;
 	let proxyProcess: ChildProcessWithoutNullStreams | undefined;
@@ -91,11 +91,17 @@ export function connectSshClient(
 		onError(error);
 	};
 	const connectTarget = (sock?: Duplex) => {
+		if (disposed) {
+			sock?.destroy();
+			return;
+		}
 		client
 			.on('keyboard-interactive', (_name, _instructions, _language, prompts, finish) => {
 				finish(prompts.map(() => credentials.password ?? ''));
 			})
-			.on('ready', () => onReady({ client, dispose }))
+			.on('ready', () => {
+				if (!disposed) onReady({ client, dispose });
+			})
 			.on('error', fail)
 			.connect({
 				...connectionConfig(server, credentials),
@@ -126,7 +132,7 @@ export function connectSshClient(
 					passphrase: credentials.proxyPassphrase,
 				}),
 			);
-		return;
+		return dispose;
 	}
 
 	if (server.proxyCommand) {
@@ -140,16 +146,17 @@ export function connectSshClient(
 				fail(
 					new Error(
 						stderr.trim() ||
-							`Proxy command exited with ${signal ? `signal ${signal}` : `code ${code ?? 'unknown'}`}.`,
+						`Proxy command exited with ${signal ? `signal ${signal}` : `code ${code ?? 'unknown'}`}.`,
 					),
 				);
 			}
 		});
 		connectTarget(Duplex.from({ readable: proxyProcess.stdout, writable: proxyProcess.stdin }));
-		return;
+		return dispose;
 	}
 
 	connectTarget();
+	return dispose;
 }
 
 function connectionConfig(

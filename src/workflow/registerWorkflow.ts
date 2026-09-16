@@ -1,18 +1,17 @@
-import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { listSshConnections, resolveSshConnection } from '../ssh/connectionService';
-import { executeSshCommand } from '../ssh/sshCommand';
-import { downloadSftpFile, writeSftpFile } from '../ssh/sftp';
-import { executeWorkflow, sftpActions, Workflow, WorkflowStep } from './workflow';
+import { listSshConnections } from '../ssh/connectionService';
+import type { ResultView } from '../result/resultView';
+import { sftpActions, Workflow, WorkflowStep } from './workflow';
+import { WorkflowExecutionError, WorkflowRunner } from './runner';
 import { registerWorkflowPanel } from './panel';
 import { registerWorkflowTools } from './tools';
 import { WorkflowStore } from './store';
 import { hasWorkflowVariables, resolveWorkflowVariables, validateWorkflowPaths } from './variables';
 
-export function registerWorkflow(context: vscode.ExtensionContext): void {
-	const output = vscode.window.createOutputChannel('Toolkit Workflow');
+export function registerWorkflow(context: vscode.ExtensionContext, resultView: ResultView): void {
+	const runner = new WorkflowRunner(resultView);
 	let managing = false;
 	let running = false;
 	const store = new WorkflowStore(context);
@@ -39,64 +38,8 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 		if (toolToken?.isCancellationRequested) return false;
 		if (running) throw new Error('A workflow is already running.');
 		running = true;
-		output.show(true);
-		output.appendLine(`\nWorkflow: ${workflow.name}`);
 		try {
-			await vscode.window.withProgress(
-				{ location: vscode.ProgressLocation.Notification, title: workflow.name, cancellable: true },
-				async (progress, token) => {
-					const cancellation = token.onCancellationRequested(() => {
-						output.appendLine('Cancellation requested; waiting for the current step to finish.');
-						progress.report({ message: 'Stopping after the current step...' });
-					});
-					try {
-						await executeWorkflow(
-							workflow,
-							async (step, index) => {
-								progress.report({ message: `${index + 1}/${workflow.steps.length}: ${step.name}` });
-								output.appendLine(`[${index + 1}/${workflow.steps.length}] ${step.name}`);
-								if (step.type === 'command') {
-									await new Promise<void>((resolve, reject) => {
-										const child = spawn(step.command, {
-											shell: true,
-											cwd: step.cwd,
-											stdio: ['ignore', 'pipe', 'pipe'],
-										});
-										child.stdout.setEncoding('utf8');
-										child.stderr.setEncoding('utf8');
-										child.stdout.on('data', (data: string) => output.append(data));
-										child.stderr.on('data', (data: string) => output.append(data));
-										child.once('error', reject);
-										child.once('close', (code, signal) =>
-											code === 0
-												? resolve()
-												: reject(new Error(`Command exited with ${signal ?? code}.`)),
-										);
-									});
-								} else {
-									const { server, credentials } = await resolveSshConnection(step.serverId);
-									if (step.type === 'ssh')
-										output.appendLine(await executeSshCommand(server, credentials, step.command));
-									else if (step.action === 'download')
-										await downloadSftpFile(server, credentials, step.remotePath, step.localPath);
-									else await writeSftpFile(server, credentials, step.localPath, step.remotePath);
-								}
-								output.appendLine(`\nCompleted: ${step.name}`);
-								progress.report({ increment: 100 / workflow.steps.length });
-							},
-							() => token.isCancellationRequested || !!toolToken?.isCancellationRequested,
-						);
-					} finally {
-						cancellation.dispose();
-					}
-				},
-			);
-			output.appendLine('Workflow completed.');
-			void vscode.window.showInformationMessage(`Workflow "${workflow.name}" completed.`);
-			return true;
-		} catch (error) {
-			output.appendLine(`Stopped: ${error instanceof Error ? error.message : String(error)}`);
-			throw error;
+			return await runner.run(workflow, toolToken);
 		} finally {
 			running = false;
 		}
@@ -195,7 +138,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 	}
 
 	context.subscriptions.push(
-		output,
+		runner,
 		registerWorkflowTools(store, (workflow, token) => run(workflow, token, false, true)),
 		vscode.commands.registerCommand('vscode-toolkit.openWorkflowQuickPick', async () => {
 			if (managing) return;
@@ -203,7 +146,16 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 			try {
 				await manage();
 			} catch (error) {
-				void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+				if (error instanceof WorkflowExecutionError) {
+					runner.showOutput();
+					return;
+				}
+				await resultView.show({
+					type: 'workflow', data: {
+						name: 'Workflow', state: 'error', summary: 'Workflow failed.',
+						output: error instanceof Error ? error.message : String(error),
+					}
+				});
 			} finally {
 				managing = false;
 			}
@@ -215,7 +167,7 @@ export function registerWorkflow(context: vscode.ExtensionContext): void {
 		async workflow => {
 			await run(workflow);
 		},
-		() => output.show(),
+		() => runner.showOutput(),
 	);
 }
 

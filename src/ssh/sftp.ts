@@ -67,6 +67,7 @@ export async function writeSftpFile(
 	credentials: ServerCredentials,
 	localPath: string,
 	remotePath: string,
+	signal?: AbortSignal,
 ): Promise<void> {
 	await withSftp(
 		server,
@@ -75,6 +76,7 @@ export async function writeSftpFile(
 			new Promise<void>((resolve, reject) => {
 				sftp.fastPut(localPath, remotePath, error => (error ? reject(error) : resolve()));
 			}),
+		signal,
 	);
 }
 
@@ -83,7 +85,9 @@ export async function downloadSftpFile(
 	credentials: ServerCredentials,
 	remotePath: string,
 	localPath: string,
+	signal?: AbortSignal,
 ): Promise<void> {
+	signal?.throwIfAborted();
 	await fs.mkdir(path.dirname(localPath), { recursive: true });
 	await withSftp(
 		server,
@@ -92,6 +96,7 @@ export async function downloadSftpFile(
 			new Promise<void>((resolve, reject) => {
 				sftp.fastGet(remotePath, localPath, error => (error ? reject(error) : resolve()));
 			}),
+		signal,
 	);
 }
 
@@ -151,31 +156,54 @@ async function withSftp<T>(
 	server: SshServer,
 	credentials: ServerCredentials,
 	operation: (sftp: SFTPWrapper) => Promise<T>,
+	signal?: AbortSignal,
 ): Promise<T> {
 	return new Promise((resolve, reject) => {
 		let settled = false;
+		let disconnect: (() => void) | undefined;
+		let channel: SFTPWrapper | undefined;
+		const abort = () => finish(new DOMException('SFTP transfer cancelled; the destination may be incomplete.', 'AbortError'));
 		const finish = (error?: Error, value?: T) => {
 			if (settled) return;
 			settled = true;
-			connection?.dispose();
+			signal?.removeEventListener('abort', abort);
+			channel?.end();
+			if (disconnect) disconnect();
+			else connection?.dispose();
 			if (error) reject(error);
 			else resolve(value as T);
 		};
 		let connection: { dispose: () => void } | undefined;
-		connectSshClient(
+		if (signal?.aborted) {
+			abort();
+			return;
+		}
+		signal?.addEventListener('abort', abort, { once: true });
+		disconnect = connectSshClient(
 			server,
 			credentials,
 			nextConnection => {
+				if (settled) {
+					nextConnection.dispose();
+					return;
+				}
 				connection = nextConnection;
 				nextConnection.client.sftp((error, sftp) => {
+					if (settled) {
+						sftp?.end();
+						return;
+					}
 					if (error) {
 						finish(error);
 						return;
 					}
+					channel = sftp;
+					sftp.on('error', finish);
 					void operation(sftp).then(value => finish(undefined, value), finish);
 				});
 			},
 			finish,
 		);
+		if (settled) disconnect();
 	});
 }

@@ -19,7 +19,14 @@ export type TableResult = {
         | { kind: 'command'; message: string }
     );
 
-export type Result = { type: 'http'; data: HttpResult } | { type: 'table'; data: TableResult };
+export interface WorkflowResult {
+    name: string;
+    state: 'running' | 'stopping' | 'success' | 'error' | 'cancelled';
+    summary: string;
+    output: string;
+}
+
+export type Result = { type: 'http'; data: HttpResult } | { type: 'table'; data: TableResult } | { type: 'workflow'; data: WorkflowResult };
 
 export interface ResultMessage {
     type: 'result';

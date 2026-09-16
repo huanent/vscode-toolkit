@@ -30,12 +30,58 @@ function createView() {
         view,
         resolve: (provider: ResultView) => provider.resolveWebviewView(view as unknown as vscode.WebviewView),
         ready: () => receive({ type: 'ready' }),
+        cancel: () => receive({ type: 'cancelWorkflow' }),
         visibilityChanged: () => visibilityChanged(),
         dispose: () => disposed(),
     };
 }
 
 describe('shared result view', () => {
+    it('routes panel cancellation only for a running workflow', async () => {
+        const provider = new ResultView({} as vscode.Uri);
+        const harness = createView();
+        harness.resolve(provider);
+        const workflow: Result = { type: 'workflow', data: { name: 'Build', state: 'running', summary: 'Starting', output: '' } };
+        await provider.show(workflow);
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        harness.cancel();
+        expect(vscode.commands.executeCommand).toHaveBeenCalledExactlyOnceWith('vscode-toolkit.cancelWorkflow');
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        for (const state of ['stopping', 'success', 'error', 'cancelled'] as const) {
+            workflow.data.state = state;
+            harness.cancel();
+        }
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+        await provider.show(http);
+        vi.mocked(vscode.commands.executeCommand).mockClear();
+        harness.cancel();
+        expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+    });
+
+    it('updates workflow output without revealing the view or replacing another result', async () => {
+        const provider = new ResultView({} as vscode.Uri);
+        const harness = createView();
+        harness.resolve(provider);
+        harness.ready();
+        const workflow: Result = { type: 'workflow', data: { name: 'Build', state: 'running', summary: 'Starting', output: '' } };
+        await provider.show(workflow);
+        workflow.data.output = 'Building...';
+        provider.update(workflow);
+        expect(harness.view.show).toHaveBeenCalledTimes(1);
+        expect(harness.view.webview.postMessage).toHaveBeenLastCalledWith({ type: 'result', result: workflow });
+        harness.view.visible = false;
+        harness.view.webview.postMessage.mockClear();
+        workflow.data.output += '\nDone';
+        provider.update(workflow);
+        expect(harness.view.webview.postMessage).not.toHaveBeenCalled();
+        harness.view.visible = true;
+        harness.visibilityChanged();
+        expect(harness.view.webview.postMessage).toHaveBeenLastCalledWith({ type: 'result', result: workflow });
+        await provider.show(http);
+        provider.update(workflow);
+        expect(harness.view.webview.postMessage).toHaveBeenLastCalledWith({ type: 'result', result: http });
+    });
+
     it('shows HTTP and table results in the same view and resets SQL export', async () => {
         const provider = new ResultView({} as vscode.Uri);
         const harness = createView();

@@ -48,7 +48,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	await registerChat(context);
 	await registerExplorer(context);
 	await registerSsh(context);
-	registerWorkflow(context);
+	registerWorkflow(context, resultView);
 	await registerDatabase(context, resultView);
 	await registerContainer(context);
 

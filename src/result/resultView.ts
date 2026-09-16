@@ -22,6 +22,9 @@ export class ResultView implements vscode.WebviewViewProvider {
 				this.ready = true;
 				this.postResult();
 			}
+			if (message?.type === 'cancelWorkflow' && this.result?.type === 'workflow' && this.result.data.state === 'running') {
+				void vscode.commands.executeCommand('vscode-toolkit.cancelWorkflow');
+			}
 		});
 		view.webview.html = getWebviewHtml(view.webview, this.extensionUri, {
 			entry: 'result',
@@ -46,6 +49,11 @@ export class ResultView implements vscode.WebviewViewProvider {
 		} else {
 			await vscode.commands.executeCommand(`${ResultView.viewType}.focus`);
 		}
+	}
+
+	update(result: Result): void {
+		if (this.result !== result) return;
+		this.postResult();
 	}
 
 	private postResult(): void {
