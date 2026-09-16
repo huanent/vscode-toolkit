@@ -141,7 +141,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "vscode-toolkit",
+          "id": "vscode-toolkit-dashboard",
           "title": "Toolkit",
           "icon": "$(tools)"
         }
@@ -155,7 +155,7 @@
       ]
     },
     "views": {
-      "vscode-toolkit": [
+      "vscode-toolkit-dashboard": [
         {
           "id": "vscode-toolkit.dashboard",
           "name": "Toolkit",
@@ -165,7 +165,7 @@
       ],
       "vscode-toolkit-result": [
         {
-          "id": "vscode-toolkit.httpResult",
+          "id": "vscode-toolkit.result",
           "name": "Result",
           "type": "webview",
           "icon": "$(output)",
@@ -389,7 +389,7 @@
         },
         {
           "command": "vscode-toolkit.servers.exportMysqlSqlResults",
-          "when": "view == vscode-toolkit.httpResult && vscode-toolkit.servers.mysqlSqlResultsExportable",
+          "when": "view == vscode-toolkit.result && vscode-toolkit.servers.mysqlSqlResultsExportable",
           "group": "navigation@9999"
         }
       ],

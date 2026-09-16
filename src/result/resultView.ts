@@ -3,12 +3,12 @@ import type { Result, ResultMessage } from './protocol';
 import { getWebviewHtml } from '../webview';
 
 export class ResultView implements vscode.WebviewViewProvider {
-	static readonly viewType = 'vscode-toolkit.httpResult';
+	static readonly viewType = 'vscode-toolkit.result';
 	private view: vscode.WebviewView | undefined;
 	private result: Result | undefined;
 	private ready = false;
 
-	constructor(private readonly extensionUri: vscode.Uri) {}
+	constructor(private readonly extensionUri: vscode.Uri) { }
 
 	resolveWebviewView(view: vscode.WebviewView): void {
 		this.view = view;
