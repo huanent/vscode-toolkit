@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -168,8 +168,7 @@
           "id": "vscode-toolkit.result",
           "name": "Result",
           "type": "webview",
-          "icon": "$(output)",
-          "when": "vscode-toolkit.httpResultVisible"
+          "icon": "$(output)"
         }
       ]
     },

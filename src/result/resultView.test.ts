@@ -39,6 +39,29 @@ function createView() {
 }
 
 describe('shared result view', () => {
+    it('refreshes tasks and the selected result without cancelling running tasks', async () => {
+        const provider = new ResultView({} as vscode.Uri);
+        const harness = createView();
+        harness.resolve(provider);
+        harness.ready();
+        const cancel = vi.fn();
+        const active: Result = { type: 'http', data: { method: 'GET', url: '/active', state: 'loading' } };
+        await provider.show(active, false, cancel);
+        await provider.show(table, true);
+        harness.view.webview.postMessage.mockClear();
+        harness.view.show.mockClear();
+        harness.send({ type: 'refreshTasks' });
+        expect(harness.view.webview.postMessage).toHaveBeenCalledWith({
+            type: 'history', selectedId: provider.runner.find(table)!.task.id,
+            tasks: provider.runner.history.map(entry => entry.task),
+        });
+        expect(harness.view.webview.postMessage).toHaveBeenLastCalledWith({ type: 'result', result: table });
+        expect(provider.selectedResult).toBe(table);
+        expect(provider.runner.find(active)!.task.state).toBe('running');
+        expect(cancel).not.toHaveBeenCalled();
+        expect(harness.view.show).not.toHaveBeenCalled();
+    });
+
     it('updates the running badge while hidden and clears it after completion', async () => {
         const provider = new ResultView({} as vscode.Uri);
         const first: Result = { type: 'http', data: { method: 'GET', url: '/first', state: 'loading' } };

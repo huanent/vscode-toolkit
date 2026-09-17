@@ -2,13 +2,14 @@ import * as vscode from 'vscode';
 import type { Result, ResultMessage } from './protocol';
 import { getWebviewHtml } from '../webview';
 import { TaskRunner } from './taskRunner';
+import { ResultStorage } from './storage';
 
 export class ResultView implements vscode.WebviewViewProvider {
 	static readonly viewType = 'vscode-toolkit.result';
 	private view: vscode.WebviewView | undefined;
 	private result: Result | undefined;
 	private ready = false;
-	readonly runner = new TaskRunner(() => this.postResult());
+	readonly runner = new TaskRunner(() => { this.persist(); this.postResult(); });
 	private selectedId: string | undefined;
 
 	get selectedResult(): Result | undefined { return this.result; }
@@ -19,7 +20,29 @@ export class ResultView implements vscode.WebviewViewProvider {
 
 	dispose(): void { this.runner.dispose(); }
 
-	constructor(private readonly extensionUri: vscode.Uri) { }
+	constructor(private readonly extensionUri: vscode.Uri, private readonly storage?: ResultStorage) { }
+
+	static async create(context: vscode.ExtensionContext): Promise<ResultView> {
+		try {
+			const storage = await ResultStorage.create(context);
+			const entries = await storage.load();
+			const provider = new ResultView(context.extensionUri, storage);
+			provider.runner.restore(entries);
+			const latest = provider.runner.history[0];
+			provider.selectedId = latest?.task.id;
+			provider.result = latest?.result;
+			return provider;
+		} catch (error) {
+			void vscode.window.showErrorMessage(`Unable to load result history: ${String(error)}`);
+			return new ResultView(context.extensionUri);
+		}
+	}
+
+	private persist(): void {
+		void this.storage?.persist(this.runner.history).catch(error => {
+			void vscode.window.showErrorMessage(`Unable to save result history: ${String(error)}`);
+		});
+	}
 
 	resolveWebviewView(view: vscode.WebviewView): void {
 		this.view = view;
@@ -30,6 +53,7 @@ export class ResultView implements vscode.WebviewViewProvider {
 			localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')],
 		};
 		view.webview.onDidReceiveMessage(message => {
+			if (message?.type === 'refreshTasks') this.postResult();
 			if (message?.type === 'selectTask' && typeof message.id === 'string') {
 				const entry = this.runner.entries.get(message.id);
 				if (entry) {
@@ -42,7 +66,7 @@ export class ResultView implements vscode.WebviewViewProvider {
 			if (message?.type === 'deleteTask' && typeof message.id === 'string') {
 				this.runner.remove(message.id);
 				if (!this.selectedId || !this.runner.entries.has(this.selectedId)) {
-					const entry = [...this.runner.entries.values()].at(-1);
+					const entry = this.runner.history[0];
 					this.selectedId = entry?.task.id;
 					this.result = entry?.result;
 				}
@@ -69,8 +93,8 @@ export class ResultView implements vscode.WebviewViewProvider {
 	async show(result: Result, exportable = false, cancel?: () => void): Promise<void> {
 		this.result = result;
 		this.selectedId = this.runner.add(result, cancel).task.id;
+		this.persist();
 		await vscode.commands.executeCommand('setContext', 'vscode-toolkit.servers.mysqlSqlResultsExportable', exportable);
-		await vscode.commands.executeCommand('setContext', 'vscode-toolkit.httpResultVisible', true);
 		if (this.view) {
 			this.view.show(true);
 			this.postResult();
@@ -96,7 +120,7 @@ export class ResultView implements vscode.WebviewViewProvider {
 		if (this.ready && this.view?.visible) {
 			void this.view.webview.postMessage({
 				type: 'history', selectedId: this.selectedId,
-				tasks: [...this.runner.entries.values()].map(entry => entry.task).reverse(),
+				tasks: this.runner.history.map(entry => entry.task),
 			});
 		}
 		if (this.ready && this.result && this.view?.visible) {

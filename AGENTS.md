@@ -12,6 +12,7 @@
 - Keep files and components small: aim for React source files under 300 lines and individual components under 150 lines. Treat these as refactoring guidelines, not hard limits; split by cohesive responsibility rather than mechanically by line count.
 - Extract substantial UI sections and repeated rendering into named components. Move complex stateful behavior and effects into focused custom hooks, and move pure business logic into utilities.
 - Organize components, hooks, and utilities by feature. Keep feature-specific code close to its consumers; promote code to shared modules only when it is genuinely reusable across features.
+- Put feature-independent, reusable non-UI utilities in `webview/src/lib` (for example, date grouping and formatting helpers). Before adding a helper, check for an existing shared implementation; when the same logic is needed by multiple features, extract it into `lib` and update all consumers instead of duplicating it. Keep feature-specific logic in its feature directory.
 - Put basic, feature-independent UI primitives in `webview/src/components/ui` (for example, buttons, inputs, dialogs, and icons).
 - Reserve `webview/src/components` outside `ui` for shared components reusable across multiple features. Compose these from UI primitives where appropriate.
 - Keep components specific to one feature in that feature's directory directly under `webview/src`, not in the shared components directory.

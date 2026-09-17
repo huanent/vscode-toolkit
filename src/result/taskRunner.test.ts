@@ -5,6 +5,23 @@ import { TaskRunner } from './taskRunner';
 const result = (): Result => ({ type: 'http', data: { method: 'GET', url: 'https://example.com', state: 'loading' } });
 
 describe('result task runner', () => {
+    it('restores results newest first and cancels interrupted tasks', () => {
+        const original = new TaskRunner(vi.fn());
+        const newest = original.add(result(), vi.fn());
+        newest.task.startedAt = 200;
+        const oldest = original.add(result());
+        oldest.task.startedAt = 100;
+        const restored = new TaskRunner(vi.fn());
+        restored.restore(JSON.parse(JSON.stringify([newest, oldest])));
+        expect(restored.history.map(entry => entry.task.startedAt)).toEqual([200, 100]);
+        const entry = restored.history[0];
+        expect(entry.task).toMatchObject({ state: 'cancelled', cancellable: false });
+        expect(entry.result.data).toMatchObject({ state: 'cancelled' });
+        expect(restored.find(entry.result)).toBe(entry);
+        restored.remove(entry.task.id);
+        expect(restored.history).toHaveLength(1);
+    });
+
     it('runs independently and cancels only the requested task', async () => {
         const runner = new TaskRunner(vi.fn());
         const first = result();

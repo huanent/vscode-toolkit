@@ -1,10 +1,11 @@
 import { Search, X, MessageSquare, MessageCircle, Trash2 } from '../../components/ui/icons';
 import { List, ListGroup, ListItem } from '../../components/ui/list';
-import { useEffect, useState, type UIEvent } from 'react';
+import { Fragment, useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
 import { Empty } from '../../components/ui/empty';
 import { IconButton } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { getHistoryGroup } from '../../lib/history';
 
 const pageSize = 30;
 
@@ -79,29 +80,30 @@ export function HistoryPanel({
 						/>
 					</li>
 				)}
-				{groupSessions(visibleSessions).map(group => (
-					<ListGroup key={group.label} label={group.label}>
-						{group.items.map(session => (
-							<ListItem
-								key={session.id}
-								icon={<MessageCircle size="sm" />}
-								selected={session.id === currentSessionId}
-								onSelect={() => onSelect(session.id)}
-								actions={
-									<IconButton
-										label="Delete chat"
-										icon={<Trash2 size="sm" />}
-										size="sm"
-										className="text-inherit"
-										onClick={() => onDelete(session.id)}
-									/>
-								}
-							>
-								{session.summary}
-							</ListItem>
-						))}
-					</ListGroup>
-				))}
+				{groupSessions(visibleSessions).map(group => {
+					const entries = group.items.map(session => (
+						<ListItem
+							key={session.id}
+							icon={<MessageCircle size="sm" />}
+							selected={session.id === currentSessionId}
+							onSelect={() => onSelect(session.id)}
+							actions={
+								<IconButton
+									label="Delete chat"
+									icon={<Trash2 size="sm" />}
+									size="sm"
+									className="text-inherit"
+									onClick={() => onDelete(session.id)}
+								/>
+							}
+						>
+							{session.summary}
+						</ListItem>
+					));
+					return group.label === 'Today'
+						? <Fragment key={group.label}>{entries}</Fragment>
+						: <ListGroup key={group.label} label={group.label}>{entries}</ListGroup>;
+				})}
 			</List>
 		</aside>
 	);
@@ -110,21 +112,9 @@ export function HistoryPanel({
 function groupSessions(sessions: SessionItem[]) {
 	const groups = new Map<string, SessionItem[]>();
 	for (const session of sessions) {
-		const label = getSessionGroup(session.updatedAt);
+		const label = getHistoryGroup(session.updatedAt);
 		groups.set(label, [...(groups.get(label) ?? []), session]);
 	}
 	return [...groups].map(([label, items]) => ({ label, items }));
 }
 
-function getSessionGroup(updatedAt: number): string {
-	const date = new Date(updatedAt);
-	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	const sessionDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-	const daysAgo = Math.round((today.getTime() - sessionDay.getTime()) / 86_400_000);
-	if (daysAgo <= 0) return 'Today';
-	if (daysAgo === 1) return 'Yesterday';
-	if (daysAgo <= 3) return 'Previous 3 days';
-	if (daysAgo <= 7) return 'Previous 7 days';
-	return 'Older';
-}

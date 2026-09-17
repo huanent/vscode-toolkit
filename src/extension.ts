@@ -19,7 +19,7 @@ import { registerExcelEditor } from './excel/editor';
 import { registerArchiveEditor } from './archive/editor';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-	const resultView = new ResultView(context.extensionUri);
+	const resultView = await ResultView.create(context);
 	context.subscriptions.push(resultView);
 	context.subscriptions.push(vscode.window.registerWebviewViewProvider(ResultView.viewType, resultView, {
 		webviewOptions: { retainContextWhenHidden: true },

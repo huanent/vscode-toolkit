@@ -13,6 +13,31 @@ export class TaskRunner {
 
     constructor(private readonly changed: () => void) { }
 
+    get history(): TaskEntry[] {
+        return [...this.entries.values()].sort((first, second) => second.task.startedAt - first.task.startedAt || second.task.id.localeCompare(first.task.id));
+    }
+
+    restore(entries: TaskEntry[]): void {
+        for (const entry of entries) {
+            if (this.entries.has(entry.task.id)) continue;
+            entry.cancel = undefined;
+            entry.task.cancellable = false;
+            if (this.active(entry.task.state)) {
+                entry.task.state = 'cancelled';
+                entry.task.finishedAt = Date.now();
+                if (entry.result.type === 'http') Object.assign(entry.result.data, { state: 'cancelled', message: 'Task interrupted by restart.' });
+                if (entry.result.type === 'workflow') {
+                    Object.assign(entry.result.data, { state: 'cancelled', summary: 'Task interrupted by restart.', finishedAt: entry.task.finishedAt });
+                    for (const step of entry.result.data.steps) {
+                        if (step.state === 'running' || step.state === 'pending') step.state = 'cancelled';
+                    }
+                }
+            }
+            this.entries.set(entry.task.id, entry);
+            this.resultIds.set(entry.result, entry.task.id);
+        }
+    }
+
     add(result: Result, cancel?: () => void): TaskEntry {
         const existing = this.find(result);
         if (existing) return existing;
