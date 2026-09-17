@@ -49,7 +49,7 @@ export function WorkflowStepOutput({ step, index, now }: { step: WorkflowStepRes
             </div>
             <div id={contentId} hidden={!expanded}>
                 {step.progress && (
-                    <div className="px-3 py-2 text-xs text-(--vscode-descriptionForeground)">
+                    <div className="py-2 pr-3 pl-[calc(14px+var(--spacing)*5)] text-xs text-(--vscode-descriptionForeground)">
                         <div className="mb-1 flex flex-wrap justify-between gap-2 tabular-nums">
                             <span>{step.progress.total > 0 ? Math.min(100, Math.floor(step.progress.transferred / step.progress.total * 100)) : step.state === 'success' ? 100 : 0}%</span>
                             <span>{step.progress.transferred.toLocaleString()} / {step.progress.total.toLocaleString()} bytes</span>
@@ -61,9 +61,9 @@ export function WorkflowStepOutput({ step, index, now }: { step: WorkflowStepRes
                     <pre ref={output} onScroll={event => {
                         const element = event.currentTarget;
                         follow.current = element.scrollHeight - element.scrollTop - element.clientHeight < 24;
-                    }} className="m-0 max-h-80 overflow-auto bg-(--vscode-textCodeBlock-background) px-3 py-2 font-(family-name:--vscode-editor-font-family) text-xs whitespace-pre-wrap wrap-anywhere">{step.output}</pre>
+                    }} className="m-0 max-h-80 overflow-auto bg-(--vscode-textCodeBlock-background) py-2 pr-3 pl-[calc(14px+var(--spacing)*5)] font-(family-name:--vscode-editor-font-family) text-xs whitespace-pre-wrap wrap-anywhere">{step.output}</pre>
                 ) : !step.progress && (
-                    <p className="m-0 px-3 py-2 text-xs text-(--vscode-descriptionForeground)">
+                    <p className="m-0 py-2 pr-3 pl-[calc(14px+var(--spacing)*5)] text-xs text-(--vscode-descriptionForeground)">
                         {step.state === 'running' ? step.type === 'sftp' ? 'Preparing transfer...' : 'Waiting for output...' : step.state === 'pending' ? 'Waiting to run.' : step.state === 'skipped' ? 'Not executed.' : 'No output.'}
                     </p>
                 )}
