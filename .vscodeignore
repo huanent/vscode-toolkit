@@ -1,5 +1,10 @@
 .vscode/**
 .vscode-test/**
+.github/**
+.temp/**
+AGENTS.md
+.oxlintrc.json
+.oxfmtrc.json
 src/**
 webview/**
 vite.config.mts
@@ -17,3 +22,5 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 node_modules/ssh2/lib/protocol/crypto/build/**
 node_modules/cpu-features/**
+node_modules/ssh2/test/**
+node_modules/ssh2/examples/**

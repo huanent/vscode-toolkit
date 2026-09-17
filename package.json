@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -1015,7 +1015,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:typecheck": "tsc -p tsconfig.test.json",
-    "test:dashboard": "node --test tests/dashboard.test.cjs",
     "vscode:prepublish": "npm run build",
     "build": "npm run compile && npm run compile:webview",
     "watch:extension": "vite build --config vite.extension.config.mts --watch",
@@ -1038,15 +1037,20 @@
     "@types/yauzl": "^3.4.0",
     "@types/yazl": "^3.3.1",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vscode/codicons": "^0.0.46-24",
+    "@vscode/debugprotocol": "^1.68.0",
     "@vscode/vsce": "^3.6.2",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
+    "cn": "^0.2.4",
     "dompurify": "^3.4.13",
+    "exceljs": "^4.4.0",
     "katex": "^0.18.4",
     "markdown-it": "^15.0.0",
     "markdown-it-texmath": "^1.0.0",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
+    "postcss": "^8.5.28",
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -1054,7 +1058,10 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "xml-formatter": "^3.7.0",
+    "yauzl": "^3.4.0",
+    "yazl": "^3.3.1"
   },
   "overrides": {
     "exceljs": {
@@ -1062,14 +1069,7 @@
     }
   },
   "dependencies": {
-    "@vscode/codicons": "^0.0.46-24",
-    "@vscode/debugprotocol": "^1.68.0",
-    "cn": "^0.2.4",
-    "exceljs": "^4.4.0",
     "mysql2": "^3.24.3",
-    "ssh2": "^1.17.0",
-    "xml-formatter": "^3.7.0",
-    "yauzl": "^3.4.0",
-    "yazl": "^3.3.1"
+    "ssh2": "^1.17.0"
   }
 }

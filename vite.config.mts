@@ -2,10 +2,33 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { list } from 'postcss';
 
 export default defineConfig({
 	root: 'webview',
 	base: './',
+	css: {
+		postcss: {
+			plugins: [
+				{
+					postcssPlugin: 'katex-woff2-only',
+					AtRule: {
+						'font-face': rule => {
+							if (!rule.source?.input.file?.replaceAll('\\', '/').includes('/katex/')) {
+								return;
+							}
+							rule.walkDecls('src', declaration => {
+								const sources = list.comma(declaration.value).filter(source => /\.woff2\b/.test(source));
+								if (sources.length > 0) {
+									declaration.value = sources.join(', ');
+								}
+							});
+						},
+					},
+				},
+			],
+		},
+	},
 	plugins: [
 		{
 			name: 'prism-language-dependencies',
