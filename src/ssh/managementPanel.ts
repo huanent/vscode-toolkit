@@ -75,6 +75,7 @@ export function registerManagementFeature(
 							group: server.group,
 							address: `${server.username}@${server.host}:${server.port}`,
 							kind: 'SSH',
+							commandCount: server.commands.length,
 						})),
 				});
 			const changes = store.onDidChange(() => void publish());
@@ -182,6 +183,9 @@ export function registerManagementFeature(
 							return;
 						}
 						switch (message.type) {
+							case 'runScript':
+								await vscode.commands.executeCommand('vscode-toolkit.servers.runSshCommand', server.id);
+								break;
 							case 'copyHost':
 								await vscode.env.clipboard.writeText(server.host);
 								break;

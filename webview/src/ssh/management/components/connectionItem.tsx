@@ -4,7 +4,7 @@ import { Play, Terminal } from '../../../components/ui/icons';
 import { ListItem } from '../../../components/ui/list';
 import { Popover } from '../../../components/ui/popover';
 
-export type Connection = { id: string; name: string; group: string; address: string; kind: string };
+export type Connection = { id: string; name: string; group: string; address: string; kind: string; commandCount: number };
 
 export function ConnectionItem({
 	server,
@@ -56,6 +56,7 @@ export function ConnectionItem({
 								['edit', 'Edit'],
 								['duplicate', 'Duplicate'],
 								['copyHost', 'Copy Host'],
+								...(server.commandCount > 0 ? [['runScript', 'Run Script']] : []),
 								['up', 'Move Up'],
 								['down', 'Move Down'],
 								['export', 'Export'],
