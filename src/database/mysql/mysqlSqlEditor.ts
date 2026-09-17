@@ -1,5 +1,5 @@
 import { getStorageUri } from '../../storagePath';
-import type { ResultMessage } from '../../result/protocol';
+import type { Result, ResultMessage } from '../../result/protocol';
 import * as vscode from 'vscode';
 import { homedir } from 'node:os';
 import { FieldPacket, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
@@ -7,7 +7,7 @@ import { ServerStore } from '../serverStore';
 import type { ResultView } from '../../result/resultView';
 import { createMysqlConnection } from './mysqlConnection';
 import { displayMysqlValue } from './tableData';
-import { splitMysqlStatements } from './sqlStatements';
+import { executeSql } from './sqlRunner';
 
 const executeCommandId = 'vscode-toolkit.servers.executeMysqlSql';
 const exportResultsCommandId = 'vscode-toolkit.servers.exportMysqlSqlResults';
@@ -75,7 +75,6 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 	private readonly documentSaves = new Map<string, Promise<void>>();
 	private readonly connectionStatus: vscode.StatusBarItem;
 	private readonly disposables: vscode.Disposable[];
-	private currentResult: SqlResultModel | undefined;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -171,52 +170,38 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 			return;
 		}
 
-		await vscode.window.withProgress(
-			{
-				location: vscode.ProgressLocation.Window,
-				title: `Executing SQL on ${server.name} / ${context.database}`,
-			},
-			async () => {
-				const connection = await createMysqlConnection(server, credentials, context.database);
-				const startedAt = performance.now();
-				try {
-					const statements = splitMysqlStatements(sql);
-					if (statements.length === 0) {
-						return;
-					}
-					let queryResult: Awaited<ReturnType<typeof connection.query>> | undefined;
-					for (let index = 0; index < statements.length; index++) {
-						try {
-							queryResult = await connection.query(statements[index]);
-						} catch (error) {
-							throw new Error(`Statement ${index + 1} failed: ${errorMessage(error)}`);
-						}
-					}
-					const [result, fields] = queryResult!;
-					const durationMs = Math.round(performance.now() - startedAt);
-					if (Array.isArray(result)) {
-						this.showRows(
-							server.name,
-							context.database,
-							result as RowDataPacket[],
-							fields as FieldPacket[],
-							durationMs,
-						);
-					} else {
-						this.showCommandResult(
-							server.name,
-							context.database,
-							result as ResultSetHeader,
-							durationMs,
-						);
-					}
-				} catch (error) {
-					void vscode.window.showErrorMessage(`Could not execute SQL: ${errorMessage(error)}`);
-				} finally {
-					await connection.end();
-				}
-			},
-		);
+		const taskResult: Result = {
+			type: 'table', data: {
+				label: context.database, source: `${server.name} / ${context.database}`,
+				kind: 'command', summary: 'Executing SQL...', message: sql,
+			}
+		};
+		await this.resultView.run(taskResult, async signal => {
+			const startedAt = performance.now();
+			const queryResult = await executeSql(() => createMysqlConnection(server, credentials, context.database), sql, signal);
+			if (!queryResult) {
+				taskResult.data = { ...taskResult.data, kind: 'command', summary: 'No statements to execute.', message: 'No statements to execute.' };
+				return;
+			}
+			const [result, fields] = queryResult;
+			const durationMs = Math.round(performance.now() - startedAt);
+			if (Array.isArray(result)) {
+				taskResult.data = toResultMessage(this.showRows(
+					server.name,
+					context.database,
+					result as RowDataPacket[],
+					fields as FieldPacket[],
+					durationMs,
+				)).result.data;
+			} else {
+				taskResult.data = toResultMessage(this.showCommandResult(
+					server.name,
+					context.database,
+					result as ResultSetHeader,
+					durationMs,
+				)).result.data;
+			}
+		});
 	}
 
 	private provideCompletionItems(
@@ -334,7 +319,7 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 		rows: RowDataPacket[],
 		fields: FieldPacket[],
 		durationMs: number,
-	): void {
+	): SqlResultModel {
 		const columns = fields.map(field => field.name);
 		const values = rows.map(row =>
 			columns.map(column => {
@@ -342,14 +327,14 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 				return value;
 			}),
 		);
-		this.showResult({
+		return {
 			serverName,
 			database,
 			summary: `${rows.length.toLocaleString()} row(s) · ${durationMs.toLocaleString()} ms`,
 			kind: 'rows',
 			columns,
 			rows: values,
-		});
+		};
 	}
 
 	private showCommandResult(
@@ -357,7 +342,7 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 		database: string,
 		result: ResultSetHeader,
 		durationMs: number,
-	): void {
+	): SqlResultModel {
 		const parts = [`${result.affectedRows.toLocaleString()} row(s) affected`];
 		if (result.insertId) {
 			parts.push(`Insert id ${result.insertId.toLocaleString()}`);
@@ -366,25 +351,21 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 			parts.push(`${result.warningStatus.toLocaleString()} warning(s)`);
 		}
 		parts.push(`${durationMs.toLocaleString()} ms`);
-		this.showResult({
+		return {
 			serverName,
 			database,
 			summary: parts.join(' · '),
 			kind: 'command',
 			message: 'Command completed successfully.',
-		});
-	}
-
-	private showResult(result: SqlResultModel): void {
-		this.currentResult = result;
-		void this.resultView.show(toResultMessage(result).result, result.kind === 'rows');
+		};
 	}
 
 	private async exportResult(): Promise<void> {
-		const result = this.currentResult;
-		if (!result || result.kind !== 'rows') {
+		const selected = this.resultView.selectedResult;
+		if (selected?.type !== 'table' || selected.data.kind !== 'rows') {
 			return;
 		}
+		const result = { ...selected.data, serverName: selected.data.source ?? '', database: selected.data.label ?? 'query' };
 		const format = await vscode.window.showQuickPick(
 			[
 				{ label: 'JSON', description: 'JSON object array', extension: 'json' as const },
@@ -473,7 +454,7 @@ type SqlResultModel =
 	}
 	| { serverName: string; database: string; summary: string; kind: 'command'; message: string };
 
-function toResultMessage(result: SqlResultModel): ResultMessage {
+function toResultMessage(result: SqlResultModel): ResultMessage & { result: Extract<Result, { type: 'table' }> } {
 	return {
 		type: 'result',
 		result: {

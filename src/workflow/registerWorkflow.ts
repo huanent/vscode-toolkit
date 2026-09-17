@@ -13,14 +13,12 @@ import { hasWorkflowVariables, resolveWorkflowVariables, validateWorkflowPaths }
 export function registerWorkflow(context: vscode.ExtensionContext, resultView: ResultView): void {
 	const runner = new WorkflowRunner(resultView);
 	let managing = false;
-	let running = false;
 	const store = new WorkflowStore(context);
 
 	async function run(workflow: Workflow, toolToken?: vscode.CancellationToken, confirm = true, resolved = false): Promise<boolean> {
 		if (toolToken?.isCancellationRequested) return false;
 		if (!vscode.workspace.isTrusted)
 			throw new Error('Trust the workspace before running workflows.');
-		if (running) throw new Error('A workflow is already running.');
 		if (!workflow.steps.length) throw new Error('Add at least one step before running.');
 		if (!resolved) workflow = resolveWorkflowVariables(workflow, store.getLocation(workflow.id));
 		validateWorkflowPaths(workflow);
@@ -36,13 +34,7 @@ export function registerWorkflow(context: vscode.ExtensionContext, resultView: R
 			if (confirmed !== 'Run') return false;
 		}
 		if (toolToken?.isCancellationRequested) return false;
-		if (running) throw new Error('A workflow is already running.');
-		running = true;
-		try {
-			return await runner.run(workflow, toolToken);
-		} finally {
-			running = false;
-		}
+		return await runner.run(workflow, toolToken);
 	}
 
 	async function manage(): Promise<void> {
@@ -152,7 +144,8 @@ export function registerWorkflow(context: vscode.ExtensionContext, resultView: R
 				}
 				await resultView.show({
 					type: 'workflow', data: {
-						name: 'Workflow', state: 'error', summary: 'Workflow failed.',
+						runId: `error-${Date.now()}`, startedAt: Date.now(), finishedAt: Date.now(), steps: [],
+						name: 'Workflow', state: 'error', summary: error instanceof Error ? error.message : String(error),
 						output: error instanceof Error ? error.message : String(error),
 					}
 				});

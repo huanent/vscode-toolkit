@@ -12,7 +12,6 @@ export function registerWorkflowPanel(
 	showOutput: () => void,
 ): void {
 	let panel: vscode.WebviewPanel | undefined;
-	let busy = false;
 	const sendState = async () => {
 		try {
 			const workflows = await store.list();
@@ -21,7 +20,7 @@ export function registerWorkflowPanel(
 				workflows,
 				locations: Object.fromEntries(workflows.map(workflow => [workflow.id, store.getLocation(workflow.id)])),
 				workspaceFolders: store.getWorkspaceFolders(),
-				busy,
+				busy: false,
 				servers: listSshConnections().map(server => ({
 					id: server.id,
 					name: `${server.name} (${server.host})`,
@@ -61,10 +60,10 @@ export function registerWorkflowPanel(
 								const file = request.field === 'localPath' && request.download === true
 									? await vscode.window.showSaveDialog({ saveLabel: 'Download To' })
 									: (await vscode.window.showOpenDialog({
-									canSelectFiles: request.field === 'localPath',
-									canSelectFolders: request.field === 'cwd',
-									canSelectMany: false,
-								}))?.[0];
+										canSelectFiles: request.field === 'localPath',
+										canSelectFolders: request.field === 'cwd',
+										canSelectMany: false,
+									}))?.[0];
 								if (file)
 									await current.webview.postMessage({
 										type: 'path',
@@ -75,7 +74,6 @@ export function registerWorkflowPanel(
 									});
 								return;
 							}
-							if (busy) throw new Error('Wait for the running workflow to finish.');
 							if (request.type === 'save' || request.type === 'run') {
 								const workflow = parseWorkflow(request.workflow);
 								validateWorkflowPaths(workflow, true);
@@ -91,8 +89,6 @@ export function registerWorkflowPanel(
 								await current.webview.postMessage({ type: 'saved', workflow });
 								await sendState();
 								if (request.type === 'run') {
-									busy = true;
-									await sendState();
 									void run(workflow)
 										.catch(error =>
 											current.webview.postMessage({
@@ -101,7 +97,6 @@ export function registerWorkflowPanel(
 											}),
 										)
 										.finally(() => {
-											busy = false;
 											void sendState();
 										});
 								}

@@ -13,6 +13,8 @@ export interface SftpEntry {
 	modifiedAt: string;
 }
 
+export type SftpProgress = (transferred: number, total: number) => void;
+
 export async function listSftpDirectory(
 	server: SshServer,
 	credentials: ServerCredentials,
@@ -68,13 +70,20 @@ export async function writeSftpFile(
 	localPath: string,
 	remotePath: string,
 	signal?: AbortSignal,
+	onProgress?: SftpProgress,
 ): Promise<void> {
 	await withSftp(
 		server,
 		credentials,
 		sftp =>
 			new Promise<void>((resolve, reject) => {
-				sftp.fastPut(localPath, remotePath, error => (error ? reject(error) : resolve()));
+				const complete = (error?: Error | null) => error ? reject(error) : resolve();
+				if (onProgress) sftp.fastPut(localPath, remotePath, {
+					step: (transferred, _chunk, total) => {
+						if (!signal?.aborted) onProgress(transferred, total);
+					}
+				}, complete);
+				else sftp.fastPut(localPath, remotePath, complete);
 			}),
 		signal,
 	);
@@ -86,6 +95,7 @@ export async function downloadSftpFile(
 	remotePath: string,
 	localPath: string,
 	signal?: AbortSignal,
+	onProgress?: SftpProgress,
 ): Promise<void> {
 	signal?.throwIfAborted();
 	await fs.mkdir(path.dirname(localPath), { recursive: true });
@@ -94,7 +104,13 @@ export async function downloadSftpFile(
 		credentials,
 		sftp =>
 			new Promise<void>((resolve, reject) => {
-				sftp.fastGet(remotePath, localPath, error => (error ? reject(error) : resolve()));
+				const complete = (error?: Error | null) => error ? reject(error) : resolve();
+				if (onProgress) sftp.fastGet(remotePath, localPath, {
+					step: (transferred, _chunk, total) => {
+						if (!signal?.aborted) onProgress(transferred, total);
+					}
+				}, complete);
+				else sftp.fastGet(remotePath, localPath, complete);
 			}),
 		signal,
 	);

@@ -8,6 +8,28 @@ vi.mock('./sshConnection', () => ({ connectSshClient: vi.fn() }));
 vi.mock('node:fs/promises', () => ({ mkdir: vi.fn(async () => undefined) }));
 
 describe('SFTP cancellation', () => {
+    it.each(['upload', 'download'])('reports %s progress before completion', async action => {
+        const onProgress = vi.fn();
+        let complete!: () => void;
+        const transfer = vi.fn((_source, _target, options, callback) => {
+            options.step(512, 512, 1024);
+            complete = callback;
+        });
+        const channel = Object.assign(new EventEmitter(), { fastPut: transfer, fastGet: transfer, end: vi.fn() });
+        const dispose = vi.fn();
+        vi.mocked(connectSshClient).mockImplementation((_server, _credentials, ready) => {
+            ready({ client: { sftp: (callback: Function) => callback(undefined, channel) }, dispose } as unknown as SshConnection);
+            return dispose;
+        });
+        const execute = action === 'upload' ? writeSftpFile : downloadSftpFile;
+        const execution = execute({} as SshServer, {}, '/source', '/target', undefined, onProgress);
+        await vi.waitFor(() => expect(onProgress).toHaveBeenCalledWith(512, 1024));
+        expect(channel.end).not.toHaveBeenCalled();
+        complete();
+        await execution;
+        expect(channel.end).toHaveBeenCalledOnce();
+    });
+
     it.each(['upload', 'download'])('closes an active %s and ignores its late callback', async action => {
         let callback: (error?: Error) => void = () => { };
         const transfer = vi.fn((_source, _target, complete) => { callback = complete; });

@@ -15,6 +15,8 @@ export function executeSshCommand(
 	credentials: ServerCredentials,
 	command: string,
 	signal?: AbortSignal,
+	onOutput?: (text: string) => void,
+	options: { pty?: boolean } = {},
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		let settled = false;
@@ -33,7 +35,7 @@ export function executeSshCommand(
 			signal?.removeEventListener('abort', abort);
 			if (disconnect) disconnect();
 			else connection?.dispose();
-			if (signal?.aborted) error = cancelled();
+			if (signal?.aborted && error?.name !== 'SshCancellationUnconfirmedError') error = cancelled();
 			if (error) {
 				reject(error);
 			} else {
@@ -48,10 +50,25 @@ export function executeSshCommand(
 				return;
 			}
 			cancellationTimer = setTimeout(() => {
+				if (options.pty) {
+					const error = new Error('Ctrl+C was sent, but remote process termination could not be confirmed. Check the remote host before retrying.');
+					error.name = 'SshCancellationUnconfirmedError';
+					finish(error);
+					return;
+				}
 				try { channel?.signal('KILL'); } catch { }
 				finish(cancelled());
-			}, 2000);
-			try { channel.signal('TERM'); } catch { finish(cancelled()); }
+			}, options.pty ? 10000 : 2000);
+			try {
+				if (options.pty) channel.write('\x03');
+				else channel.signal('TERM');
+			} catch {
+				if (options.pty) {
+					const error = new Error('Unable to send Ctrl+C; remote process termination could not be confirmed.');
+					error.name = 'SshCancellationUnconfirmedError';
+					finish(error);
+				} else finish(cancelled());
+			}
 		};
 		if (signal?.aborted) {
 			finish(cancelled());
@@ -67,7 +84,9 @@ export function executeSshCommand(
 					return;
 				}
 				connection = nextConnection;
-				nextConnection.client.exec(buildRemoteCommand(command), (error, stream) => {
+				nextConnection.client.exec(buildRemoteCommand(command), options.pty ? {
+					pty: { term: 'dumb', cols: 120, rows: 30, modes: { ISIG: 1, VINTR: 3, ECHO: 0 } },
+				} : {}, (error, stream) => {
 					if (settled) {
 						stream?.close();
 						return;
@@ -82,8 +101,16 @@ export function executeSshCommand(
 					let stderr = '';
 					stream.setEncoding('utf8');
 					stream.stderr.setEncoding('utf8');
-					stream.on('data', (data: Buffer | string) => (stdout += data.toString()));
-					stream.stderr.on('data', data => (stderr += data));
+					stream.on('data', (data: Buffer | string) => {
+						if (settled) return;
+						stdout += data.toString();
+						onOutput?.(data.toString());
+					});
+					stream.stderr.on('data', (data: Buffer | string) => {
+						if (settled) return;
+						stderr += data.toString();
+						onOutput?.(data.toString());
+					});
 					stream.on('close', (code: number | undefined) => {
 						if (code && code !== 0) {
 							const output = [stdout.trim(), stderr.trim()].filter(Boolean).join('\n');

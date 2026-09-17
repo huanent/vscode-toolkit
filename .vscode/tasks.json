@@ -29,7 +29,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "build started",
-          "endsPattern": "built in [0-9]+ms\\."
+          "endsPattern": "built in [0-9]+ms\\.|Build failed with [0-9]+ errors?:|error during build:"
         }
       }
     },
@@ -48,7 +48,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "build started",
-          "endsPattern": "built in [0-9]+ms\\."
+          "endsPattern": "built in [0-9]+ms\\.|Build failed with [0-9]+ errors?:|error during build:"
         }
       }
     },

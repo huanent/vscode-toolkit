@@ -8,7 +8,7 @@ import {
 	registerHttpHoverProvider,
 	registerHttpLanguageDiagnostics,
 } from './httpLanguageService';
-import type { HttpResult } from '../result/protocol';
+import type { Result } from '../result/protocol';
 import type { ResultView } from '../result/resultView';
 
 const headers = [
@@ -23,7 +23,6 @@ const httpSaveDelay = 500;
 const httpEditorContext = 'vscode-toolkit.httpEditor';
 
 export function registerHttpClient(context: vscode.ExtensionContext, resultView: ResultView): void {
-	const resultPanel = { show: (result: HttpResult) => resultView.show({ type: 'http', data: result }) };
 	const requestStatus = new HttpRequestStatus();
 	const selector: vscode.DocumentSelector = { language: 'http' };
 	const documentStore = new HttpDocumentStore(context);
@@ -49,11 +48,8 @@ export function registerHttpClient(context: vscode.ExtensionContext, resultView:
 		vscode.commands.registerCommand(
 			'vscode-toolkit.sendHttpRequest',
 			async (uri?: vscode.Uri, line?: number) => {
-				await sendRequest(resultPanel, requestStatus, uri, line);
+				await sendRequest(resultView, requestStatus, uri, line);
 			},
-		),
-		vscode.commands.registerCommand('vscode-toolkit.cancelHttpRequest', () =>
-			requestStatus.cancel(),
 		),
 		vscode.languages.registerCodeLensProvider(selector, new HttpCodeLensProvider()),
 		vscode.languages.registerCompletionItemProvider(
@@ -80,8 +76,7 @@ class HttpRequestStatus implements vscode.Disposable {
 
 	constructor() {
 		this.sendingItem.name = 'Toolkit HTTP Request';
-		this.sendingItem.tooltip = '取消请求';
-		this.sendingItem.command = 'vscode-toolkit.cancelHttpRequest';
+		this.sendingItem.tooltip = 'HTTP request in progress';
 	}
 
 	start(controller: AbortController, method: string): void {
@@ -97,7 +92,7 @@ class HttpRequestStatus implements vscode.Disposable {
 		}
 	}
 
-	cancel(): void {
+	private cancel(): void {
 		for (const controller of this.controllers) {
 			controller.abort();
 		}
@@ -309,7 +304,7 @@ class HttpCompletionProvider implements vscode.CompletionItemProvider {
 }
 
 async function sendRequest(
-	resultPanel: { show(result: HttpResult): Promise<void> },
+	resultView: ResultView,
 	requestStatus: HttpRequestStatus,
 	uri?: vscode.Uri,
 	line?: number,
@@ -341,54 +336,61 @@ async function sendRequest(
 
 	const controller = new AbortController();
 	const startedAt = Date.now();
-	await resultPanel.show({
-		method: request.method,
-		url: request.url,
-		state: 'loading',
-	});
-	requestStatus.start(controller, request.method);
-
-	try {
-		const response = await fetch(request.url, {
-			method: request.method,
-			headers: request.headers,
-			body: request.body,
-			signal: controller.signal,
-			redirect: 'follow',
-		});
-		const body = await formatResponseBody(response);
-		const elapsed = Date.now() - startedAt;
-
-		await resultPanel.show({
+	const result: Result = {
+		type: 'http', data: {
 			method: request.method,
 			url: request.url,
-			state: 'success',
-			status: response.status,
-			statusText: response.statusText,
-			elapsed,
-			headers: Array.from(response.headers.entries()),
-			body,
-		});
-	} catch (error) {
-		if (controller.signal.aborted) {
-			await resultPanel.show({
-				method: request.method,
-				url: request.url,
-				state: 'cancelled',
-				message: 'Request cancelled.',
-			});
-		} else {
-			const message = error instanceof Error ? error.message : String(error);
-			await resultPanel.show({
-				method: request.method,
-				url: request.url,
-				state: 'error',
-				message: `Request failed: ${message}`,
-			});
+			state: 'loading',
 		}
-	} finally {
-		requestStatus.finish(controller);
-	}
+	};
+	await resultView.run(result, async signal => {
+		const abort = () => controller.abort();
+		signal.addEventListener('abort', abort, { once: true });
+		if (signal.aborted) controller.abort();
+		requestStatus.start(controller, request.method);
+		try {
+			const response = await fetch(request.url, {
+				method: request.method,
+				headers: request.headers,
+				body: request.body,
+				signal: controller.signal,
+				redirect: 'follow',
+			});
+			const body = await formatResponseBody(response);
+			const elapsed = Date.now() - startedAt;
+
+			Object.assign(result.data, {
+				method: request.method,
+				url: request.url,
+				state: 'success',
+				status: response.status,
+				statusText: response.statusText,
+				elapsed,
+				headers: Array.from(response.headers.entries()),
+				body,
+			});
+		} catch (error) {
+			if (controller.signal.aborted) {
+				Object.assign(result.data, {
+					method: request.method,
+					url: request.url,
+					state: 'cancelled',
+					message: 'Request cancelled.',
+				});
+			} else {
+				const message = error instanceof Error ? error.message : String(error);
+				Object.assign(result.data, {
+					method: request.method,
+					url: request.url,
+					state: 'error',
+					message: `Request failed: ${message}`,
+				});
+			}
+		} finally {
+			requestStatus.finish(controller);
+			signal.removeEventListener('abort', abort);
+		}
+	});
 }
 
 async function formatResponseBody(response: Response): Promise<string> {

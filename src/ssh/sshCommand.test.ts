@@ -6,25 +6,48 @@ import type { SshServer } from './server';
 
 vi.mock('./sshConnection', () => ({ connectSshClient: vi.fn() }));
 
-function harness(ready = true) {
+function harness(ready = true, pty = false) {
     const stream = Object.assign(new EventEmitter(), {
         stderr: Object.assign(new EventEmitter(), { setEncoding: vi.fn() }),
-        setEncoding: vi.fn(), signal: vi.fn(), close: vi.fn(),
+        setEncoding: vi.fn(), signal: vi.fn(), close: vi.fn(), write: vi.fn(),
     });
     const dispose = vi.fn();
-    const exec = vi.fn((_command, callback) => callback(undefined, stream));
+    const exec = vi.fn((_command, _options, callback) => callback(undefined, stream));
     const connection = { client: { exec }, dispose } as unknown as SshConnection;
     vi.mocked(connectSshClient).mockImplementation((_server, _credentials, onReady) => {
         if (ready) onReady(connection);
         return dispose;
     });
     const controller = new AbortController();
-    const execution = executeSshCommand({} as SshServer, {}, 'long-command', controller.signal);
+    const execution = executeSshCommand({} as SshServer, {}, 'long-command', controller.signal, undefined, { pty });
     return { stream, dispose, exec, connection, controller, execution };
 }
 
 describe('SSH command cancellation', () => {
     afterEach(() => { vi.useRealTimers(); });
+
+    it('sends Ctrl+C through the PTY and waits for remote channel closure', async () => {
+        const test = harness(true, true);
+        const rejected = expect(test.execution).rejects.toMatchObject({ name: 'AbortError' });
+        expect(test.exec.mock.calls[0][1]).toMatchObject({ pty: { modes: { ISIG: 1, VINTR: 3 } } });
+        test.controller.abort();
+        expect(test.stream.write).toHaveBeenCalledWith('\x03');
+        expect(test.stream.signal).not.toHaveBeenCalled();
+        expect(test.dispose).not.toHaveBeenCalled();
+        test.stream.emit('close', 130);
+        await rejected;
+        expect(test.dispose).toHaveBeenCalledOnce();
+    });
+
+    it('reports unconfirmed termination if Ctrl+C does not close the remote channel', async () => {
+        vi.useFakeTimers();
+        const test = harness(true, true);
+        const rejected = expect(test.execution).rejects.toMatchObject({ name: 'SshCancellationUnconfirmedError' });
+        test.controller.abort();
+        await vi.advanceTimersByTimeAsync(10000);
+        await rejected;
+        expect(test.dispose).toHaveBeenCalledOnce();
+    });
 
     it('sends TERM and reports cancellation when the channel closes', async () => {
         const test = harness();

@@ -1,7 +1,6 @@
 import { Button } from '@webview/components/ui/button';
 import { Save } from '@webview/components/ui/icons';
 import { Input as TextInput, Textarea as TextArea } from '@webview/components/ui/input';
-import { Dialog } from '@webview/components/ui/dialog';
 import { StorageLocation } from '@webview/components/storageLocation';
 import type { WorkflowController } from '../hooks/useWorkflow';
 import { Field } from './controls';
@@ -22,7 +21,6 @@ export function WorkflowEditor({ controller }: { controller: WorkflowController 
 		newStep,
 		updateStep,
 		submit,
-		close,
 		discard,
 		changeLocation,
 		location,
@@ -31,7 +29,7 @@ export function WorkflowEditor({ controller }: { controller: WorkflowController 
 	} = controller;
 	if (!draft) return null;
 	return (
-		<Dialog open title={draft.name || 'New Workflow'} size="lg" onClose={close} closeDisabled={pending}>
+		<div className="min-w-0">
 			{nextDraft && (
 				<div
 					role="alert"
@@ -72,57 +70,63 @@ export function WorkflowEditor({ controller }: { controller: WorkflowController 
 				}}
 			>
 				<fieldset disabled={locked} className="min-w-0">
-					<StorageLocation
-						value={location}
-						folders={state.workspaceFolders}
-						disabled={locked}
-						onChange={changeLocation}
-					/>
-					<div className="mb-4 grid items-start gap-3 sm:grid-cols-2">
-						<div className="min-w-40 flex-1">
-							<Field label="Workflow name">
-								<TextInput
-									required
-									value={draft.name}
-									onChange={event => change({ ...draft, name: event.target.value })}
-								/>
-							</Field>
-						</div>
-						<Field label="Workflow description">
-							<TextArea
-								className="min-h-8"
-								rows={2}
-								value={draft.description ?? ''}
-								onChange={event => change({ ...draft, description: event.target.value })}
+					<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) py-3.5 max-[680px]:static">
+						<div className="mx-auto w-[min(880px,calc(100%-44px))] max-[680px]:w-[calc(100%-28px)]">
+							<StorageLocation
+								value={location}
+								folders={state.workspaceFolders}
+								disabled={locked}
+								onChange={changeLocation}
 							/>
-						</Field>
-					</div>
-					<div className="mb-4 flex items-center justify-end gap-3 border-b border-(--vscode-panel-border) pb-4">
-						<span className="text-xs text-(--vscode-descriptionForeground)" role="status">
-							{pending
-								? 'Saving...'
-								: dirty
-									? 'Unsaved changes'
-									: state.workflows.some(workflow => workflow.id === draft.id)
-										? 'Saved'
-										: 'Not saved'}
-						</span>
-						<Button htmlType="submit" left={<Save />}>
-							Save
-						</Button>
-					</div>
-					<WorkflowSteps
-						draft={draft}
-						servers={state.servers}
-						activeStep={activeStep}
-						setActiveStep={setActiveStep}
-						change={change}
-						newStep={newStep}
-						updateStep={updateStep}
-						browse={browse}
-					/>
+							<div className="mb-4 grid items-start gap-3 sm:grid-cols-2">
+								<div className="min-w-40 flex-1">
+									<Field label="Workflow name">
+										<TextInput
+											required
+											value={draft.name}
+											onChange={event => change({ ...draft, name: event.target.value })}
+										/>
+									</Field>
+								</div>
+								<Field label="Workflow description">
+									<TextArea
+										className="min-h-8"
+										rows={2}
+										value={draft.description ?? ''}
+										onChange={event => change({ ...draft, description: event.target.value })}
+									/>
+								</Field>
+							</div>
+							<div className="flex flex-wrap items-center justify-end gap-3">
+								<span className="text-xs text-(--vscode-descriptionForeground)" role="status">
+									{pending
+										? 'Saving...'
+										: dirty
+											? 'Unsaved changes'
+											: state.workflows.some(workflow => workflow.id === draft.id)
+												? 'Saved'
+												: 'Not saved'}
+								</span>
+								<Button htmlType="submit" left={<Save />}>
+									Save
+								</Button>
+							</div>
+						</div>
+					</header>
+					<main className="mx-auto w-[min(880px,calc(100%-44px))] pt-6 pb-10 max-[680px]:w-[calc(100%-28px)] max-[680px]:pt-4">
+						<WorkflowSteps
+							draft={draft}
+							servers={state.servers}
+							activeStep={activeStep}
+							setActiveStep={setActiveStep}
+							change={change}
+							newStep={newStep}
+							updateStep={updateStep}
+							browse={browse}
+						/>
+					</main>
 				</fieldset>
 			</form>
-		</Dialog>
+		</div>
 	);
 }

@@ -13,10 +13,10 @@ export function App() {
 		<div
 			className={cn(
 				'flex min-w-0 flex-col text-(--vscode-foreground)',
-				editorMode ? 'mx-auto max-w-240 px-3 py-4 sm:px-6' : 'py-3',
+				!editorMode && 'py-3',
 			)}
 		>
-			<DashboardHeader
+			{!editorMode && <DashboardHeader
 				title="Workflow"
 				count={!editorMode && controller.loaded ? controller.state.workflows.length : undefined}
 			>
@@ -36,7 +36,7 @@ export function App() {
 						></IconButton>
 					</div>
 				)}
-			</DashboardHeader>
+			</DashboardHeader>}
 			<div>
 				<div hidden={editorMode}>
 					<WorkflowList

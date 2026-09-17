@@ -48,10 +48,10 @@ function harness() {
         stderr: Object.assign(new EventEmitter(), { setEncoding: vi.fn() }),
     });
     vi.mocked(spawn).mockReturnValue(child as unknown as ReturnType<typeof spawn>);
-    const view = { show: vi.fn(async (_result: Result) => { }), update: vi.fn() };
+    const view = { show: vi.fn(async (_result: Result, _exportable?: boolean, _cancel?: () => void) => { }), update: vi.fn() };
     const runner = new WorkflowRunner(view as unknown as ResultView);
     const result = () => view.show.mock.calls[0][0];
-    const cancel = () => vi.mocked(vscode.commands.registerCommand).mock.calls[0][1]();
+    const cancel = () => view.show.mock.calls[0][2]!();
     return { child, view, runner, result, cancel };
 }
 
@@ -115,7 +115,45 @@ describe('workflow result runner', () => {
         test.child.emit('close', 0);
         await expect(execution).resolves.toBe(true);
         expect(test.result().data).toMatchObject({ state: 'success', output: expect.stringContaining('output\nwarning\n') });
+        expect(test.result().data).toMatchObject({
+            runId: expect.any(String), finishedAt: expect.any(Number),
+            steps: [{ name: 'First', state: 'success', output: 'output\nwarning\n', startedAt: expect.any(Number), finishedAt: expect.any(Number) }],
+        });
         expect(test.view.show).toHaveBeenCalledTimes(1);
+        test.runner.dispose();
+    });
+
+    it('keeps each step output separate while advancing execution', async () => {
+        const test = harness();
+        const secondChild = Object.assign(new EventEmitter(), {
+            kill: vi.fn(),
+            stdout: Object.assign(new EventEmitter(), { setEncoding: vi.fn() }),
+            stderr: Object.assign(new EventEmitter(), { setEncoding: vi.fn() }),
+        });
+        vi.mocked(spawn)
+            .mockReturnValueOnce(test.child as unknown as ReturnType<typeof spawn>)
+            .mockReturnValueOnce(secondChild as unknown as ReturnType<typeof spawn>);
+        const execution = test.runner.run(workflow);
+        await vi.waitFor(() => expect(spawn).toHaveBeenCalledTimes(1));
+        expect(test.result().data).toMatchObject({ steps: [{ state: 'running' }, { state: 'pending' }] });
+        test.child.stdout.emit('data', 'first output\n');
+        test.child.emit('close', 0);
+        await vi.waitFor(() => expect(spawn).toHaveBeenCalledTimes(2));
+        expect(test.result().data).toMatchObject({
+            steps: [
+                { state: 'success', output: 'first output\n', finishedAt: expect.any(Number) },
+                { state: 'running', output: '' },
+            ]
+        });
+        secondChild.stdout.emit('data', 'second output\n');
+        secondChild.emit('close', 0);
+        await expect(execution).resolves.toBe(true);
+        expect(test.result().data).toMatchObject({
+            steps: [
+                { state: 'success', output: 'first output\n' },
+                { state: 'success', output: 'second output\n' },
+            ]
+        });
         test.runner.dispose();
     });
 
@@ -133,6 +171,31 @@ describe('workflow result runner', () => {
         expect(spawn).toHaveBeenCalledTimes(1);
         expect(test.result().data).toMatchObject({ state: 'cancelled' });
         token.dispose();
+        expect(test.result().data).toMatchObject({ steps: [{ state: 'cancelled' }, { state: 'skipped', output: '' }] });
+        test.runner.dispose();
+    });
+
+    it('cancels one concurrent workflow without stopping another', async () => {
+        const test = harness();
+        vi.mocked(resolveSshConnection).mockResolvedValue({ server: {}, credentials: {} } as Awaited<ReturnType<typeof resolveSshConnection>>);
+        let finishSecond!: (output: string) => void;
+        vi.mocked(executeSshCommand)
+            .mockImplementationOnce((_server, _credentials, _command, signal) => new Promise((_resolve, reject) => {
+                signal?.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')));
+            }))
+            .mockImplementationOnce(() => new Promise(resolve => { finishSecond = resolve; }));
+        const remote: Workflow = { ...workflow, steps: [{ name: 'Remote', type: 'ssh', serverId: 'server', command: 'echo test' }] };
+        const first = test.runner.run(remote);
+        const second = test.runner.run(remote);
+        await vi.waitFor(() => expect(executeSshCommand).toHaveBeenCalledTimes(2));
+        test.view.show.mock.calls[0][2]!();
+        await expect(first).resolves.toBe(false);
+        expect(test.view.show.mock.calls[1][0].data).toMatchObject({ state: 'running' });
+        vi.mocked(executeSshCommand).mock.calls[1][4]!('second result');
+        expect(test.view.show.mock.calls[1][0].data).toMatchObject({ state: 'running', steps: [{ output: 'second result' }] });
+        finishSecond('second result');
+        await expect(second).resolves.toBe(true);
+        expect(test.view.show.mock.calls[1][0].data).toMatchObject({ state: 'success', output: expect.stringContaining('second result') });
         test.runner.dispose();
     });
 
@@ -145,6 +208,12 @@ describe('workflow result runner', () => {
         test.child.emit('close', 1);
         await rejected;
         expect(test.result().data).toMatchObject({ state: 'error', output: expect.stringContaining('failure details') });
+        expect(test.result().data).toMatchObject({
+            steps: [
+                { state: 'error', output: expect.stringContaining('failure details\n\nCommand exited with 1.') },
+                { state: 'skipped', output: '' },
+            ]
+        });
         expect(spawn).toHaveBeenCalledTimes(1);
         test.runner.dispose();
     });
