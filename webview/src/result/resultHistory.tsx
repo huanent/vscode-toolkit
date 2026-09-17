@@ -7,7 +7,7 @@ import { vscode } from '@webview/vscodeApi';
 export function ResultHistory({ history }: { history: ResultHistoryMessage }) {
     return (
         <aside className="flex min-h-0 min-w-0 flex-col border-l border-(--vscode-panel-border)" aria-label="Result history">
-            <header className="flex h-10 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-2">
+            <header className="flex h-10 shrink-0 items-center gap-2 px-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold" title="Result History">Result History</span>
                 <span className="shrink-0 text-right text-xs text-(--vscode-descriptionForeground) tabular-nums" aria-label="Result count">{history.tasks.length}</span>
             </header>

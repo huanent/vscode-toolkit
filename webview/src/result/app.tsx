@@ -1,6 +1,6 @@
-import { HttpResultView } from './httpResultView';
-import { TableResultView } from './tableResultView';
-import { WorkflowResultView } from './workflowResultView';
+import { HttpResultView } from '../http/httpResult';
+import { TableResultView } from '../database/tableResult';
+import { WorkflowResultView } from '../workflow/workflowResult';
 import { useResult } from './useResult';
 import { ResultHistory } from './resultHistory';
 
