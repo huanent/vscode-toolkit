@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { workflowApi as vscode, subscribe } from '@webview/dashboard/channel';
-import type { Workflow, WorkflowStep } from '../../../../src/workflow/workflow';
+import { workflowApi as vscode, subscribe } from '../../vscode';
+import type { Workflow, WorkflowStep } from '@/workflow/workflow';
 
 type State = {
 	locations: Record<string, string>;
@@ -8,16 +8,14 @@ type State = {
 	workflows: Workflow[];
 	servers: { id: string; name: string }[];
 	cwd: string;
-	busy: boolean;
 };
 
-export function useWorkflow(editorMode: boolean) {
+export function useWorkflow() {
 	const [editRequest, setEditRequest] = useState<{ workflow?: Workflow; id?: string }>();
 	const [state, setState] = useState<State>({
 		workflows: [],
 		servers: [],
 		cwd: '',
-		busy: false,
 		locations: {},
 		workspaceFolders: [],
 	});
@@ -61,21 +59,17 @@ export function useWorkflow(editorMode: boolean) {
 				setDirty(true);
 			}
 		};
-		const unsubscribe = subscribe('workflow', receive);
+		const unsubscribe = subscribe(receive);
 		vscode.postMessage({ type: 'ready' });
 		return unsubscribe;
 	}, []);
-	const locked = state.busy || pending;
+	const locked = pending;
 	const change = (next: Workflow) => {
 		setDraft(next);
 		setDirty(true);
 		setError('');
 	};
 	const select = (next: Workflow) => {
-		if (!editorMode) {
-			vscode.postMessage({ type: 'openEditor', workflow: next });
-			return;
-		}
 		if (dirty) {
 			setNextDraft(next);
 			return;
@@ -126,15 +120,6 @@ export function useWorkflow(editorMode: boolean) {
 		else setError('The workflow no longer exists.');
 		setEditRequest(undefined);
 	}, [editRequest, loaded, state.workflows]);
-	useEffect(() => {
-		const open = (event: Event) => {
-			const detail = (event as CustomEvent).detail;
-			const workflow = state.workflows.find(item => item.id === detail.id);
-			if (detail.tab === 'workflow' && workflow && !locked) select(workflow);
-		};
-		window.addEventListener('dashboardOpenItem', open);
-		return () => window.removeEventListener('dashboardOpenItem', open);
-	}, [state.workflows, dirty, locked]);
 	const close = () => {
 		if (locked || (dirty && !window.confirm('Discard unsaved changes?'))) return;
 		setDraft(undefined);

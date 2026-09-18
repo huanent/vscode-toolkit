@@ -62,6 +62,7 @@ export default defineConfig({
 				dashboard: 'webview/src/dashboard/main.tsx',
 				dashboardEditor: 'webview/src/dashboard/editor.tsx',
 				sshForm: 'webview/src/ssh/form/main.tsx',
+				workflowForm: 'webview/src/workflow/form/main.tsx',
 				databaseForm: 'webview/src/database/serverForm/main.tsx',
 				containerForm: 'webview/src/container/serverForm/main.tsx',
 				containerEditor: 'webview/src/container/editor/main.tsx',

@@ -15,7 +15,7 @@ export function SshConnections() {
 		return unsubscribe;
 	}, []);
 	return (
-		<section className="py-2 text-(--vscode-foreground)">
+		<section className="h-full min-h-0 py-2 text-(--vscode-foreground)">
 			<ConnectionList state={state} query={query} onQueryChange={setQuery} onAction={send} />
 		</section>
 	);

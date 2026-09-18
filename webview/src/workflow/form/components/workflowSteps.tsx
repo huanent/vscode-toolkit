@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from 'cn';
 import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2 } from '@webview/components/ui/icons';
 import { Input as TextInput, Textarea as TextArea, Select as SelectInput } from '@webview/components/ui/input';
-import type { Workflow, WorkflowStep } from '../../../../src/workflow/workflow';
+import type { Workflow, WorkflowStep } from '@/workflow/workflow';
 import { buttonClass, Field, IconButton } from './controls';
 
 type Props = {

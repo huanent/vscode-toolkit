@@ -233,13 +233,11 @@
       },
       {
         "command": "vscode-toolkit.editWorkflow",
-        "title": "Edit",
-        "enablement": "!workflowLocked"
+        "title": "Edit"
       },
       {
         "command": "vscode-toolkit.deleteWorkflow",
-        "title": "Delete",
-        "enablement": "!workflowLocked"
+        "title": "Delete"
       },
       {
         "command": "vscode-toolkit.openDashboard",

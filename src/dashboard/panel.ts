@@ -193,7 +193,7 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 		receivers.get(tab)?.fire({ type: 'closeForm' });
 	});
 	editor.webview.html = getWebviewHtml(editor.webview, context.extensionUri, {
-		entry: 'dashboardEditor',
+		entry: tab === 'workflow' ? 'workflowForm' : 'dashboardEditor',
 		title: 'Toolkit',
 		rootData: { tab },
 	});

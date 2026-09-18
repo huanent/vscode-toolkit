@@ -20,7 +20,6 @@ export function registerWorkflowPanel(
 				workflows,
 				locations: Object.fromEntries(workflows.map(workflow => [workflow.id, store.getLocation(workflow.id)])),
 				workspaceFolders: store.getWorkspaceFolders(),
-				busy: false,
 				servers: listSshConnections().map(server => ({
 					id: server.id,
 					name: `${server.name} (${server.host})`,

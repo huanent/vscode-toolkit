@@ -1,30 +1,5 @@
-import type { ReactNode } from 'react';
 import { Button, IconButton } from '../components/ui/button';
 import { LoaderCircle, Plus, Search, X } from '../components/ui/icons';
-
-export function DashboardHeader({
-	title,
-	count,
-	children,
-}: {
-	title: string;
-	count?: number;
-	children: ReactNode;
-}) {
-	return (
-		<header className="mb-3 flex min-h-8 flex-wrap items-center gap-2">
-			<h1 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-				{title}
-				{count !== undefined && (
-					<span className="text-xs font-normal tabular-nums text-(--vscode-descriptionForeground)">
-						{count}
-					</span>
-				)}
-			</h1>
-			<div className="ml-auto flex shrink-0 items-center gap-0.5">{children}</div>
-		</header>
-	);
-}
 
 export function DashboardSearch({
 	label,
@@ -92,12 +67,12 @@ export function DashboardEmpty({
 			<p>{loading ? 'Loading...' : filtered ? `No matching ${noun}.` : `No ${noun} yet.`}</p>
 			{!loading &&
 				(filtered ? (
-						<IconButton label="Clear search" icon={<X size="md" />} onClick={onClear} />
+					<IconButton label="Clear search" icon={<X size="md" />} onClick={onClear} />
 				) : (
 					onCreate && (
-							<Button size="sm" left={<Plus size="sm" />} disabled={disabled} onClick={onCreate}>
+						<Button size="sm" left={<Plus size="sm" />} disabled={disabled} onClick={onCreate}>
 							{noun === 'workflows' ? 'New workflow' : 'New connection'}
-							</Button>
+						</Button>
 					)
 				))}
 		</div>

@@ -6,11 +6,12 @@ import { vscode } from '@webview/vscodeApi';
 import { SshConnections } from '../ssh/management/app';
 import { DatabaseConnections } from '../database/management/main';
 import { ContainerConnections } from '../container/management/main';
-import { App as Workflow } from '../workflow/main';
+import { Workflows as Workflow } from '../workflow/management/app';
 import { type Tab } from './channel';
 import { DashboardEmpty } from './components';
 
-document.body.classList.add('min-w-0');
+document.body.classList.add('min-w-0', 'overflow-hidden');
+document.getElementById('root')!.classList.add('overflow-hidden');
 const tabs = [
 	{ id: 'workflow', label: 'Workflow', icon: CircuitBoard, component: Workflow },
 	{ id: 'ssh', label: 'SSH', icon: Terminal, component: SshConnections },
@@ -38,11 +39,11 @@ function App() {
 		vscode.postMessage({ type: 'dashboardTab', tab });
 	};
 	return (
-		<main className="@container min-w-0 text-(--vscode-foreground)">
+		<main className="@container flex h-full min-h-0 min-w-0 flex-col overflow-hidden text-(--vscode-foreground)">
 			<div
 				role="tablist"
 				aria-label="Tools"
-				className="sticky top-0 z-10 grid grid-cols-4 border-b border-(--vscode-panel-border) bg-transparent"
+				className="grid shrink-0 grid-cols-4 border-b border-(--vscode-panel-border) bg-transparent"
 			>
 				{tabs.map(({ id, label, icon: Icon }, index) => (
 					<button
@@ -91,7 +92,7 @@ function App() {
 						id={`panel-${id}`}
 						role="tabpanel"
 						aria-labelledby={`tab-${id}`}
-						className="min-w-0 px-3"
+						className="min-h-0 min-w-0 flex-1 overflow-hidden px-3"
 						hidden={active !== id}
 					>
 						<Feature />

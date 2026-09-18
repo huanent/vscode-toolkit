@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { vscode } from '@webview/vscodeApi';
 import { send, subscribe, type Tab } from './channel';
 import { App as ContainerForm } from '../container/serverForm/app';
-import { App as Workflow } from '../workflow/main';
 
 const tab = document.getElementById('root')!.dataset.tab as Tab;
 document.body.dataset.toolkitEditor = 'true';
@@ -24,11 +23,9 @@ function Editor() {
 		});
 		const receive = (event: MessageEvent) => {
 			if (event.data.type !== 'editorRequest') return;
-			if (tab === 'container') {
-				if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?')))
-					return;
-				send(tab, event.data.request);
-			} else window.dispatchEvent(new CustomEvent('toolkitEdit', { detail: event.data.request }));
+			if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?')))
+				return;
+			send(tab, event.data.request);
 		};
 		window.addEventListener('message', receive);
 		vscode.postMessage({ type: 'editorReady' });
@@ -47,9 +44,7 @@ function Editor() {
 				saving.current = true;
 			}}
 		>
-			{tab === 'workflow' ? (
-				<Workflow />
-			) : sessionId === undefined ? (
+			{sessionId === undefined ? (
 				<p role="status">Loading...</p>
 			) : (
 				<ContainerForm key={sessionId} sessionId={sessionId} onClose={close} />

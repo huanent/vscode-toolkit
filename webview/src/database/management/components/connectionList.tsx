@@ -10,6 +10,7 @@ import {
 } from '../../../components/ui/icons';
 import { Input } from '../../../components/ui/input';
 import { List } from '../../../components/ui/list';
+import { Toolbar } from '../../../components/ui/toolbar';
 import { Tree } from '../../../components/ui/tree';
 import { ConnectionItem, type Connection } from './connectionItem';
 
@@ -39,18 +40,13 @@ export function ConnectionList({
 		groups.set(group, [...(groups.get(group) ?? []), server]);
 	}
 	return (
-		<div className="grid min-w-0 gap-2">
-			<header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-				<h1 className="m-0 min-w-0 text-base font-semibold wrap-anywhere">
-					{state?.name ?? 'Database'}
-				</h1>
-				<div className="flex items-center gap-0.5">
-					<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
-					<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
-					<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
-					<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
-				</div>
-			</header>
+		<div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2">
+			<Toolbar title={state?.name ?? 'Database'}>
+				<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
+				<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
+				<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
+				<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
+			</Toolbar>
 			<Input
 				left={<Search />}
 				right={query ? (
@@ -67,50 +63,52 @@ export function ConnectionList({
 				value={query}
 				onChange={event => onQueryChange(event.target.value)}
 			/>
-			{!state ? (
-				<Empty
-					icon={<RefreshCw className="codicon-modifier-spin" />}
-					title="Loading connections"
-					role="status"
-				/>
-			) : servers.length === 0 ? (
-				<div>
+			<div className="min-h-0 overflow-y-auto">
+				{!state ? (
 					<Empty
-						title={search ? 'No matching connections' : 'No connections'}
+						icon={<RefreshCw className="codicon-modifier-spin" />}
+						title="Loading connections"
+						role="status"
 					/>
-					{!search && (
-						<div className="flex justify-center">
-							<Button onClick={() => onAction('add')}>
-								New connection
-							</Button>
-						</div>
-					)}
-				</div>
-			) : (
-				<div className="grid min-w-0">
-					{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup)).map(([group, connections]) => {
-						const items = (
-							<List>
-								{connections.map(server => (
-									<ConnectionItem
-										key={server.id}
-										server={server}
-										onAction={onAction}
-										filtered={!!search}
-									/>
-								))}
-							</List>
-						);
-						return group ? (
-							<Tree key={`${group}-${!!search}`} label={group} count={connections.length} open={search ? true : undefined}>
-								{items}
-							</Tree>
-						) : (
-							<div key="ungrouped">{items}</div>
-						);
-					})}
-				</div>
-			)}
+				) : servers.length === 0 ? (
+					<div>
+						<Empty
+							title={search ? 'No matching connections' : 'No connections'}
+						/>
+						{!search && (
+							<div className="flex justify-center">
+								<Button onClick={() => onAction('add')}>
+									New connection
+								</Button>
+							</div>
+						)}
+					</div>
+				) : (
+					<div className="grid min-w-0">
+						{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup)).map(([group, connections]) => {
+							const items = (
+								<List>
+									{connections.map(server => (
+										<ConnectionItem
+											key={server.id}
+											server={server}
+											onAction={onAction}
+											filtered={!!search}
+										/>
+									))}
+								</List>
+							);
+							return group ? (
+								<Tree key={`${group}-${!!search}`} label={group} count={connections.length} open={search ? true : undefined}>
+									{items}
+								</Tree>
+							) : (
+								<div key="ungrouped">{items}</div>
+							);
+						})}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
