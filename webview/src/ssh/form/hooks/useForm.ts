@@ -29,6 +29,7 @@ const emptyValues: ConnectionFormValues = {
 	privateKey: '',
 	passphrase: '',
 	commands: [],
+	favorites: [],
 };
 
 export function useForm(sessionId: number, onClose: () => void) {
@@ -81,6 +82,7 @@ export function useForm(sessionId: number, onClose: () => void) {
 						proxyPrivateKey: nextModel.credentials.proxyPrivateKey ?? '',
 						proxyPassphrase: nextModel.credentials.proxyPassphrase ?? '',
 						commands: server?.type === 'ssh' ? server.commands : [],
+						favorites: server?.favorites ?? [],
 						password: nextModel.credentials.password ?? '',
 						privateKey: nextModel.credentials.privateKey ?? '',
 						passphrase: nextModel.credentials.passphrase ?? '',

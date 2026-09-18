@@ -14,7 +14,7 @@ export function registerSshEditor(
 	store: ServerStore,
 ): vscode.Disposable {
 	const provider: vscode.CustomReadonlyEditorProvider = {
-		openCustomDocument: uri => ({ uri, dispose() {} }),
+		openCustomDocument: uri => ({ uri, dispose() { } }),
 		resolveCustomEditor: async (document, panel) => {
 			const descriptor = parseEditorDescriptor(document.uri);
 			const server = store.getServers().find(candidate => candidate.id === descriptor.serverId);
@@ -29,7 +29,7 @@ export function registerSshEditor(
 			if (server.authType === 'privateKey' ? !credentials.privateKey : !credentials.password) {
 				throw new Error('The SSH connection credentials are missing.');
 			}
-			configureSshTerminal(context, panel, server, credentials);
+			configureSshTerminal(context, panel, server, credentials, store);
 		},
 	};
 	return vscode.window.registerCustomEditorProvider(editorViewType, provider, {

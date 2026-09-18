@@ -32,6 +32,7 @@ export interface SshServer extends NetworkServer {
 	proxyCommand?: string;
 	proxy?: SshProxy;
 	commands: ServerCommand[];
+	favorites?: string[];
 }
 
 export type Server = SshServer;
@@ -72,6 +73,7 @@ export interface ServerFormMessage {
 	connectionType?: unknown;
 	sshServerId?: unknown;
 	commands?: unknown;
+	favorites?: unknown;
 	aiEnabled?: unknown;
 }
 
@@ -133,6 +135,9 @@ export function parseServerForm(
 			: {}),
 		...(proxy ? { proxy } : {}),
 		commands: normalizeCommands(message.commands),
+		favorites: Array.isArray(message.favorites)
+			? [...new Set(message.favorites.filter((path): path is string => typeof path === 'string' && path.trim().length > 0))]
+			: undefined,
 	};
 }
 
@@ -198,6 +203,7 @@ export function parseServer(value: unknown): Server {
 		{
 			type: 'save',
 			name: value.name,
+			favorites: value.favorites,
 			group: value.group,
 			host: value.host,
 			port: value.port,

@@ -6,27 +6,27 @@ import * as path from 'path';
 import { ClientChannel, FileEntryWithStats, SFTPWrapper } from 'ssh2';
 import { formatByteRate, RemoteMetricsFormatter, RemoteMetricsReader } from './remoteMetrics';
 import { SshServer } from './server';
-import { ServerCredentials } from './serverStore';
+import { ServerCredentials, ServerStore } from './serverStore';
 import { getWebviewHtml } from './webview';
 import { connectSshClient, SshConnection } from './sshConnection';
 import { formatTerminalCommand } from './terminalCommand';
 
 interface SshWebviewMessage {
 	type:
-		| 'input'
-		| 'resize'
-		| 'ready'
-		| 'terminalCopy'
-		| 'terminalPaste'
-		| 'sftpList'
-		| 'sftpDelete'
-		| 'sftpDownload'
-		| 'sftpUpload'
-		| 'sftpCopyPath'
-		| 'sftpCreateDirectory'
-		| 'sftpRename'
-		| 'sftpEdit'
-		| 'sftpToggleFavorite';
+	| 'input'
+	| 'resize'
+	| 'ready'
+	| 'terminalCopy'
+	| 'terminalPaste'
+	| 'sftpList'
+	| 'sftpDelete'
+	| 'sftpDownload'
+	| 'sftpUpload'
+	| 'sftpCopyPath'
+	| 'sftpCreateDirectory'
+	| 'sftpRename'
+	| 'sftpEdit'
+	| 'sftpToggleFavorite';
 	data?: unknown;
 	rows?: unknown;
 	columns?: unknown;
@@ -35,7 +35,6 @@ interface SshWebviewMessage {
 }
 
 const metricsRefreshIntervalMs = 5000;
-const sftpFavoritesStateKey = 'vscode-toolkit.servers.sftpFavorites';
 const activeSshHasCommandsContextKey = 'vscode-toolkit.servers.activeSshHasCommands';
 const sftpEditTempRoot = path.join(os.tmpdir(), 'servers-sftp-edit');
 const sftpEditFiles = new Map<
@@ -93,6 +92,7 @@ export function configureSshTerminal(
 	panel: vscode.WebviewPanel,
 	server: SshServer,
 	credentials: ServerCredentials,
+	store: ServerStore,
 ): void {
 	const extensionUri = context.extensionUri;
 	panel.title = server.name;
@@ -106,13 +106,14 @@ export function configureSshTerminal(
 	const queuedCommands = pendingTerminalCommands.get(server.id) ?? [];
 	pendingTerminalCommands.delete(server.id);
 	const session = new SshWebviewSession(
-		context.globalState,
+		store,
 		panel,
 		server,
 		credentials,
 		queuedCommands,
 	);
 	activeSshSession = session;
+	const favoritesSubscription = store.onDidChange(() => session.postSftpFavorites());
 	void vscode.commands.executeCommand(
 		'setContext',
 		activeSshHasCommandsContextKey,
@@ -137,6 +138,7 @@ export function configureSshTerminal(
 			void vscode.commands.executeCommand('setContext', activeSshHasCommandsContextKey, false);
 		}
 		session.dispose();
+		favoritesSubscription.dispose();
 	});
 	panel.webview.onDidReceiveMessage((message: SshWebviewMessage) => session.handleMessage(message));
 }
@@ -158,12 +160,12 @@ class SshWebviewSession {
 	private sftpPath = '.';
 
 	constructor(
-		private readonly globalState: vscode.Memento,
+		private readonly store: ServerStore,
 		private readonly panel: vscode.WebviewPanel,
 		private readonly server: SshServer,
 		private readonly credentials: ServerCredentials,
 		private readonly pendingCommands: string[],
-	) {}
+	) { }
 
 	handleMessage(message: SshWebviewMessage): void {
 		if (message.type === 'ready' && !this.webviewReady) {
@@ -907,28 +909,18 @@ class SshWebviewSession {
 	}
 
 	private async toggleSftpFavorite(remotePath: string): Promise<void> {
-		const favoritesByServer = this.globalState.get<Record<string, string[]>>(
-			sftpFavoritesStateKey,
-			{},
-		);
-		const favorites = favoritesByServer[this.server.id] ?? [];
-		const updatedFavorites = favorites.includes(remotePath)
-			? favorites.filter(favorite => favorite !== remotePath)
-			: [...favorites, remotePath].sort((left, right) => left.localeCompare(right));
-		await this.globalState.update(sftpFavoritesStateKey, {
-			...favoritesByServer,
-			[this.server.id]: updatedFavorites,
-		});
-		this.postSftpFavorites(updatedFavorites);
+		try {
+			await this.store.toggleFavorite(this.server.id, remotePath);
+			this.postSftpFavorites();
+		} catch (error) {
+			void vscode.window.showErrorMessage(`Could not save favorite: ${this.errorMessage(error)}`);
+		}
 	}
 
-	private postSftpFavorites(favorites?: string[]): void {
+	postSftpFavorites(): void {
 		this.postMessage({
 			type: 'sftpFavorites',
-			favorites:
-				favorites ??
-				this.globalState.get<Record<string, string[]>>(sftpFavoritesStateKey, {})[this.server.id] ??
-				[],
+			favorites: this.store.getServers().find(server => server.id === this.server.id)?.favorites ?? [],
 		});
 	}
 

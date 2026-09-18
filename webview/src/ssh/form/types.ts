@@ -16,5 +16,6 @@ export interface ConnectionFormValues extends ProxyFieldValues {
 	privateKey: string;
 	passphrase: string;
 	commands: ServerCommand[];
+	favorites: string[];
 	aiEnabled: boolean;
 }

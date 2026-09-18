@@ -29,6 +29,7 @@ export interface SshServer extends BaseServer {
 	proxyCommand?: string;
 	proxy?: SshProxy;
 	commands: ServerCommand[];
+	favorites?: string[];
 }
 
 export interface ServerCommand {

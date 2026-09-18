@@ -51,6 +51,17 @@ class ConnectionStore {
 		const store = new ConnectionStore(context, serverType);
 		try {
 			await store.initialize();
+			const legacyKey = 'vscode-toolkit.servers.sftpFavorites';
+			const legacyFavorites = context.globalState.get<Record<string, string[]>>(legacyKey, {});
+			for (const server of store.getServers()) {
+				if (server.favorites === undefined && Array.isArray(legacyFavorites[server.id])) {
+					await store.saveServer(parseServer({ ...server, favorites: legacyFavorites[server.id] }));
+				}
+			}
+			const remainingFavorites = Object.fromEntries(
+				Object.entries(legacyFavorites).filter(([id]) => !store.getServers().some(server => server.id === id)),
+			);
+			await context.globalState.update(legacyKey, Object.keys(remainingFavorites).length ? remainingFavorites : undefined);
 			return store;
 		} catch (error) {
 			store.dispose();
@@ -90,6 +101,20 @@ class ConnectionStore {
 			await this.writeServers(updatedServers);
 			await this.locations.move(server.id, serverFileName(server), location);
 			this.changeEmitter.fire();
+		});
+	}
+
+	async toggleFavorite(serverId: string, remotePath: string): Promise<void> {
+		await this.enqueueMutation(async () => {
+			const server = this.getServers().find(current => current.id === serverId);
+			if (!server) throw new Error('SSH connection no longer exists.');
+			const favorites = server.favorites ?? [];
+			const updatedFavorites = favorites.includes(remotePath)
+				? favorites.filter(favorite => favorite !== remotePath)
+				: [...favorites, remotePath].sort((left, right) => left.localeCompare(right));
+			await this.writeServers(this.getServers().map(current =>
+				current.id === serverId ? { ...current, favorites: updatedFavorites } : current,
+			));
 		});
 	}
 

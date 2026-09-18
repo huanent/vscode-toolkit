@@ -8,12 +8,13 @@ import { Input } from '../../../components/ui/input';
 import { Switch } from '../../../components/ui/switch';
 import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
+import { FavoriteFields } from './favoriteFields';
 import { NetworkFields } from './networkFields';
 import { ProxyFields } from '../../../components/proxyFields';
 import type { ConnectionFormState } from '../hooks/useForm';
 
 export function ConnectionForm({ form }: { form: ConnectionFormState }) {
-	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(
+	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'favorites' | 'other'>(
 		'connection',
 	);
 	if (!form.model) {
@@ -30,6 +31,7 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 		{ value: 'connection' as const, label: 'Connection' },
 		...(supportsProxy ? [{ value: 'proxy' as const, label: 'Proxy' }] : []),
 		{ value: 'commands' as const, label: 'Commands' },
+		{ value: 'favorites' as const, label: 'Favorites' },
 		{ value: 'other' as const, label: 'Other' },
 	];
 	const selectedTab = tabs.some(tab => tab.value === activeTab) ? activeTab : 'connection';
@@ -148,6 +150,7 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 						/>
 					)}
 					{selectedTab === 'commands' && <CommandFields form={form} />}
+					{selectedTab === 'favorites' && <FavoriteFields form={form} />}
 					{selectedTab === 'other' && (
 						<section aria-labelledby="other-heading">
 							<label className="flex items-center justify-between gap-3 py-3.5 text-sm">
