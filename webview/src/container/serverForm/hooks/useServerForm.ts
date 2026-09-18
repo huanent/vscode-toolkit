@@ -7,6 +7,7 @@ import type {
 } from '../../../../../src/container/formProtocol';
 
 const emptyValues: ServerFormValues = {
+	proxyCredentialId: '',
 	location: '',
 	name: '',
 	group: '',
@@ -22,12 +23,12 @@ const emptyValues: ServerFormValues = {
 	proxyPort: '22',
 	proxyUsername: '',
 	proxyAuthType: 'password',
-	proxyPassword: '',
-	proxyPrivateKey: '',
-	proxyPassphrase: '',
-	password: '',
-	privateKey: '',
-	passphrase: '',
+
+
+
+
+
+
 	runtime: 'docker',
 	executablePath: 'docker',
 	connectionType: 'local',
@@ -58,6 +59,7 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 					setModel(nextModel);
 					setValues({
 						...emptyValues,
+						proxyCredentialId: manualContainerSsh ? container.credentialId ?? '' : server && 'proxy' in server ? server.proxy?.credentialId ?? '' : '',
 						location: nextModel.location ?? '',
 						name: server?.name ?? '',
 						group: server?.group ?? '',
@@ -97,18 +99,12 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 								(server && 'proxy' in server
 									? (server.proxy?.authType ?? 'password')
 									: 'password')),
-						proxyPassword: manualContainerSsh
-							? (nextModel.credentials.password ?? '')
-							: (nextModel.credentials.proxyPassword ?? ''),
-						proxyPrivateKey: manualContainerSsh
-							? (nextModel.credentials.privateKey ?? '')
-							: (nextModel.credentials.proxyPrivateKey ?? ''),
-						proxyPassphrase: manualContainerSsh
-							? (nextModel.credentials.passphrase ?? '')
-							: (nextModel.credentials.proxyPassphrase ?? ''),
-						password: nextModel.credentials.password ?? '',
-						privateKey: nextModel.credentials.privateKey ?? '',
-						passphrase: nextModel.credentials.passphrase ?? '',
+
+
+
+
+
+
 						runtime: container?.runtime ?? 'docker',
 						executablePath: container?.executablePath ?? 'docker',
 						connectionType: container?.connectionType ?? 'local',
@@ -118,12 +114,6 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 				}
 				case 'executableSelected':
 					setValues(current => ({ ...current, executablePath: message.path }));
-					break;
-				case 'privateKeySelected':
-					setValues(current => ({ ...current, privateKey: message.contents }));
-					break;
-				case 'proxyPrivateKeySelected':
-					setValues(current => ({ ...current, proxyPrivateKey: message.contents }));
 					break;
 				case 'error':
 					setError(message.message);
@@ -154,8 +144,6 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 		update,
 		save,
 		selectExecutable: () => vscode.postMessage({ type: 'selectExecutable' }),
-		selectPrivateKey: () => vscode.postMessage({ type: 'selectPrivateKey' }),
-		selectProxyPrivateKey: () => vscode.postMessage({ type: 'selectProxyPrivateKey' }),
 	};
 }
 

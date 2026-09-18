@@ -1,14 +1,11 @@
-import { IconButton } from '@webview/components/ui/button';
+import { CredentialFields } from '@webview/components/credentialFields';
 import { Field } from '@webview/components/ui/field';
-import { KeyRound } from '@webview/components/ui/icons';
-import { PasswordInput, Textarea as TextArea, Input as TextInput } from '@webview/components/ui/input';
+import { Input as TextInput } from '@webview/components/ui/input';
 import { Segmented as SegmentedControl } from '@webview/components/ui/segmented';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 export function ProxyFields({ form }: { form: ServerFormState }) {
 	const { values } = form;
-	const credentialRequired =
-		values.proxyAuthType === 'privateKey' ? !values.proxyPrivateKey : !values.proxyPassword;
 	const updateProxyMode = (mode: 'none' | 'ssh' | 'command') => {
 		form.update('proxyMode', mode);
 		form.update('proxyEnabled', mode === 'ssh');
@@ -22,9 +19,7 @@ export function ProxyFields({ form }: { form: ServerFormState }) {
 		| 'proxyPort'
 		| 'proxyUsername'
 		| 'proxyAuthType'
-		| 'proxyPassword'
-		| 'proxyPrivateKey'
-		| 'proxyPassphrase',
+		| 'proxyCredentialId',
 	>(
 		key: Key,
 		value: ServerFormState['values'][Key],
@@ -72,64 +67,11 @@ export function ProxyFields({ form }: { form: ServerFormState }) {
 								/>
 							</>}</Field>
 						</div>
-						<Field label="Username" required>{control => <>
-							<TextInput {...control}
-								required
-								autoComplete="username"
-								placeholder="root"
-								value={values.proxyUsername}
-								onChange={event => updateProxy('proxyUsername', event.target.value)}
-							/>
-						</>}</Field>
-						<SegmentedControl
-							label="SSH authentication method"
-							value={values.proxyAuthType}
-							options={[
-								{ value: 'password', label: 'Password' },
-								{ value: 'privateKey', label: 'Private key' },
-							]}
-							onChange={value => updateProxy('proxyAuthType', value)}
-						/>
-						{values.proxyAuthType === 'password' ? (
-							<Field label="SSH password" required={credentialRequired}>{control => <>
-								<PasswordInput {...control}
-									value={values.proxyPassword}
-									required={credentialRequired}
-									onChange={event => updateProxy('proxyPassword', event.target.value)}
-								/>
-							</>}</Field>
-						) : (
-							<>
-								<Field
-									label="SSH private key"
-									required={credentialRequired}
-									action={
-										<IconButton label="Select proxy private key" icon={<><KeyRound size="sm" /></>}
-											className="size-6 border-0"
-											htmlType="button"
-											title="Select proxy private key"
-											aria-label="Select proxy private key"
-											onClick={form.selectProxyPrivateKey}
-										></IconButton>
-									}
-								>{control => <>
-									<TextArea {...control}
-										required={credentialRequired}
-										spellCheck={false}
-										placeholder="Paste the PEM or OpenSSH private key"
-										value={values.proxyPrivateKey}
-										onChange={event => updateProxy('proxyPrivateKey', event.target.value)}
-									/>
-								</>}</Field>
-								<Field label="SSH key passphrase">{control => <>
-									<PasswordInput {...control}
-										placeholder="Optional"
-										value={values.proxyPassphrase}
-										onChange={event => updateProxy('proxyPassphrase', event.target.value)}
-									/>
-								</>}</Field>
-							</>
-						)}
+						<CredentialFields types={['password', 'privateKey']} value={values.proxyCredentialId} disabled={form.saving} onChange={credential => {
+							updateProxy('proxyCredentialId', credential?.id ?? '');
+							updateProxy('proxyUsername', credential?.user ?? '');
+							if (credential?.type === 'password' || credential?.type === 'privateKey') updateProxy('proxyAuthType', credential.type);
+						}} />
 					</>
 				)}
 				{values.proxyMode === 'command' && (

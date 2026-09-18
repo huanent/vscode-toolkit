@@ -14,6 +14,7 @@ interface BaseServer {
 }
 
 export interface SshProxy {
+	credentialId: string;
 	host: string;
 	port: number;
 	username: string;
@@ -21,6 +22,7 @@ export interface SshProxy {
 }
 
 export interface MysqlServer extends BaseServer {
+	credentialId: string;
 	type: 'mysql';
 	host: string;
 	port: number;
@@ -29,14 +31,7 @@ export interface MysqlServer extends BaseServer {
 	proxy?: SshProxy;
 }
 
-export interface ServerCredentials {
-	password?: string;
-	privateKey?: string;
-	passphrase?: string;
-	proxyPassword?: string;
-	proxyPrivateKey?: string;
-	proxyPassphrase?: string;
-}
+export type ServerCredentials = Record<string, never>;
 
 export interface ServerFormModel {
 	location: string;
@@ -51,6 +46,6 @@ export interface ServerFormModel {
 export type ServerFormExtensionMessage =
 	| { type: 'initialize'; model: ServerFormModel }
 	| { type: 'executableSelected'; path: string }
-	| { type: 'privateKeySelected'; contents: string }
-	| { type: 'proxyPrivateKeySelected'; contents: string }
+
+
 	| { type: 'error'; message: string };

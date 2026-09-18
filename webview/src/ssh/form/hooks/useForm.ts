@@ -7,6 +7,8 @@ import type {
 } from '@/ssh/formProtocol';
 
 const emptyValues: ConnectionFormValues = {
+	proxyCredentialId: '',
+	credentialId: '',
 	location: '',
 	name: '',
 	group: '',
@@ -22,12 +24,12 @@ const emptyValues: ConnectionFormValues = {
 	proxyPort: '22',
 	proxyUsername: '',
 	proxyAuthType: 'password',
-	proxyPassword: '',
-	proxyPrivateKey: '',
-	proxyPassphrase: '',
-	password: '',
-	privateKey: '',
-	passphrase: '',
+
+
+
+
+
+
 	commands: [],
 	favorites: [],
 };
@@ -57,6 +59,8 @@ export function useForm(sessionId: number, onClose: () => void) {
 					setModel(nextModel);
 					setValues({
 						...emptyValues,
+						proxyCredentialId: server?.proxy?.credentialId ?? '',
+						credentialId: server?.credentialId ?? '',
 						location: nextModel.location ?? '',
 						name: server?.name ?? '',
 						group: server?.group ?? '',
@@ -78,23 +82,17 @@ export function useForm(sessionId: number, onClose: () => void) {
 						proxyUsername: server && 'proxy' in server ? (server.proxy?.username ?? '') : '',
 						proxyAuthType:
 							server && 'proxy' in server ? (server.proxy?.authType ?? 'password') : 'password',
-						proxyPassword: nextModel.credentials.proxyPassword ?? '',
-						proxyPrivateKey: nextModel.credentials.proxyPrivateKey ?? '',
-						proxyPassphrase: nextModel.credentials.proxyPassphrase ?? '',
+
+
+
 						commands: server?.type === 'ssh' ? server.commands : [],
 						favorites: server?.favorites ?? [],
-						password: nextModel.credentials.password ?? '',
-						privateKey: nextModel.credentials.privateKey ?? '',
-						passphrase: nextModel.credentials.passphrase ?? '',
+
+
+
 					});
 					break;
 				}
-				case 'privateKeySelected':
-					setValues(current => ({ ...current, privateKey: message.contents }));
-					break;
-				case 'proxyPrivateKeySelected':
-					setValues(current => ({ ...current, proxyPrivateKey: message.contents }));
-					break;
 				case 'error':
 					setError(message.message);
 					setSaving(false);
@@ -123,14 +121,6 @@ export function useForm(sessionId: number, onClose: () => void) {
 		saving,
 		update,
 		save,
-		selectPrivateKey: () =>
-			vscode.postMessage({ type: 'formMessage', sessionId, message: { type: 'selectPrivateKey' } }),
-		selectProxyPrivateKey: () =>
-			vscode.postMessage({
-				type: 'formMessage',
-				sessionId,
-				message: { type: 'selectProxyPrivateKey' },
-			}),
 	};
 }
 

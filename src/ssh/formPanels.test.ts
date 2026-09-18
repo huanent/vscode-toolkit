@@ -52,12 +52,12 @@ describe('SSH form panels', () => {
         forms.open(firstServer);
         expect(vscode.window.createWebviewPanel).toHaveBeenCalledTimes(2);
         expect(first.panel.reveal).toHaveBeenCalledOnce();
-        expect(store.getCredentials).toHaveBeenCalledTimes(2);
+        expect(store.getCredentials).not.toHaveBeenCalled();
         const request = { channel: 'ssh', type: 'formMessage', sessionId: 1, message: { type: 'ready' } };
         await first.send(request);
         await second.send(request);
         expect(vi.mocked(handleMessage).mock.calls.map(call => [call[4], call[5]]))
-            .toEqual([[firstServer, { password: 'first' }], [secondServer, { password: 'second' }]]);
+            .toEqual([[firstServer, {}], [secondServer, {}]]);
         first.panel.dispose();
         await second.send({ ...request, message: { type: 'save' } });
         expect(vi.mocked(handleMessage).mock.calls.at(-1)?.[4]).toBe(secondServer);

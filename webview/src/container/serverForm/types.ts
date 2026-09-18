@@ -6,6 +6,7 @@ import type {
 } from '../../../../src/container/formProtocol';
 
 export interface ServerFormValues {
+	proxyCredentialId: string;
 	location: string;
 	name: string;
 	group: string;
@@ -20,12 +21,6 @@ export interface ServerFormValues {
 	proxyPort: string;
 	proxyUsername: string;
 	proxyAuthType: AuthType;
-	proxyPassword: string;
-	proxyPrivateKey: string;
-	proxyPassphrase: string;
-	password: string;
-	privateKey: string;
-	passphrase: string;
 	runtime: ContainerRuntime;
 	executablePath: string;
 	connectionType: ConnectionType;

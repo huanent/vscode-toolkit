@@ -23,7 +23,7 @@ export function registerManagementFeature(
 			panel = current;
 			const form = createFormSession(
 				current,
-				(server: ReturnType<ServerStore['getServers']>[number]) => store.getCredentials(server.id),
+				async (_server: ReturnType<ServerStore['getServers']>[number]) => ({}),
 				{},
 				(
 					message: ServerFormWebviewMessage,

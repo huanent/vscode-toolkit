@@ -9,9 +9,16 @@ const connection = {
     port: 22,
     username: 'test',
     authType: 'password',
+    credentialId: 'shared-key',
 };
 
 describe('SSH favorites configuration', () => {
+    it('preserves shared credential references through form and file parsing', () => {
+        const server = parseServerForm({ ...connection, type: 'save', credentialId: 'shared-key' }, 'ssh', connection.id);
+        expect(server?.credentialId).toBe('shared-key');
+        expect(parseServer(JSON.parse(JSON.stringify(server))).credentialId).toBe('shared-key');
+        expect(() => parseServer({ ...connection, credentialId: undefined })).toThrow('Invalid server');
+    });
     it('saves favorites from the connection form', () => {
         const server = parseServerForm({ ...connection, type: 'save', favorites: ['/home', '/var/log'] }, 'ssh', connection.id);
         expect(server?.favorites).toEqual(['/home', '/var/log']);

@@ -60,6 +60,7 @@ export default defineConfig({
 				global: 'webview/src/global.css',
 				explorerStyles: 'webview/src/explorer/explorer.css',
 				dashboard: 'webview/src/dashboard/main.tsx',
+				credential: 'webview/src/credential/main.tsx',
 				dashboardEditor: 'webview/src/dashboard/editor.tsx',
 				sshForm: 'webview/src/ssh/form/main.tsx',
 				workflowForm: 'webview/src/workflow/form/main.tsx',

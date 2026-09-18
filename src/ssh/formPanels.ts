@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { credentialDashboard } from '../credential/dashboard';
 import { createFormSession } from '../dashboard/formSession';
 import { getWebviewHtml } from '../webview';
 import { Server } from './server';
@@ -6,6 +7,7 @@ import { ServerCredentials, ServerStore } from './serverStore';
 import { handleMessage, ServerFormWebviewMessage } from './serverForm';
 
 export function createSshFormPanels(context: vscode.ExtensionContext, store: ServerStore) {
+    const handleCredential = credentialDashboard(context);
     const panels = new Map<string | symbol, vscode.WebviewPanel>();
     return {
         open(server?: Server, duplicate = false) {
@@ -30,7 +32,7 @@ export function createSshFormPanels(context: vscode.ExtensionContext, store: Ser
                 },
             } as vscode.WebviewPanel;
             const session = createFormSession<Server, ServerCredentials, ServerFormWebviewMessage>(
-                scoped, server => store.getCredentials(server.id), {},
+                scoped, async () => ({}), {},
                 (message, activeServer, credentials, isDuplicate, state, saved, sessionId) =>
                     handleMessage(message, context, scoped, store, activeServer, credentials,
                         isDuplicate, state, saved, sessionId),
@@ -38,6 +40,10 @@ export function createSshFormPanels(context: vscode.ExtensionContext, store: Ser
             let ready = false;
             const messages = panel.webview.onDidReceiveMessage(async message => {
                 try {
+                    if (message.channel === 'credential') {
+                        await handleCredential(message, panel.webview);
+                        return;
+                    }
                     if (message.type === 'editorReady' && !ready) {
                         ready = true;
                         await session.open(server, duplicate);

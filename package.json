@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.7.9",
+  "version": "1.8.0",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -363,6 +363,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "vscode-toolkit.openCredential",
+        "title": "Open Credential",
+        "icon": "$(key)",
+        "category": "Toolkit"
+      },
+      {
         "command": "vscode-toolkit.newChat",
         "title": "New Chat",
         "category": "Toolkit",
@@ -503,6 +509,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "vscode-toolkit.openCredential",
+          "when": "view == vscode-toolkit.dashboard",
+          "group": "navigation@0"
+        },
         {
           "command": "vscode-toolkit.openExplorer",
           "when": "view == vscode-toolkit.dashboard",

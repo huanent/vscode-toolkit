@@ -10,21 +10,23 @@ export async function createMysqlConnection(
 ): Promise<Connection> {
 	const forward = server.proxy
 		? await createSshForward(
-				server.proxy,
-				{
-					password: credentials.proxyPassword,
-					privateKey: credentials.proxyPrivateKey,
-					passphrase: credentials.proxyPassphrase,
-				},
-				server.host,
-				server.port,
-			)
+			server.proxy,
+			{
+				username: credentials.proxyUsername,
+				authType: credentials.proxyAuthType,
+				password: credentials.proxyPassword,
+				privateKey: credentials.proxyPrivateKey,
+				passphrase: credentials.proxyPassphrase,
+			},
+			server.host,
+			server.port,
+		)
 		: undefined;
 	try {
 		return await createConnection({
 			host: server.host,
 			port: server.port,
-			user: server.username,
+			user: credentials.username,
 			password: credentials.password,
 			database,
 			...(forward ? { stream: forward.stream } : {}),

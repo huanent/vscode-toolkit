@@ -7,6 +7,8 @@ import { vscode } from '@webview/vscodeApi';
 import type { ServerFormValues } from '../types';
 
 const emptyValues: ServerFormValues = {
+	credentialId: '',
+	proxyCredentialId: '',
 	location: '',
 	name: '',
 	group: '',
@@ -21,10 +23,10 @@ const emptyValues: ServerFormValues = {
 	proxyPort: '22',
 	proxyUsername: '',
 	proxyAuthType: 'password',
-	proxyPassword: '',
-	proxyPrivateKey: '',
-	proxyPassphrase: '',
-	password: '',
+
+
+
+
 	database: '',
 };
 
@@ -45,6 +47,8 @@ export function useServerForm() {
 					setModel(nextModel);
 					setValues({
 						...emptyValues,
+						credentialId: server?.credentialId ?? '',
+						proxyCredentialId: server?.proxy?.credentialId ?? '',
 						location: nextModel.location ?? '',
 						name: server?.name ?? '',
 						group: server?.group ?? '',
@@ -60,17 +64,14 @@ export function useServerForm() {
 						proxyUsername: server && 'proxy' in server ? (server.proxy?.username ?? '') : '',
 						proxyAuthType:
 							server && 'proxy' in server ? (server.proxy?.authType ?? 'password') : 'password',
-						proxyPassword: nextModel.credentials.proxyPassword ?? '',
-						proxyPrivateKey: nextModel.credentials.proxyPrivateKey ?? '',
-						proxyPassphrase: nextModel.credentials.proxyPassphrase ?? '',
-						password: nextModel.credentials.password ?? '',
+
+
+
+
 						database: server?.type === 'mysql' ? server.database : '',
 					});
 					break;
 				}
-				case 'proxyPrivateKeySelected':
-					setValues(current => ({ ...current, proxyPrivateKey: message.contents }));
-					break;
 				case 'error':
 					setError(message.message);
 					setSaving(false);
@@ -99,7 +100,6 @@ export function useServerForm() {
 		saving,
 		update,
 		save,
-		selectProxyPrivateKey: () => vscode.postMessage({ type: 'selectProxyPrivateKey' }),
 	};
 }
 

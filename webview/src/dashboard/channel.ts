@@ -1,8 +1,9 @@
 import { vscode } from '@webview/vscodeApi';
 
 export type Tab = 'ssh' | 'workflow' | 'database' | 'container';
-export const send = (channel: Tab, message: object) => vscode.postMessage({ ...message, channel });
-export function subscribe(channel: Tab, listener: (event: MessageEvent) => void) {
+type Channel = Tab | 'credential';
+export const send = (channel: Channel, message: object) => vscode.postMessage({ ...message, channel });
+export function subscribe(channel: Channel, listener: (event: MessageEvent) => void) {
 	const receive = (event: MessageEvent) => {
 		if (event.data.channel === channel) listener(event);
 	};

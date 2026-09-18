@@ -19,18 +19,20 @@ export type ContainerServer = ContainerServerBase &
 		| { connectionType: 'local' }
 		| { connectionType: 'ssh'; sshServerId: string }
 		| {
-				connectionType: 'ssh';
-				sshServerId?: undefined;
-				host: string;
-				port: number;
-				username: string;
-				authType: 'password' | 'privateKey';
-				proxyCommand?: string;
-				proxy?: SshProxy;
-		  }
+			connectionType: 'ssh';
+			sshServerId?: undefined;
+			credentialId: string;
+			host: string;
+			port: number;
+			username: string;
+			authType: 'password' | 'privateKey';
+			proxyCommand?: string;
+			proxy?: SshProxy;
+		}
 	);
 
 export interface SshProxy {
+	credentialId: string;
 	host: string;
 	port: number;
 	username: string;
@@ -39,18 +41,13 @@ export interface SshProxy {
 
 export type Server = ContainerServer;
 
-export type ExportedServer = Server & {
-	password: string;
-	privateKey?: string;
-	passphrase?: string;
-	proxyPassword?: string;
-	proxyPrivateKey?: string;
-	proxyPassphrase?: string;
-};
+export type ExportedServer = Server;
 
 export interface ServerFormMessage {
+	credentialId?: unknown;
+	proxyCredentialId?: unknown;
 	location?: unknown;
-	type: 'save' | 'selectPrivateKey' | 'selectProxyPrivateKey' | 'selectExecutable';
+	type: 'save' | 'selectExecutable';
 	name?: unknown;
 	group?: unknown;
 	host?: unknown;
@@ -63,12 +60,6 @@ export interface ServerFormMessage {
 	proxyPort?: unknown;
 	proxyUsername?: unknown;
 	proxyAuthType?: unknown;
-	proxyPassword?: unknown;
-	proxyPrivateKey?: unknown;
-	proxyPassphrase?: unknown;
-	password?: unknown;
-	privateKey?: unknown;
-	passphrase?: unknown;
 	database?: unknown;
 	runtime?: unknown;
 	executablePath?: unknown;
@@ -82,13 +73,15 @@ function parseSshProxy(message: ServerFormMessage): SshProxy | undefined {
 	if (message.proxyEnabled !== true) {
 		return undefined;
 	}
+	const credentialId = normalizeString(message.proxyCredentialId);
 	const host = normalizeString(message.proxyHost);
 	const username = normalizeString(message.proxyUsername);
 	const port = Number(message.proxyPort);
-	if (!host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if (!credentialId || !host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
 		return undefined;
 	}
 	return {
+		credentialId,
 		host,
 		port,
 		username,
@@ -135,6 +128,7 @@ export function parseServerForm(
 	return {
 		...baseServer,
 		connectionType: 'ssh',
+		credentialId: proxy.credentialId,
 		host: proxy.host,
 		port: proxy.port,
 		username: proxy.username,
@@ -151,7 +145,7 @@ export function parseServerExport(value: unknown): ExportedServer[] {
 	return value.servers
 		.filter(entry => isRecord(entry) && entry.type === 'container')
 		.map((entry, index) => {
-			if (!isRecord(entry) || typeof entry.password !== 'string') {
+			if (!isRecord(entry)) {
 				throw new Error(`Server ${index + 1} is invalid.`);
 			}
 
@@ -164,27 +158,10 @@ export function parseServerExport(value: unknown): ExportedServer[] {
 			if (serverIds.has(server.id)) {
 				throw new Error(`Server ${index + 1} uses a duplicate ID.`);
 			}
-			if (usesPrivateKey(server) && typeof entry.privateKey !== 'string') {
-				throw new Error(`Server ${index + 1} has no private key.`);
-			}
 
 			serverIds.add(server.id);
-			return {
-				...server,
-				password: entry.password,
-				privateKey: typeof entry.privateKey === 'string' ? entry.privateKey : undefined,
-				passphrase: typeof entry.passphrase === 'string' ? entry.passphrase : undefined,
-				proxyPassword: typeof entry.proxyPassword === 'string' ? entry.proxyPassword : undefined,
-				proxyPrivateKey:
-					typeof entry.proxyPrivateKey === 'string' ? entry.proxyPrivateKey : undefined,
-				proxyPassphrase:
-					typeof entry.proxyPassphrase === 'string' ? entry.proxyPassphrase : undefined,
-			};
+			return server;
 		});
-}
-
-export function normalizePassword(value: unknown): string {
-	return typeof value === 'string' ? value : '';
 }
 
 export function parseServer(value: unknown): Server {
@@ -208,9 +185,11 @@ export function parseServer(value: unknown): Server {
 			host: value.host,
 			port: value.port,
 			username: value.username,
+			credentialId: value.credentialId,
 			authType: value.authType,
 			proxyCommand: value.proxyCommand,
 			proxyEnabled: containerSsh || isRecord(value.proxy),
+			proxyCredentialId: manualContainerSsh ? value.credentialId : isRecord(value.proxy) ? value.proxy.credentialId : undefined,
 			proxyHost: manualContainerSsh
 				? value.host
 				: isRecord(value.proxy)
@@ -254,10 +233,4 @@ function normalizeString(value: unknown): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-export function usesPrivateKey(server: Server): boolean {
-	return (
-		server.connectionType === 'ssh' && 'authType' in server && server.authType === 'privateKey'
-	);
 }

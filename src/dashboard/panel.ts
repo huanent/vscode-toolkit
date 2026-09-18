@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from '../webview';
 import { registerDashboardContextMenus } from './contextMenus';
+import { credentialDashboard } from '../credential/dashboard';
 
 export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container';
 let panel: vscode.WebviewView | undefined;
@@ -80,7 +81,7 @@ function configureDashboard(current: vscode.WebviewView): void {
 				await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
 			}
 			await current.webview.postMessage({ type: 'dashboardConnected' });
-		} else if (message.type === 'dashboardTab' && message.tab in commands) {
+		} else if (message.type === 'dashboardTab' && Object.hasOwn(commands, message.tab)) {
 			activeTab = message.tab;
 		} else if (
 			message.type === 'dashboardNavigate' &&
@@ -178,7 +179,12 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 	};
 	editor.iconPath = new vscode.ThemeIcon(icons[tab]);
 	editors.set(tab, editor);
+	const handleCredential = credentialDashboard(context);
 	const messages = editor.webview.onDidReceiveMessage(message => {
+		if (message.channel === 'credential') {
+			void handleCredential(message, editor.webview);
+			return;
+		}
 		if (message.type === 'editorReady') {
 			editorReady.add(tab);
 			void editor.webview.postMessage({ type: 'editorRequest', request: editorRequests.get(tab) });

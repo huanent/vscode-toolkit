@@ -14,6 +14,7 @@ interface BaseServer {
 }
 
 export interface SshProxy {
+	credentialId: string;
 	host: string;
 	port: number;
 	username: string;
@@ -25,6 +26,7 @@ export type ContainerRuntime = 'docker' | 'podman' | 'apple';
 export type ConnectionType = 'local' | 'ssh';
 
 export interface ContainerServer extends BaseServer {
+	credentialId?: string;
 	type: 'container';
 	runtime: ContainerRuntime;
 	executablePath: string;
@@ -54,14 +56,7 @@ export interface ServerCommand {
 	value: string;
 }
 
-export interface ServerCredentials {
-	password?: string;
-	privateKey?: string;
-	passphrase?: string;
-	proxyPassword?: string;
-	proxyPrivateKey?: string;
-	proxyPassphrase?: string;
-}
+export type ServerCredentials = Record<string, never>;
 
 export interface ServerFormModel {
 	location: string;
@@ -77,6 +72,6 @@ export interface ServerFormModel {
 export type ServerFormExtensionMessage =
 	| { type: 'initialize'; model: ServerFormModel }
 	| { type: 'executableSelected'; path: string }
-	| { type: 'privateKeySelected'; contents: string }
-	| { type: 'proxyPrivateKeySelected'; contents: string }
+
+
 	| { type: 'error'; message: string };

@@ -1,10 +1,12 @@
+import { credentialDashboard } from '../credential/dashboard';
+import { CredentialStore } from '../credential/store';
+import { getStorageUri } from '../storagePath';
+import { resolveFormCredentials } from '../credential/connectionCredentials';
 import * as vscode from 'vscode';
 import {
-	normalizePassword,
 	parseServerForm,
 	Server,
 	ServerFormMessage,
-	usesPrivateKey,
 } from './server';
 import { ServerCredentials, ServerStore } from './serverStore';
 import { getWebviewHtml } from './webview';
@@ -20,7 +22,7 @@ export async function configureServerForm(
 ): Promise<void> {
 	const title =
 		existingServer && !duplicate ? `Edit ${existingServer.name} Server` : 'Add Database Server';
-	const credentials = existingServer ? await store.getCredentials(existingServer.id) : {};
+	const credentials = {};
 	panel.title = title;
 	panel.webview.options = {
 		enableScripts: true,
@@ -28,9 +30,10 @@ export async function configureServerForm(
 	};
 	panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri, 'databaseForm', title);
 	const saveState = { inProgress: false };
+	const handleCredential = credentialDashboard(context);
 	panel.webview.onDidReceiveMessage(
-		(message: ServerFormWebviewMessage) =>
-			handleMessage(
+		(message: ServerFormWebviewMessage & { channel?: string }) =>
+			message.channel === 'credential' ? handleCredential({ ...message }, panel.webview) : handleMessage(
 				message,
 				context,
 				panel,
@@ -51,7 +54,7 @@ export async function handleMessage(
 	panel: vscode.WebviewPanel,
 	store: ServerStore,
 	existingServer: Server | undefined,
-	credentials: ServerCredentials,
+	_credentials: ServerCredentials,
 	duplicate: boolean,
 	saveState: { inProgress: boolean },
 ): Promise<void> {
@@ -65,7 +68,7 @@ export async function handleMessage(
 					duplicate && existingServer && 'host' in existingServer
 						? { ...existingServer, host: '' }
 						: existingServer,
-				credentials,
+				credentials: {},
 				groups: store.getGroups(),
 				location: existingServer ? store.getLocation(existingServer.id) : '',
 				locationLocked: false,
@@ -74,78 +77,13 @@ export async function handleMessage(
 		});
 		return;
 	}
-	if (message.type === 'selectPrivateKey' || message.type === 'selectProxyPrivateKey') {
-		const selection = await vscode.window.showOpenDialog({
-			canSelectMany: false,
-			canSelectFiles: true,
-			canSelectFolders: false,
-			openLabel: 'Select',
-			title: 'Select SSH Private Key',
-		});
-		if (!selection?.[0]) {
-			return;
-		}
-		try {
-			const contents = await vscode.workspace.fs.readFile(selection[0]);
-			await postMessage({
-				type:
-					message.type === 'selectProxyPrivateKey'
-						? 'proxyPrivateKeySelected'
-						: 'privateKeySelected',
-				contents: Buffer.from(contents).toString('utf8'),
-			});
-		} catch (error) {
-			await postMessage({
-				type: 'error',
-				message: `Could not read the private key: ${error instanceof Error ? error.message : String(error)}`,
-			});
-		}
-		return;
-	}
 	if (message.type !== 'save' || saveState.inProgress) return;
 	saveState.inProgress = true;
-	const server = parseServerForm(message, 'mysql', duplicate ? undefined : existingServer?.id);
-	const submitted = {
-		password: normalizePassword(message.password),
-		privateKey: normalizePassword(message.privateKey),
-		passphrase: normalizePassword(message.passphrase),
-		proxyPassword: normalizePassword(message.proxyPassword),
-		proxyPrivateKey: normalizePassword(message.proxyPrivateKey),
-		proxyPassphrase: normalizePassword(message.proxyPassphrase),
-	};
-	const nextCredentials: ServerCredentials = submitted;
-	const ownsCredentials = true;
-	const existingOwnsCredentials = Boolean(existingServer);
-	const privateKey = server ? usesPrivateKey(server) : false;
-	const hasStoredCredential = privateKey
-		? Boolean(credentials.privateKey)
-		: Boolean(credentials.password);
-	const changed =
-		!existingOwnsCredentials ||
-		!existingServer ||
-		(server && usesPrivateKey(server) !== usesPrivateKey(existingServer));
-	const needsCredential = ownsCredentials && (changed || !hasStoredCredential);
-	const hasCredential = privateKey
-		? Boolean(nextCredentials.privateKey)
-		: Boolean(nextCredentials.password);
-	const proxy = server?.proxy;
-	const needsProxyCredential =
-		proxy &&
-		(!existingServer?.proxy ||
-			existingServer.proxy.authType !== proxy.authType ||
-			(proxy.authType === 'privateKey'
-				? !credentials.proxyPrivateKey
-				: !credentials.proxyPassword));
-	const proxyInvalid =
-		needsProxyCredential &&
-		!(proxy?.authType === 'privateKey' ? submitted.proxyPrivateKey : submitted.proxyPassword);
-	if (!server || (needsCredential && !hasCredential) || proxyInvalid) {
-		saveState.inProgress = false;
-		await postMessage({ type: 'error', message: 'Please complete all required fields.' });
-		return;
-	}
 	try {
-		await store.saveServer(server, nextCredentials, typeof message.location === 'string' ? message.location : undefined);
+		const resolved = await resolveFormCredentials(new CredentialStore(getStorageUri(_context, 'credential').fsPath), { ...message }, 'database');
+		const server = parseServerForm(resolved as unknown as ServerFormMessage, 'mysql', duplicate ? undefined : existingServer?.id);
+		if (!server) throw new Error('Please complete all required fields.');
+		await store.saveServer(server, typeof message.location === 'string' ? message.location : undefined);
 		panel.dispose();
 	} catch (error) {
 		saveState.inProgress = false;

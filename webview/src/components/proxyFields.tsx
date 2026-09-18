@@ -1,10 +1,10 @@
-import { IconButton } from './ui/button';
+import { CredentialFields } from './credentialFields';
 import { Field } from './ui/field';
-import { KeyRound } from './ui/icons';
-import { PasswordInput, Textarea, Input } from './ui/input';
+import { Input } from './ui/input';
 import { Segmented } from './ui/segmented';
 
 export interface ProxyFieldValues {
+	proxyCredentialId: string;
 	proxyMode: 'none' | 'ssh' | 'command';
 	proxyEnabled: boolean;
 	proxyCommand: string;
@@ -12,20 +12,14 @@ export interface ProxyFieldValues {
 	proxyPort: string;
 	proxyUsername: string;
 	proxyAuthType: 'password' | 'privateKey';
-	proxyPassword: string;
-	proxyPrivateKey: string;
-	proxyPassphrase: string;
 }
 
 export interface ProxyFieldsProps {
 	values: ProxyFieldValues;
 	onChange: <Key extends keyof ProxyFieldValues>(key: Key, value: ProxyFieldValues[Key]) => void;
-	onSelectPrivateKey: () => void;
 }
 
-export function ProxyFields({ values, onChange, onSelectPrivateKey }: ProxyFieldsProps) {
-	const credentialRequired =
-		values.proxyAuthType === 'privateKey' ? !values.proxyPrivateKey : !values.proxyPassword;
+export function ProxyFields({ values, onChange }: ProxyFieldsProps) {
 	const updateProxyMode = (mode: ProxyFieldValues['proxyMode']) => {
 		onChange('proxyMode', mode);
 		onChange('proxyEnabled', mode === 'ssh');
@@ -74,76 +68,11 @@ export function ProxyFields({ values, onChange, onSelectPrivateKey }: ProxyField
 								)}
 							</Field>
 						</div>
-						<Field label="Username" required>
-							{control => (
-								<Input
-									{...control}
-									required
-									autoComplete="username"
-									placeholder="root"
-									value={values.proxyUsername}
-									onChange={event => onChange('proxyUsername', event.target.value)}
-								/>
-							)}
-						</Field>
-						<Segmented
-							label="SSH authentication method"
-							value={values.proxyAuthType}
-							options={[
-								{ value: 'password', label: 'Password' },
-								{ value: 'privateKey', label: 'Private key' },
-							]}
-							onChange={value => onChange('proxyAuthType', value)}
-						/>
-						{values.proxyAuthType === 'password' ? (
-							<Field label="SSH password" required={credentialRequired}>
-								{control => (
-									<PasswordInput
-										{...control}
-										value={values.proxyPassword}
-										required={credentialRequired}
-										onChange={event => onChange('proxyPassword', event.target.value)}
-									/>
-								)}
-							</Field>
-						) : (
-							<>
-								<Field
-									label="SSH private key"
-									required={credentialRequired}
-									action={
-										<IconButton
-											size="sm"
-											htmlType="button"
-											label="Select proxy private key"
-											onClick={onSelectPrivateKey}
-											icon={<KeyRound size="sm" />}
-										/>
-									}
-								>
-									{control => (
-										<Textarea
-											{...control}
-											required={credentialRequired}
-											spellCheck={false}
-											placeholder="Paste the PEM or OpenSSH private key"
-											value={values.proxyPrivateKey}
-											onChange={event => onChange('proxyPrivateKey', event.target.value)}
-										/>
-									)}
-								</Field>
-								<Field label="SSH key passphrase">
-									{control => (
-										<PasswordInput
-											{...control}
-											placeholder="Optional"
-											value={values.proxyPassphrase}
-											onChange={event => onChange('proxyPassphrase', event.target.value)}
-										/>
-									)}
-								</Field>
-							</>
-						)}
+						<CredentialFields types={['password', 'privateKey']} value={values.proxyCredentialId} onChange={credential => {
+							onChange('proxyCredentialId', credential?.id ?? '');
+							onChange('proxyUsername', credential?.user ?? '');
+							if (credential?.type === 'password' || credential?.type === 'privateKey') onChange('proxyAuthType', credential.type);
+						}} />
 					</>
 				)}
 				{values.proxyMode === 'command' && (

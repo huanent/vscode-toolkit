@@ -1,6 +1,8 @@
 import type { AuthType, ProxyMode } from '../../../../src/database/formProtocol';
 
 export interface ServerFormValues {
+	credentialId: string;
+	proxyCredentialId: string;
 	location: string;
 	name: string;
 	group: string;
@@ -14,10 +16,6 @@ export interface ServerFormValues {
 	proxyPort: string;
 	proxyUsername: string;
 	proxyAuthType: AuthType;
-	proxyPassword: string;
-	proxyPrivateKey: string;
-	proxyPassphrase: string;
-	password: string;
 	database: string;
 	aiEnabled: boolean;
 }

@@ -63,6 +63,20 @@ Requests require absolute HTTP(S) URLs. Put credentials in headers, not URLs. CO
 
 ### SSH
 
+SSH, MySQL, manual Container SSH connections, and SSH proxies use shared `credentialId` references. Manage credentials from the key icon in the Toolkit toolbar, or create one in a connection's credential selector. Credentials are stored as plaintext files under `<toolkit.storagePath>/credential/<id>.json` (the extension storage directory is used when the setting is empty), with owner-only file permissions where supported. Connection exports contain references, not secrets; referenced credentials must exist in the destination store.
+
+#### One-Time Credential Migration
+
+Old inline credentials and the retired `secret.json` format are not supported at runtime. Close VS Code before migrating, and include every workspace that uses the same store. Preview first:
+
+```sh
+node scripts/migrateCredentials.mjs --store /absolute/store/path --config-root /absolute/workspace/.vscode/toolkit
+```
+
+Repeat `--config-root` for additional workspaces. After reviewing the counts, run the same command with `--apply`. The script backs up original configurations and legacy secrets in a restricted `credential-migration-backup-<id>` directory, creates individual credential files, replaces inline secrets with references, and removes the original `secret.json` only after successful writes. Private-key passphrases are preserved. Existing credential references are validated; missing references stop migration before changes. Re-running after success is safe. Backups contain secrets: retain them securely until connections are verified, then remove them manually. The script does not discover unopened workspaces automatically.
+
+### SSH Connections
+
 - Connect using passwords or private keys, with support for jump hosts and proxy commands.
 - Open remote terminals in editor tabs, save frequently used commands, and view remote metrics.
 - Browse, upload, download, and edit remote files over SFTP.

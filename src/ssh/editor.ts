@@ -26,7 +26,7 @@ export function registerSshEditor(
 			}
 			if (!server || server.type !== 'ssh') throw new Error('The connection no longer exists.');
 			const credentials = await store.getCredentials(server.id);
-			if (server.authType === 'privateKey' ? !credentials.privateKey : !credentials.password) {
+			if ((credentials.authType ?? server.authType) === 'privateKey' ? !credentials.privateKey : !credentials.password) {
 				throw new Error('The SSH connection credentials are missing.');
 			}
 			configureSshTerminal(context, panel, server, credentials, store);

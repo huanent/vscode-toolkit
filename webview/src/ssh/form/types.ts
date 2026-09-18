@@ -5,6 +5,8 @@ import type {
 import type { ProxyFieldValues } from '../../components/proxyFields';
 
 export interface ConnectionFormValues extends ProxyFieldValues {
+	proxyCredentialId: string;
+	credentialId: string;
 	location: string;
 	name: string;
 	group: string;
@@ -12,9 +14,6 @@ export interface ConnectionFormValues extends ProxyFieldValues {
 	port: string;
 	username: string;
 	authType: AuthType;
-	password: string;
-	privateKey: string;
-	passphrase: string;
 	commands: ServerCommand[];
 	favorites: string[];
 	aiEnabled: boolean;

@@ -127,6 +127,8 @@ export function connectSshClient(
 			.on('error', fail)
 			.connect(
 				connectionConfig(server.proxy, {
+					username: credentials.proxyUsername,
+					authType: credentials.proxyAuthType,
 					password: credentials.proxyPassword,
 					privateKey: credentials.proxyPrivateKey,
 					passphrase: credentials.proxyPassphrase,
@@ -166,8 +168,8 @@ function connectionConfig(
 	return {
 		host: server.host,
 		port: server.port,
-		username: server.username,
-		...(server.authType === 'privateKey'
+		username: credentials.username ?? server.username,
+		...((credentials.authType ?? server.authType) === 'privateKey'
 			? { privateKey: credentials.privateKey, passphrase: credentials.passphrase }
 			: { password: credentials.password, tryKeyboard: true }),
 		readyTimeout: 15_000,

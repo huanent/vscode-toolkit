@@ -142,7 +142,6 @@ export function ConnectionForm({ form }: { form: ServerFormState }) {
 						<ProxyFields
 							values={form.values}
 							onChange={(key, value) => form.update<keyof typeof form.values>(key, value)}
-							onSelectPrivateKey={form.selectProxyPrivateKey}
 						/>
 					)}
 					{selectedTab === 'other' && (

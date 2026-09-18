@@ -1,21 +1,15 @@
+import { CredentialStore } from '../credential/store';
+import { resolveConnectionCredentials, type ConnectionCredentials } from '../credential/connectionCredentials';
 import { watch, FSWatcher } from 'node:fs';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../storagePath';
 import { StorageLocation } from '../storageLocation';
-import { CredentialStorage } from '../credentialStorage';
-import { ExportedServer, parseServer, Server, ServerType, usesPrivateKey } from './server';
+import { ExportedServer, parseServer, Server, ServerType } from './server';
 
 const serverOrderFileName = 'order.json';
 const serverOrderVersion = 1;
 
-export interface ServerCredentials {
-	password?: string;
-	privateKey?: string;
-	passphrase?: string;
-	proxyPassword?: string;
-	proxyPrivateKey?: string;
-	proxyPassphrase?: string;
-}
+export type ServerCredentials = ConnectionCredentials;
 
 export type ServerMoveDirection = 'up' | 'down';
 
@@ -24,11 +18,10 @@ class ConnectionStore {
 	readonly onDidChange = this.changeEmitter.event;
 	private readonly storageDirectoryUri: vscode.Uri;
 	private readonly serversDirectoryUri: vscode.Uri;
-	private readonly credentialStorage: CredentialStorage;
 	private readonly locations: StorageLocation;
 	private workspaceWatcher: vscode.FileSystemWatcher | undefined;
 	private servers: Server[] = [];
-	private readonly credentials = new Map<string, ServerCredentials>();
+	private readonly sharedCredentials: CredentialStore;
 	private watcher: FSWatcher | undefined;
 	private reloadTimer: NodeJS.Timeout | undefined;
 	private mutationQueue: Promise<void> = Promise.resolve();
@@ -39,7 +32,7 @@ class ConnectionStore {
 		private readonly serverType: ServerType = 'mysql',
 	) {
 		this.storageDirectoryUri = getStorageUri(context, 'database');
-		this.credentialStorage = new CredentialStorage(context, 'database');
+		this.sharedCredentials = new CredentialStore(getStorageUri(context, 'credential').fsPath);
 		this.serversDirectoryUri = this.storageDirectoryUri;
 		this.locations = new StorageLocation(this.serversDirectoryUri, 'database');
 	}
@@ -76,7 +69,7 @@ class ConnectionStore {
 		].sort((left, right) => left.localeCompare(right));
 	}
 
-	async saveServer(server: Server, credentials: ServerCredentials = {}, location?: string): Promise<void> {
+	async saveServer(server: Server, location?: string): Promise<void> {
 		this.assertServerType(server);
 		await this.enqueueMutation(async () => {
 			if (location !== undefined) this.locations.resolve(location);
@@ -86,7 +79,6 @@ class ConnectionStore {
 			const updatedServers = exists
 				? servers.map(current => (current.id === server.id ? server : current))
 				: [...servers, server];
-			this.saveCredentials(server, credentials, false);
 			await this.writeServers(updatedServers);
 			await this.locations.move(server.id, serverFileName(server), location);
 			this.changeEmitter.fire();
@@ -155,34 +147,17 @@ class ConnectionStore {
 		await this.enqueueMutation(async () => {
 			const deletedIds = new Set(serverIds);
 			await this.writeServers(this.getServers().filter(server => !deletedIds.has(server.id)));
-			serverIds.forEach(serverId => this.credentials.delete(serverId));
-			await this.credentialStorage.delete(serverIds);
 		});
 	}
 
-	getPassword(serverId: string): Thenable<string | undefined> {
-		return Promise.resolve(this.credentials.get(serverId)?.password);
-	}
-
 	async getCredentials(serverId: string): Promise<ServerCredentials> {
-		return { ...this.credentials.get(serverId) };
+		const server = this.servers.find(entry => entry.id === serverId);
+		if (!server) throw new Error('Connection no longer exists.');
+		return resolveConnectionCredentials(this.sharedCredentials, server);
 	}
 
 	async getExportedServers(): Promise<ExportedServer[]> {
-		return Promise.all(
-			this.getServers().map(async server => {
-				const credentials = await this.getCredentials(server.id);
-				return {
-					...server,
-					password: credentials.password ?? '',
-					privateKey: credentials.privateKey,
-					passphrase: credentials.passphrase,
-					proxyPassword: credentials.proxyPassword,
-					proxyPrivateKey: credentials.proxyPrivateKey,
-					proxyPassphrase: credentials.proxyPassphrase,
-				};
-			}),
-		);
+		return this.getServers().map(server => parseServer(server));
 	}
 
 	async importServers(importedServers: ExportedServer[]): Promise<void> {
@@ -191,19 +166,8 @@ class ConnectionStore {
 			const importedIds = new Set(importedServers.map(server => server.id));
 			const updatedServers = [
 				...this.getServers().filter(server => !importedIds.has(server.id)),
-				...importedServers.map(
-					({
-						password: _password,
-						privateKey: _privateKey,
-						passphrase: _passphrase,
-						proxyPassword: _proxyPassword,
-						proxyPrivateKey: _proxyPrivateKey,
-						proxyPassphrase: _proxyPassphrase,
-						...server
-					}) => server,
-				),
+				...importedServers.map(server => parseServer(server)),
 			];
-			importedServers.forEach(server => this.saveCredentials(server, server, true));
 			await this.writeServers(updatedServers);
 		});
 	}
@@ -271,7 +235,6 @@ class ConnectionStore {
 			if (ids.has(stored.server.id)) throw new Error('Duplicate connection ID across storage locations.');
 			ids.add(stored.server.id);
 			this.locations.remember(stored.server.id, stored.directory);
-			stored.credentials = await this.credentialStorage.resolve(stored.credentials);
 		}
 		const storedServersById = new Map(
 			storedServers.map(storedServer => [storedServer.server.id, storedServer]),
@@ -283,20 +246,8 @@ class ConnectionStore {
 		];
 		const orderedStoredServers = orderedIds.map(serverId => storedServersById.get(serverId)!);
 		const servers = orderedStoredServers.map(({ server }) => server);
-		const credentials = new Map(
-			orderedStoredServers.map(
-				storedServer => [storedServer.server.id, storedServer.credentials] as const,
-			),
-		);
-		if (
-			JSON.stringify(servers) === JSON.stringify(this.servers) &&
-			JSON.stringify([...credentials]) === JSON.stringify([...this.credentials])
-		) {
-			return;
-		}
+		if (JSON.stringify(servers) === JSON.stringify(this.servers)) return;
 		this.servers = servers;
-		this.credentials.clear();
-		credentials.forEach((value, key) => this.credentials.set(key, value));
 		this.changeEmitter.fire();
 	}
 
@@ -312,18 +263,9 @@ class ConnectionStore {
 					const directory = this.locations.directory(server.id);
 					await vscode.workspace.fs.createDirectory(directory);
 					const serverUri = vscode.Uri.joinPath(directory, fileName);
-					const credentials = await this.credentialStorage.store(server.id, this.credentials.get(server.id) ?? {});
 					const contents = Buffer.from(
 						JSON.stringify(
-							{
-								...server,
-								password: credentials.password ?? '',
-								privateKey: credentials.privateKey ?? '',
-								passphrase: credentials.passphrase ?? '',
-								proxyPassword: credentials.proxyPassword ?? '',
-								proxyPrivateKey: credentials.proxyPrivateKey ?? '',
-								proxyPassphrase: credentials.proxyPassphrase ?? '',
-							},
+							server,
 							undefined,
 							2,
 						),
@@ -387,39 +329,6 @@ class ConnectionStore {
 		return result;
 	}
 
-	private saveCredentials(server: Server, credentials: ServerCredentials, replace: boolean): void {
-		const current = this.credentials.get(server.id) ?? {};
-		if (usesPrivateKey(server)) {
-			this.credentials.set(server.id, {
-				privateKey: credentials.privateKey || (replace ? undefined : current.privateKey),
-				passphrase:
-					credentials.passphrase ||
-					(replace || credentials.passphrase !== undefined ? undefined : current.passphrase),
-				proxyPassword: credentials.proxyPassword || (replace ? undefined : current.proxyPassword),
-				proxyPrivateKey:
-					credentials.proxyPrivateKey || (replace ? undefined : current.proxyPrivateKey),
-				proxyPassphrase:
-					credentials.proxyPassphrase ||
-					(replace || credentials.proxyPassphrase !== undefined
-						? undefined
-						: current.proxyPassphrase),
-			});
-			return;
-		}
-
-		this.credentials.set(server.id, {
-			password: credentials.password || (replace ? undefined : current.password),
-			proxyPassword: credentials.proxyPassword || (replace ? undefined : current.proxyPassword),
-			proxyPrivateKey:
-				credentials.proxyPrivateKey || (replace ? undefined : current.proxyPrivateKey),
-			proxyPassphrase:
-				credentials.proxyPassphrase ||
-				(replace || credentials.proxyPassphrase !== undefined
-					? undefined
-					: current.proxyPassphrase),
-		});
-	}
-
 	private assertServerType(server: Server): void {
 		if (this.serverType && server.type !== this.serverType) {
 			throw new Error('Connection type does not match this feature storage.');
@@ -445,7 +354,6 @@ function serverFileName(server: Server): string {
 
 interface StoredServer {
 	server: Server;
-	credentials: ServerCredentials;
 }
 
 function parseStoredServer(value: unknown): StoredServer | undefined {
@@ -459,19 +367,7 @@ function parseStoredServer(value: unknown): StoredServer | undefined {
 	} catch {
 		return undefined;
 	}
-	return {
-		server,
-		credentials: {
-			password: typeof record.password === 'string' ? record.password : undefined,
-			privateKey: typeof record.privateKey === 'string' ? record.privateKey : undefined,
-			passphrase: typeof record.passphrase === 'string' ? record.passphrase : undefined,
-			proxyPassword: typeof record.proxyPassword === 'string' ? record.proxyPassword : undefined,
-			proxyPrivateKey:
-				typeof record.proxyPrivateKey === 'string' ? record.proxyPrivateKey : undefined,
-			proxyPassphrase:
-				typeof record.proxyPassphrase === 'string' ? record.proxyPassphrase : undefined,
-		},
-	};
+	return { server };
 }
 
 function isServerOrder(value: unknown): value is { version: number; serverIds: string[] } {

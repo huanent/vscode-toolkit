@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerDashboard } from './dashboard/panel';
+import { registerCredential } from './credential/dashboard';
 import { registerSourceControl } from './git/sourceControl';
 import { generateGitignore } from './git/gitignoreService';
 import { registerHttpClient } from './http/httpClient';
@@ -25,6 +26,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		webviewOptions: { retainContextWhenHidden: true },
 	}));
 	registerDashboard(context);
+	registerCredential(context);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('vscode-toolkit.generateGitignore', () =>

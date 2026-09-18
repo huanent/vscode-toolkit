@@ -28,16 +28,6 @@ export function NetworkFields({ form }: { form: ServerFormState }) {
 					/>}
 				</Field>
 			</div>
-			<Field label="Username" required>
-				{control => <Input
-					{...control}
-					required
-					autoComplete="username"
-					placeholder="root"
-					value={values.username}
-					onChange={event => form.update('username', event.target.value)}
-				/>}
-			</Field>
 
 			<Field label="Database" required>
 				{control => <Input
