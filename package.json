@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -179,6 +179,68 @@
       }
     ],
     "commands": [
+      {
+        "command": "vscode-toolkit.dashboard.edit",
+        "title": "Edit"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.duplicate",
+        "title": "Duplicate"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.copyHost",
+        "title": "Copy Host"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.runScript",
+        "title": "Run Script"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.up",
+        "title": "Move Up",
+        "enablement": "!dashboardFiltered"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.down",
+        "title": "Move Down",
+        "enablement": "!dashboardFiltered"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.export",
+        "title": "Export"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.delete",
+        "title": "Delete"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.groupUp",
+        "title": "Move Up",
+        "enablement": "!dashboardFiltered && !dashboardGroupFirst"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.groupDown",
+        "title": "Move Down",
+        "enablement": "!dashboardFiltered && !dashboardGroupLast"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.groupRename",
+        "title": "Rename"
+      },
+      {
+        "command": "vscode-toolkit.dashboard.groupDelete",
+        "title": "Delete"
+      },
+      {
+        "command": "vscode-toolkit.editWorkflow",
+        "title": "Edit",
+        "enablement": "!workflowLocked"
+      },
+      {
+        "command": "vscode-toolkit.deleteWorkflow",
+        "title": "Delete",
+        "enablement": "!workflowLocked"
+      },
       {
         "command": "vscode-toolkit.openDashboard",
         "title": "Open Dashboard",
@@ -370,6 +432,78 @@
       }
     ],
     "menus": {
+      "webview/context": [
+        {
+          "command": "vscode-toolkit.dashboard.edit",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@1"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.duplicate",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@2"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.copyHost",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem' && dashboardTab != 'container'",
+          "group": "connection@3"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.runScript",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem' && dashboardTab == 'ssh' && dashboardHasScripts",
+          "group": "connection@4"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.up",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@5"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.down",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@6"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.export",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@7"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.delete",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
+          "group": "connection@8"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupUp",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'sshGroup'",
+          "group": "group@1"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupDown",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'sshGroup'",
+          "group": "group@2"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupRename",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'sshGroup'",
+          "group": "group@3"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupDelete",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'sshGroup'",
+          "group": "group@4"
+        },
+        {
+          "command": "vscode-toolkit.editWorkflow",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'workflowItem'",
+          "group": "workflow@1"
+        },
+        {
+          "command": "vscode-toolkit.deleteWorkflow",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'workflowItem'",
+          "group": "workflow@2"
+        }
+      ],
       "view/title": [
         {
           "command": "vscode-toolkit.openExplorer",
@@ -499,6 +633,62 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "vscode-toolkit.dashboard.edit",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.duplicate",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.copyHost",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.runScript",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.up",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.down",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.export",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.delete",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupUp",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupDown",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupRename",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.dashboard.groupDelete",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.editWorkflow",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.deleteWorkflow",
+          "when": "false"
+        },
         {
           "command": "vscode-toolkit.newHttpClient",
           "when": "false"

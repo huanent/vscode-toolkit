@@ -51,6 +51,8 @@ export type TaskState = 'running' | 'stopping' | 'success' | 'error' | 'cancelle
 
 export interface ResultTask {
     id: string;
+    ownerSessionId?: string;
+    executionStatus?: 'external' | 'unknown';
     label: string;
     type: Result['type'];
     state: TaskState;

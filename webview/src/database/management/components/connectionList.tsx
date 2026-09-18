@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { Button, IconButton } from '../../../components/ui/button';
 import { Empty } from '../../../components/ui/empty';
 import {
-	MoreHorizontal,
+	Download,
+	Upload,
 	Plus,
 	RefreshCw,
 	Search,
@@ -10,11 +10,10 @@ import {
 } from '../../../components/ui/icons';
 import { Input } from '../../../components/ui/input';
 import { List } from '../../../components/ui/list';
-import { Popover } from '../../../components/ui/popover';
 import { Tree } from '../../../components/ui/tree';
 import { ConnectionItem, type Connection } from './connectionItem';
 
-export type ConnectionListState={ name: string; servers: Connection[] };
+export type ConnectionListState = { name: string; servers: Connection[] };
 
 export function ConnectionList({
 	state,
@@ -27,90 +26,59 @@ export function ConnectionList({
 	onQueryChange(value: string): void;
 	onAction(type: string, id?: string): void;
 }) {
-	const [moreOpen, setMoreOpen]=useState(false);
-	const search=query.trim().toLowerCase();
-	const servers=
+	const search = query.trim().toLowerCase();
+	const servers =
 		state?.servers.filter(server =>
 			`${server.name} ${server.group} ${server.address} ${server.kind}`
 				.toLowerCase()
 				.includes(search),
-		)??[];
-	const groups=new Map<string, Connection[]>();
-	for(const server of servers) {
-		const group=server.group.trim();
-		groups.set(group, [...(groups.get(group)??[]), server]);
+		) ?? [];
+	const groups = new Map<string, Connection[]>();
+	for (const server of servers) {
+		const group = server.group.trim();
+		groups.set(group, [...(groups.get(group) ?? []), server]);
 	}
 	return (
 		<div className="grid min-w-0 gap-2">
 			<header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
 				<h1 className="m-0 min-w-0 text-base font-semibold wrap-anywhere">
-					{state?.name??'Database'}
-					{state&&(
-						<span className="ml-2 text-xs font-normal text-(--vscode-descriptionForeground)">
-							{servers.length}
-						</span>
-					)}
+					{state?.name ?? 'Database'}
 				</h1>
 				<div className="flex items-center gap-0.5">
+					<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
+					<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
 					<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
 					<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
-					<Popover
-						open={moreOpen}
-						onOpenChange={setMoreOpen}
-						label="More connection actions"
-						placement="bottom-end"
-						trigger={props => <IconButton {...props} icon={<MoreHorizontal />} label="More actions" />}
-					>
-						<div className="grid min-w-40 p-1">
-							{[
-								{ type: 'import', label: 'Import', disabled: false },
-								{ type: 'exportAll', label: 'Export', disabled: !state?.servers.length },
-							].map(action => (
-								<Button
-									key={action.type}
-									variant="text"
-									disabled={action.disabled}
-									className="w-full justify-start"
-									onClick={() => {
-										setMoreOpen(false);
-										onAction(action.type);
-									}}
-								>
-									{action.label}
-								</Button>
-							))}
-						</div>
-					</Popover>
 				</div>
 			</header>
 			<Input
 				left={<Search />}
-				right={query? (
+				right={query ? (
 					<IconButton
 						size="sm"
 						icon={<X />}
 						label="Clear search"
 						onClick={() => onQueryChange('')}
 					/>
-				):undefined}
+				) : undefined}
 				type="search"
 				aria-label="Search connections"
 				placeholder="Search connections"
 				value={query}
 				onChange={event => onQueryChange(event.target.value)}
 			/>
-			{!state? (
+			{!state ? (
 				<Empty
 					icon={<RefreshCw className="codicon-modifier-spin" />}
 					title="Loading connections"
 					role="status"
 				/>
-			):servers.length===0? (
+			) : servers.length === 0 ? (
 				<div>
 					<Empty
-						title={search? 'No matching connections':'No connections'}
+						title={search ? 'No matching connections' : 'No connections'}
 					/>
-					{!search&&(
+					{!search && (
 						<div className="flex justify-center">
 							<Button onClick={() => onAction('add')}>
 								New connection
@@ -118,10 +86,10 @@ export function ConnectionList({
 						</div>
 					)}
 				</div>
-			):(
+			) : (
 				<div className="grid min-w-0">
-					{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup)-Number(!secondGroup)).map(([group, connections]) => {
-						const items=(
+					{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup)).map(([group, connections]) => {
+						const items = (
 							<List>
 								{connections.map(server => (
 									<ConnectionItem
@@ -133,11 +101,11 @@ export function ConnectionList({
 								))}
 							</List>
 						);
-						return group? (
-							<Tree key={`${group}-${!!search}`} label={group} count={connections.length} open={search? true:undefined}>
+						return group ? (
+							<Tree key={`${group}-${!!search}`} label={group} count={connections.length} open={search ? true : undefined}>
 								{items}
 							</Tree>
-						):(
+						) : (
 							<div key="ungrouped">{items}</div>
 						);
 					})}

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from '../webview';
+import { registerDashboardContextMenus } from './contextMenus';
 
 export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container';
 let panel: vscode.WebviewView | undefined;
@@ -31,6 +32,17 @@ export function registerDashboard(extensionContext: vscode.ExtensionContext): vo
 			{ webviewOptions: { retainContextWhenHidden: true } },
 		),
 		vscode.commands.registerCommand('vscode-toolkit.openDashboard', () => focusDashboard()),
+		registerDashboardContextMenus((tab, request) => {
+			if (request.type === 'edit' || request.type === 'duplicate') openDashboardEditor(tab, request);
+			else receivers.get(tab)?.fire(request);
+		}),
+		...(['edit', 'delete'] as const).map(action =>
+			vscode.commands.registerCommand(`vscode-toolkit.${action}Workflow`, (request?: { workflowId?: unknown; workflowLocked?: unknown }) => {
+				if (typeof request?.workflowId !== 'string' || request.workflowLocked === true) return;
+				if (action === 'edit') openDashboardEditor('workflow', { type: 'openEditor', id: request.workflowId });
+				else receivers.get('workflow')?.fire({ type: 'delete', id: request.workflowId });
+			}),
+		),
 		{
 			dispose: () => {
 				for (const editor of editors.values()) editor.dispose();

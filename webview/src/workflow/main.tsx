@@ -18,7 +18,6 @@ export function App() {
 		>
 			{!editorMode && <DashboardHeader
 				title="Workflow"
-				count={!editorMode && controller.loaded ? controller.state.workflows.length : undefined}
 			>
 				{!editorMode && (
 					<div className="flex items-center gap-0.5">
@@ -44,9 +43,7 @@ export function App() {
 						locked={controller.locked}
 						loaded={controller.loaded}
 						error={controller.draft ? '' : controller.error}
-						onSelect={controller.select}
 						onRun={controller.run}
-						onDelete={controller.remove}
 						onCreate={controller.create}
 					/>
 				</div>

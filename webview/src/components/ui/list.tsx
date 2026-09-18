@@ -38,6 +38,7 @@ type ListItemProps = {
 	onSelect?(): void;
 	onContextMenu?: ComponentPropsWithoutRef<'li'>['onContextMenu'];
 	onKeyDown?: ComponentPropsWithoutRef<'li'>['onKeyDown'];
+	'data-vscode-context'?: string;
 };
 
 export function ListItem({
@@ -50,11 +51,13 @@ export function ListItem({
 	onSelect,
 	onContextMenu,
 	onKeyDown,
+	'data-vscode-context': vscodeContext,
 }: ListItemProps) {
 	const isOption = role === 'option';
 
 	return (
 		<li
+			data-vscode-context={vscodeContext}
 			onContextMenu={onContextMenu}
 			onKeyDown={onKeyDown}
 			role={isOption ? 'presentation' : undefined}

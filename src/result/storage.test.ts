@@ -39,14 +39,14 @@ describe('result history storage', () => {
         await storage.persist(runner.history);
         const restored = await (await ResultStorage.create({} as vscode.ExtensionContext)).load();
         expect(restored).toEqual([{ task: entry.task, result: entry.result }]);
-        expect([...mocks.files.keys()]).toEqual([`/data/result/${entry.task.startedAt}.json`]);
+        expect([...mocks.files.keys()]).toEqual([`/data/result/${entry.task.id}.json`]);
     });
 
     it('serializes writes so deleting a record cannot be undone by an earlier save', async () => {
         const storage = await ResultStorage.create({} as vscode.ExtensionContext);
         const runner = new TaskRunner(vi.fn());
-        runner.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'Done' } });
-        await Promise.all([storage.persist(runner.history), storage.persist([])]);
+        const entry = runner.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'Done' } });
+        await Promise.all([storage.persist(runner.history), storage.remove(entry.task.id)]);
         expect(await storage.load()).toEqual([]);
     });
 
@@ -59,18 +59,20 @@ describe('result history storage', () => {
         expect(mocks.files.get('/data/result/history.json')).toBe(content);
     });
 
-    it('keeps timestamp filenames stable across updates and deletion', async () => {
+    it('keeps legacy timestamp filenames stable across updates and explicit deletion', async () => {
         const runner = new TaskRunner(vi.fn());
         const first = runner.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'First' } });
         const second = runner.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'Second' } });
         first.task.startedAt = second.task.startedAt = 100;
+        mocks.files.set('/data/result/100.json', new TextEncoder().encode(JSON.stringify(first)));
+        mocks.files.set('/data/result/101.json', new TextEncoder().encode(JSON.stringify(second)));
         const storage = await ResultStorage.create({} as vscode.ExtensionContext);
-        await storage.persist([first, second]);
         const entries = await storage.load();
         expect(entries).toHaveLength(2);
         expect([...mocks.files.keys()]).toEqual(['/data/result/100.json', '/data/result/101.json']);
         entries[1].task.startedAt = 200;
         await storage.persist([entries[1]]);
+        await storage.remove(entries[0].task.id);
         expect([...mocks.files.keys()]).toEqual(['/data/result/101.json']);
         expect(await (await ResultStorage.create({} as vscode.ExtensionContext)).load()).toEqual([entries[1]]);
     });
@@ -84,8 +86,43 @@ describe('result history storage', () => {
         const entry = runner.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'Done' } });
         entry.task.startedAt = 100;
         await storage.persist([entry]);
-        expect([...mocks.files.keys()]).toEqual(['/data/result/100.json', '/data/result/notes.json', '/data/result/101.json']);
-        await storage.persist([]);
+        expect([...mocks.files.keys()]).toEqual(['/data/result/100.json', '/data/result/notes.json', `/data/result/${entry.task.id}.json`]);
+        await storage.remove(entry.task.id);
         expect([...mocks.files.keys()]).toEqual(['/data/result/100.json', '/data/result/notes.json']);
+    });
+
+    it('does not overwrite, delete, or collide with another window tasks', async () => {
+        const first = await ResultStorage.create({} as vscode.ExtensionContext);
+        const second = await ResultStorage.create({} as vscode.ExtensionContext);
+        const owner = new TaskRunner(vi.fn());
+        const observer = new TaskRunner(vi.fn());
+        const active = owner.add({ type: 'http', data: { method: 'GET', url: '/test', state: 'loading' } });
+        const other = observer.add({ type: 'table', data: { kind: 'command', message: 'OK', summary: 'Done' } });
+        active.task.startedAt = other.task.startedAt = 100;
+        await Promise.all([first.persist([active]), second.persist([other])]);
+        expect(await first.load()).toHaveLength(2);
+        await second.load();
+        await second.persist([]);
+        await second.remove(other.task.id);
+        expect(await first.load()).toEqual([{ task: active.task, result: active.result }]);
+    });
+
+    it('expires session liveness without changing task outcomes', async () => {
+        const storage = await ResultStorage.create({} as vscode.ExtensionContext);
+        const runner = new TaskRunner(vi.fn());
+        const now = vi.spyOn(Date, 'now').mockReturnValue(100_000);
+        try {
+            await storage.heartbeat(runner.sessionId);
+            expect(await storage.liveSessions()).toEqual(new Set([runner.sessionId]));
+            expect(await storage.load()).toEqual([]);
+            now.mockReturnValue(131_000);
+            expect(await storage.liveSessions()).toEqual(new Set());
+            await storage.heartbeat(runner.sessionId);
+            expect(await storage.liveSessions()).toEqual(new Set([runner.sessionId]));
+            await storage.endSession(runner.sessionId);
+            expect(await storage.liveSessions()).toEqual(new Set());
+        } finally {
+            now.mockRestore();
+        }
     });
 });

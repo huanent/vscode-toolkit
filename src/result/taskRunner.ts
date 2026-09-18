@@ -9,30 +9,32 @@ export interface TaskEntry {
 
 export class TaskRunner {
     readonly entries = new Map<string, TaskEntry>();
+    readonly sessionId = randomUUID();
     private readonly resultIds = new WeakMap<Result, string>();
 
-    constructor(private readonly changed: () => void) { }
+    constructor(private readonly changed: (entry: TaskEntry) => void) { }
 
     get history(): TaskEntry[] {
         return [...this.entries.values()].sort((first, second) => second.task.startedAt - first.task.startedAt || second.task.id.localeCompare(first.task.id));
     }
 
-    restore(entries: TaskEntry[]): void {
+    restore(entries: TaskEntry[], liveSessions: ReadonlySet<string> = new Set()): void {
+        const incomingIds = new Set(entries.map(entry => entry.task.id));
+        for (const [id, entry] of this.entries) {
+            if (!incomingIds.has(id) && (entry.task.ownerSessionId !== this.sessionId || !this.active(entry.task.state))) {
+                this.resultIds.delete(entry.result);
+                this.entries.delete(id);
+            }
+        }
         for (const entry of entries) {
-            if (this.entries.has(entry.task.id)) continue;
+            const existing = this.entries.get(entry.task.id);
+            if (existing?.task.ownerSessionId === this.sessionId) continue;
+            if (existing) this.resultIds.delete(existing.result);
             entry.cancel = undefined;
             entry.task.cancellable = false;
-            if (this.active(entry.task.state)) {
-                entry.task.state = 'cancelled';
-                entry.task.finishedAt = Date.now();
-                if (entry.result.type === 'http') Object.assign(entry.result.data, { state: 'cancelled', message: 'Task interrupted by restart.' });
-                if (entry.result.type === 'workflow') {
-                    Object.assign(entry.result.data, { state: 'cancelled', summary: 'Task interrupted by restart.', finishedAt: entry.task.finishedAt });
-                    for (const step of entry.result.data.steps) {
-                        if (step.state === 'running' || step.state === 'pending') step.state = 'cancelled';
-                    }
-                }
-            }
+            entry.task.executionStatus = this.active(entry.task.state)
+                ? entry.task.ownerSessionId && liveSessions.has(entry.task.ownerSessionId) ? 'external' : 'unknown'
+                : undefined;
             this.entries.set(entry.task.id, entry);
             this.resultIds.set(entry.result, entry.task.id);
         }
@@ -44,7 +46,7 @@ export class TaskRunner {
         const entry: TaskEntry = {
             result, cancel,
             task: {
-                id: randomUUID(), type: result.type,
+                id: randomUUID(), ownerSessionId: this.sessionId, type: result.type,
                 label: result.type === 'workflow' ? result.data.name : result.type === 'http' ? `${result.data.method} ${result.data.url}` : result.data.source ?? result.data.label ?? 'SQL query',
                 state: this.state(result), startedAt: Date.now(), cancellable: Boolean(cancel),
             },
@@ -62,7 +64,7 @@ export class TaskRunner {
 
     update(result: Result): void {
         const entry = this.find(result);
-        if (!entry) return;
+        if (!entry || entry.task.ownerSessionId !== this.sessionId) return;
         this.finish(entry, this.state(result));
     }
 
@@ -70,15 +72,16 @@ export class TaskRunner {
         const entry = this.entries.get(id);
         if (!entry?.cancel || entry.task.state !== 'running') return;
         entry.task.state = 'stopping';
-        this.changed();
+        this.changed(entry);
         entry.cancel();
     }
 
-    remove(id: string): void {
+    remove(id: string): boolean {
         const entry = this.entries.get(id);
-        if (!entry || this.active(entry.task.state)) return;
+        if (!entry || this.active(entry.task.state)) return false;
         this.entries.delete(id);
-        this.changed();
+        this.resultIds.delete(entry.result);
+        return true;
     }
 
     async run(result: Result, show: () => Promise<void>, execute: (signal: AbortSignal) => Promise<void>): Promise<void> {
@@ -114,7 +117,7 @@ export class TaskRunner {
             entry.cancel = undefined;
             entry.task.cancellable = false;
         }
-        this.changed();
+        this.changed(entry);
     }
 
     private active(state: TaskState): boolean {

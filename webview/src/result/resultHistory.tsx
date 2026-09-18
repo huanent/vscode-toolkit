@@ -32,20 +32,25 @@ export function ResultHistory({ history }: { history: ResultHistoryMessage }) {
                 {[...groups].map(([label, items]) => {
                     const entries = items.map(task => {
                         const isActive = task.state === 'running' || task.state === 'stopping';
-                        const Icon = isActive ? LoaderCircle : task.state === 'error' ? CircleAlert : task.state === 'cancelled' ? CircleSlash : CircleCheck;
+                        const unknown = task.executionStatus === 'unknown';
+                        const executionLabel = unknown ? 'Execution status unknown' : task.executionStatus === 'external' ? 'Running in another window' : undefined;
+                        const Icon = unknown ? CircleAlert : isActive ? LoaderCircle : task.state === 'error' ? CircleAlert : task.state === 'cancelled' ? CircleSlash : CircleCheck;
                         return (
                             <ListItem
                                 key={task.id}
                                 selected={history.selectedId === task.id}
                                 onSelect={() => vscode.postMessage({ type: 'selectTask', id: task.id })}
-                                icon={<Icon className={isActive ? 'animate-spin' : undefined} />}
-                                actions={isActive ? (
+                                icon={<Icon className={isActive && !unknown ? 'animate-spin' : undefined} />}
+                                actions={isActive ? task.executionStatus ? undefined : (
                                     <IconButton size="sm" icon={<Square />} label={task.state === 'stopping' ? 'Stopping...' : 'Stop'} disabled={!task.cancellable || task.state === 'stopping'} onClick={() => vscode.postMessage({ type: 'cancelTask', id: task.id })} />
                                 ) : (
                                     <IconButton size="sm" icon={<Trash2 />} label="Delete" onClick={() => vscode.postMessage({ type: 'deleteTask', id: task.id })} />
                                 )}
                             >
-                                <span title={task.label}>{task.label}</span>
+                                <span className="inline-flex max-w-full flex-col align-middle" title={executionLabel ? `${task.label}: ${executionLabel}` : task.label}>
+                                    <span className="truncate">{task.label}</span>
+                                    {executionLabel && <small className="truncate text-xs text-(--vscode-descriptionForeground)">{executionLabel}</small>}
+                                </span>
                             </ListItem>
                         );
                     });

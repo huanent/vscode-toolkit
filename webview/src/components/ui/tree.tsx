@@ -5,7 +5,7 @@ import { ChevronRight } from './icons';
 type TreeProps = ComponentPropsWithoutRef<'details'> & {
 	label: ReactNode;
 	count?: number;
-	summaryProps?: ComponentPropsWithoutRef<'summary'>;
+	summaryProps?: ComponentPropsWithoutRef<'summary'> & { 'data-vscode-context'?: string };
 };
 
 export function Tree({ label, count, summaryProps, className, children, ...props }: TreeProps) {

@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { IconButton, Button } from '../../../components/ui/button';
 import { Empty } from '../../../components/ui/empty';
 import {
-	MoreHorizontal,
+	Download,
+	Upload,
 	Plus,
 	RefreshCw,
 	Search,
@@ -10,7 +10,6 @@ import {
 } from '../../../components/ui/icons';
 import { Input } from '../../../components/ui/input';
 import { List } from '../../../components/ui/list';
-import { Popover } from '../../../components/ui/popover';
 import { ConnectionItem, type Connection } from './connectionItem';
 import { ConnectionGroupNode } from './connectionGroupNode';
 
@@ -27,7 +26,6 @@ export function ConnectionList({
 	onQueryChange(value: string): void;
 	onAction(type: string, id?: string): void;
 }) {
-	const [moreOpen, setMoreOpen] = useState(false);
 	const search = query.trim().toLowerCase();
 	const servers =
 		state?.servers.filter(server =>
@@ -45,42 +43,12 @@ export function ConnectionList({
 			<header className="flex min-w-0 flex-wrap items-center justify-between gap-2">
 				<h1 className="m-0 min-w-0 text-md font-semibold wrap-anywhere">
 					{state?.name ?? 'SSH'}
-					{state && (
-						<span className="ml-2 text-xs font-normal text-(--vscode-descriptionForeground)">
-							{servers.length}
-						</span>
-					)}
 				</h1>
 				<div className="flex items-center gap-0.5">
+					<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
+					<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
 					<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
 					<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
-					<Popover
-						open={moreOpen}
-						onOpenChange={setMoreOpen}
-						label="More connection actions"
-						placement="bottom-end"
-						trigger={props => <IconButton {...props} icon={<MoreHorizontal />} label="More actions" />}
-					>
-						<div className="grid min-w-40 p-1">
-							{[
-								{ type: 'import', label: 'Import', disabled: false },
-								{ type: 'exportAll', label: 'Export', disabled: !state?.servers.length },
-							].map(action => (
-								<Button
-									key={action.type}
-									variant="text"
-									disabled={action.disabled}
-									className="w-full justify-start"
-									onClick={() => {
-										setMoreOpen(false);
-										onAction(action.type);
-									}}
-								>
-									{action.label}
-								</Button>
-							))}
-						</div>
-					</Popover>
 				</div>
 			</header>
 			<Input
@@ -135,7 +103,7 @@ export function ConnectionList({
 						);
 						return group ? (
 							<ConnectionGroupNode key={`${group}-${!!search}`} name={group} count={connections.length}
-								filtered={!!search} onAction={onAction}
+								filtered={!!search}
 								first={group === Array.from(groups.keys()).filter(Boolean)[0]}
 								last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
 								{items}

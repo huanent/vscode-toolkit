@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { DashboardEmpty, DashboardHeader, DashboardSearch } from '@webview/dashboard/components';
-import { Button, IconButton } from '@webview/components/ui/button';
+import { IconButton } from '@webview/components/ui/button';
 import { List, ListGroup, ListItem } from '@webview/components/ui/list';
-import { Popover } from '@webview/components/ui/popover';
 import { Container, Download, Play, Plus, RefreshCw, Upload } from '@webview/components/ui/icons';
 
 export interface ConnectionListState {
@@ -18,7 +17,6 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
     onAction(type: string, id?: string): void;
 }) {
     const [selectedId, setSelectedId] = useState<string>();
-    const [menu, setMenu] = useState<{ server: ConnectionListState['servers'][number]; x: number; y: number }>();
     const servers = state?.servers.filter(server => `${server.name} ${server.group} ${server.address} ${server.kind}`.toLowerCase().includes(query.trim().toLowerCase())) ?? [];
     const groups = new Map<string, ConnectionListState['servers']>();
     for (const server of servers) {
@@ -28,7 +26,7 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
         else groups.set(group, [server]);
     }
     return <>
-        <DashboardHeader title={state?.name ?? title} count={state ? servers.length : undefined}>
+        <DashboardHeader title={state?.name ?? title}>
             <IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
             <IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
             <IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
@@ -38,38 +36,18 @@ export function ConnectionList({ title, state, query, onQueryChange, onAction }:
         {!state || !servers.length ? <DashboardEmpty loading={!state} noun="connections" filtered={!!query.trim()} onClear={() => onQueryChange('')} onCreate={() => onAction('add')} /> : <List>
             {Array.from(groups, ([group, connections]) => <ListGroup key={group} label={group || 'Ungrouped'}>
                 {connections.map(server => <ListItem key={server.id} selected={selectedId === server.id} onSelect={() => setSelectedId(server.id)} icon={<Container />} description={server.address}
-                    onContextMenu={event => {
-                        event.preventDefault();
-                        setSelectedId(server.id);
-                        setMenu({ server, x: event.clientX, y: event.clientY });
-                    }}
-                    onKeyDown={event => {
-                        if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
-                        event.preventDefault();
-                        const bounds = event.currentTarget.getBoundingClientRect();
-                        setSelectedId(server.id);
-                        setMenu({ server, x: bounds.left, y: bounds.bottom });
-                    }}
+                    data-vscode-context={JSON.stringify({
+                        webviewSection: 'connectionItem',
+                        dashboardTab: 'container',
+                        connectionId: server.id,
+                        dashboardFiltered: false,
+                        preventDefaultContextMenuItems: true,
+                    })}
+                    onContextMenu={() => setSelectedId(server.id)}
                     actions={<>
                         <IconButton icon={<Play />} label="Open" onClick={() => onAction('connect', server.id)} />
                     </>}>{server.name}</ListItem>)}
             </ListGroup>)}
         </List>}
-        <Popover open={!!menu} onOpenChange={open => { if (!open) setMenu(undefined); }} anchorPosition={menu} label={`Actions for ${menu?.server.name ?? 'connection'}`}>
-            <div className="grid min-w-40 p-1">
-                {[
-                    ['edit', 'Edit'],
-                    ['duplicate', 'Duplicate'],
-                    ['export', 'Export'],
-                    ['moveUp', 'Move up'],
-                    ['moveDown', 'Move down'],
-                    ['delete', 'Delete'],
-                ].map(([type, label]) => <Button key={type} variant="text" className="w-full justify-start" onClick={() => {
-                    if (!menu) return;
-                    setMenu(undefined);
-                    onAction(type, menu.server.id);
-                }}>{label}</Button>)}
-            </div>
-        </Popover>
     </>;
 }

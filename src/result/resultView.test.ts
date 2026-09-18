@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
 import { ResultView } from './resultView';
 import type { Result } from './protocol';
+import { TaskRunner } from './taskRunner';
+import type { ResultStorage } from './storage';
+import type { TaskEntry } from './taskRunner';
 
 vi.mock('vscode', () => ({
     commands: { executeCommand: vi.fn(async () => undefined) },
@@ -39,6 +42,64 @@ function createView() {
 }
 
 describe('shared result view', () => {
+    it('preserves local results created while an older disk refresh is pending', async () => {
+        let finishLoad!: (entries: TaskEntry[]) => void;
+        const storage = {
+            load: vi.fn(() => new Promise<TaskEntry[]>(resolve => { finishLoad = resolve; })),
+            liveSessions: vi.fn(async () => new Set<string>()),
+            persist: vi.fn(async () => { }),
+        };
+        const provider = new ResultView({} as vscode.Uri, storage as unknown as ResultStorage);
+        const harness = createView();
+        harness.resolve(provider);
+        harness.ready();
+        const local: Result = { type: 'http', data: { method: 'GET', url: '/local', state: 'loading' } };
+        await provider.show(local);
+        local.data.state = 'success';
+        provider.update(local);
+        finishLoad([]);
+        await new Promise<void>(resolve => queueMicrotask(resolve));
+        expect(provider.selectedResult).toBe(local);
+        expect(provider.runner.find(local)?.task.state).toBe('success');
+    });
+
+    it('refreshes external output and completion without writing back or taking control', async () => {
+        const owner = new TaskRunner(vi.fn());
+        const result: Result = { type: 'http', data: { method: 'GET', url: '/external', state: 'loading' } };
+        const external = owner.add(result, vi.fn());
+        const storage = {
+            load: vi.fn(async () => JSON.parse(JSON.stringify(owner.history))),
+            liveSessions: vi.fn(async () => new Set([owner.sessionId])),
+            persist: vi.fn(async () => { }),
+            remove: vi.fn(async () => { }),
+        };
+        const provider = new ResultView({} as vscode.Uri, storage as unknown as ResultStorage);
+        const harness = createView();
+        harness.resolve(provider);
+        harness.ready();
+        await vi.waitFor(() => expect(provider.selectedResult?.data).toMatchObject({ state: 'loading' }));
+        expect(provider.runner.history[0].task).toMatchObject({ executionStatus: 'external', cancellable: false });
+        harness.send({ type: 'cancelTask', id: external.task.id });
+        expect(external.cancel).not.toHaveBeenCalled();
+        result.data.state = 'success';
+        result.data.body = 'Finished in owner window';
+        owner.update(result);
+        harness.send({ type: 'refreshTasks' });
+        await vi.waitFor(() => expect(provider.selectedResult?.data).toMatchObject({ state: 'success', body: 'Finished in owner window' }));
+        expect(storage.persist).not.toHaveBeenCalled();
+        owner.remove(external.task.id);
+        harness.send({ type: 'refreshTasks' });
+        await vi.waitFor(() => expect(provider.selectedResult).toBeUndefined());
+    });
+
+    it('removes locally completed history deleted in another window', async () => {
+        const runner = new TaskRunner(vi.fn());
+        const completed = runner.add({ type: 'http', data: { method: 'GET', url: '/done', state: 'success' } });
+        runner.restore([]);
+        expect(runner.find(completed.result)).toBeUndefined();
+        expect(runner.history).toEqual([]);
+    });
+
     it('refreshes tasks and the selected result without cancelling running tasks', async () => {
         const provider = new ResultView({} as vscode.Uri);
         const harness = createView();

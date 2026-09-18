@@ -5,21 +5,41 @@ import { TaskRunner } from './taskRunner';
 const result = (): Result => ({ type: 'http', data: { method: 'GET', url: 'https://example.com', state: 'loading' } });
 
 describe('result task runner', () => {
-    it('restores results newest first and cancels interrupted tasks', () => {
+    it('restores external results without cancelling or granting control', () => {
         const original = new TaskRunner(vi.fn());
         const newest = original.add(result(), vi.fn());
         newest.task.startedAt = 200;
         const oldest = original.add(result());
         oldest.task.startedAt = 100;
         const restored = new TaskRunner(vi.fn());
-        restored.restore(JSON.parse(JSON.stringify([newest, oldest])));
+        restored.restore(JSON.parse(JSON.stringify([newest, oldest])), new Set([original.sessionId]));
         expect(restored.history.map(entry => entry.task.startedAt)).toEqual([200, 100]);
         const entry = restored.history[0];
-        expect(entry.task).toMatchObject({ state: 'cancelled', cancellable: false });
-        expect(entry.result.data).toMatchObject({ state: 'cancelled' });
+        expect(entry.task).toMatchObject({ state: 'running', cancellable: false, executionStatus: 'external' });
+        expect(entry.result.data).toMatchObject({ state: 'loading' });
         expect(restored.find(entry.result)).toBe(entry);
+        restored.cancel(entry.task.id);
         restored.remove(entry.task.id);
-        expect(restored.history).toHaveLength(1);
+        expect(restored.history).toHaveLength(2);
+        restored.restore(JSON.parse(JSON.stringify([newest, oldest])));
+        expect(restored.history[0].task.executionStatus).toBe('unknown');
+    });
+
+    it('merges external updates and deletion without replacing local execution', () => {
+        const owner = new TaskRunner(vi.fn());
+        const observer = new TaskRunner(vi.fn());
+        const external = owner.add(result(), vi.fn());
+        const local = observer.add(result(), vi.fn());
+        observer.restore(JSON.parse(JSON.stringify(owner.history)));
+        const previous = observer.entries.get(external.task.id)!;
+        external.task.state = 'success';
+        observer.restore(JSON.parse(JSON.stringify([...owner.history, local])));
+        expect(observer.entries.get(external.task.id)!.task.state).toBe('success');
+        expect(observer.find(previous.result)).toBeUndefined();
+        expect(observer.entries.get(local.task.id)).toBe(local);
+        expect(local.cancel).toBeDefined();
+        observer.restore([]);
+        expect(observer.history).toEqual([local]);
     });
 
     it('runs independently and cancels only the requested task', async () => {
