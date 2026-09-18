@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, IconButton } from '../../../components/ui/button';
 import { List, ListItem } from '../../../components/ui/list';
 import { Pencil, Plus, Trash2 } from '../../../components/ui/icons';
-import type { ConnectionFormState } from '../hooks/useConnectionForm';
+import type { ConnectionFormState } from '../hooks/useForm';
 import { CommandDialog } from './commandDialog';
 
 export function CommandFields({ form }: { form: ConnectionFormState }) {

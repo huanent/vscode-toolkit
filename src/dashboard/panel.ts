@@ -136,7 +136,7 @@ export function dashboardFeaturePanel(tab: DashboardTab, background = false): vs
 }
 
 export function openDashboardEditor(tab: DashboardTab, request: Record<string, unknown>): void {
-	if (tab === 'database') {
+	if (tab === 'database' || tab === 'ssh') {
 		receivers.get(tab)?.fire(request);
 		return;
 	}
@@ -150,7 +150,7 @@ export function openDashboardEditor(tab: DashboardTab, request: Record<string, u
 	editorRequests.set(tab, request);
 	const editor = vscode.window.createWebviewPanel(
 		`vscode-toolkit.${tab}.workspace`,
-		`${tab === 'ssh' ? 'SSH' : tab[0].toUpperCase() + tab.slice(1)} - Toolkit`,
+		`${tab[0].toUpperCase() + tab.slice(1)} - Toolkit`,
 		vscode.ViewColumn.Active,
 		{
 			enableScripts: true,

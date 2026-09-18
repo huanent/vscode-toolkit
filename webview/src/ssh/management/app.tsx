@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ConnectionList, type ConnectionListState } from './components/connectionList';
-import { sshApi, subscribe } from '../services/vscode';
+import { sshApi, subscribe } from '../vscode';
 
 export function SshConnections() {
 	const send = (type: string, id?: string) => sshApi.postMessage({ type, id });

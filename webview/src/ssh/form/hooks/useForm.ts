@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { ConnectionFormValues } from '../types';
-import { sshApi as vscode, subscribe } from '../../services/vscode';
+import { sshApi as vscode, subscribe } from '../../vscode';
 import type {
 	ServerFormExtensionMessage,
 	ServerFormModel,
-} from '../../../../../src/ssh/formProtocol';
+} from '@/ssh/formProtocol';
 
 const emptyValues: ConnectionFormValues = {
 	location: '',
@@ -31,7 +31,7 @@ const emptyValues: ConnectionFormValues = {
 	commands: [],
 };
 
-export function useConnectionForm(sessionId: number, onClose: () => void) {
+export function useForm(sessionId: number, onClose: () => void) {
 	const [model, setModel] = useState<ServerFormModel>();
 	const [values, setValues] = useState(emptyValues);
 	const [error, setError] = useState('');
@@ -132,4 +132,4 @@ export function useConnectionForm(sessionId: number, onClose: () => void) {
 	};
 }
 
-export type ConnectionFormState = ReturnType<typeof useConnectionForm>;
+export type ConnectionFormState = ReturnType<typeof useForm>;

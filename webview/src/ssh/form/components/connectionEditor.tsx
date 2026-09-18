@@ -1,4 +1,4 @@
-import { useConnectionForm } from '../hooks/useConnectionForm';
+import { useForm } from '../hooks/useForm';
 import { ConnectionForm } from './connectionForm';
 
 export function ConnectionEditor({
@@ -8,7 +8,7 @@ export function ConnectionEditor({
 	sessionId: number;
 	onClose: () => void;
 }) {
-	const form = useConnectionForm(sessionId, onClose);
+	const form = useForm(sessionId, onClose);
 	return (
 		<section className="min-w-0">
 			<ConnectionForm form={form} />

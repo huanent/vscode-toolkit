@@ -10,7 +10,7 @@ import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
 import { NetworkFields } from './networkFields';
 import { ProxyFields } from '../../../components/proxyFields';
-import type { ConnectionFormState } from '../hooks/useConnectionForm';
+import type { ConnectionFormState } from '../hooks/useForm';
 
 export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(

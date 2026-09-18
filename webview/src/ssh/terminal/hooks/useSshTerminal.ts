@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { terminalApi as vscode } from '../../services/vscode';
+import { terminalApi as vscode } from '../../vscode';
 import type {
 	ConnectionStatus,
 	RemoteMetricsDisplay,

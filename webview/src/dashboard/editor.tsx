@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { vscode } from '@webview/vscodeApi';
 import { send, subscribe, type Tab } from './channel';
-import { ConnectionEditor } from '../ssh/serverForm/components/connectionEditor';
 import { App as ContainerForm } from '../container/serverForm/app';
 import { App as Workflow } from '../workflow/main';
 
@@ -25,7 +24,7 @@ function Editor() {
 		});
 		const receive = (event: MessageEvent) => {
 			if (event.data.type !== 'editorRequest') return;
-			if (['ssh', 'container'].includes(tab)) {
+			if (tab === 'container') {
 				if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?')))
 					return;
 				send(tab, event.data.request);
@@ -52,12 +51,6 @@ function Editor() {
 				<Workflow />
 			) : sessionId === undefined ? (
 				<p role="status">Loading...</p>
-			) : tab === 'ssh' ? (
-				<ConnectionEditor
-					key={sessionId}
-					sessionId={sessionId}
-					onClose={() => send(tab, { type: 'closeForm' })}
-				/>
 			) : (
 				<ContainerForm key={sessionId} sessionId={sessionId} onClose={close} />
 			)}

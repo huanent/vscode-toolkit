@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/button';
 import { Dialog } from '../../../components/ui/dialog';
 import { Field } from '../../../components/ui/field';
 import { Textarea, Input } from '../../../components/ui/input';
-import type { ServerCommand } from '../../../../../src/ssh/formProtocol';
+import type { ServerCommand } from '@/ssh/formProtocol';
 
 export function CommandDialog({
 	command,

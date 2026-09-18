@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { dashboardFeaturePanel, openDashboardEditor } from '../dashboard/panel';
+import { dashboardFeaturePanel } from '../dashboard/panel';
 import { openServerConnection } from './editor';
 import { Server } from './server';
-import { ServerCredentials, ServerStore } from './serverStore';
-import { handleMessage, ServerFormWebviewMessage } from './serverForm';
+import { ServerStore } from './serverStore';
+import { createSshFormPanels } from './formPanels';
 import { exportServer, importServers } from './serverTransfer';
 export function registerManagementFeature(
 	context: vscode.ExtensionContext,
@@ -12,56 +12,22 @@ export function registerManagementFeature(
 	const name = 'SSH';
 	const serverType = 'ssh';
 	let panel: vscode.WebviewPanel | undefined;
-	let pendingForm:
-		| {
-			server?: Server;
-			duplicate?: boolean;
-		}
-		| undefined;
-	let requestForm:
-		| ((request: { server?: Server; duplicate?: boolean }) => Promise<void>)
-		| undefined;
+	const forms = createSshFormPanels(context, store);
 	const command = vscode.commands.registerCommand(
 		`vscode-toolkit.open${name}`,
 		async (request?: { server?: Server; duplicate?: boolean; background?: boolean }) => {
 			const background = request?.background;
 			if (background) request = undefined;
-			if (panel) {
-				if (!background) panel.reveal();
-				if (request) {
-					if (requestForm) await requestForm(request);
-					else pendingForm = request;
-				}
+			if (request) {
+				forms.open(request.server, request.duplicate);
 				return;
 			}
-			pendingForm = request;
+			if (panel) {
+				if (!background) panel.reveal();
+				return;
+			}
 			const current = dashboardFeaturePanel('ssh', background);
 			panel = current;
-			let sequence = 0;
-			let form:
-				| {
-					sessionId: number;
-					server?: Server;
-					duplicate: boolean;
-					credentials: ServerCredentials;
-					inProgress: boolean;
-				}
-				| undefined;
-			const openForm = async (request: { server?: Server; duplicate?: boolean }) => {
-				if (form?.inProgress) return;
-				const sessionId = ++sequence;
-				const credentials = request.server ? await store.getCredentials(request.server.id) : {};
-				if (sessionId !== sequence) return;
-				form = {
-					sessionId,
-					server: request.server,
-					duplicate: !!request.duplicate,
-					credentials,
-					inProgress: false,
-				};
-				current.title = request.server && !request.duplicate ? `Edit ${request.server.name}` : 'New SSH';
-				await current.webview.postMessage({ type: 'openForm', sessionId });
-			};
 			const publish = () =>
 				current.webview.postMessage({
 					type: 'state',
@@ -83,66 +49,14 @@ export function registerManagementFeature(
 				async (message: {
 					type?: string;
 					id?: string;
-					sessionId?: number;
-					message?: ServerFormWebviewMessage;
 				}) => {
 					try {
-						if (message.type === 'closeForm') {
-							if (!form?.inProgress) {
-								form = undefined;
-								sequence++;
-								await current.webview.postMessage({ type: 'formClosed' });
-							}
-							return;
-						}
-						if (message.type === 'formMessage') {
-							const active = form;
-							if (!active || active.sessionId !== message.sessionId || !message.message) return;
-							if (
-								!['ready', 'save', 'selectPrivateKey', 'selectProxyPrivateKey'].includes(
-									message.message.type,
-								)
-							)
-								return;
-							await handleMessage(
-								message.message,
-								context,
-								current,
-								store,
-								active.server,
-								active.credentials,
-								active.duplicate,
-								active,
-								() => {
-									if (form === active) form = undefined;
-									void current.webview.postMessage({ type: 'saved', sessionId: active.sessionId });
-								},
-								active.sessionId,
-							);
-							return;
-						}
 						if (message.type === 'ready' || message.type === 'refresh') {
 							await publish();
-							if (message.type === 'ready') {
-								requestForm = async request => {
-									pendingForm = request;
-									openDashboardEditor('ssh', { type: 'openRequestedForm' });
-								};
-								if (pendingForm) {
-									const request = pendingForm;
-									pendingForm = undefined;
-									await requestForm(request);
-								}
-							}
 							return;
 						}
 						if (message.type === 'add') {
-							await openForm({});
-							return;
-						}
-						if (message.type === 'openRequestedForm') {
-							await openForm(pendingForm ?? {});
-							pendingForm = undefined;
+							forms.open();
 							return;
 						}
 						if (message.type === 'import') {
@@ -199,10 +113,10 @@ export function registerManagementFeature(
 								await openServerConnection(server);
 								break;
 							case 'edit':
-								await openForm({ server });
+								forms.open(server);
 								break;
 							case 'duplicate':
-								await openForm({ server, duplicate: true });
+								forms.open(server, true);
 								break;
 							case 'export':
 								await exportServer(store, [server]);
@@ -230,11 +144,8 @@ export function registerManagementFeature(
 				changes.dispose();
 				messages.dispose();
 				panel = undefined;
-				requestForm = undefined;
-				pendingForm = undefined;
-				sequence++;
 			});
 		},
 	);
-	return vscode.Disposable.from(command, { dispose: () => panel?.dispose() });
+	return vscode.Disposable.from(command, forms, { dispose: () => panel?.dispose() });
 }

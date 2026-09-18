@@ -3,7 +3,7 @@ import { Field } from '../../../components/ui/field';
 import { KeyRound } from '../../../components/ui/icons';
 import { PasswordInput, Textarea } from '../../../components/ui/input';
 import { Segmented } from '../../../components/ui/segmented';
-import type { ConnectionFormState } from '../hooks/useConnectionForm';
+import type { ConnectionFormState } from '../hooks/useForm';
 
 export function AuthenticationFields({ form }: { form: ConnectionFormState }) {
 	const { values } = form;
