@@ -17,8 +17,6 @@ export interface SshProxy {
 	credentialId: string;
 	host: string;
 	port: number;
-	username: string;
-	authType: AuthType;
 }
 
 export interface MysqlServer extends BaseServer {
@@ -26,7 +24,6 @@ export interface MysqlServer extends BaseServer {
 	type: 'mysql';
 	host: string;
 	port: number;
-	username: string;
 	database: string;
 	proxy?: SshProxy;
 }

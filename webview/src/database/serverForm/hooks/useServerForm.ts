@@ -15,14 +15,11 @@ const emptyValues: ServerFormValues = {
 	aiEnabled: false,
 	host: '',
 	port: '3306',
-	username: '',
 	proxyCommand: '',
 	proxyMode: 'none',
 	proxyEnabled: false,
 	proxyHost: '',
 	proxyPort: '22',
-	proxyUsername: '',
-	proxyAuthType: 'password',
 
 
 
@@ -55,15 +52,11 @@ export function useServerForm() {
 						aiEnabled: server?.aiEnabled ?? false,
 						host: server && 'host' in server ? (server.host ?? '') : '',
 						port: String(server?.port ?? 3306),
-						username: server && 'username' in server ? (server.username ?? '') : '',
 						proxyCommand: '',
 						proxyMode: server?.proxy ? 'ssh' : 'none',
 						proxyEnabled: Boolean(server && 'proxy' in server && server.proxy),
 						proxyHost: server && 'proxy' in server ? (server.proxy?.host ?? '') : '',
 						proxyPort: String(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22),
-						proxyUsername: server && 'proxy' in server ? (server.proxy?.username ?? '') : '',
-						proxyAuthType:
-							server && 'proxy' in server ? (server.proxy?.authType ?? 'password') : 'password',
 
 
 

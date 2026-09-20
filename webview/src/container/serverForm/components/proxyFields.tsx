@@ -17,8 +17,6 @@ export function ProxyFields({ form }: { form: ServerFormState }) {
 		Key extends
 		| 'proxyHost'
 		| 'proxyPort'
-		| 'proxyUsername'
-		| 'proxyAuthType'
 		| 'proxyCredentialId',
 	>(
 		key: Key,
@@ -69,8 +67,6 @@ export function ProxyFields({ form }: { form: ServerFormState }) {
 						</div>
 						<CredentialFields types={['password', 'privateKey']} value={values.proxyCredentialId} disabled={form.saving} onChange={credential => {
 							updateProxy('proxyCredentialId', credential?.id ?? '');
-							updateProxy('proxyUsername', credential?.user ?? '');
-							if (credential?.type === 'password' || credential?.type === 'privateKey') updateProxy('proxyAuthType', credential.type);
 						}} />
 					</>
 				)}

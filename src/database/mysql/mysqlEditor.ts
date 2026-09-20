@@ -47,7 +47,7 @@ export function configureMysqlEditor(
 				type: 'initialize',
 				server: {
 					name: server.name,
-					address: `${server.username}@${server.host}:${server.port}`,
+					address: `${server.host}:${server.port}`,
 					database: server.database,
 				},
 			});

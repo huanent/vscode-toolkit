@@ -14,8 +14,10 @@ describe('connections without credential references', () => {
         { type: 'container', parse: parseContainerServer, parseExport: parseContainerExport, data: { ...network, type: 'container', connectionType: 'ssh', runtime: 'docker', executablePath: 'docker' } },
     ])('keeps $type connections available for editing and import', ({ parse, parseExport, data }) => {
         const server = parse(data);
-        expect(server).toMatchObject({ ...network, credentialId: '' });
-        if ('proxy' in server) expect(server.proxy).toEqual({ ...proxy, credentialId: '' });
+        expect(server).toMatchObject({ id: network.id, host: network.host, port: network.port, credentialId: '' });
+        expect(server).not.toHaveProperty('username');
+        expect(server).not.toHaveProperty('authType');
+        if ('proxy' in server) expect(server.proxy).toEqual({ host: proxy.host, port: proxy.port, credentialId: '' });
         expect(parse(JSON.parse(JSON.stringify(server)))).toEqual(server);
         expect(parseExport({ servers: [data] })).toEqual([server]);
         expect(() => parse({ ...data, port: 0 })).toThrow('Invalid server');
@@ -23,6 +25,31 @@ describe('connections without credential references', () => {
 });
 
 describe('connection credential references', () => {
+    it('parses credential-only identities for SSH, MySQL, proxies and containers', () => {
+        const credentials = [
+            { id: 'password', name: 'Password', type: 'password' as const, user: 'db-user' },
+            { id: 'key', name: 'Key', type: 'privateKey' as const, user: 'ssh-user' },
+            { id: 'api', name: 'API', type: 'apikey' as const, user: '' },
+        ];
+        const network = { id: 'connection', name: 'Connection', host: 'localhost', port: 22, credentialId: 'key' };
+        const proxy = { host: 'proxy', port: 22, credentialId: 'password' };
+        const servers = [
+            parseSshServer({ ...network, type: 'ssh', proxy }, credentials),
+            parseDatabaseServer({ ...network, type: 'mysql', credentialId: 'password', database: 'app' }, credentials),
+            parseContainerServer({ ...network, type: 'container', runtime: 'docker', executablePath: 'docker', connectionType: 'ssh' }, credentials),
+        ];
+        for (const server of servers) {
+            expect(server).toHaveProperty('credentialId');
+            expect(JSON.stringify(server)).not.toMatch(/"(username|authType)"/);
+            expect(JSON.stringify(server)).not.toContain('ssh-user');
+        }
+        for (const credentialId of ['missing', 'api', 'key']) {
+            expect(() => parseDatabaseServer({ ...network, type: 'mysql', credentialId, database: 'app' }, credentials)).toThrow('credential');
+        }
+        expect(parseSshServer({ ...network, type: 'ssh', username: 'stale', authType: 'password' }, credentials))
+            .toEqual(parseSshServer({ ...network, type: 'ssh' }, credentials));
+    });
+
     const password = { id: 'password', name: 'Password', type: 'password', user: 'db-user', secret: 'secret' };
     const privateKey = { id: 'key', name: 'Key', type: 'privateKey', user: 'ssh-user', secret: 'private-key', passphrase: 'phrase' };
     const api = { id: 'api', name: 'API', type: 'apikey', user: '', secret: 'token' };
@@ -48,7 +75,7 @@ describe('connection credential references', () => {
     });
     it('validates form references and ignores submitted identity in favor of the credential', async () => {
         expect(await resolveFormCredentials(store(), { credentialId: 'password', username: 'wrong', proxyEnabled: true, proxyCredentialId: 'key' }, 'database'))
-            .toMatchObject({ username: 'db-user', authType: 'password', proxyUsername: 'ssh-user', proxyAuthType: 'privateKey' });
+            .toEqual({ credentialId: 'password', proxyEnabled: true, proxyCredentialId: 'key' });
         await expect(resolveFormCredentials(store(), { password: 'legacy' }, 'ssh')).rejects.toThrow();
     });
 });

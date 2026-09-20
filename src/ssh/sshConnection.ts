@@ -162,14 +162,14 @@ export function connectSshClient(
 }
 
 function connectionConfig(
-	server: Pick<SshServer, 'host' | 'port' | 'username' | 'authType'>,
+	server: Pick<SshServer, 'host' | 'port'>,
 	credentials: ServerCredentials,
 ): ConnectConfig {
 	return {
 		host: server.host,
 		port: server.port,
-		username: credentials.username ?? server.username,
-		...((credentials.authType ?? server.authType) === 'privateKey'
+		username: credentials.username,
+		...(credentials.authType === 'privateKey'
 			? { privateKey: credentials.privateKey, passphrase: credentials.passphrase }
 			: { password: credentials.password, tryKeyboard: true }),
 		readyTimeout: 15_000,

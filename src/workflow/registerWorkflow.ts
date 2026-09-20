@@ -221,7 +221,7 @@ async function editStep(existing?: WorkflowStep): Promise<WorkflowStep | undefin
 	const selected = await vscode.window.showQuickPick(
 		servers.map(server => ({
 			label: server.name,
-			description: `${server.username}@${server.host}:${server.port}`,
+			description: `${server.host}:${server.port}`,
 			server,
 		})),
 		{ title: 'SSH Connection' },

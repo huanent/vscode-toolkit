@@ -1,5 +1,4 @@
 import type {
-	AuthType,
 	ContainerRuntime,
 	ConnectionType,
 	ProxyMode,
@@ -12,15 +11,11 @@ export interface ServerFormValues {
 	group: string;
 	host: string;
 	port: string;
-	username: string;
-	authType: AuthType;
 	proxyCommand: string;
 	proxyMode: ProxyMode;
 	proxyEnabled: boolean;
 	proxyHost: string;
 	proxyPort: string;
-	proxyUsername: string;
-	proxyAuthType: AuthType;
 	runtime: ContainerRuntime;
 	executablePath: string;
 	connectionType: ConnectionType;

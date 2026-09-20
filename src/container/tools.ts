@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { ContainerServer } from './server';
+import { ContainerServer, parseServer } from './server';
+import { registerConnectionConfigurations } from '../configuration/tools';
 import { ServerStore } from './serverStore';
 import { executeContainerCommand } from './containerCommand';
 
@@ -10,23 +11,13 @@ interface ExecuteContainerInput {
 
 export function registerContainerTools(store: ServerStore): vscode.Disposable {
 	return vscode.Disposable.from(
-		vscode.lm.registerTool('listContainerConnections', {
-			async invoke() {
-				return textResult(
-					JSON.stringify(
-						store.getServers().filter(server => server.aiEnabled),
-						undefined,
-						2,
-					),
-				);
-			},
-		}),
+		registerConnectionConfigurations('container', store, parseServer),
 		vscode.lm.registerTool('runContainerCommand', new ContainerTool(store)),
 	);
 }
 
 class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
-	constructor(private readonly serverStore: ServerStore) {}
+	constructor(private readonly serverStore: ServerStore) { }
 
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<ExecuteContainerInput>,
@@ -50,7 +41,7 @@ class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findContainerServer(options.input.serverId);
 		if (!server)
-			throw new Error('Container server was not found. Call listContainerConnections first.');
+			throw new Error('Container server was not found. Call readConfigrations first.');
 		const output = await executeContainerCommand(server, this.serverStore, options.input.args);
 		return textResult(output.slice(0, 20_000));
 	}

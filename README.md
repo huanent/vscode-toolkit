@@ -8,6 +8,44 @@ Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard
 
 ## Features
 
+### AI Configuration Tools
+
+`readConfigrations` returns JSON entries containing `type`, `id`, `location`, and `configuration`. All filters are optional and combined: `type` accepts `workflow`, `ssh`, `database`, `container`, or `credential`; `id` matches a non-empty configuration ID exactly and case-sensitively; `regex` is a JavaScript regular expression pattern matched against each entry's JSON text case-insensitively, including IDs. For an ID lookup, pass `{"id":"configuration-id"}`; results remain an array, empty when nothing matches. Pass regex patterns without `/` delimiters or flags, for example `{"type":"ssh","regex":"production|staging"}`. Omitted or empty patterns match all entries; invalid patterns return an error. Connection results include only AI-enabled entries. Credential configurations contain only `id`, `name`, `type`, and `user`: secrets and passphrases are neither returned nor searched.
+
+`createConfigration` accepts `type`, a structured `configuration` object, and optional `location`. Only `workflow`, `ssh`, `database`, and `container` can be created. IDs are generated automatically; do not include `id`, `type`, or `location` inside `configuration`. Existing configurations are never replaced. New connections always have `aiEnabled: true`, set by the backend; this field is not a creation parameter. Reference credentials by `credentialId`, never by secret values. Omitted location uses global storage. Creation returns the new JSON entry without executing it. For example:
+
+```json
+{
+  "type": "container",
+  "configuration": {
+    "name": "Local Docker",
+    "runtime": "docker",
+    "executablePath": "docker",
+    "connectionType": "local"
+  }
+}
+```
+
+Credentials are read-only for these tools: neither `createConfigration` nor `editConfigration` can write them. Manage credential contents through the credential editor. Connection configurations store `credentialId`, not `username` or `authType`, including within `proxy`. The backend validates credential references and resolves the current username and authentication type only when connecting. Legacy identity fields are ignored on load and omitted on save or export. MySQL requires a password credential. Local containers and containers using `sshServerId` do not require a primary credential reference.
+
+`editConfigration` updates an existing ID with ordered `patchs` string replacements. The target is the configuration object serialized as JSON with an additional `location` field, not the result envelope. Read the configuration first, then supply enough context for a unique match:
+
+```json
+{
+  "id": "existing-configuration-id",
+  "patchs": [
+    {
+      "oldString": "\"name\": \"Old name\"",
+      "newString": "\"name\": \"New name\""
+    }
+  ]
+}
+```
+
+Matching prefers exact text, then tolerates differences in indentation, spaces, tabs, and line breaks outside JSON strings. Spaces within commands and other string values remain significant. Missing or ambiguous matches, invalid JSON, invalid fields, and ID/type changes are rejected before saving. All patches must succeed; editing does not execute the configuration. `location` is empty for global storage or an open workspace folder URI for workspace storage.
+
+These tools replace `listWorkflows`, `getWorkflow`, `listSSHServers`, `listDatabaseConnections`, `listContainerConnections`, and `upsertWorkflow`; execution tools remain unchanged.
+
 ### Dashboard
 
 - Open Chat, Explorer, and HTTP Client from the quick navigation bar.

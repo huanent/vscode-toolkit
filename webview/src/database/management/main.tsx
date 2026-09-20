@@ -15,7 +15,7 @@ export function DatabaseConnections() {
 		return unsubscribe;
 	}, []);
 	return (
-		<section className="h-full min-h-0 py-3 text-(--vscode-foreground)">
+		<section className="h-full min-h-0 py-2 text-(--vscode-foreground)">
 			<ConnectionList
 				state={state}
 				query={query}

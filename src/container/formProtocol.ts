@@ -17,8 +17,6 @@ export interface SshProxy {
 	credentialId: string;
 	host: string;
 	port: number;
-	username: string;
-	authType: AuthType;
 }
 
 export type ContainerRuntime = 'docker' | 'podman' | 'apple';
@@ -34,8 +32,6 @@ export interface ContainerServer extends BaseServer {
 	sshServerId?: string;
 	host?: string;
 	port?: number;
-	username?: string;
-	authType?: AuthType;
 	proxyCommand?: string;
 	proxy?: SshProxy;
 }
@@ -44,8 +40,6 @@ export interface SshServer extends BaseServer {
 	type: 'ssh';
 	host: string;
 	port: number;
-	username: string;
-	authType: AuthType;
 	proxyCommand?: string;
 	proxy?: SshProxy;
 	commands: ServerCommand[];

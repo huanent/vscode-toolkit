@@ -1,5 +1,4 @@
 import type {
-	AuthType,
 	ServerCommand,
 } from '@/ssh/formProtocol';
 import type { ProxyFieldValues } from '../../components/proxyFields';
@@ -12,8 +11,6 @@ export interface ConnectionFormValues extends ProxyFieldValues {
 	group: string;
 	host: string;
 	port: string;
-	username: string;
-	authType: AuthType;
 	commands: ServerCommand[];
 	favorites: string[];
 	aiEnabled: boolean;

@@ -19,6 +19,7 @@ import { ResultView } from './result/resultView';
 import { registerExcelEditor } from './excel/editor';
 import { registerArchiveEditor } from './archive/editor';
 import { registerStorageBackup } from './registerStorageBackup';
+import { registerConfigurationTools } from './configuration/tools';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	registerStorageBackup(context);
@@ -56,6 +57,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	registerWorkflow(context, resultView);
 	await registerDatabase(context, resultView);
 	await registerContainer(context);
+	context.subscriptions.push(registerConfigurationTools(context));
 
 	context.subscriptions.push(
 		vscode.debug.registerDebugAdapterTrackerFactory('*', {

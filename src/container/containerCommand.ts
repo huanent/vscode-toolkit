@@ -45,7 +45,7 @@ async function resolveSshConnection(server: ContainerServer, serverStore: Server
 		const { server: sshServer, credentials } = await resolveSavedSshConnection(server.sshServerId);
 		return { sshServer, credentials };
 	}
-	if (!('authType' in server)) {
+	if (!('credentialId' in server)) {
 		throw new Error('The manual SSH configuration is invalid.');
 	}
 	const sshServer: SshServer = {
@@ -56,8 +56,7 @@ async function resolveSshConnection(server: ContainerServer, serverStore: Server
 		aiEnabled: server.aiEnabled,
 		host: server.host,
 		port: server.port,
-		username: server.username,
-		authType: server.authType,
+		credentialId: server.credentialId,
 		commands: [],
 		...(server.proxyCommand ? { proxyCommand: server.proxyCommand } : {}),
 		...(server.proxy ? { proxy: server.proxy } : {}),

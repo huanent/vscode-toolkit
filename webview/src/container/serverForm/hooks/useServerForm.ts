@@ -14,15 +14,11 @@ const emptyValues: ServerFormValues = {
 	aiEnabled: false,
 	host: '',
 	port: '22',
-	username: '',
-	authType: 'password',
 	proxyCommand: '',
 	proxyMode: 'none',
 	proxyEnabled: false,
 	proxyHost: '',
 	proxyPort: '22',
-	proxyUsername: '',
-	proxyAuthType: 'password',
 
 
 
@@ -66,8 +62,6 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 						aiEnabled: server?.aiEnabled ?? false,
 						host: server && 'host' in server ? (server.host ?? '') : '',
 						port: String(server && 'port' in server ? (server.port ?? 22) : 22),
-						username: server && 'username' in server ? (server.username ?? '') : '',
-						authType: server && 'authType' in server ? (server.authType ?? 'password') : 'password',
 						proxyCommand: server && 'proxyCommand' in server ? (server.proxyCommand ?? '') : '',
 						proxyMode:
 							container?.connectionType === 'ssh' ||
@@ -89,16 +83,6 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 								: (referencedContainerSsh?.port ??
 									(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22)),
 						),
-						proxyUsername: manualContainerSsh
-							? (container.username ?? '')
-							: (referencedContainerSsh?.username ??
-								(server && 'proxy' in server ? (server.proxy?.username ?? '') : '')),
-						proxyAuthType: manualContainerSsh
-							? (container.authType ?? 'password')
-							: (referencedContainerSsh?.authType ??
-								(server && 'proxy' in server
-									? (server.proxy?.authType ?? 'password')
-									: 'password')),
 
 
 

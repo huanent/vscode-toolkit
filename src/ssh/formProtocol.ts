@@ -17,8 +17,6 @@ export interface SshProxy {
 	credentialId: string;
 	host: string;
 	port: number;
-	username: string;
-	authType: AuthType;
 }
 
 export interface SshServer extends BaseServer {
@@ -26,8 +24,6 @@ export interface SshServer extends BaseServer {
 	type: 'ssh';
 	host: string;
 	port: number;
-	username: string;
-	authType: AuthType;
 	proxyCommand?: string;
 	proxy?: SshProxy;
 	commands: ServerCommand[];

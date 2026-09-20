@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { MysqlServer } from './server';
+import { MysqlServer, parseServer } from './server';
+import { registerConnectionConfigurations } from '../configuration/tools';
 import { ServerStore } from './serverStore';
 import { createMysqlConnection } from './mysql/mysqlConnection';
 
@@ -11,23 +12,13 @@ interface ExecuteSqlInput {
 
 export function registerDatabaseTools(store: ServerStore): vscode.Disposable {
 	return vscode.Disposable.from(
-		vscode.lm.registerTool('listDatabaseConnections', {
-			async invoke() {
-				return textResult(
-					JSON.stringify(
-						store.getServers().filter(server => server.aiEnabled),
-						undefined,
-						2,
-					),
-				);
-			},
-		}),
+		registerConnectionConfigurations('database', store, parseServer),
 		vscode.lm.registerTool('runSQLStatement', new SqlTool(store)),
 	);
 }
 
 class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
-	constructor(private readonly serverStore: ServerStore) {}
+	constructor(private readonly serverStore: ServerStore) { }
 
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<ExecuteSqlInput>,
@@ -52,7 +43,7 @@ class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findMysqlServer(options.input.serverId);
-		if (!server) throw new Error('DB server was not found. Call listDatabaseConnections first.');
+		if (!server) throw new Error('DB server was not found. Call readConfigrations first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		const connection = await createMysqlConnection(server, credentials, options.input.database);
 		try {

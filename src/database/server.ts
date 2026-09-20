@@ -1,3 +1,6 @@
+import { resolveConfigurationIdentity } from '../credential/configurationIdentity';
+import type { CredentialSummary } from '../credential/protocol';
+
 export type ServerType = 'mysql';
 
 export interface BaseServer {
@@ -11,15 +14,12 @@ export interface BaseServer {
 export interface NetworkServer extends BaseServer {
 	host: string;
 	port: number;
-	username: string;
 }
 
 export interface SshProxy {
 	credentialId: string;
 	host: string;
 	port: number;
-	username: string;
-	authType: 'password' | 'privateKey';
 }
 
 export interface MysqlServer extends NetworkServer {
@@ -42,14 +42,10 @@ export interface ServerFormMessage {
 	group?: unknown;
 	host?: unknown;
 	port?: unknown;
-	username?: unknown;
-	authType?: unknown;
 	proxyCommand?: unknown;
 	proxyEnabled?: unknown;
 	proxyHost?: unknown;
 	proxyPort?: unknown;
-	proxyUsername?: unknown;
-	proxyAuthType?: unknown;
 	database?: unknown;
 	runtime?: unknown;
 	executablePath?: unknown;
@@ -65,17 +61,14 @@ function parseSshProxy(message: ServerFormMessage, requireCredential: boolean): 
 	}
 	const credentialId = normalizeString(message.proxyCredentialId);
 	const host = normalizeString(message.proxyHost);
-	const username = normalizeString(message.proxyUsername);
 	const port = Number(message.proxyPort);
-	if ((requireCredential && !credentialId) || !host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if ((requireCredential && !credentialId) || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
 		return undefined;
 	}
 	return {
 		credentialId,
 		host,
 		port,
-		username,
-		authType: message.proxyAuthType === 'privateKey' ? 'privateKey' : 'password',
 	};
 }
 
@@ -92,9 +85,8 @@ export function parseServerForm(
 	}
 	const credentialId = normalizeString(message.credentialId);
 	const host = normalizeString(message.host);
-	const username = normalizeString(message.username);
 	const port = Number(message.port);
-	if ((requireCredential && !credentialId) || !name || !host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if ((requireCredential && !credentialId) || !name || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
 		return undefined;
 	}
 
@@ -106,7 +98,6 @@ export function parseServerForm(
 		aiEnabled: message.aiEnabled === true,
 		host,
 		port,
-		username,
 	};
 	const database = normalizeString(message.database);
 	if (!database) {
@@ -147,7 +138,8 @@ export function parseServerExport(value: unknown): ExportedServer[] {
 		});
 }
 
-export function parseServer(value: unknown): Server {
+export function parseServer(value: unknown, credentials?: readonly CredentialSummary[]): Server {
+	if (credentials) value = resolveConfigurationIdentity(value, credentials);
 	if (!isRecord(value)) {
 		throw new Error('Invalid server.');
 	}
@@ -167,9 +159,7 @@ export function parseServer(value: unknown): Server {
 			group: value.group,
 			host: value.host,
 			port: value.port,
-			username: value.username,
 			credentialId: value.credentialId,
-			authType: value.authType,
 			proxyCommand: value.proxyCommand,
 			proxyEnabled: containerSsh || isRecord(value.proxy),
 			proxyCredentialId: manualContainerSsh ? value.credentialId : isRecord(value.proxy) ? value.proxy.credentialId : undefined,
@@ -182,16 +172,6 @@ export function parseServer(value: unknown): Server {
 				? value.port
 				: isRecord(value.proxy)
 					? value.proxy.port
-					: undefined,
-			proxyUsername: manualContainerSsh
-				? value.username
-				: isRecord(value.proxy)
-					? value.proxy.username
-					: undefined,
-			proxyAuthType: manualContainerSsh
-				? value.authType
-				: isRecord(value.proxy)
-					? value.proxy.authType
 					: undefined,
 			database: value.database,
 			runtime: value.runtime,

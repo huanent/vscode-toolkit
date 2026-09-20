@@ -174,7 +174,7 @@ class SshWebviewSession {
 				type: 'initialize',
 				server: {
 					name: this.server.name,
-					address: `${this.server.username}@${this.server.host}:${this.server.port}`,
+					address: `${this.credentials.username}@${this.server.host}:${this.server.port}`,
 				},
 			});
 			this.postSftpFavorites();
@@ -294,7 +294,7 @@ class SshWebviewSession {
 		this.postMessage({
 			type: 'status',
 			status: 'connecting',
-			message: `${this.server.username}@${this.server.host}:${this.server.port}...`,
+			message: `${this.credentials.username}@${this.server.host}:${this.server.port}...`,
 		});
 		connectSshClient(
 			this.server,
@@ -1002,7 +1002,7 @@ class SshWebviewSession {
 		this.stopMetricsPolling();
 		const reason =
 			error.message === 'All configured authentication methods failed'
-				? `Authentication failed. Check the username and ${this.server.authType === 'privateKey' ? 'private key certificate' : 'password'}, and confirm that the server allows this authentication method.`
+				? `Authentication failed. Check the username and ${this.credentials.authType === 'privateKey' ? 'private key certificate' : 'password'}, and confirm that the server allows this authentication method.`
 				: error.message;
 		this.postMessage({ type: 'status', status: 'error', message: reason });
 		this.connection?.dispose();

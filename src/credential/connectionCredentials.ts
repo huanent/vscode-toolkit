@@ -49,15 +49,12 @@ export async function resolveConnectionCredentials(store: CredentialStore, serve
 
 export async function resolveFormCredentials(store: CredentialStore, message: Record<string, unknown>, feature: 'ssh' | 'database' | 'container') {
     const resolved = { ...message };
+    for (const key of ['username', 'authType', 'proxyUsername', 'proxyAuthType']) delete resolved[key];
     if (feature !== 'container') {
-        const credential = await resolveCredential(store, message.credentialId, feature === 'database');
-        resolved.username = credential.user;
-        resolved.authType = credential.type;
+        await resolveCredential(store, message.credentialId, feature === 'database');
     }
     if (message.proxyEnabled === true && !(feature === 'container' && message.sshServerId)) {
-        const credential = await resolveCredential(store, message.proxyCredentialId);
-        resolved.proxyUsername = credential.user;
-        resolved.proxyAuthType = credential.type;
+        await resolveCredential(store, message.proxyCredentialId);
     }
     return resolved;
 }

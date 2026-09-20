@@ -10,8 +10,6 @@ export interface ProxyFieldValues {
 	proxyCommand: string;
 	proxyHost: string;
 	proxyPort: string;
-	proxyUsername: string;
-	proxyAuthType: 'password' | 'privateKey';
 }
 
 export interface ProxyFieldsProps {
@@ -70,8 +68,6 @@ export function ProxyFields({ values, onChange }: ProxyFieldsProps) {
 						</div>
 						<CredentialFields types={['password', 'privateKey']} value={values.proxyCredentialId} onChange={credential => {
 							onChange('proxyCredentialId', credential?.id ?? '');
-							onChange('proxyUsername', credential?.user ?? '');
-							if (credential?.type === 'password' || credential?.type === 'privateKey') onChange('proxyAuthType', credential.type);
 						}} />
 					</>
 				)}
