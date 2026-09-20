@@ -5,7 +5,7 @@ import { ServerStore } from './serverStore';
 import { createMysqlConnection } from './mysql/mysqlConnection';
 
 interface ExecuteSqlInput {
-	serverId: string;
+	id: string;
 	database?: string;
 	sql: string;
 }
@@ -23,10 +23,10 @@ class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<ExecuteSqlInput>,
 	): vscode.PreparedToolInvocation {
-		const server = this.findMysqlServer(options.input.serverId);
+		const server = this.findMysqlServer(options.input.id);
 		const target = server
 			? `${server.name} (${server.host}:${server.port})`
-			: options.input.serverId;
+			: options.input.id;
 		return {
 			invocationMessage: `Executing SQL on ${target}`,
 			confirmationMessages: {
@@ -42,7 +42,7 @@ class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
 		options: vscode.LanguageModelToolInvocationOptions<ExecuteSqlInput>,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
-		const server = this.findMysqlServer(options.input.serverId);
+		const server = this.findMysqlServer(options.input.id);
 		if (!server) throw new Error('DB server was not found. Call readConfigrations first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		const connection = await createMysqlConnection(server, credentials, options.input.database);

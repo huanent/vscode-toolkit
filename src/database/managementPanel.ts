@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerConnectionStore } from '../connection/management';
 import { dashboardFeaturePanel } from '../dashboard/panel';
 import { openServerConnection, openServerForm } from './editor';
 import { ServerStore } from './serverStore';
@@ -8,6 +9,7 @@ export function registerManagementFeature(
 	store: ServerStore,
 ): vscode.Disposable {
 	const name = 'Database';
+	context.subscriptions.push(registerConnectionStore('database', store));
 	const serverType = 'mysql';
 	let panel: vscode.WebviewPanel | undefined;
 	const command = vscode.commands.registerCommand(

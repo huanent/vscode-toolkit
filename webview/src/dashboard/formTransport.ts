@@ -1,7 +1,7 @@
 import { vscode } from '@webview/vscodeApi';
-import { send, subscribe, type Tab } from './channel';
+import { send, subscribe, type Channel } from './channel';
 
-export function formTransport(tab: Tab, sessionId?: number) {
+export function formTransport(tab: Channel, sessionId?: number) {
 	return {
 		postMessage(message: object) {
 			if (sessionId === undefined) vscode.postMessage(message);

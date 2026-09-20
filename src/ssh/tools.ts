@@ -14,7 +14,7 @@ import {
 } from './sftp';
 
 interface SftpInput {
-	serverId: string;
+	id: string;
 	action: 'list' | 'read' | 'upload' | 'download' | 'delete' | 'mkdir' | 'rename';
 	remotePath: string;
 	localPath?: string;
@@ -23,7 +23,7 @@ interface SftpInput {
 }
 
 interface ExecuteSshCommandInput {
-	serverId: string;
+	id: string;
 	command: string;
 }
 
@@ -41,10 +41,10 @@ class SftpTool implements vscode.LanguageModelTool<SftpInput> {
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<SftpInput>,
 	): vscode.PreparedToolInvocation {
-		const server = this.findSshServer(options.input.serverId);
+		const server = this.findSshServer(options.input.id);
 		const target = server
 			? `${server.name} (${server.host}:${server.port})`
-			: options.input.serverId;
+			: options.input.id;
 		return {
 			invocationMessage: `Using SFTP to ${options.input.action} ${options.input.remotePath} on ${target}`,
 			confirmationMessages: {
@@ -61,7 +61,7 @@ class SftpTool implements vscode.LanguageModelTool<SftpInput> {
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
 		const input = options.input;
-		const server = this.findSshServer(input.serverId);
+		const server = this.findSshServer(input.id);
 		if (!server) throw new Error('SSH server was not found. Call readConfigrations first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		switch (input.action) {
@@ -114,10 +114,10 @@ class ExecuteSshCommandTool implements vscode.LanguageModelTool<ExecuteSshComman
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<ExecuteSshCommandInput>,
 	): vscode.PreparedToolInvocation {
-		const server = this.findSshServer(options.input.serverId);
+		const server = this.findSshServer(options.input.id);
 		const target = server
 			? `${server.name} (${server.host}:${server.port})`
-			: options.input.serverId;
+			: options.input.id;
 		return {
 			invocationMessage: `Executing SSH command on ${target}`,
 			confirmationMessages: {
@@ -131,7 +131,7 @@ class ExecuteSshCommandTool implements vscode.LanguageModelTool<ExecuteSshComman
 		options: vscode.LanguageModelToolInvocationOptions<ExecuteSshCommandInput>,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
-		const server = this.findSshServer(options.input.serverId);
+		const server = this.findSshServer(options.input.id);
 		if (!server) {
 			throw new Error('SSH server was not found. Call readConfigrations first.');
 		}

@@ -12,8 +12,8 @@ describe('storage backup', () => {
     beforeEach(async () => { root = await mkdtemp(join(tmpdir(), 'toolkit-backup-')); });
     afterEach(async () => { await rm(root, { recursive: true, force: true }); });
 
-    it('backs up only the five directories, including nested files, once per local day', async () => {
-        for (const directory of ['credential', 'database', 'ssh', 'container', 'workflow', 'chat']) {
+    it('backs up connection and legacy directories, including nested files, once per local day', async () => {
+        for (const directory of ['credential', 'connection', 'database', 'ssh', 'container', 'workflow', 'chat']) {
             await mkdir(join(root, directory, 'nested'), { recursive: true });
             await writeFile(join(root, directory, 'nested', 'data.json'), directory);
         }
@@ -31,7 +31,7 @@ describe('storage backup', () => {
                 contents[entry.fileName] = Buffer.concat(chunks).toString();
             }
         } finally { zip.close(); }
-        expect(contents).toEqual(Object.fromEntries(['credential', 'database', 'ssh', 'container', 'workflow'].map(directory => [`${directory}/nested/data.json`, directory])));
+        expect(contents).toEqual(Object.fromEntries(['credential', 'connection', 'database', 'ssh', 'container', 'workflow'].map(directory => [`${directory}/nested/data.json`, directory])));
         await writeFile(join(root, 'credential', 'nested', 'data.json'), 'changed');
         await backupStorage(root, new Date(2026, 8, 20, 23));
         expect(await readFile(file)).toEqual(original);

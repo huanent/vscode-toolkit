@@ -24,7 +24,7 @@ export function ConnectionGroupNode({
 			summaryProps={{
 				'data-vscode-context': JSON.stringify({
 					webviewSection: 'sshGroup',
-					dashboardTab: 'ssh',
+					dashboardTab: 'connection',
 					connectionId: name,
 					dashboardFiltered: filtered,
 					dashboardGroupFirst: first,

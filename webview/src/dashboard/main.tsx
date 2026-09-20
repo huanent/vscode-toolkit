@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CircuitBoard, Database, Container, Terminal } from '../components/ui/icons';
+import { CircuitBoard, Terminal } from '../components/ui/icons';
 import { cn } from 'cn';
 import { vscode } from '@webview/vscodeApi';
-import { SshConnections } from '../ssh/management/app';
-import { DatabaseConnections } from '../database/management/main';
-import { ContainerConnections } from '../container/management/main';
+import { Connections } from '../connection/app';
 import { Workflows as Workflow } from '../workflow/management/app';
 import { type Tab } from './channel';
 import { DashboardEmpty } from './components';
@@ -14,9 +12,7 @@ document.body.classList.add('min-w-0', 'overflow-hidden');
 document.getElementById('root')!.classList.add('overflow-hidden');
 const tabs = [
 	{ id: 'workflow', label: 'Workflow', icon: CircuitBoard, component: Workflow },
-	{ id: 'ssh', label: 'SSH', icon: Terminal, component: SshConnections },
-	{ id: 'database', label: 'Database', icon: Database, component: DatabaseConnections },
-	{ id: 'container', label: 'Container', icon: Container, component: ContainerConnections },
+	{ id: 'connection', label: 'Connection', icon: Terminal, component: Connections },
 ] as const;
 function App() {
 	const [active, setActive] = useState<Tab>('workflow');
@@ -25,9 +21,9 @@ function App() {
 		const receive = (event: MessageEvent) => {
 			const message = event.data;
 			if (message.type === 'dashboardState') {
-				setActive(message.tab);
+				setActive(message.tab === 'workflow' ? 'workflow' : 'connection');
 			}
-			if (message.type === 'dashboardTab') setActive(message.tab);
+			if (message.type === 'dashboardTab') setActive(message.tab === 'workflow' ? 'workflow' : 'connection');
 			if (message.type === 'dashboardConnected') setConnected(true);
 		};
 		window.addEventListener('message', receive);
@@ -43,7 +39,7 @@ function App() {
 			<div
 				role="tablist"
 				aria-label="Tools"
-				className="grid shrink-0 grid-cols-4 border-b border-(--vscode-panel-border) bg-transparent"
+				className="grid shrink-0 grid-cols-2 border-b border-(--vscode-panel-border) bg-transparent"
 			>
 				{tabs.map(({ id, label, icon: Icon }, index) => (
 					<button

@@ -1330,16 +1330,16 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "serverId": {
+            "id": {
               "type": "string",
-              "description": "SSH server id from readConfigrations."
+              "description": "SSH connection id from readConfigrations."
             },
             "command": {
               "type": "string"
             }
           },
           "required": [
-            "serverId",
+            "id",
             "command"
           ]
         },
@@ -1357,9 +1357,9 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "serverId": {
+            "id": {
               "type": "string",
-              "description": "DB server id from readConfigrations."
+              "description": "Database connection id from readConfigrations."
             },
             "database": {
               "type": "string"
@@ -1370,7 +1370,7 @@
             }
           },
           "required": [
-            "serverId",
+            "id",
             "sql"
           ]
         },
@@ -1389,9 +1389,9 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "serverId": {
+            "id": {
               "type": "string",
-              "description": "Container server id from readConfigrations."
+              "description": "Container connection id from readConfigrations."
             },
             "args": {
               "type": "array",
@@ -1403,7 +1403,7 @@
             }
           },
           "required": [
-            "serverId",
+            "id",
             "args"
           ]
         },
@@ -1422,9 +1422,9 @@
         "inputSchema": {
           "type": "object",
           "properties": {
-            "serverId": {
+            "id": {
               "type": "string",
-              "description": "SSH server id from readConfigrations."
+              "description": "SSH connection id from readConfigrations."
             },
             "action": {
               "type": "string",
@@ -1456,7 +1456,7 @@
             }
           },
           "required": [
-            "serverId",
+            "id",
             "action",
             "remotePath"
           ]

@@ -1,5 +1,5 @@
-import { IconButton, Button } from '../../../components/ui/button';
-import { Empty } from '../../../components/ui/empty';
+import { IconButton, Button } from '../../components/ui/button';
+import { Empty } from '../../components/ui/empty';
 import {
 	Download,
 	Upload,
@@ -7,10 +7,10 @@ import {
 	RefreshCw,
 	Search,
 	X,
-} from '../../../components/ui/icons';
-import { Input } from '../../../components/ui/input';
-import { List } from '../../../components/ui/list';
-import { Toolbar } from '../../../components/ui/toolbar';
+} from '../../components/ui/icons';
+import { Input } from '../../components/ui/input';
+import { List } from '../../components/ui/list';
+import { Toolbar } from '../../components/ui/toolbar';
 import { ConnectionItem, type Connection } from './connectionItem';
 import { ConnectionGroupNode } from './connectionGroupNode';
 
@@ -25,7 +25,7 @@ export function ConnectionList({
 	state?: ConnectionListState;
 	query: string;
 	onQueryChange(value: string): void;
-	onAction(type: string, id?: string): void;
+	onAction(type: string, id?: string, connectionType?: Connection['connectionType']): void;
 }) {
 	const search = query.trim().toLowerCase();
 	const servers =
@@ -41,7 +41,7 @@ export function ConnectionList({
 	}
 	return (
 		<div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2">
-			<Toolbar title={state?.name ?? 'SSH'}>
+			<Toolbar title={state?.name ?? 'Connection'}>
 				<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
 				<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
 				<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
@@ -90,9 +90,9 @@ export function ConnectionList({
 								<List>
 									{connections.map(server => (
 										<ConnectionItem
-											key={server.id}
+											key={`${server.connectionType}:${server.id}`}
 											server={server}
-											onAction={onAction}
+											onAction={(type, id) => onAction(type, id, server.connectionType)}
 											filtered={!!search}
 										/>
 									))}

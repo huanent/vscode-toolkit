@@ -10,7 +10,7 @@ export function getStorageUri(context: vscode.ExtensionContext, directory: strin
 	const rootUri = configuredPath
 		? vscode.Uri.file(resolveStoragePath(configuredPath))
 		: context.globalStorageUri;
-	return vscode.Uri.joinPath(rootUri, directory);
+	return vscode.Uri.joinPath(rootUri, ['ssh', 'database', 'container'].includes(directory) ? 'connection' : directory);
 }
 
 function resolveStoragePath(configuredPath: string): string {

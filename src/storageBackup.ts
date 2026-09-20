@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { ZipFile } from 'yazl';
 
-const directories = ['credential', 'database', 'ssh', 'container', 'workflow'];
+const directories = ['credential', 'connection', 'database', 'ssh', 'container', 'workflow'];
 
 export async function backupStorage(root: string, now = new Date()): Promise<void> {
     const archive = join(root, 'archive');

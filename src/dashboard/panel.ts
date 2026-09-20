@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import { getWebviewHtml } from '../webview';
 import { registerDashboardContextMenus } from './contextMenus';
 import { credentialDashboard } from '../credential/dashboard';
+import { loadConnectionOrder, manageConnection } from '../connection/management';
 
 export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container';
 let panel: vscode.WebviewView | undefined;
 let context: vscode.ExtensionContext;
-let activeTab: DashboardTab = 'workflow';
+let activeTab: 'workflow' | 'connection' = 'workflow';
 const channels = new Map<DashboardTab, vscode.WebviewPanel>();
 const receivers = new Map<DashboardTab, vscode.EventEmitter<unknown>>();
 const editors = new Map<DashboardTab, vscode.WebviewPanel>();
@@ -34,7 +35,11 @@ export function registerDashboard(extensionContext: vscode.ExtensionContext): vo
 		),
 		vscode.commands.registerCommand('vscode-toolkit.openDashboard', () => focusDashboard()),
 		registerDashboardContextMenus((tab, request) => {
-			if (request.type === 'edit' || request.type === 'duplicate') openDashboardEditor(tab, request);
+			if (tab === 'connection' || ['up', 'down'].includes(request.type)) {
+				void manageConnection(context, tab, request.type, request.id, order => {
+					void panel?.webview.postMessage({ channel: 'connection', type: 'order', order });
+				}).catch(error => { void vscode.window.showErrorMessage(String(error)); });
+			} else if (request.type === 'edit' || request.type === 'duplicate') openDashboardEditor(tab, request);
 			else receivers.get(tab)?.fire(request);
 		}),
 		...(['edit', 'delete'] as const).map(action =>
@@ -53,11 +58,11 @@ export function registerDashboard(extensionContext: vscode.ExtensionContext): vo
 	);
 }
 
-async function focusDashboard(tab: DashboardTab = activeTab): Promise<void> {
-	activeTab = tab;
+async function focusDashboard(tab: DashboardTab | 'connection' = activeTab): Promise<void> {
+	activeTab = tab === 'workflow' ? 'workflow' : 'connection';
 	await vscode.commands.executeCommand('vscode-toolkit.dashboard.focus');
 	panel?.show();
-	await panel?.webview.postMessage({ type: 'dashboardTab', tab });
+	await panel?.webview.postMessage({ type: 'dashboardTab', tab: activeTab });
 }
 
 function configureDashboard(current: vscode.WebviewView): void {
@@ -66,6 +71,24 @@ function configureDashboard(current: vscode.WebviewView): void {
 		localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 	};
 	const messages = current.webview.onDidReceiveMessage(async message => {
+		if (message.channel === 'connection') {
+			if (message.type === 'ready') {
+				await current.webview.postMessage({ channel: 'connection', type: 'order', order: await loadConnectionOrder(context) });
+			} else if (message.type === 'refresh') {
+				for (const tab of ['ssh', 'database', 'container'] as const) receivers.get(tab)?.fire(message);
+			} else if (['add', 'import', 'exportAll'].includes(message.type)) {
+				const selected = await vscode.window.showQuickPick([
+					{ label: 'SSH', tab: 'ssh' as const },
+					{ label: 'Database', tab: 'database' as const },
+					{ label: 'Container', tab: 'container' as const },
+				], { title: message.type === 'add' ? 'New connection' : 'Connection type', placeHolder: 'Select a connection type' });
+				if (selected) {
+					if (message.type === 'add') openDashboardEditor(selected.tab, message);
+					else receivers.get(selected.tab)?.fire(message);
+				}
+			}
+			return;
+		}
 		if (message.channel && Object.hasOwn(commands, message.channel)) {
 			if (['add', 'edit', 'duplicate', 'openEditor', 'details'].includes(message.type)) {
 				openDashboardEditor(message.channel, message);
@@ -81,7 +104,7 @@ function configureDashboard(current: vscode.WebviewView): void {
 				await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
 			}
 			await current.webview.postMessage({ type: 'dashboardConnected' });
-		} else if (message.type === 'dashboardTab' && Object.hasOwn(commands, message.tab)) {
+		} else if (message.type === 'dashboardTab' && ['workflow', 'connection'].includes(message.tab)) {
 			activeTab = message.tab;
 		} else if (
 			message.type === 'dashboardNavigate' &&

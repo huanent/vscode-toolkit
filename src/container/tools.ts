@@ -5,7 +5,7 @@ import { ServerStore } from './serverStore';
 import { executeContainerCommand } from './containerCommand';
 
 interface ExecuteContainerInput {
-	serverId: string;
+	id: string;
 	args: string[];
 }
 
@@ -22,8 +22,8 @@ class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
 	prepareInvocation(
 		options: vscode.LanguageModelToolInvocationPrepareOptions<ExecuteContainerInput>,
 	): vscode.PreparedToolInvocation {
-		const server = this.findContainerServer(options.input.serverId);
-		const target = server ? `${server.name} (${server.runtime})` : options.input.serverId;
+		const server = this.findContainerServer(options.input.id);
+		const target = server ? `${server.name} (${server.runtime})` : options.input.id;
 		return {
 			invocationMessage: `Executing container command on ${target}`,
 			confirmationMessages: {
@@ -39,7 +39,7 @@ class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
 		options: vscode.LanguageModelToolInvocationOptions<ExecuteContainerInput>,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
-		const server = this.findContainerServer(options.input.serverId);
+		const server = this.findContainerServer(options.input.id);
 		if (!server)
 			throw new Error('Container server was not found. Call readConfigrations first.');
 		const output = await executeContainerCommand(server, this.serverStore, options.input.args);

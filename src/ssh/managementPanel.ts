@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerConnectionStore } from '../connection/management';
 import { dashboardFeaturePanel } from '../dashboard/panel';
 import { openServerConnection } from './editor';
 import { Server } from './server';
@@ -10,6 +11,7 @@ export function registerManagementFeature(
 	store: ServerStore,
 ): vscode.Disposable {
 	const name = 'SSH';
+	context.subscriptions.push(registerConnectionStore('ssh', store));
 	const serverType = 'ssh';
 	let panel: vscode.WebviewPanel | undefined;
 	const forms = createSshFormPanels(context, store);

@@ -24,9 +24,7 @@ describe('Dashboard native context menus', () => {
     it.each(['ssh', 'database', 'container'])('routes connection operations for %s', dashboardTab => {
         for (const action of ['edit', 'duplicate', 'export', 'delete', 'up', 'down']) {
             invoke(action, { ...connection, dashboardTab });
-            const type = dashboardTab === 'container' && (action === 'up' || action === 'down')
-                ? (action === 'up' ? 'moveUp' : 'moveDown') : action;
-            expect(dispatch).toHaveBeenLastCalledWith(dashboardTab, { type, id: 'server-1' });
+            expect(dispatch).toHaveBeenLastCalledWith(dashboardTab, { type: action, id: 'server-1' });
         }
     });
 
@@ -43,8 +41,8 @@ describe('Dashboard native context menus', () => {
         expect(dispatch).toHaveBeenLastCalledWith('ssh', { type: 'copyHost', id: 'server-1' });
     });
 
-    it('routes group names and preserves group movement boundaries', () => {
-        const group = { ...connection, webviewSection: 'sshGroup', connectionId: 'Production' };
+    it.each(['ssh', 'connection'])('routes %s group names and preserves group movement boundaries', dashboardTab => {
+        const group = { ...connection, dashboardTab, webviewSection: 'sshGroup', connectionId: 'Production' };
         invoke('groupUp', { ...group, dashboardGroupFirst: true });
         invoke('groupDown', { ...group, dashboardGroupLast: true });
         invoke('groupUp', { ...group, dashboardFiltered: true });
@@ -52,7 +50,7 @@ describe('Dashboard native context menus', () => {
         expect(dispatch).not.toHaveBeenCalled();
         for (const type of ['groupUp', 'groupDown', 'groupRename', 'groupDelete']) {
             invoke(type, group);
-            expect(dispatch).toHaveBeenLastCalledWith('ssh', { type, id: 'Production' });
+            expect(dispatch).toHaveBeenLastCalledWith(dashboardTab, { type, id: 'Production' });
         }
     });
 

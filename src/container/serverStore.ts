@@ -6,7 +6,7 @@ import { getStorageUri } from '../storagePath';
 import { StorageLocation } from '../storageLocation';
 import { ExportedServer, parseServer, Server, ServerType } from './server';
 
-const serverOrderFileName = 'order.json';
+const serverOrderFileName = 'containerOrder.json';
 const serverOrderVersion = 1;
 
 export type ServerCredentials = ConnectionCredentials;
@@ -173,13 +173,14 @@ class ConnectionStore {
 	}
 
 	private async initialize(): Promise<void> {
+		await this.locations.entries();
 		await vscode.workspace.fs.createDirectory(this.storageDirectoryUri);
 		this.watcher = watch(this.serversDirectoryUri.fsPath, (_eventType, fileName) => {
 			if (fileName?.endsWith('.json')) {
 				this.scheduleReload();
 			}
 		});
-		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/container/*.json');
+		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/connection/*.json');
 		this.workspaceWatcher.onDidCreate(() => this.scheduleReload());
 		this.workspaceWatcher.onDidChange(() => this.scheduleReload());
 		this.workspaceWatcher.onDidDelete(() => this.scheduleReload());

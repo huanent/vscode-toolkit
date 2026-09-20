@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerConnectionStore } from '../connection/management';
 import { dashboardFeaturePanel } from '../dashboard/panel';
 import { openServerConnection } from './editor';
 import { createFormSession } from '../dashboard/formSession';
@@ -10,6 +11,7 @@ export function registerManagementFeature(
 	store: ServerStore,
 ): vscode.Disposable {
 	const name = 'Container';
+	context.subscriptions.push(registerConnectionStore('container', store));
 	const serverType = 'container';
 	let panel: vscode.WebviewPanel | undefined;
 	const command = vscode.commands.registerCommand(
