@@ -65,6 +65,8 @@ Requests require absolute HTTP(S) URLs. Put credentials in headers, not URLs. CO
 
 SSH, MySQL, manual Container SSH connections, and SSH proxies use shared `credentialId` references. Manage credentials from the key icon in the Toolkit toolbar, or create one in a connection's credential selector. Credentials are stored as plaintext files under `<toolkit.storagePath>/credential/<id>.json` (the extension storage directory is used when the setting is empty), with owner-only file permissions where supported. Connection exports contain references, not secrets; referenced credentials must exist in the destination store.
 
+Toolkit automatically backs up the storage directory's `credential`, `database`, `ssh`, `container`, and `workflow` folders into `archive/<timestamp>.zip` once per local calendar day. The timestamp is the Unix time in milliseconds at the start of that day. Backups are checked at extension startup and every minute while the extension is running; days when VS Code is closed are not backfilled. Backups older than one calendar year are deleted during a successful check. Workspace-local `.vscode/toolkit` data is not included. ZIP files contain plaintext credentials and are not encrypted; owner-only permissions are applied where supported. Keep the storage directory secure. Failures are recorded in the **Toolkit Backup** output channel and retried on the next check.
+
 #### One-Time Credential Migration
 
 Old inline credentials and the retired `secret.json` format are not supported at runtime. Close VS Code before migrating, and include every workspace that uses the same store. Preview first:
