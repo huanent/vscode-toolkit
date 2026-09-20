@@ -1,6 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
 import { resolveConnectionCredentials, resolveFormCredentials } from './connectionCredentials';
 import type { CredentialStore } from './store';
+import { parseServer as parseSshServer, parseServerExport as parseSshExport } from '../ssh/server';
+import { parseServer as parseDatabaseServer, parseServerExport as parseDatabaseExport } from '../database/server';
+import { parseServer as parseContainerServer, parseServerExport as parseContainerExport } from '../container/server';
+
+describe('connections without credential references', () => {
+    const network = { id: 'connection', name: 'Connection', host: 'localhost', port: 22, username: 'user' };
+    const proxy = { host: 'proxy', port: 22, username: 'proxy-user', authType: 'password' };
+    it.each([
+        { type: 'ssh', parse: parseSshServer, parseExport: parseSshExport, data: { ...network, type: 'ssh', proxy } },
+        { type: 'database', parse: parseDatabaseServer, parseExport: parseDatabaseExport, data: { ...network, type: 'mysql', database: 'test', proxy } },
+        { type: 'container', parse: parseContainerServer, parseExport: parseContainerExport, data: { ...network, type: 'container', connectionType: 'ssh', runtime: 'docker', executablePath: 'docker' } },
+    ])('keeps $type connections available for editing and import', ({ parse, parseExport, data }) => {
+        const server = parse(data);
+        expect(server).toMatchObject({ ...network, credentialId: '' });
+        if ('proxy' in server) expect(server.proxy).toEqual({ ...proxy, credentialId: '' });
+        expect(parse(JSON.parse(JSON.stringify(server)))).toEqual(server);
+        expect(parseExport({ servers: [data] })).toEqual([server]);
+        expect(() => parse({ ...data, port: 0 })).toThrow('Invalid server');
+    });
+});
 
 describe('connection credential references', () => {
     const password = { id: 'password', name: 'Password', type: 'password', user: 'db-user', secret: 'secret' };

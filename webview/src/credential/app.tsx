@@ -7,7 +7,7 @@ import { Toolbar } from '../components/ui/toolbar';
 import { Pencil, Plus, RefreshCw, Search, Trash2 } from '../components/ui/icons';
 import { DashboardEmpty } from '../dashboard/components';
 import { send, subscribe } from '../dashboard/channel';
-import { CredentialForm, credentialLabels } from './credentialForm';
+import { CredentialForm, credentialLabels, type CredentialDraft } from './credentialForm';
 
 export function Credentials() {
     const [entries, setEntries] = useState<CredentialSummary[]>([]);
@@ -15,7 +15,7 @@ export function Credentials() {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
-    const [editing, setEditing] = useState<CredentialSummary | null | undefined>(undefined);
+    const [editing, setEditing] = useState<(CredentialDraft & CredentialSummary) | null | undefined>(undefined);
     useEffect(() => {
         const unsubscribe = subscribe('credential', event => {
             const message = event.data;
@@ -25,6 +25,10 @@ export function Credentials() {
                 setBusy(false);
                 setError('');
                 if (message.saved) setEditing(undefined);
+            } else if (message.type === 'edit') {
+                setEditing(message.credential);
+                setBusy(false);
+                setError('');
             } else if (message.type === 'error') {
                 setError(message.error);
                 setLoaded(true);
@@ -70,7 +74,7 @@ export function Credentials() {
                             <td className="px-3 py-2 wrap-anywhere">{entry.user || '-'}</td>
                             <td className="px-3 py-2">
                                 <div className="flex justify-end">
-                                    <IconButton label={`Edit ${entry.name}`} icon={<Pencil />} disabled={busy} onClick={() => { setError(''); setEditing(entry); }} />
+                                    <IconButton label={`Edit ${entry.name}`} icon={<Pencil />} disabled={busy} onClick={() => request({ type: 'get', id: entry.id })} />
                                     <IconButton label={`Delete ${entry.name}`} icon={<Trash2 />} disabled={busy} onClick={() => request({ type: 'delete', id: entry.id })} />
                                 </div>
                             </td>

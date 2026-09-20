@@ -42,6 +42,12 @@ export function credentialDashboard(context: vscode.ExtensionContext) {
                 stores.set(directory, store);
             }
             let credential;
+            if (message.type === 'get' && typeof message.id === 'string') {
+                credential = await store.get(message.id);
+                if (!credential) throw new Error('Credential no longer exists.');
+                await webview.postMessage({ channel: 'credential', type: 'edit', credential, requestId: message.requestId });
+                return;
+            }
             if (message.type === 'save') credential = await store.save(message.credential);
             else if (message.type === 'delete' && typeof message.id === 'string') {
                 const entry = (await store.list()).find(item => item.id === message.id);

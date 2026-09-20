@@ -17,7 +17,8 @@ describe('SSH favorites configuration', () => {
         const server = parseServerForm({ ...connection, type: 'save', credentialId: 'shared-key' }, 'ssh', connection.id);
         expect(server?.credentialId).toBe('shared-key');
         expect(parseServer(JSON.parse(JSON.stringify(server))).credentialId).toBe('shared-key');
-        expect(() => parseServer({ ...connection, credentialId: undefined })).toThrow('Invalid server');
+        expect(parseServer({ ...connection, credentialId: undefined }).credentialId).toBe('');
+        expect(parseServerForm({ ...connection, type: 'save', credentialId: undefined }, 'ssh')).toBeUndefined();
     });
     it('saves favorites from the connection form', () => {
         const server = parseServerForm({ ...connection, type: 'save', favorites: ['/home', '/var/log'] }, 'ssh', connection.id);

@@ -69,7 +69,7 @@ export interface ServerFormMessage {
 	aiEnabled?: unknown;
 }
 
-function parseSshProxy(message: ServerFormMessage): SshProxy | undefined {
+function parseSshProxy(message: ServerFormMessage, requireCredential: boolean): SshProxy | undefined {
 	if (message.proxyEnabled !== true) {
 		return undefined;
 	}
@@ -77,7 +77,7 @@ function parseSshProxy(message: ServerFormMessage): SshProxy | undefined {
 	const host = normalizeString(message.proxyHost);
 	const username = normalizeString(message.proxyUsername);
 	const port = Number(message.proxyPort);
-	if (!credentialId || !host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if ((requireCredential && !credentialId) || !host || !username || !Number.isInteger(port) || port < 1 || port > 65_535) {
 		return undefined;
 	}
 	return {
@@ -93,6 +93,7 @@ export function parseServerForm(
 	message: ServerFormMessage,
 	_serverType: ServerType,
 	serverId?: string,
+	requireCredential = true,
 ): Server | undefined {
 	const name = normalizeString(message.name);
 	const group = normalizeString(message.group);
@@ -121,7 +122,7 @@ export function parseServerForm(
 	if (sshServerId) {
 		return { ...baseServer, connectionType: 'ssh', sshServerId };
 	}
-	const proxy = parseSshProxy(message);
+	const proxy = parseSshProxy(message, requireCredential);
 	if (!proxy) {
 		return undefined;
 	}
@@ -220,6 +221,7 @@ export function parseServer(value: unknown): Server {
 		},
 		type,
 		id,
+		false,
 	);
 	if (!server) {
 		throw new Error('Invalid server.');

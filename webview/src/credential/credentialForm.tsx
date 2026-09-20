@@ -10,7 +10,7 @@ export type CredentialDraft = Omit<CredentialSummary, 'id'> & { id?: string; sec
 
 export function CredentialForm({ entry, busy, onSave, onCancel, types = ['password', 'privateKey', 'apikey'] }: {
     types?: readonly CredentialType[];
-    entry: CredentialSummary | null;
+    entry: (CredentialSummary & { secret?: string; passphrase?: string }) | null;
     busy: boolean;
     onSave: (draft: CredentialDraft) => void;
     onCancel: () => void;
@@ -18,8 +18,8 @@ export function CredentialForm({ entry, busy, onSave, onCancel, types = ['passwo
     const [name, setName] = useState(entry?.name ?? '');
     const [type, setType] = useState<CredentialType>(entry?.type ?? types[0]);
     const [user, setUser] = useState(entry?.user ?? '');
-    const [secret, setSecret] = useState('');
-    const [passphrase, setPassphrase] = useState('');
+    const [secret, setSecret] = useState(entry?.secret ?? '');
+    const [passphrase, setPassphrase] = useState(entry?.passphrase ?? '');
     const secretRequired = !entry || entry.type !== type;
     return (
         <form className="grid min-w-0 gap-4" onSubmit={event => {
