@@ -180,7 +180,7 @@ class ConnectionStore {
 				this.scheduleReload();
 			}
 		});
-		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/toolkit/connection/*.json');
+		this.workspaceWatcher = vscode.workspace.createFileSystemWatcher('**/.toolkit/connection/*.json');
 		this.workspaceWatcher.onDidCreate(() => this.scheduleReload());
 		this.workspaceWatcher.onDidChange(() => this.scheduleReload());
 		this.workspaceWatcher.onDidDelete(() => this.scheduleReload());

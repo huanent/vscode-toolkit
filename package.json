@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -22,6 +22,7 @@
   ],
   "activationEvents": [
     "onDebugAdapterProtocolTracker",
+    "onFileSystem:toolkit-temp",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -228,6 +229,21 @@
         "title": "Rename"
       },
       {
+        "command": "vscode-toolkit.temp.newFile",
+        "title": "New Temp File",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.temp.delete",
+        "title": "Delete",
+        "category": "Toolkit"
+      },
+      {
+        "command": "vscode-toolkit.temp.selectFolder",
+        "title": "Select Folder...",
+        "category": "Toolkit"
+      },
+      {
         "command": "vscode-toolkit.dashboard.groupDelete",
         "title": "Delete"
       },
@@ -250,33 +266,6 @@
         "title": "Open Workflow",
         "icon": "$(list-ordered)",
         "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.openHttpClient",
-        "title": "Open HTTP Client",
-        "icon": "$(globe)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "vscode-toolkit.newHttpClient",
-        "title": "New HTTP Request",
-        "icon": "$(new-file)",
-        "category": "Toolkit",
-        "enablement": "vscode-toolkit.httpEditor"
-      },
-      {
-        "command": "vscode-toolkit.renameHttpFile",
-        "title": "Rename HTTP Request",
-        "icon": "$(edit)",
-        "category": "Toolkit",
-        "enablement": "vscode-toolkit.httpEditor"
-      },
-      {
-        "command": "vscode-toolkit.deleteHttpFile",
-        "title": "Delete HTTP Request",
-        "icon": "$(trash)",
-        "category": "Toolkit",
-        "enablement": "vscode-toolkit.httpEditor"
       },
       {
         "command": "vscode-toolkit.generateGitignore",
@@ -438,6 +427,16 @@
     "menus": {
       "webview/context": [
         {
+          "command": "vscode-toolkit.temp.delete",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && (webviewSection == 'tempFile' || webviewSection == 'tempFolder')",
+          "group": "temp@2"
+        },
+        {
+          "command": "vscode-toolkit.temp.selectFolder",
+          "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'tempFile'",
+          "group": "temp@1"
+        },
+        {
           "command": "vscode-toolkit.dashboard.edit",
           "when": "webviewId == 'vscode-toolkit.dashboard' && webviewSection == 'connectionItem'",
           "group": "connection@1"
@@ -512,7 +511,7 @@
         {
           "command": "vscode-toolkit.openCredential",
           "when": "view == vscode-toolkit.dashboard",
-          "group": "navigation@0"
+          "group": "navigation@3"
         },
         {
           "command": "vscode-toolkit.openExplorer",
@@ -525,11 +524,6 @@
           "group": "navigation@2"
         },
         {
-          "command": "vscode-toolkit.openHttpClient",
-          "when": "view == vscode-toolkit.dashboard",
-          "group": "tools@2"
-        },
-        {
           "command": "vscode-toolkit.servers.exportMysqlSqlResults",
           "when": "view == vscode-toolkit.result && vscode-toolkit.servers.mysqlSqlResultsExportable",
           "group": "navigation@9999"
@@ -540,21 +534,6 @@
           "command": "editor.foldAll",
           "when": "activeEditor == workbench.editors.textEditor",
           "group": "navigation@8"
-        },
-        {
-          "command": "vscode-toolkit.newHttpClient",
-          "when": "vscode-toolkit.httpEditor",
-          "group": "navigation@9"
-        },
-        {
-          "command": "vscode-toolkit.renameHttpFile",
-          "when": "vscode-toolkit.httpEditor",
-          "group": "navigation@10"
-        },
-        {
-          "command": "vscode-toolkit.deleteHttpFile",
-          "when": "vscode-toolkit.httpEditor",
-          "group": "navigation@11"
         },
         {
           "command": "vscode-toolkit.newChat",
@@ -643,6 +622,14 @@
       ],
       "commandPalette": [
         {
+          "command": "vscode-toolkit.temp.delete",
+          "when": "false"
+        },
+        {
+          "command": "vscode-toolkit.temp.selectFolder",
+          "when": "false"
+        },
+        {
           "command": "vscode-toolkit.dashboard.edit",
           "when": "false"
         },
@@ -699,18 +686,6 @@
           "when": "false"
         },
         {
-          "command": "vscode-toolkit.newHttpClient",
-          "when": "false"
-        },
-        {
-          "command": "vscode-toolkit.renameHttpFile",
-          "when": "false"
-        },
-        {
-          "command": "vscode-toolkit.deleteHttpFile",
-          "when": "false"
-        },
-        {
           "command": "vscode-toolkit.runNodeScript",
           "when": "vscode-toolkit.nodeAvailable && !vscode-toolkit.bunWorkspace"
         },
@@ -745,6 +720,11 @@
       ]
     },
     "keybindings": [
+      {
+        "command": "vscode-toolkit.temp.newFile",
+        "key": "ctrl+shift+,",
+        "mac": "cmd+shift+,"
+      },
       {
         "command": "vscode-toolkit.openDashboard",
         "key": "ctrl+shift+.",

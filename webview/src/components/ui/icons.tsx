@@ -37,6 +37,7 @@ export const CircleAlert = icon('warning');
 export const CircleCheck = icon('check');
 export const CircleSlash = icon('circle-slash');
 export const CircuitBoard = icon('circuit-board');
+export const CollapseAll = icon('collapse-all');
 export const Container = icon('symbol-method');
 export const Copy = icon('copy');
 export const Database = icon('database');

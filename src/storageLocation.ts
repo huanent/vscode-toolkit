@@ -18,13 +18,13 @@ export class StorageLocation {
 		const folder = vscode.workspace.workspaceFolders?.find(candidate => candidate.uri.toString() === uri);
 		if (!folder) throw new Error('Select an open workspace folder.');
 		if (!vscode.workspace.isTrusted) throw new Error('Trust the workspace before saving connections.');
-		return vscode.Uri.joinPath(folder.uri, '.vscode', 'toolkit', this.feature);
+		return vscode.Uri.joinPath(folder.uri, '.toolkit', this.feature);
 	}
 
 	location(id: string): string {
 		const directory = this.directory(id).toString();
 		return this.folders.find(folder =>
-			vscode.Uri.joinPath(vscode.Uri.parse(folder.uri), '.vscode', 'toolkit', this.feature).toString() === directory,
+			vscode.Uri.joinPath(vscode.Uri.parse(folder.uri), '.toolkit', this.feature).toString() === directory,
 		)?.uri ?? '';
 	}
 
@@ -65,7 +65,7 @@ export class StorageLocation {
 			await migrateConnections(vscode.Uri.joinPath(this.globalDirectory, '..').fsPath);
 			if (vscode.workspace.isTrusted) {
 				for (const folder of vscode.workspace.workspaceFolders ?? []) {
-					await migrateConnections(vscode.Uri.joinPath(folder.uri, '.vscode', 'toolkit').fsPath);
+					await migrateConnections(vscode.Uri.joinPath(folder.uri, '.toolkit').fsPath);
 				}
 			}
 		}

@@ -48,8 +48,8 @@ These tools replace `listWorkflows`, `getWorkflow`, `listSSHServers`, `listDatab
 
 ### Dashboard
 
-- Open Chat, Explorer, and HTTP Client from the quick navigation bar.
-- Open Toolkit from the Activity Bar to browse four compact tool tabs and searchable lists in a webview sidebar.
+- Open Chat and Explorer from the quick navigation bar.
+- Open Toolkit from the Activity Bar to browse Workflow, Connection, and Temp tabs in a webview sidebar.
 - Connection groups are collapsed by default; expand a group to browse its items.
 - Create and edit connections and workflows in separate editor tabs.
 - Existing tool commands and the Dashboard shortcut focus the corresponding sidebar tab.
@@ -89,9 +89,16 @@ Image input requires support from the selected provider and model. Attachment co
 - File opening uses VS Code's custom editor associations, with no spreadsheet-specific handling in Explorer. Legacy `.xls` files are not supported.
 - Use **Reopen Editor With... > Text Editor** to edit CSV source text.
 
+### Temp
+
+- Store files in `<toolkit.storagePath>/temp`, or the extension storage directory's `temp` folder when unset.
+- Create files and folders at the root. Right-click a file to select an existing folder or move it back to the root. Expand folders in place; right-click files or folders to move them to the system trash without confirmation. Folders have no create-item action.
+- Open files in the text editor using virtual `toolkit-temp:/folder/file` paths, without exposing the storage directory. Virtual navigation is confined to Temp. Content changes auto-save after 500 ms of inactivity; further edits reset the timer, and saving or closing the document cancels it.
+- Auto-save applies only to Temp files and does not change VS Code's global auto-save settings.
+
 ### HTTP Client
 
-- Create, rename, and delete requests with automatic saving and restoration of the last opened request.
+- Create `.http` or `.rest` files in Temp for automatically saved requests, or use ordinary files elsewhere. HTTP-specific temporary storage and history are no longer used; existing files in the old storage `http` folder remain untouched and can be moved to Temp manually.
 - Work with `.http` and `.rest` files. Separate requests with `###`, define variables with `@name = value`, and reference them with `{{name}}`.
 - Get syntax highlighting, request and header completion, hover details, diagnostics, and formatting.
 - Automatically format valid JSON bodies, even without a `Content-Type` header.
@@ -103,16 +110,18 @@ Requests require absolute HTTP(S) URLs. Put credentials in headers, not URLs. CO
 
 SSH, MySQL, manual Container SSH connections, and SSH proxies use shared `credentialId` references. Manage credentials from the key icon in the Toolkit toolbar, or create one in a connection's credential selector. Credentials are stored as plaintext files under `<toolkit.storagePath>/credential/<id>.json` (the extension storage directory is used when the setting is empty), with owner-only file permissions where supported. Connection exports contain references, not secrets; referenced credentials must exist in the destination store.
 
-The Dashboard's **Connection** list combines SSH, Database, and Container connections with shared search, groups, and ordering. **New connection** asks for the connection type before opening its form. Connection files are stored in `<toolkit.storagePath>/connection` (or extension storage when unset) and `.vscode/toolkit/connection` for workspace-local connections. On first access, the old `ssh`, `database`, and `container` directories are migrated together, including their ordering and auxiliary files. Workspace migration requires trust. Successfully migrated source directories are removed; conflicting target files are never overwritten, and migration can resume after the conflict is resolved.
+The Dashboard's **Connection** list combines SSH, Database, and Container connections with shared search, groups, and ordering. **New connection** asks for the connection type before opening its form. Connection files are stored in `<toolkit.storagePath>/connection` (or extension storage when unset) and `.toolkit/connection` for workspace-local connections. On first access, the old `ssh`, `database`, and `container` directories are migrated together, including their ordering and auxiliary files. Workspace migration requires trust. Successfully migrated source directories are removed; conflicting target files are never overwritten, and migration can resume after the conflict is resolved.
 
-Toolkit automatically backs up the storage directory's `credential`, `connection`, and `workflow` folders, plus any remaining legacy `database`, `ssh`, and `container` folders, into `archive/<timestamp>.zip` once per local calendar day. The timestamp is the Unix time in milliseconds at the start of that day. Backups are checked at extension startup and every minute while the extension is running; days when VS Code is closed are not backfilled. Backups older than one calendar year are deleted during a successful check. Workspace-local `.vscode/toolkit` data is not included. ZIP files contain plaintext credentials and are not encrypted; owner-only permissions are applied where supported. Keep the storage directory secure. Failures are recorded in the **Toolkit Backup** output channel and retried on the next check.
+All workspace locations use the workspace root's `.toolkit` directory: workflows use `.toolkit/workflow`, and SSH, Database, and Container connections use `.toolkit/connection`. Global storage is unchanged. Existing `.vscode/toolkit` data is not moved automatically; move its contents into `.toolkit` before reloading the extension, preserving any existing destination files.
+
+Toolkit automatically backs up the storage directory's `credential`, `connection`, and `workflow` folders, plus any remaining legacy `database`, `ssh`, and `container` folders, into `archive/<timestamp>.zip` once per local calendar day. The timestamp is the Unix time in milliseconds at the start of that day. Backups are checked at extension startup and every minute while the extension is running; days when VS Code is closed are not backfilled. Backups older than one calendar year are deleted during a successful check. Workspace-local `.toolkit` data is not included. ZIP files contain plaintext credentials and are not encrypted; owner-only permissions are applied where supported. Keep the storage directory secure. Failures are recorded in the **Toolkit Backup** output channel and retried on the next check.
 
 #### One-Time Credential Migration
 
 Old inline credentials and the retired `secret.json` format are not supported at runtime. Close VS Code before migrating, and include every workspace that uses the same store. Preview first:
 
 ```sh
-node scripts/migrateCredentials.mjs --store /absolute/store/path --config-root /absolute/workspace/.vscode/toolkit
+node scripts/migrateCredentials.mjs --store /absolute/store/path --config-root /absolute/workspace/.toolkit
 ```
 
 Repeat `--config-root` for additional workspaces. After reviewing the counts, run the same command with `--apply`. The script backs up original configurations and legacy secrets in a restricted `credential-migration-backup-<id>` directory, creates individual credential files, replaces inline secrets with references, and removes the original `secret.json` only after successful writes. Private-key passphrases are preserved. Existing credential references are validated; missing references stop migration before changes. Re-running after success is safe. Backups contain secrets: retain them securely until connections are verified, then remove them manually. The script does not discover unopened workspaces automatically.

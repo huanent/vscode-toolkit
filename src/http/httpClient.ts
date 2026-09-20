@@ -1,6 +1,4 @@
-import { basename } from 'node:path';
 import * as vscode from 'vscode';
-import { HttpDocumentStore } from './httpDocumentStore';
 import { registerHttpFormatter } from './httpFormatter';
 import {
 	HTTP_METHODS,
@@ -19,32 +17,13 @@ const headers = [
 	['Cache-Control', 'no-cache'],
 ];
 const languageService = new HttpLanguageService();
-const httpSaveDelay = 500;
-const httpEditorContext = 'vscode-toolkit.httpEditor';
 
 export function registerHttpClient(context: vscode.ExtensionContext, resultView: ResultView): void {
 	const requestStatus = new HttpRequestStatus();
 	const selector: vscode.DocumentSelector = { language: 'http' };
-	const documentStore = new HttpDocumentStore(context);
-	const documentStoreReady = documentStore.initialize();
 
 	context.subscriptions.push(
 		requestStatus,
-		documentStore,
-		vscode.commands.registerCommand('vscode-toolkit.openHttpClient', async () => {
-			await documentStoreReady;
-			await documentStore.openLastOrCreate();
-		}),
-		vscode.commands.registerCommand('vscode-toolkit.newHttpClient', async () => {
-			await documentStoreReady;
-			await documentStore.createAndOpen();
-		}),
-		vscode.commands.registerCommand('vscode-toolkit.renameHttpFile', () =>
-			renameHttpFile(documentStore),
-		),
-		vscode.commands.registerCommand('vscode-toolkit.deleteHttpFile', () =>
-			deleteHttpFile(documentStore),
-		),
 		vscode.commands.registerCommand(
 			'vscode-toolkit.sendHttpRequest',
 			async (uri?: vscode.Uri, line?: number) => {
@@ -61,8 +40,6 @@ export function registerHttpClient(context: vscode.ExtensionContext, resultView:
 		),
 		registerHttpHoverProvider(languageService),
 		registerHttpFormatter(),
-		registerHttpAutoSave(documentStore),
-		registerHttpEditorContext(documentStore),
 	);
 	registerHttpLanguageDiagnostics(context, languageService);
 }
@@ -102,117 +79,6 @@ class HttpRequestStatus implements vscode.Disposable {
 		this.cancel();
 		this.sendingItem.dispose();
 	}
-}
-
-async function renameHttpFile(documentStore: HttpDocumentStore): Promise<void> {
-	const document = vscode.window.activeTextEditor?.document;
-	if (!document || !documentStore.isManagedUri(document.uri)) {
-		return;
-	}
-
-	const currentName = basename(document.uri.fsPath);
-	const currentBaseName = currentName.slice(0, -'.http'.length);
-	const input = await vscode.window.showInputBox({
-		title: 'Rename HTTP Request',
-		value: currentBaseName,
-		prompt: 'File name; empty uses timestamp.',
-		validateInput: value => documentStore.validateName(document.uri, value),
-	});
-	if (input === undefined) {
-		return;
-	}
-
-	if (document.isDirty && !(await document.save())) {
-		void vscode.window.showErrorMessage('Unable to save the HTTP request before renaming it.');
-		return;
-	}
-
-	try {
-		await documentStore.renameDocument(document.uri, input);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		void vscode.window.showErrorMessage(`Unable to rename the HTTP request: ${message}`);
-	}
-}
-
-async function deleteHttpFile(documentStore: HttpDocumentStore): Promise<void> {
-	const document = vscode.window.activeTextEditor?.document;
-	if (!document || !documentStore.isManagedUri(document.uri)) {
-		return;
-	}
-
-	try {
-		if (document.isDirty) {
-			await document.save();
-		}
-		await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-		await documentStore.deleteAndOpenPrevious(document.uri);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		void vscode.window.showErrorMessage(`Unable to delete the HTTP request: ${message}`);
-	}
-}
-
-function registerHttpEditorContext(documentStore: HttpDocumentStore): vscode.Disposable {
-	const update = (editor: vscode.TextEditor | undefined): void => {
-		if (editor && documentStore.isManagedUri(editor.document.uri)) {
-			void documentStore.markVisited(editor.document.uri);
-		}
-		void vscode.commands.executeCommand(
-			'setContext',
-			httpEditorContext,
-			Boolean(editor && documentStore.isManagedUri(editor.document.uri)),
-		);
-	};
-	update(vscode.window.activeTextEditor);
-	return vscode.window.onDidChangeActiveTextEditor(update);
-}
-
-function registerHttpAutoSave(documentStore: HttpDocumentStore): vscode.Disposable {
-	const saveTimers = new Map<string, NodeJS.Timeout>();
-	const clearSaveTimer = (document: vscode.TextDocument): void => {
-		const key = document.uri.toString();
-		const timer = saveTimers.get(key);
-		if (timer) {
-			clearTimeout(timer);
-			saveTimers.delete(key);
-		}
-	};
-
-	const changeSubscription = vscode.workspace.onDidChangeTextDocument(event => {
-		const document = event.document;
-		if (!documentStore.isManagedUri(document.uri) || event.contentChanges.length === 0) {
-			return;
-		}
-
-		clearSaveTimer(document);
-		const key = document.uri.toString();
-		saveTimers.set(
-			key,
-			setTimeout(() => {
-				saveTimers.delete(key);
-				if (!document.isClosed && document.isDirty) {
-					void document.save().then(saved => {
-						if (!saved && !document.isClosed) {
-							void vscode.window.showWarningMessage('Unable to auto-save the HTTP request.');
-						}
-					});
-				}
-			}, httpSaveDelay),
-		);
-	});
-	const saveSubscription = vscode.workspace.onDidSaveTextDocument(clearSaveTimer);
-	const closeSubscription = vscode.workspace.onDidCloseTextDocument(clearSaveTimer);
-
-	return new vscode.Disposable(() => {
-		changeSubscription.dispose();
-		saveSubscription.dispose();
-		closeSubscription.dispose();
-		for (const timer of saveTimers.values()) {
-			clearTimeout(timer);
-		}
-		saveTimers.clear();
-	});
 }
 
 class HttpCodeLensProvider implements vscode.CodeLensProvider {

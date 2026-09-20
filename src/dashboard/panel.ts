@@ -3,11 +3,13 @@ import { getWebviewHtml } from '../webview';
 import { registerDashboardContextMenus } from './contextMenus';
 import { credentialDashboard } from '../credential/dashboard';
 import { loadConnectionOrder, manageConnection } from '../connection/management';
+import { TempService } from '../temp/service';
 
 export type DashboardTab = 'ssh' | 'workflow' | 'database' | 'container';
 let panel: vscode.WebviewView | undefined;
 let context: vscode.ExtensionContext;
-let activeTab: 'workflow' | 'connection' = 'workflow';
+let activeTab: 'workflow' | 'connection' | 'temp' = 'workflow';
+let temp: TempService;
 const channels = new Map<DashboardTab, vscode.WebviewPanel>();
 const receivers = new Map<DashboardTab, vscode.EventEmitter<unknown>>();
 const editors = new Map<DashboardTab, vscode.WebviewPanel>();
@@ -22,7 +24,9 @@ const commands: Record<DashboardTab, string> = {
 
 export function registerDashboard(extensionContext: vscode.ExtensionContext): void {
 	context = extensionContext;
+	temp = new TempService(context);
 	context.subscriptions.push(
+		temp,
 		vscode.window.registerWebviewViewProvider(
 			'vscode-toolkit.dashboard',
 			{
@@ -34,6 +38,15 @@ export function registerDashboard(extensionContext: vscode.ExtensionContext): vo
 			{ webviewOptions: { retainContextWhenHidden: true } },
 		),
 		vscode.commands.registerCommand('vscode-toolkit.openDashboard', () => focusDashboard()),
+		vscode.commands.registerCommand('vscode-toolkit.temp.newFile', () => temp.handle({ type: 'newFile' }, panel?.webview)),
+		vscode.commands.registerCommand('vscode-toolkit.temp.selectFolder', (request?: { webviewSection?: unknown; tempPath?: unknown }) => {
+			if (request?.webviewSection !== 'tempFile' || typeof request.tempPath !== 'string' || !panel) return;
+			return temp.handle({ type: 'selectFolder', path: request.tempPath }, panel.webview);
+		}),
+		vscode.commands.registerCommand('vscode-toolkit.temp.delete', (request?: { webviewSection?: unknown; tempPath?: unknown }) => {
+			if ((request?.webviewSection !== 'tempFile' && request?.webviewSection !== 'tempFolder') || typeof request.tempPath !== 'string' || !panel) return;
+			return temp.handle({ type: 'delete', path: request.tempPath }, panel.webview);
+		}),
 		registerDashboardContextMenus((tab, request) => {
 			if (tab === 'connection' || ['up', 'down'].includes(request.type)) {
 				void manageConnection(context, tab, request.type, request.id, order => {
@@ -58,8 +71,8 @@ export function registerDashboard(extensionContext: vscode.ExtensionContext): vo
 	);
 }
 
-async function focusDashboard(tab: DashboardTab | 'connection' = activeTab): Promise<void> {
-	activeTab = tab === 'workflow' ? 'workflow' : 'connection';
+async function focusDashboard(tab: DashboardTab | 'connection' | 'temp' = activeTab): Promise<void> {
+	activeTab = tab === 'workflow' || tab === 'temp' ? tab : 'connection';
 	await vscode.commands.executeCommand('vscode-toolkit.dashboard.focus');
 	panel?.show();
 	await panel?.webview.postMessage({ type: 'dashboardTab', tab: activeTab });
@@ -71,6 +84,10 @@ function configureDashboard(current: vscode.WebviewView): void {
 		localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
 	};
 	const messages = current.webview.onDidReceiveMessage(async message => {
+		if (message.channel === 'temp') {
+			await temp.handle(message, current.webview);
+			return;
+		}
 		if (message.channel === 'connection') {
 			if (message.type === 'ready') {
 				await current.webview.postMessage({ channel: 'connection', type: 'order', order: await loadConnectionOrder(context) });
@@ -104,11 +121,11 @@ function configureDashboard(current: vscode.WebviewView): void {
 				await vscode.commands.executeCommand(`vscode-toolkit.${command}`, { background: true });
 			}
 			await current.webview.postMessage({ type: 'dashboardConnected' });
-		} else if (message.type === 'dashboardTab' && ['workflow', 'connection'].includes(message.tab)) {
+		} else if (message.type === 'dashboardTab' && ['workflow', 'connection', 'temp'].includes(message.tab)) {
 			activeTab = message.tab;
 		} else if (
 			message.type === 'dashboardNavigate' &&
-			['openChat', 'openExplorer', 'openHttpClient'].includes(message.command)
+			['openChat', 'openExplorer'].includes(message.command)
 		) {
 			await vscode.commands.executeCommand(`vscode-toolkit.${message.command}`);
 		}
