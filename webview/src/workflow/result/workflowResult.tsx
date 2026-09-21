@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { WorkflowResult } from '@/result/protocol';
 import { cn } from 'cn';
-import { LoaderCircle } from '@webview/components/ui/icons';
+import { Loading } from '@webview/components/ui/loading';
 import { formatDuration, WorkflowStepOutput } from './workflowStepOutput';
 
 export function WorkflowResultView({ result }: { result: WorkflowResult }) {
@@ -22,7 +22,7 @@ export function WorkflowResultView({ result }: { result: WorkflowResult }) {
                         'flex min-w-0 flex-1 items-center gap-2',
                         result.state === 'error' ? 'text-(--vscode-errorForeground)' : 'text-(--vscode-descriptionForeground)',
                     )}>
-                        {isActive && <LoaderCircle className="shrink-0 animate-spin" aria-hidden="true" />}
+                        {isActive && <Loading variant="icon" label={result.summary} aria-hidden="true" />}
                         <span className="min-w-0 truncate" title={result.summary}>{result.summary}</span>
                     </div>
                     <span className="shrink-0 text-(--vscode-descriptionForeground) tabular-nums" aria-label="Total duration">{formatDuration((result.finishedAt ?? now) - result.startedAt)}</span>

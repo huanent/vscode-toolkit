@@ -1,4 +1,5 @@
 import { Sparkles, CircleCheck } from '../../components/ui/icons';
+import { Loading } from '../../components/ui/loading';
 import { useState } from 'react';
 import { Popover } from '../../components/ui/popover';
 import type { ModelItem } from '../types';
@@ -44,7 +45,7 @@ export function ModelPicker({
 						{...props}
 						variant="text"
 						size="sm"
-						left={<Sparkles size="sm" />}
+						left={!error && models.length === 0 ? <Loading variant="icon" label="Loading models..." /> : <Sparkles size="sm" />}
 						active={open}
 						title={selectedModel ? `${selectedModel.providerName} · ${selectedModel.name}` : label}
 					>

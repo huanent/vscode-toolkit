@@ -1,4 +1,6 @@
 import { cn } from 'cn';
+import { Loading } from '../../../components/ui/loading';
+import { RefreshCw } from '../../../components/ui/icons';
 import type { MouseEvent } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
@@ -118,7 +120,7 @@ export function FileList({ state, actions }: FileListProps) {
 					{normalizedQuery ? 'No matching files.' : 'This folder is empty.'}
 				</div>
 			)}
-			{state.status && (
+			{state.status === 'Loading...' ? <Loading /> : state.status && (
 				<div
 					className="py-11 text-center text-(--vscode-descriptionForeground)"
 					role="status"
@@ -346,12 +348,7 @@ function EntrySize({
 				}}
 				onDoubleClick={event => event.stopPropagation()}
 			>
-				<i
-					className={cn(
-						'codicon',
-						entry.calculating ? 'codicon-loading codicon-modifier-spin' : 'codicon-refresh',
-					)}
-				/>
+				{entry.calculating ? <Loading variant="icon" label={label} size="md" /> : <RefreshCw size="md" />}
 			</button>
 		</span>
 	);

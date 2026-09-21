@@ -1,5 +1,6 @@
 import { cn } from 'cn';
-import { Boxes, CircleAlert, CircleCheck, CircleSlash, Database, Info, LoaderCircle, Network, Package, Pencil, Play, RefreshCw, Square, X } from '@webview/components/ui/icons';
+import { Boxes, CircleAlert, CircleCheck, CircleSlash, Database, Info, Network, Package, Pencil, Play, RefreshCw, Square, X } from '@webview/components/ui/icons';
+import { Loading } from '@webview/components/ui/loading';
 import { useEffect } from 'react';
 import { IconButton } from '@webview/components/ui/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
@@ -33,7 +34,7 @@ export function App() {
 	if (!editor.server) {
 		return (
 			<main className="grid min-h-screen place-items-center text-(--vscode-descriptionForeground)">
-				<LoaderCircle className="animate-spin" size="lg" />
+				<Loading />
 			</main>
 		);
 	}
@@ -48,13 +49,11 @@ export function App() {
 			} as const
 		)[editor.serviceState];
 	const StatusIcon =
-		editor.serviceState === 'checking'
-			? LoaderCircle
-			: editor.serviceState === 'running'
-				? CircleCheck
-				: editor.serviceState === 'stopped'
-					? CircleSlash
-					: CircleAlert;
+		editor.serviceState === 'running'
+			? CircleCheck
+			: editor.serviceState === 'stopped'
+				? CircleSlash
+				: CircleAlert;
 	return (
 		<div className="grid h-screen min-w-75 grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-1 select-none">
 			<header className="flex min-h-10 min-w-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) px-3 py-2">
@@ -78,13 +77,9 @@ export function App() {
 					)}
 					title={statusLabel}
 				>
-					<StatusIcon
-						className={cn(
-							'shrink-0',
-							editor.serviceState === 'checking' || editor.systemPending ? 'animate-spin' : '',
-						)}
-						size="sm"
-					/>
+					{editor.serviceState === 'checking' || editor.systemPending
+						? <Loading variant="icon" label={statusLabel} />
+						: <StatusIcon className="shrink-0" size="sm" />}
 					<span>{statusLabel}</span>
 				</span>
 				{editor.server.runtime === 'apple' && (
@@ -93,7 +88,7 @@ export function App() {
 							? 'Stop Apple Container system'
 							: 'Start Apple Container system'
 					} icon={<>{editor.systemPending ? (
-						<LoaderCircle className="animate-spin" size="md" />
+						<Loading variant="icon" size="md" />
 					) : editor.serviceState === 'running' ? (
 						<Square size="md" />
 					) : (
@@ -142,10 +137,7 @@ export function App() {
 				</aside>
 				<main className="min-h-0 min-w-0 overflow-hidden">
 					{editor.loading ? (
-						<Message>
-							<LoaderCircle className="animate-spin" size="lg" />
-							Loading...
-						</Message>
+						<Loading />
 					) : editor.error ? (
 						<Message error>{editor.error}</Message>
 					) : editor.rows.length === 0 ? (
@@ -184,9 +176,9 @@ export function App() {
 								onClick={editor.closeDetails}
 							></IconButton>
 						</header>
-						<pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-4 font-(family-name:--vscode-editor-font-family) text-sm whitespace-pre-wrap wrap-anywhere">
+						{editor.details.loading ? <Loading label="Loading details..." /> : <pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-4 font-(family-name:--vscode-editor-font-family) text-sm whitespace-pre-wrap wrap-anywhere">
 							{editor.details.content}
-						</pre>
+						</pre>}
 					</section>
 				</div>
 			)}
@@ -254,7 +246,7 @@ function ResourceTable({ editor }: { editor: EditorState }) {
 													onClick={() => editor.editContainer(row.id)}
 												></IconButton>
 												<IconButton label={`${running ? 'Stop' : 'Start'} ${row.name}`} icon={<>{editor.containerPendingId === row.id ? (
-													<LoaderCircle className="animate-spin" size="md" />
+													<Loading variant="icon" size="md" />
 												) : running ? (
 													<Square size="sm" />
 												) : (

@@ -1,4 +1,5 @@
 import { cn } from 'cn';
+import { Loading } from '../../../components/ui/loading';
 import { StorageLocation } from '../../../components/storageLocation';
 import { useState } from 'react';
 import { Save } from '../../../components/ui/icons';
@@ -19,8 +20,8 @@ export function ConnectionForm({ form }: { form: ConnectionFormState }) {
 	);
 	if (!form.model) {
 		return (
-			<main role="status" className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">
-				Loading...
+			<main className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">
+				<Loading />
 			</main>
 		);
 	}

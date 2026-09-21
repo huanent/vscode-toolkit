@@ -1,4 +1,5 @@
 import { cn } from 'cn';
+import { Loading } from '@webview/components/ui/loading';
 import { StorageLocation } from '@webview/components/storageLocation';
 import { useState } from 'react';
 import { Save } from '@webview/components/ui/icons';
@@ -17,7 +18,7 @@ export function App({ sessionId, onClose }: { sessionId?: number; onClose?: () =
 	if (!form.model) {
 		return (
 			<main className="grid min-h-32 place-items-center text-sm text-(--vscode-descriptionForeground)">
-				Loading...
+				<Loading />
 			</main>
 		);
 	}

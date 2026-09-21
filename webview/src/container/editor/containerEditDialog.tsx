@@ -1,12 +1,12 @@
 import { cn } from 'cn';
 import { useId } from 'react';
 import { Dialog } from '@webview/components/ui/dialog';
-import { LoaderCircle, RotateCw } from '@webview/components/ui/icons';
+import { RotateCw } from '@webview/components/ui/icons';
+import { Loading } from '@webview/components/ui/loading';
 import { Button as PrimaryButton, Button as SecondaryButton } from '@webview/components/ui/button';
 import { FieldLabel } from '@webview/components/ui/field';
 import { Select as SelectInput, Textarea as TextArea, Input as TextInput } from '@webview/components/ui/input';
 import type { useContainerEditor } from './hooks/useContainerEditor';
-import { Message } from './message';
 
 type EditorState = Pick<
 	ReturnType<typeof useContainerEditor>,
@@ -30,7 +30,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 			closeDisabled={state.saving}
 			actions={<>
 				<SecondaryButton variant="plain" disabled={state.saving} onClick={editor.closeContainerEditor}>Cancel</SecondaryButton>
-				<PrimaryButton htmlType="submit" form={formId} disabled={!config || state.loading || state.saving} left={<RotateCw className={state.saving ? 'animate-spin' : ''} />}>
+				<PrimaryButton htmlType="submit" form={formId} disabled={!config || state.loading || state.saving} left={state.saving ? <Loading variant="icon" label="Recreating..." /> : <RotateCw />}>
 					{state.saving ? 'Recreating...' : 'Recreate'}
 				</PrimaryButton>
 			</>}
@@ -43,10 +43,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 				}}
 			>
 				{state.loading ? (
-					<Message>
-						<LoaderCircle className="animate-spin" size="lg" />
-						Loading configuration...
-					</Message>
+					<Loading label="Loading configuration..." />
 				) : config ? (
 					<div className="grid gap-4">
 						<div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">

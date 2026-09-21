@@ -2,7 +2,8 @@ import { Fragment, useState, type UIEvent } from 'react';
 import type { ResultHistoryMessage, ResultTask } from '@/result/protocol';
 import { IconButton } from '@webview/components/ui/button';
 import { List, ListGroup, ListItem } from '@webview/components/ui/list';
-import { CircleAlert, CircleCheck, CircleSlash, LoaderCircle, RefreshCw, Square, Trash2 } from '@webview/components/ui/icons';
+import { CircleAlert, CircleCheck, CircleSlash, RefreshCw, Square, Trash2 } from '@webview/components/ui/icons';
+import { Loading } from '@webview/components/ui/loading';
 import { vscode } from '@webview/vscodeApi';
 import { getHistoryGroup } from '@webview/lib/history';
 
@@ -34,13 +35,13 @@ export function ResultHistory({ history }: { history: ResultHistoryMessage }) {
                         const isActive = task.state === 'running' || task.state === 'stopping';
                         const unknown = task.executionStatus === 'unknown';
                         const executionLabel = unknown ? 'Execution status unknown' : task.executionStatus === 'external' ? 'Running in another window' : undefined;
-                        const Icon = unknown ? CircleAlert : isActive ? LoaderCircle : task.state === 'error' ? CircleAlert : task.state === 'cancelled' ? CircleSlash : CircleCheck;
+                        const Icon = unknown || task.state === 'error' ? CircleAlert : task.state === 'cancelled' ? CircleSlash : CircleCheck;
                         return (
                             <ListItem
                                 key={task.id}
                                 selected={history.selectedId === task.id}
                                 onSelect={() => vscode.postMessage({ type: 'selectTask', id: task.id })}
-                                icon={<Icon className={isActive && !unknown ? 'animate-spin' : undefined} />}
+                                icon={isActive && !unknown ? <Loading variant="icon" label={task.state === 'stopping' ? 'Stopping...' : 'Running...'} /> : <Icon />}
                                 actions={isActive ? task.executionStatus ? undefined : (
                                     <IconButton size="sm" icon={<Square />} label={task.state === 'stopping' ? 'Stopping...' : 'Stop'} disabled={!task.cancellable || task.state === 'stopping'} onClick={() => vscode.postMessage({ type: 'cancelTask', id: task.id })} />
                                 ) : (

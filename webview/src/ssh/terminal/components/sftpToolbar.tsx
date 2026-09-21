@@ -1,4 +1,4 @@
-import { cn } from 'cn';
+import { Loading } from '../../../components/ui/loading';
 import { useEffect, useState } from 'react';
 import { IconButton } from '../../../components/ui/button';
 import { ArrowUp, FolderPlus, RefreshCw, Star, Upload } from '../../../components/ui/icons';
@@ -46,7 +46,7 @@ export function SftpToolbar({
 				disabled={loading}
 				label="Refresh"
 				onClick={() => list(sftpPath)}
-				icon={<RefreshCw className={cn(loading ? 'codicon-modifier-spin' : '')} size="md" />}
+				icon={loading ? <Loading variant="icon" size="md" /> : <RefreshCw size="md" />}
 			/>
 			<div ref={setAnchorElement} className="min-w-0 flex-1">
 				<Input

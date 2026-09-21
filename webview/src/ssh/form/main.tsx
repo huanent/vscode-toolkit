@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { vscode } from '@webview/vscodeApi';
 import { subscribe } from '../vscode';
 import { ConnectionEditor } from './components/connectionEditor';
+import { Loading } from '../../components/ui/loading';
 
 const close = () => vscode.postMessage({ type: 'closeEditor' });
 document.body.dataset.toolkitEditor = 'true';
@@ -20,7 +21,7 @@ function App() {
     return (
         <main className="mx-auto max-w-6xl p-4 text-(--vscode-foreground)">
             {sessionId === undefined ? (
-                <p role="status">Loading...</p>
+                <Loading />
             ) : (
                 <ConnectionEditor key={sessionId} sessionId={sessionId} onClose={close} />
             )}

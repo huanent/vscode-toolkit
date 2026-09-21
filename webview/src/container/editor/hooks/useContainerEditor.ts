@@ -25,7 +25,7 @@ export function useContainerEditor() {
 	const [error, setError] = useState('');
 	const [systemPending, setSystemPending] = useState(false);
 	const [containerPendingId, setContainerPendingId] = useState('');
-	const [details, setDetails] = useState<{ title: string; content: string }>();
+	const [details, setDetails] = useState<{ title: string; content: string; loading: boolean }>();
 	const [containerEditor, setContainerEditor] = useState<{
 		id: string;
 		config?: ContainerRecreateConfig;
@@ -115,11 +115,11 @@ export function useContainerEditor() {
 					break;
 				case 'details':
 					setDetails(current =>
-						current ? { ...current, content: JSON.stringify(message.details, null, 2) } : current,
+						current ? { ...current, content: JSON.stringify(message.details, null, 2), loading: false } : current,
 					);
 					break;
 				case 'detailsError':
-					setDetails(current => (current ? { ...current, content: message.message } : current));
+					setDetails(current => (current ? { ...current, content: message.message, loading: false } : current));
 					break;
 			}
 		};
@@ -179,7 +179,7 @@ export function useContainerEditor() {
 			if (!containerEditor?.saving) setContainerEditor(undefined);
 		},
 		inspect: (row: ResourceRow) => {
-			setDetails({ title: row.name, content: 'Loading details...' });
+			setDetails({ title: row.name, content: '', loading: true });
 			postMessage({ type: 'inspect', resource, id: row.id });
 		},
 		closeDetails: () => setDetails(undefined),
