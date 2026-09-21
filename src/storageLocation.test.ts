@@ -2,9 +2,7 @@ import { posix } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
 import { StorageLocation } from './storageLocation';
-import { migrateConnections } from './connection/migration';
 
-vi.mock('./connection/migration', () => ({ migrateConnections: vi.fn() }));
 vi.mock('vscode', () => {
     const uri = (value: string) => ({ fsPath: value.replace('file://', ''), toString: () => value });
     return {
@@ -31,12 +29,13 @@ describe('workspace storage locations', () => {
         expect(locations.directory('item').toString()).toBe(`file:///project/.toolkit/${directory}`);
     });
 
-    it('enumerates and migrates connections only at the new workspace root', async () => {
+    it('enumerates connections only in the current global and workspace directories', async () => {
         const locations = new StorageLocation(vscode.Uri.parse('file:///global/connection'), 'ssh');
         await locations.entries();
-        expect(migrateConnections).toHaveBeenCalledWith('/project/.toolkit');
+        expect(vscode.workspace.fs.readDirectory).toHaveBeenCalledTimes(2);
+        expect(vscode.workspace.fs.readDirectory).toHaveBeenCalledWith(expect.objectContaining({ fsPath: '/global/connection' }));
         expect(vscode.workspace.fs.readDirectory).toHaveBeenCalledWith(expect.objectContaining({ fsPath: '/project/.toolkit/connection' }));
-        expect(migrateConnections).not.toHaveBeenCalledWith('/project/.vscode/toolkit');
+        expect(vscode.workspace.fs.rename).not.toHaveBeenCalled();
     });
 
     it('moves workflows to the new workspace directory', async () => {

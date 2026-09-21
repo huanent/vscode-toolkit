@@ -46,7 +46,6 @@ const sftpEditFiles = new Map<
 	}
 >();
 let activeSshSession: SshWebviewSession | undefined;
-const pendingTerminalCommands = new Map<string, string[]>();
 
 function errorMessage(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
@@ -80,13 +79,6 @@ export function runCommandInActiveTerminal(serverId: string, command: string): b
 	return activeSshSession?.runCommand(serverId, command) ?? false;
 }
 
-export function queueCommandForTerminal(serverId: string, command: string): void {
-	pendingTerminalCommands.set(serverId, [
-		...(pendingTerminalCommands.get(serverId) ?? []),
-		command,
-	]);
-}
-
 export function configureSshTerminal(
 	context: vscode.ExtensionContext,
 	panel: vscode.WebviewPanel,
@@ -103,14 +95,11 @@ export function configureSshTerminal(
 	panel.iconPath = new vscode.ThemeIcon('terminal');
 	panel.webview.html = getWebviewHtml(panel.webview, extensionUri, 'sshTerminal', server.name);
 
-	const queuedCommands = pendingTerminalCommands.get(server.id) ?? [];
-	pendingTerminalCommands.delete(server.id);
 	const session = new SshWebviewSession(
 		store,
 		panel,
 		server,
 		credentials,
-		queuedCommands,
 	);
 	activeSshSession = session;
 	const favoritesSubscription = store.onDidChange(() => session.postSftpFavorites());
@@ -144,6 +133,7 @@ export function configureSshTerminal(
 }
 
 class SshWebviewSession {
+	private readonly pendingCommands: string[] = [];
 	private connection: SshConnection | undefined;
 	private readonly metricsReader = new RemoteMetricsReader();
 	private readonly metricsFormatter = new RemoteMetricsFormatter();
@@ -164,7 +154,6 @@ class SshWebviewSession {
 		private readonly panel: vscode.WebviewPanel,
 		private readonly server: SshServer,
 		private readonly credentials: ServerCredentials,
-		private readonly pendingCommands: string[],
 	) { }
 
 	handleMessage(message: SshWebviewMessage): void {

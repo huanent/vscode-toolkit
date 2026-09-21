@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { IconButton } from '../components/ui/button';
 import { Toolbar } from '../components/ui/toolbar';
-import { ChevronDown, ChevronRight, CollapseAll, File, Folder, FolderPlus, Plus } from '../components/ui/icons';
+import { CollapseAll, File, FolderPlus, Plus } from '../components/ui/icons';
+import { List, ListItem } from '../components/ui/list';
+import { Tree } from '../components/ui/tree';
 import { DashboardEmpty } from '../dashboard/components';
 import { Loading } from '../components/ui/loading';
 import { send, subscribe } from '../dashboard/channel';
@@ -33,9 +35,10 @@ export function Temp() {
         send('temp', { type: 'list', directory: '' });
         return unsubscribe;
     }, []);
-    const toggle = (directory: string) => {
-        setExpanded(current => ({ ...current, [directory]: !current[directory] }));
-        if (!expanded[directory]) send('temp', { type: 'list', directory });
+    const toggle = (directory: string, open: boolean) => {
+        if (open === !!expanded[directory]) return;
+        setExpanded(current => ({ ...current, [directory]: open }));
+        if (open) send('temp', { type: 'list', directory });
     };
     return (
         <section className="flex h-full min-h-0 flex-col">
@@ -47,58 +50,50 @@ export function Temp() {
             {error && <p role="alert" className="wrap-break-word py-2 text-xs text-(--vscode-errorForeground)">{error}</p>}
             <div className="min-h-0 flex-1 overflow-auto">
                 {loading || entries.length === 0 ? <DashboardEmpty loading={loading} noun="files" /> : (
-                    <ul aria-label="Temp files">
-                        {entries.map(entry => (
+                    <List aria-label="Temp files">
+                        {entries.map(entry => entry.directory ? (
                             <li key={entry.path}>
-                                {entry.directory ? (
-                                    <>
-                                        <div className="flex min-w-0 items-center gap-1" data-vscode-context={JSON.stringify({ webviewSection: 'tempFolder', tempPath: entry.path, preventDefaultContextMenuItems: true })}>
-                                            <button
-                                                type="button"
-                                                title={entry.name}
-                                                aria-expanded={!!expanded[entry.path]}
-                                                className="flex min-w-0 flex-1 items-center gap-2 rounded-xs px-2 py-1.5 text-left text-xs hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)"
-                                                onClick={() => toggle(entry.path)}
-                                            >
-                                                {expanded[entry.path] ? <ChevronDown className="shrink-0" /> : <ChevronRight className="shrink-0" />}
-                                                <Folder className="shrink-0" />
-                                                <span className="min-w-0 truncate">{entry.name}</span>
-                                            </button>
-                                        </div>
-                                        {expanded[entry.path] && (
-                                            <ul aria-label={entry.name} className="pl-5">
-                                                {children[entry.path] === undefined ? (
-                                                    <li className="px-2 py-1 text-xs text-(--vscode-descriptionForeground)"><Loading variant="inline" /></li>
-                                                ) : children[entry.path].filter(child => !child.directory).length === 0 ? (
-                                                    <li className="px-2 py-1 text-xs text-(--vscode-descriptionForeground)">No files yet.</li>
-                                                ) : children[entry.path].filter(child => !child.directory).map(child => (
-                                                    <li key={child.path}><TempFile entry={child} /></li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </>
-                                ) : <TempFile entry={entry} />}
+                                <Tree
+                                    label={entry.name}
+                                    open={!!expanded[entry.path]}
+                                    onToggle={event => toggle(entry.path, event.currentTarget.open)}
+                                    summaryProps={{
+                                        title: entry.name,
+                                        'data-vscode-context': JSON.stringify({ webviewSection: 'tempFolder', tempPath: entry.path, preventDefaultContextMenuItems: true }),
+                                    }}
+                                >
+                                    {expanded[entry.path] && <TempFiles name={entry.name} entries={children[entry.path]} />}
+                                </Tree>
                             </li>
-                        ))}
-                    </ul>
+                        ) : <TempFile key={entry.path} entry={entry} />)}
+                    </List>
                 )}
             </div>
         </section>
     );
 }
 
+function TempFiles({ name, entries }: { name: string; entries?: Entry[] }) {
+    const files = entries?.filter(entry => !entry.directory);
+    return (
+        <List aria-label={name}>
+            {files === undefined ? (
+                <li className="py-1"><Loading variant="inline" /></li>
+            ) : files.length === 0 ? (
+                <li className="py-1 text-xs text-(--vscode-descriptionForeground)">No files yet.</li>
+            ) : files.map(entry => <TempFile key={entry.path} entry={entry} />)}
+        </List>
+    );
+}
+
 function TempFile({ entry }: { entry: Entry }) {
     return (
-        <div className="flex min-w-0 items-center gap-1" data-vscode-context={JSON.stringify({ webviewSection: 'tempFile', tempPath: entry.path, preventDefaultContextMenuItems: true })}>
-            <button
-                type="button"
-                title={entry.name}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-xs px-2 py-1.5 text-left text-xs hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-(--vscode-focusBorder)"
-                onClick={() => send('temp', { type: 'open', path: entry.path })}
-            >
-                <File className="shrink-0" />
-                <span className="min-w-0 truncate">{entry.name}</span>
-            </button>
-        </div>
+        <ListItem
+            icon={<File />}
+            data-vscode-context={JSON.stringify({ webviewSection: 'tempFile', tempPath: entry.path, preventDefaultContextMenuItems: true })}
+            onSelect={() => send('temp', { type: 'open', path: entry.path })}
+        >
+            <span title={entry.name}>{entry.name}</span>
+        </ListItem>
     );
 }

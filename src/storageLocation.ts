@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { migrateConnections } from './connection/migration';
 
 export class StorageLocation {
 	private readonly locations = new Map<string, vscode.Uri>();
@@ -61,14 +60,6 @@ export class StorageLocation {
 	}
 
 	async entries(): Promise<{ name: string; directory: vscode.Uri; type: vscode.FileType }[]> {
-		if (this.feature === 'connection') {
-			await migrateConnections(vscode.Uri.joinPath(this.globalDirectory, '..').fsPath);
-			if (vscode.workspace.isTrusted) {
-				for (const folder of vscode.workspace.workspaceFolders ?? []) {
-					await migrateConnections(vscode.Uri.joinPath(folder.uri, '.toolkit').fsPath);
-				}
-			}
-		}
 		const directories = [this.globalDirectory, ...(vscode.workspace.isTrusted ? this.folders.map(folder => this.workspaceDirectory(folder.uri)) : [])];
 		const entries = [];
 		for (const directory of directories) {

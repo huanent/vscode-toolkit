@@ -123,11 +123,6 @@ function configureDashboard(current: vscode.WebviewView): void {
 			await current.webview.postMessage({ type: 'dashboardConnected' });
 		} else if (message.type === 'dashboardTab' && ['workflow', 'connection', 'temp'].includes(message.tab)) {
 			activeTab = message.tab;
-		} else if (
-			message.type === 'dashboardNavigate' &&
-			['openChat', 'openExplorer'].includes(message.command)
-		) {
-			await vscode.commands.executeCommand(`vscode-toolkit.${message.command}`);
 		}
 	});
 	current.onDidDispose(() => {
@@ -188,7 +183,7 @@ export function dashboardFeaturePanel(tab: DashboardTab, background = false): vs
 	return scoped;
 }
 
-export function openDashboardEditor(tab: DashboardTab, request: Record<string, unknown>): void {
+function openDashboardEditor(tab: DashboardTab, request: Record<string, unknown>): void {
 	if (tab === 'database' || tab === 'ssh') {
 		receivers.get(tab)?.fire(request);
 		return;

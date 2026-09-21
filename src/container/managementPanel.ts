@@ -96,12 +96,6 @@ export function registerManagementFeature(
 							return;
 						}
 						switch (message.type) {
-							case 'up':
-								await store.moveServer(server.id, 'up');
-								break;
-							case 'down':
-								await store.moveServer(server.id, 'down');
-								break;
 							case 'connect':
 								await openServerConnection(server);
 								break;

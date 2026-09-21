@@ -21,7 +21,7 @@ export function registerDashboardContextMenus(
                 if ((tab !== 'ssh' && tab !== 'database' && tab !== 'container' && tab !== 'connection') || typeof request?.connectionId !== 'string') return;
                 const groupAction = action.startsWith('group');
                 if (request.webviewSection !== (groupAction ? 'sshGroup' : 'connectionItem')) return;
-                if (groupAction && tab !== 'ssh' && tab !== 'connection') return;
+                if (groupAction && tab !== 'connection') return;
                 if (!groupAction && tab === 'connection') return;
                 if ((action === 'copyHost' && tab === 'container') || (action === 'runScript' && (tab !== 'ssh' || request.dashboardHasScripts !== true))) return;
                 if (['up', 'down', 'groupUp', 'groupDown'].includes(action) && request.dashboardFiltered === true) return;

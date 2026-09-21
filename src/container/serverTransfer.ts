@@ -3,16 +3,6 @@ import * as vscode from 'vscode';
 import { ExportedServer, parseServerExport, Server, ServerType } from './server';
 import { ServerStore } from './serverStore';
 
-export async function exportServers(serverStore: ServerStore): Promise<void> {
-	const servers = serverStore.getServers();
-	if (servers.length === 0) {
-		void vscode.window.showInformationMessage('There are no servers to export.');
-		return;
-	}
-
-	await exportServerFile(await serverStore.getExportedServers(), 'servers-export.json');
-}
-
 export async function exportServer(serverStore: ServerStore, servers: Server[]): Promise<void> {
 	await exportServerFile(
 		(await serverStore.getExportedServers()).filter(server =>

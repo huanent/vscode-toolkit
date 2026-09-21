@@ -68,12 +68,6 @@ export function registerManagementFeature(
 							case 'copyHost':
 								await vscode.env.clipboard.writeText(server.host);
 								break;
-							case 'up':
-								await store.moveServer(server.id, 'up');
-								break;
-							case 'down':
-								await store.moveServer(server.id, 'down');
-								break;
 							case 'connect':
 								await openServerConnection(server);
 								break;

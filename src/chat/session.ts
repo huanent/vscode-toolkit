@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import type { ChatAttachment } from './attachments';
 
 export type TokenUsage = {
@@ -21,16 +20,6 @@ export type StoredSession = {
 	updatedAt: number;
 	messages: StoredMessage[];
 };
-
-export function createSession(messages: StoredMessage[]): StoredSession {
-	const firstUserMessage = messages.find(message => message.role === 'user')?.content ?? 'New Chat';
-	return {
-		id: randomUUID(),
-		summary: createSummary(firstUserMessage),
-		updatedAt: Date.now(),
-		messages,
-	};
-}
 
 export function createSummary(text: string) {
 	const summary = text.replace(/\s+/g, ' ').trim();
