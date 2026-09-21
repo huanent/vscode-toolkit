@@ -41,7 +41,7 @@ class ContainerTool implements vscode.LanguageModelTool<ExecuteContainerInput> {
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findContainerServer(options.input.id);
 		if (!server)
-			throw new Error('Container server was not found. Call readConfigrations first.');
+			throw new Error('Container server was not found. Call readConfigurations first.');
 		const output = await executeContainerCommand(server, this.serverStore, options.input.args);
 		return textResult(output.slice(0, 20_000));
 	}

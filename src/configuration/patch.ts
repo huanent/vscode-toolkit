@@ -28,9 +28,9 @@ function uniqueIndex(source: string, search: string): number {
     return index;
 }
 
-export function applyConfigurationPatches(text: string, patchs: ConfigurationPatch[]): string {
-    if (!Array.isArray(patchs) || !patchs.length) throw new Error('patchs must be a non-empty array.');
-    for (const patch of patchs) {
+export function applyConfigurationPatches(text: string, patches: ConfigurationPatch[]): string {
+    if (!Array.isArray(patches) || !patches.length) throw new Error('patches must be a non-empty array.');
+    for (const patch of patches) {
         if (!patch || typeof patch.oldString !== 'string' || !patch.oldString.trim() || typeof patch.newString !== 'string')
             throw new Error('Each patch requires a non-empty oldString and a string newString.');
         let start = uniqueIndex(text, patch.oldString);

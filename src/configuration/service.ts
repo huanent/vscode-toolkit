@@ -62,18 +62,18 @@ export class ConfigurationService {
         return pending;
     }
 
-    edit(id: string, patchs: ConfigurationPatch[], isCancelled = () => false): Promise<ConfigurationEntry> {
+    edit(id: string, patches: ConfigurationPatch[], isCancelled = () => false): Promise<ConfigurationEntry> {
         const pending = this.mutation.then(async () => {
             if (typeof id !== 'string' || !id.trim()) throw new Error('id is required.');
             const matches = (await this.read()).filter(entry => entry.id === id);
-            if (!matches.length) throw new Error('Configuration was not found or is not enabled for AI. Call readConfigrations first.');
+            if (!matches.length) throw new Error('Configuration was not found or is not enabled for AI. Call readConfigurations first.');
             if (matches.length > 1) throw new Error('Configuration ID is ambiguous across types.');
             if (isCancelled()) throw new Error('Configuration update cancelled.');
             const entry = matches[0];
             const provider = this.providers.get(entry.type);
             if (entry.type === 'credential' || !provider?.update) throw new Error('Credentials are read-only.');
             const document = { ...entry.configuration, location: entry.location };
-            const patched: unknown = JSON.parse(applyConfigurationPatches(JSON.stringify(document, undefined, 2), patchs));
+            const patched: unknown = JSON.parse(applyConfigurationPatches(JSON.stringify(document, undefined, 2), patches));
             if (!patched || typeof patched !== 'object' || Array.isArray(patched)) throw new Error('Configuration must be a JSON object.');
             const { location, ...configuration } = patched as Record<string, unknown>;
             if (configuration.id !== id || configuration.type !== entry.configuration.type) throw new Error('Cannot change configuration id or type.');

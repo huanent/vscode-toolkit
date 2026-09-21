@@ -33,7 +33,7 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
     ]);
     return vscode.Disposable.from(
         registerCredentialConfigurations(new CredentialStore(getStorageUri(context, 'credential').fsPath)),
-        vscode.lm.registerTool<{ type: WritableConfigurationType; configuration: Record<string, unknown>; location?: string }>('createConfigration', {
+        vscode.lm.registerTool<{ type: WritableConfigurationType; configuration: Record<string, unknown>; location?: string }>('createConfiguration', {
             prepareInvocation({ input }) {
                 return {
                     invocationMessage: `Creating ${input.type} configuration`,
@@ -44,12 +44,12 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
                 return result(await configurations.create(input.type, input.configuration, input.location, () => token.isCancellationRequested));
             },
         }),
-        vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string }>('readConfigrations', {
+        vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string }>('readConfigurations', {
             async invoke({ input }) {
                 return result(await configurations.read(input.type, input.regex));
             },
         }),
-        vscode.lm.registerTool<{ id: string; patchs: ConfigurationPatch[] }>('editConfigration', {
+        vscode.lm.registerTool<{ id: string; patches: ConfigurationPatch[] }>('editConfiguration', {
             prepareInvocation({ input }) {
                 return {
                     invocationMessage: `Updating configuration ${input.id}`,
@@ -60,7 +60,7 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
                 };
             },
             async invoke({ input }, token) {
-                return result(await configurations.edit(input.id, input.patchs, () => token.isCancellationRequested));
+                return result(await configurations.edit(input.id, input.patches, () => token.isCancellationRequested));
             },
         }),
     );

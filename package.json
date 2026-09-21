@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.8.8",
+  "version": "1.8.9",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -790,11 +790,11 @@
     },
     "languageModelTools": [
       {
-        "name": "readConfigrations",
-        "toolReferenceName": "readConfigrations",
+        "name": "readConfigurations",
+        "toolReferenceName": "readConfigurations",
         "displayName": "Read Configurations",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read saved configurations as a JSON array, optionally filtered by type and regular expression. Credentials include metadata only, never secrets.",
+        "modelDescription": "Read AI-enabled saved configurations as a JSON array. Call this before using a connection, workflow, or credential ID. Optionally filter by type or a case-insensitive JavaScript regular expression. Credentials include metadata only, never secrets.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -816,11 +816,11 @@
         }
       },
       {
-        "name": "editConfigration",
-        "toolReferenceName": "editConfigration",
+        "name": "editConfiguration",
+        "toolReferenceName": "editConfiguration",
         "displayName": "Edit Configuration",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read the configuration with readConfigrations first, then apply ordered string-replacement patches to update specific parts of its JSON. Each patch must match uniquely. Configuration ID and top-level type cannot change. Credentials cannot be edited. Returns the updated configuration.",
+        "modelDescription": "Read the configuration with readConfigurations immediately before editing, then apply ordered exact string-replacement patches to its JSON. Use text copied from the returned JSON; each oldString must match exactly once. Prefer one patch per field. Configuration ID and top-level type cannot change. Credentials are read-only. Returns the updated configuration.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -828,7 +828,7 @@
               "type": "string",
               "minLength": 1
             },
-            "patchs": {
+            "patches": {
               "type": "array",
               "minItems": 1,
               "items": {
@@ -851,16 +851,16 @@
           },
           "required": [
             "id",
-            "patchs"
+            "patches"
           ]
         }
       },
       {
-        "name": "createConfigration",
-        "toolReferenceName": "createConfigration",
+        "name": "createConfiguration",
+        "toolReferenceName": "createConfiguration",
         "displayName": "Create Configuration",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Create a new configuration and return the created entry as JSON.",
+        "modelDescription": "Create a new AI-enabled workflow, SSH connection, MySQL connection, or container connection. Call readConfigurations first when referring to saved credentials or SSH connections. Omit generated id, type, location, username, authentication type, passwords, and secrets. The operation changes local configuration state and requires confirmation.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -951,7 +951,7 @@
                               },
                               "serverId": {
                                 "type": "string",
-                                "description": "SSH server ID from readConfigrations."
+                                "description": "AI-enabled SSH server ID from readConfigurations."
                               },
                               "command": {
                                 "type": "string",
@@ -980,7 +980,7 @@
                               },
                               "serverId": {
                                 "type": "string",
-                                "description": "SSH server ID from readConfigrations."
+                                "description": "AI-enabled SSH server ID from readConfigurations."
                               },
                               "localPath": {
                                 "type": "string",
@@ -1014,7 +1014,8 @@
                   "required": [
                     "name",
                     "steps"
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
@@ -1045,7 +1046,7 @@
                     "credentialId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                     },
                     "proxy": {
                       "type": "object",
@@ -1053,7 +1054,7 @@
                         "credentialId": {
                           "type": "string",
                           "minLength": 1,
-                          "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                         },
                         "host": {
                           "type": "string",
@@ -1106,7 +1107,8 @@
                     "host",
                     "port",
                     "credentialId"
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
@@ -1137,7 +1139,7 @@
                     "credentialId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                     },
                     "proxy": {
                       "type": "object",
@@ -1145,7 +1147,7 @@
                         "credentialId": {
                           "type": "string",
                           "minLength": 1,
-                          "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                         },
                         "host": {
                           "type": "string",
@@ -1174,7 +1176,8 @@
                     "port",
                     "credentialId",
                     "database"
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
@@ -1205,7 +1208,7 @@
                     "credentialId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                     },
                     "proxy": {
                       "type": "object",
@@ -1213,7 +1216,7 @@
                         "credentialId": {
                           "type": "string",
                           "minLength": 1,
-                          "description": "Saved credential ID from readConfigrations; username and authentication type are derived automatically."
+                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
                         },
                         "host": {
                           "type": "string",
@@ -1263,7 +1266,8 @@
                     "runtime",
                     "executablePath",
                     "connectionType"
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -1278,14 +1282,14 @@
         "toolReferenceName": "runWorkflow",
         "displayName": "Run Workflow",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Run a workflow by id. Stops on failure. Cancellation terminates local commands, requests SSH termination, and closes SFTP transfers; partial destination files may remain. Returns execution status only.",
+        "modelDescription": "Run a saved workflow by ID after reading configurations. A workflow may execute local shell commands, remote SSH commands, and SFTP uploads or downloads, and can change local or remote state. Stops on failure. Cancellation terminates local commands, requests SSH termination, and closes SFTP transfers; partial destination files may remain. Requires user confirmation and returns execution status only.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "Saved workflow ID from readConfigrations."
+              "description": "Saved workflow ID from readConfigurations."
             }
           },
           "required": [
@@ -1301,16 +1305,18 @@
         "toolReferenceName": "runSSHCommand",
         "displayName": "Run SSH Command",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Run a non-interactive remote shell command via SSH using stored credentials. Do not embed credentials or prompt for input. Returns the first 20,000 characters of output.",
+        "modelDescription": "Execute one non-interactive remote shell command through an AI-enabled SSH connection using stored credentials. This can change remote state. Do not embed credentials or use commands that require interactive input. Returns the first 20,000 characters of output.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "SSH connection id from readConfigrations."
+              "description": "AI-enabled SSH connection ID from readConfigurations."
             },
             "command": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "description": "Remote shell command. May change remote state; do not include credentials."
             }
           },
           "required": [
@@ -1328,16 +1334,18 @@
         "toolReferenceName": "runSQLStatement",
         "displayName": "Run SQL statement",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Run one MySQL statement; database optionally selects the database for this call. Returns rows or result metadata as JSON. Session state and transactions do not persist across calls. Use LIMIT to bound query results.",
+        "modelDescription": "Execute one MySQL statement, including reads and mutations such as INSERT, UPDATE, DELETE, and DDL. This can change database state. The optional database selects the database for this call. Returns rows or result metadata as JSON. Session state and transactions do not persist across calls. Use LIMIT to bound query results.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "Database connection id from readConfigrations."
+              "description": "AI-enabled database connection ID from readConfigurations."
             },
             "database": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional database/schema name for this call."
             },
             "sql": {
               "type": "string",
@@ -1360,13 +1368,13 @@
         "toolReferenceName": "runContainerCommand",
         "displayName": "Run Container Command",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Run a Docker, Podman or Apple Container command. Pass runtime-specific arguments as separate args entries, not a shell command. Avoid interactive or indefinitely streaming commands. Returns the first 20,000 characters of output.",
+        "modelDescription": "Execute a Docker, Podman, or Apple Container command on an AI-enabled connection. This can create, modify, or delete containers and other runtime state. Pass runtime-specific arguments as separate args entries, not a shell command. Avoid interactive or indefinitely streaming commands. Returns the first 20,000 characters of output.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "Container connection id from readConfigrations."
+              "description": "AI-enabled container connection ID from readConfigurations."
             },
             "args": {
               "type": "array",
@@ -1393,13 +1401,13 @@
         "toolReferenceName": "manageSFTPFiles",
         "displayName": "Manage SFTP Files",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Manage remote files via SFTP. Upload/download require localPath and can overwrite files; rename requires toRemotePath. For directory deletion, set isDirectory. Read returns up to 20,000 text characters; use download for binary or complete files.",
+        "modelDescription": "Manage files on an AI-enabled SSH connection via SFTP. list and read are read-only; upload, download, delete, mkdir, and rename change local or remote filesystem state and may overwrite or remove data. upload/download require localPath; rename requires toRemotePath; delete requires the correct isDirectory value. read returns up to 20,000 UTF-8 characters; use download for binary or complete files.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "SSH connection id from readConfigrations."
+              "description": "AI-enabled SSH connection ID from readConfigurations."
             },
             "action": {
               "type": "string",
@@ -1434,6 +1442,52 @@
             "id",
             "action",
             "remotePath"
+          ],
+          "oneOf": [
+            {
+              "properties": {
+                "action": {
+                  "enum": [
+                    "list",
+                    "read",
+                    "mkdir"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "action": {
+                  "enum": [
+                    "upload",
+                    "download"
+                  ]
+                }
+              },
+              "required": [
+                "localPath"
+              ]
+            },
+            {
+              "properties": {
+                "action": {
+                  "const": "rename"
+                }
+              },
+              "required": [
+                "toRemotePath"
+              ]
+            },
+            {
+              "properties": {
+                "action": {
+                  "const": "delete"
+                }
+              },
+              "required": [
+                "isDirectory"
+              ]
+            }
           ]
         },
         "tags": [

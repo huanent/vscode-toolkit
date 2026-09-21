@@ -43,7 +43,7 @@ class SqlTool implements vscode.LanguageModelTool<ExecuteSqlInput> {
 		_token: vscode.CancellationToken,
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findMysqlServer(options.input.id);
-		if (!server) throw new Error('DB server was not found. Call readConfigrations first.');
+		if (!server) throw new Error('DB server was not found. Call readConfigurations first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		const connection = await createMysqlConnection(server, credentials, options.input.database);
 		try {

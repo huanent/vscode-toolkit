@@ -62,7 +62,7 @@ class SftpTool implements vscode.LanguageModelTool<SftpInput> {
 	): Promise<vscode.LanguageModelToolResult> {
 		const input = options.input;
 		const server = this.findSshServer(input.id);
-		if (!server) throw new Error('SSH server was not found. Call readConfigrations first.');
+		if (!server) throw new Error('SSH server was not found. Call readConfigurations first.');
 		const credentials = await this.serverStore.getCredentials(server.id);
 		switch (input.action) {
 			case 'list':
@@ -133,7 +133,7 @@ class ExecuteSshCommandTool implements vscode.LanguageModelTool<ExecuteSshComman
 	): Promise<vscode.LanguageModelToolResult> {
 		const server = this.findSshServer(options.input.id);
 		if (!server) {
-			throw new Error('SSH server was not found. Call readConfigrations first.');
+			throw new Error('SSH server was not found. Call readConfigurations first.');
 		}
 
 		const credentials = await this.serverStore.getCredentials(server.id);
