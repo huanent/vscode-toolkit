@@ -44,9 +44,9 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
                 return result(await configurations.create(input.type, input.configuration, input.location, () => token.isCancellationRequested));
             },
         }),
-        vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string; id?: string }>('readConfigrations', {
+        vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string }>('readConfigrations', {
             async invoke({ input }) {
-                return result(await configurations.read(input.type, input.regex, input.id));
+                return result(await configurations.read(input.type, input.regex));
             },
         }),
         vscode.lm.registerTool<{ id: string; patchs: ConfigurationPatch[] }>('editConfigration', {

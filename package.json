@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.8.7",
+  "version": "1.8.8",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -794,7 +794,7 @@
         "toolReferenceName": "readConfigrations",
         "displayName": "Read Configurations",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read saved configurations as a JSON array, optionally filtered by type, exact ID, and regular expression. Credentials include metadata only, never secrets.",
+        "modelDescription": "Read saved configurations as a JSON array, optionally filtered by type and regular expression. Credentials include metadata only, never secrets.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -810,12 +810,7 @@
             },
             "regex": {
               "type": "string",
-              "description": "JavaScript regular expression pattern without / delimiters or flags. Case-insensitive; omit or pass an empty pattern to match all entries."
-            },
-            "id": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Exact, case-sensitive configuration ID. Combined with type and regex filters; returns an empty array when no entry matches."
+              "description": "JavaScript regular expression pattern without / delimiters or flags, matched case-insensitively against each entry's JSON, so it can match fields such as id, name, host..."
             }
           }
         }

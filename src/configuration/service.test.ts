@@ -55,27 +55,6 @@ describe('ConfigurationService', () => {
         expect(update).toHaveBeenCalledExactlyOnceWith(entry, { ...configuration, name: 'Updated' }, '');
     });
 
-    it('filters by exact ID combined with type and regex', async () => {
-        const { service } = setup();
-        expect(await service.read(undefined, undefined, 'server-1')).toHaveLength(1);
-        expect(await service.read('ssh', 'Production', 'server-1')).toHaveLength(1);
-        expect(await service.read('workflow', undefined, 'server-1')).toEqual([]);
-        expect(await service.read('ssh', 'missing', 'server-1')).toEqual([]);
-        for (const id of ['server', 'SERVER-1', 'missing']) {
-            expect(await service.read(undefined, undefined, id)).toEqual([]);
-        }
-    });
-
-    it('rejects invalid IDs before reading providers', async () => {
-        const service = new ConfigurationService();
-        const list = vi.fn(async () => []);
-        service.register('ssh', { list });
-        for (const id of ['', ' ', 123 as unknown as string]) {
-            await expect(service.read(undefined, undefined, id)).rejects.toThrow('id must be a non-empty string');
-        }
-        expect(list).not.toHaveBeenCalled();
-    });
-
     it('filters JSON entries by optional type and case-insensitive regular expression', async () => {
         const { service } = setup();
         expect(await service.read()).toHaveLength(1);
@@ -84,6 +63,7 @@ describe('ConfigurationService', () => {
         expect(await service.read('workflow', 'Production')).toEqual([]);
         expect(await service.read(undefined, 'example\\.com')).toHaveLength(1);
         expect(await service.read(undefined, '"id":"server-\\d+"')).toHaveLength(1);
+        expect(await service.read(undefined, 'server-1')).toHaveLength(1);
         expect(await service.read(undefined, '^Production$')).toEqual([]);
         expect(await service.read(undefined, '')).toHaveLength(1);
         expect(await service.read(undefined, ' Production ')).toEqual([]);

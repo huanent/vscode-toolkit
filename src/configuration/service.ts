@@ -28,10 +28,9 @@ export class ConfigurationService {
         return () => { this.providers.delete(type); };
     }
 
-    async read(type?: ConfigurationType, regex?: string, id?: string): Promise<ConfigurationEntry[]> {
+    async read(type?: ConfigurationType, regex?: string): Promise<ConfigurationEntry[]> {
         if (type !== undefined && !configurationTypes.includes(type)) throw new Error('Invalid configuration type.');
         if (regex !== undefined && typeof regex !== 'string') throw new Error('regex must be a string.');
-        if (id !== undefined && (typeof id !== 'string' || !id.trim())) throw new Error('id must be a non-empty string.');
         let search: RegExp | undefined;
         if (regex !== undefined) {
             try {
@@ -43,7 +42,7 @@ export class ConfigurationService {
         const entries = (await Promise.all([...this.providers]
             .filter(([candidate]) => type === undefined || candidate === type)
             .map(([, provider]) => provider.list()))).flat();
-        return entries.filter(entry => (id === undefined || entry.id === id) && (!search || search.test(JSON.stringify(entry))));
+        return entries.filter(entry => !search || search.test(JSON.stringify(entry)));
     }
 
     create(type: WritableConfigurationType, configuration: Record<string, unknown>, location?: string, isCancelled = () => false): Promise<ConfigurationEntry> {
