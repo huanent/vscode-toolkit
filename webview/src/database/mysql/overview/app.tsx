@@ -1,8 +1,8 @@
 import { IconButton } from '../../../components/ui/button';
+import { Loading } from '../../../components/ui/loading';
 import {
 	Download,
 	Gist,
-	LoaderCircle,
 	Plus,
 	RefreshCw,
 	Trash2,
@@ -18,7 +18,7 @@ export function App() {
 	if (!mysql.server)
 		return (
 			<div className="grid h-screen place-items-center">
-				<LoaderCircle className="animate-spin" />
+				<Loading />
 			</div>
 		);
 	return (

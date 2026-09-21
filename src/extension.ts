@@ -28,7 +28,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	context.subscriptions.push(vscode.window.registerWebviewViewProvider(ResultView.viewType, resultView, {
 		webviewOptions: { retainContextWhenHidden: true },
 	}));
-	registerDashboard(context);
 	registerCredential(context);
 
 	context.subscriptions.push(
@@ -57,6 +56,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	registerWorkflow(context, resultView);
 	await registerDatabase(context, resultView);
 	await registerContainer(context);
+	registerDashboard(context);
 	context.subscriptions.push(registerConfigurationTools(context));
 
 	context.subscriptions.push(

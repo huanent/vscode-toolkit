@@ -1,5 +1,6 @@
 import { Button, IconButton } from '../components/ui/button';
-import { LoaderCircle, Plus, Search, X } from '../components/ui/icons';
+import { Plus, Search, X } from '../components/ui/icons';
+import { Loading } from '../components/ui/loading';
 
 export function DashboardSearch({
 	label,
@@ -56,25 +57,22 @@ export function DashboardEmpty({
 	onClear?: () => void;
 	disabled?: boolean;
 }) {
+	if (loading) return <Loading />;
 	return (
 		<div
 			role="status"
 			className="flex min-h-36 flex-col items-center justify-center gap-3 px-3 py-6 text-center text-xs text-(--vscode-descriptionForeground)"
 		>
-			{loading && (
-				<LoaderCircle size="lg" className="motion-safe:animate-spin" aria-hidden="true" />
+			<p>{filtered ? `No matching ${noun}.` : `No ${noun} yet.`}</p>
+			{filtered ? (
+				<IconButton label="Clear search" icon={<X size="md" />} onClick={onClear} />
+			) : (
+				onCreate && (
+					<Button size="sm" left={<Plus size="sm" />} disabled={disabled} onClick={onCreate}>
+						{noun === 'workflows' ? 'New workflow' : 'New connection'}
+					</Button>
+				)
 			)}
-			<p>{loading ? 'Loading...' : filtered ? `No matching ${noun}.` : `No ${noun} yet.`}</p>
-			{!loading &&
-				(filtered ? (
-					<IconButton label="Clear search" icon={<X size="md" />} onClick={onClear} />
-				) : (
-					onCreate && (
-						<Button size="sm" left={<Plus size="sm" />} disabled={disabled} onClick={onCreate}>
-							{noun === 'workflows' ? 'New workflow' : 'New connection'}
-						</Button>
-					)
-				))}
 		</div>
 	);
 }

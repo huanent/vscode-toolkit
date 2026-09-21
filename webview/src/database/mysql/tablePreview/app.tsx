@@ -1,9 +1,8 @@
-import { cn } from 'cn';
+import { Loading } from '../../../components/ui/loading';
 import { IconButton } from '../../../components/ui/button';
 import {
 	ChevronLeft,
 	ChevronRight,
-	LoaderCircle,
 	Plus,
 	RefreshCw
 } from '../../../components/ui/icons';
@@ -23,7 +22,7 @@ export function App() {
 	if (!preview.identity)
 		return (
 			<div className="grid h-screen place-items-center">
-				<LoaderCircle className="animate-spin" />
+				<Loading />
 			</div>
 		);
 	const data = preview.data;
@@ -76,7 +75,7 @@ export function App() {
 						label="Refresh"
 						disabled={preview.loading}
 						onClick={preview.refresh}
-						icon={<RefreshCw size="md" className={cn(preview.loading ? 'animate-spin' : '')} />} />
+						icon={preview.loading ? <Loading variant="icon" size="md" /> : <RefreshCw size="md" />} />
 				</span>
 			</header>
 			<main aria-busy={preview.loading} className="min-h-0 overflow-auto">

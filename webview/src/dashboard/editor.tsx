@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { vscode } from '@webview/vscodeApi';
 import { send, subscribe, type Tab } from './channel';
 import { App as ContainerForm } from '../container/serverForm/app';
+import { Loading } from '../components/ui/loading';
 
 const tab = document.getElementById('root')!.dataset.tab as Tab;
 document.body.dataset.toolkitEditor = 'true';
@@ -45,7 +46,7 @@ function Editor() {
 			}}
 		>
 			{sessionId === undefined ? (
-				<p role="status">Loading...</p>
+				<Loading />
 			) : (
 				<ContainerForm key={sessionId} sessionId={sessionId} onClose={close} />
 			)}

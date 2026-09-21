@@ -1,7 +1,5 @@
 import { cn } from 'cn';
-import {
-	LoaderCircle
-} from '../../../../components/ui/icons';
+import { Loading } from '../../../../components/ui/loading';
 
 export function Status({
 	children,
@@ -12,14 +10,14 @@ export function Status({
 	loading?: boolean;
 	error?: boolean;
 }) {
+	if (loading) return <Loading label={children} />;
 	return (
 		<div
 			className={cn(
 				'flex items-center justify-center gap-2 p-8',
-				error? 'text-(--vscode-errorForeground)':'text-(--vscode-descriptionForeground)',
+				error ? 'text-(--vscode-errorForeground)' : 'text-(--vscode-descriptionForeground)',
 			)}
 		>
-			{loading&&<LoaderCircle className="animate-spin" size="md" />}
 			{children}
 		</div>
 	);

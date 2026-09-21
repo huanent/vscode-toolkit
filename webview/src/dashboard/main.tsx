@@ -6,7 +6,7 @@ import { vscode } from '@webview/vscodeApi';
 import { Connections } from '../connection/app';
 import { Workflows as Workflow } from '../workflow/management/app';
 import { type Tab } from './channel';
-import { DashboardEmpty } from './components';
+import { Loading } from '../components/ui/loading';
 import { Temp } from '../temp/app';
 
 document.body.classList.add('min-w-0', 'overflow-hidden');
@@ -96,7 +96,7 @@ function App() {
 					</div>
 				))
 			) : (
-				<DashboardEmpty loading noun="connections" />
+				<Loading />
 			)}
 		</main>
 	);

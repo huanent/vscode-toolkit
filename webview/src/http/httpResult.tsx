@@ -1,5 +1,6 @@
 import type { HttpResult } from '@/result/protocol';
 import { cn } from 'cn';
+import { Loading } from '../components/ui/loading';
 
 export function HttpResultView({ result }: { result: HttpResult }) {
 	return (
@@ -35,13 +36,7 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 				)}
 			</header>
 			{result.state === 'loading' && (
-				<div
-					role="status"
-					className="flex min-h-0 items-start gap-2 overflow-auto p-3.5 text-(--vscode-descriptionForeground)"
-				>
-					<span className="size-3.5 animate-spin rounded-full border-2 border-(--vscode-progressBar-background) border-r-transparent" />
-					Sending request...
-				</div>
+				<Loading variant="inline" label="Sending request..." className="self-start p-3.5 text-(--vscode-descriptionForeground)" />
 			)}
 			{(result.state === 'error' || result.state === 'cancelled') && (
 				<div

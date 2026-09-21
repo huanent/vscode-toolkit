@@ -1,5 +1,6 @@
 import { cn } from 'cn';
 import { lazy, Suspense } from 'react';
+import { Loading } from '../../../components/ui/loading';
 
 const MarkdownContent = lazy(() =>
 	import('./markdownContent').then(module => ({ default: module.MarkdownContent })),
@@ -15,11 +16,7 @@ type MessageContentProps = {
 export function MessageContent({ content, isUser, isEditing, isLoading }: MessageContentProps) {
 	if (isLoading) {
 		return (
-			<div className="flex h-6 items-center gap-1 px-1" role="status" aria-label="Waiting for response">
-				{[0, 120, 240].map(delay => (
-					<span key={delay} className="size-1 rounded-full bg-(--vscode-descriptionForeground) motion-safe:animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-				))}
-			</div>
+			<Loading variant="icon" label="Waiting for response" className="h-6 px-1" />
 		);
 	}
 	return (

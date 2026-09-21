@@ -1,7 +1,8 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
 import { Empty } from '../../components/ui/empty';
-import { CircleAlert, LoaderCircle } from '../../components/ui/icons';
+import { CircleAlert } from '../../components/ui/icons';
+import { Loading } from '../../components/ui/loading';
 import { RemoteMetrics } from './components/remoteMetrics';
 import { SftpPanel } from './components/sftpPanel';
 import { TerminalView, type TerminalViewHandle } from './components/terminalView';
@@ -49,7 +50,7 @@ export function App() {
 							}
 							icon={
 								ssh.status === 'connecting' ? (
-									<LoaderCircle className="codicon-modifier-spin text-(--vscode-progressBar-background)" />
+									<Loading variant="icon" label="Connecting" className="text-(--vscode-progressBar-background)" />
 								) : (
 									<CircleAlert />
 								)

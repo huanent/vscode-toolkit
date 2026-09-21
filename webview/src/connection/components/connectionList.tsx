@@ -1,5 +1,6 @@
 import { IconButton, Button } from '../../components/ui/button';
 import { Empty } from '../../components/ui/empty';
+import { Loading } from '../../components/ui/loading';
 import {
 	Download,
 	Upload,
@@ -65,11 +66,7 @@ export function ConnectionList({
 			/>
 			<div className="min-h-0 overflow-y-auto">
 				{!state ? (
-					<Empty
-						icon={<RefreshCw className="codicon-modifier-spin" />}
-						title="Loading connections"
-						role="status"
-					/>
+					<Loading label="Loading connections" />
 				) : servers.length === 0 ? (
 					<div>
 						<Empty

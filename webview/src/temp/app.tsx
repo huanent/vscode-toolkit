@@ -3,6 +3,7 @@ import { IconButton } from '../components/ui/button';
 import { Toolbar } from '../components/ui/toolbar';
 import { ChevronDown, ChevronRight, CollapseAll, File, Folder, FolderPlus, Plus } from '../components/ui/icons';
 import { DashboardEmpty } from '../dashboard/components';
+import { Loading } from '../components/ui/loading';
 import { send, subscribe } from '../dashboard/channel';
 
 type Entry = { name: string; path: string; directory: boolean };
@@ -67,7 +68,7 @@ export function Temp() {
                                         {expanded[entry.path] && (
                                             <ul aria-label={entry.name} className="pl-5">
                                                 {children[entry.path] === undefined ? (
-                                                    <li className="px-2 py-1 text-xs text-(--vscode-descriptionForeground)">Loading...</li>
+                                                    <li className="px-2 py-1 text-xs text-(--vscode-descriptionForeground)"><Loading variant="inline" /></li>
                                                 ) : children[entry.path].filter(child => !child.directory).length === 0 ? (
                                                     <li className="px-2 py-1 text-xs text-(--vscode-descriptionForeground)">No files yet.</li>
                                                 ) : children[entry.path].filter(child => !child.directory).map(child => (

@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { Empty } from '../../../components/ui/empty';
 import { Popover } from '../../../components/ui/popover';
-import { FolderOpen, LoaderCircle } from '../../../components/ui/icons';
+import { FolderOpen } from '../../../components/ui/icons';
+import { Loading } from '../../../components/ui/loading';
 import { fileGridClassName, SftpFileRow } from './sftpFileRow';
 import { SftpToolbar } from './sftpToolbar';
 import type { SftpEntry } from '../types';
@@ -85,12 +86,9 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 					))}
 				</div>
 				{sftp.loading ? (
-					<Empty
+					<Loading
 						className="absolute inset-0 overflow-auto bg-(--vscode-editor-background)"
-						role="status"
-						icon={<LoaderCircle className="codicon-modifier-spin" size="md" />}
-						title="Loading directory"
-						description={sftp.sftpPath}
+						label={<>Loading directory<span className="block">{sftp.sftpPath}</span></>}
 					/>
 				) : (
 					sftp.entries.length === 0 && (
