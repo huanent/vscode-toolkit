@@ -10,6 +10,15 @@ describe('configuration string patches', () => {
         expect(JSON.parse(result)).toEqual({ name: 'Updated', steps: [] });
     });
 
+    it('tolerates Unicode whitespace outside strings', () => {
+        const source = '{\n  "name": "Example"\n}';
+        const result = applyConfigurationPatches(source, [{
+            oldString: '{\u00a0"name"\u2003:\u2003"Example"\u00a0}',
+            newString: '{ "name": "Updated" }',
+        }]);
+        expect(JSON.parse(result)).toEqual({ name: 'Updated' });
+    });
+
     it('preserves whitespace and escapes inside JSON strings', () => {
         const source = JSON.stringify({ command: 'echo  "hello"\nnext' }, undefined, 2);
         expect(() => applyConfigurationPatches(source, [{

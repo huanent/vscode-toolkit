@@ -794,7 +794,7 @@
         "toolReferenceName": "readConfigurations",
         "displayName": "Read Configurations",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read AI-enabled saved configurations as a JSON array. Call this before using a connection, workflow, or credential ID. Optionally filter by type or a case-insensitive JavaScript regular expression. Credentials include metadata only, never secrets.",
+        "modelDescription": "Read AI-enabled saved configurations as a flat JSON array. Each item is the editable configuration itself and includes its location; there is no configuration wrapper. Call this before using a connection, workflow, or credential ID. Optionally filter by type or a case-insensitive JavaScript regular expression. Credentials include metadata only, never secrets.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -820,7 +820,7 @@
         "toolReferenceName": "editConfiguration",
         "displayName": "Edit Configuration",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read the configuration with readConfigurations immediately before editing, then apply ordered exact string-replacement patches to its JSON. Use text copied from the returned JSON; each oldString must match exactly once. Prefer one patch per field. Configuration ID and top-level type cannot change. Credentials are read-only. Returns the updated configuration.",
+        "modelDescription": "Read the flat configuration with readConfigurations immediately before editing, then apply ordered text-replacement patches to that JSON. oldString and newString should be JSON text copied or adapted from the returned configuration; whitespace outside quoted strings is ignored, but ambiguous matches are rejected. Prefer one patch per field. Configuration ID and top-level type cannot change. Credentials are read-only. Returns the updated configuration.",
         "inputSchema": {
           "type": "object",
           "properties": {

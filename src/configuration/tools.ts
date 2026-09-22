@@ -46,7 +46,8 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
         }),
         vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string }>('readConfigurations', {
             async invoke({ input }) {
-                return result(await configurations.read(input.type, input.regex));
+                const entries = await configurations.read(input.type, input.regex);
+                return result(entries.map(({ configuration, location }) => ({ ...configuration, location })));
             },
         }),
         vscode.lm.registerTool<{ id: string; patches: ConfigurationPatch[] }>('editConfiguration', {
