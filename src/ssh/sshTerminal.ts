@@ -451,7 +451,7 @@ class SshWebviewSession {
 				location: vscode.ProgressLocation.Notification,
 				title: `Saving ${path.posix.basename(remotePath)}`,
 			},
-			progress => this.uploadSftpFile(sftp, localPath, remotePath, progress),
+			progress => this.writeExistingSftpFile(sftp, localPath, remotePath, progress),
 		);
 		if (path.posix.dirname(remotePath) === this.sftpPath) {
 			await this.loadSftpDirectory(this.sftpPath);
@@ -635,6 +635,7 @@ class SshWebviewSession {
 		cancellationToken?: vscode.CancellationToken,
 	): Promise<void> {
 		const localSize = expectedSize ?? (await fs.stat(localPath)).size;
+		const originalMetadata = await this.readRemoteFileMetadata(sftp, remotePath);
 		const temporaryRemotePath = path.posix.join(
 			path.posix.dirname(remotePath),
 			`.${path.posix.basename(remotePath)}.servers-upload-${randomUUID()}.tmp`,
@@ -664,9 +665,90 @@ class SshWebviewSession {
 					`Upload verification failed for ${path.posix.basename(remotePath)}: expected ${localSize} bytes, received ${remoteStats.size} bytes.`,
 				);
 			}
+			await this.restoreRemoteFileMetadata(sftp, temporaryRemotePath, originalMetadata);
 			await this.replaceRemoteFile(sftp, temporaryRemotePath, remotePath);
 		} finally {
 			await new Promise<void>(resolve => sftp.unlink(temporaryRemotePath, () => resolve()));
+		}
+	}
+
+	private async writeExistingSftpFile(
+		sftp: SFTPWrapper,
+		localPath: string,
+		remotePath: string,
+		progress: vscode.Progress<{ increment?: number; message?: string }>,
+	): Promise<void> {
+		const remoteStats = await this.statRemoteFile(sftp, remotePath);
+		const localSize = (await fs.stat(localPath)).size;
+		await this.transferFile(
+			(progressStep, done) =>
+				sftp.fastPut(localPath, remotePath, { concurrency: 8, step: progressStep }, done),
+			progress,
+		);
+		const updatedStats = await this.statRemoteFile(sftp, remotePath);
+		if (updatedStats.size !== localSize) {
+			throw new Error(
+				`Save verification failed for ${path.posix.basename(remotePath)}: expected ${localSize} bytes, received ${updatedStats.size} bytes.`,
+			);
+		}
+		if (remoteStats.ino !== undefined && updatedStats.ino !== undefined && remoteStats.ino !== updatedStats.ino) {
+			throw new Error(`Save replaced the remote file instead of updating it: ${path.posix.basename(remotePath)}.`);
+		}
+	}
+
+	private readRemoteFileMetadata(
+		sftp: SFTPWrapper,
+		remotePath: string,
+	): Promise<{ mode?: number; uid?: number; gid?: number; atime?: number; mtime?: number } | undefined> {
+		return new Promise((resolve, reject) => {
+			sftp.stat(remotePath, (error, stats) => {
+				if (error) {
+					if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+						resolve(undefined);
+						return;
+					}
+					reject(error);
+					return;
+				}
+				resolve({
+					mode: typeof stats.mode === 'number' ? stats.mode & 0o7777 : undefined,
+					uid: stats.uid,
+					gid: stats.gid,
+					atime: stats.atime,
+					mtime: stats.mtime,
+				});
+			});
+		});
+	}
+
+	private statRemoteFile(sftp: SFTPWrapper, remotePath: string): Promise<{ size: number; ino?: number }> {
+		return new Promise((resolve, reject) => {
+			sftp.stat(remotePath, (error, stats) => (error ? reject(error) : resolve(stats)));
+		});
+	}
+
+	private async restoreRemoteFileMetadata(
+		sftp: SFTPWrapper,
+		remotePath: string,
+		metadata: { mode?: number; uid?: number; gid?: number; atime?: number; mtime?: number } | undefined,
+	): Promise<void> {
+		if (!metadata) {
+			return;
+		}
+		if (metadata.uid !== undefined && metadata.gid !== undefined) {
+			await new Promise<void>(resolve =>
+				sftp.chown(remotePath, metadata.uid!, metadata.gid!, () => resolve()),
+			);
+		}
+		if (metadata.mode !== undefined) {
+			await new Promise<void>((resolve, reject) =>
+				sftp.chmod(remotePath, metadata.mode!, error => (error ? reject(error) : resolve())),
+			);
+		}
+		if (metadata.atime !== undefined && metadata.mtime !== undefined) {
+			await new Promise<void>((resolve, reject) =>
+				sftp.utimes(remotePath, metadata.atime!, metadata.mtime!, error => (error ? reject(error) : resolve())),
+			);
 		}
 	}
 
