@@ -14,6 +14,7 @@ export interface ConfigurationEntry {
 
 export interface ConfigurationProvider {
     list(): Promise<ConfigurationEntry[]>;
+    readText?(id: string): Promise<string>;
     update?(entry: ConfigurationEntry, configuration: Record<string, unknown>, location: string): Promise<ConfigurationEntry>;
     create?(configuration: Record<string, unknown>, location?: string): Promise<ConfigurationEntry>;
 }
@@ -45,6 +46,16 @@ export class ConfigurationService {
         return entries.filter(entry => !search || search.test(JSON.stringify(entry)));
     }
 
+    async readTexts(type?: ConfigurationType, regex?: string): Promise<string[]> {
+        const entries = await this.read(type, regex);
+        return Promise.all(entries.map(entry => {
+            const provider = this.providers.get(entry.type);
+            return entry.type !== 'credential' && provider?.readText
+                ? provider.readText(entry.id)
+                : JSON.stringify(entry.configuration, undefined, 2);
+        }));
+    }
+
     create(type: WritableConfigurationType, configuration: Record<string, unknown>, location?: string, isCancelled = () => false): Promise<ConfigurationEntry> {
         const pending = this.mutation.then(async () => {
             if (!['workflow', 'ssh', 'database', 'container'].includes(type)) throw new Error('Invalid writable configuration type. Credentials are read-only.');
@@ -70,15 +81,17 @@ export class ConfigurationService {
             if (matches.length > 1) throw new Error('Configuration ID is ambiguous across types.');
             if (isCancelled()) throw new Error('Configuration update cancelled.');
             const entry = matches[0];
+            if ('aiEnabled' in entry.configuration && entry.configuration.aiEnabled !== true)
+                throw new Error('Configuration is not enabled for AI.');
             const provider = this.providers.get(entry.type);
             if (entry.type === 'credential' || !provider?.update) throw new Error('Credentials are read-only.');
-            const document = { ...entry.configuration, location: entry.location };
-            const patched: unknown = JSON.parse(applyConfigurationPatches(JSON.stringify(document, undefined, 2), patches));
+            if (!provider.readText) throw new Error('Configuration source text is unavailable.');
+            const source = await provider.readText(id);
+            const patched: unknown = JSON.parse(applyConfigurationPatches(source, patches));
             if (!patched || typeof patched !== 'object' || Array.isArray(patched)) throw new Error('Configuration must be a JSON object.');
-            const { location, ...configuration } = patched as Record<string, unknown>;
+            const configuration = patched as Record<string, unknown>;
             if (configuration.id !== id || configuration.type !== entry.configuration.type) throw new Error('Cannot change configuration id or type.');
-            if (typeof location !== 'string') throw new Error('location must be a string.');
-            return provider.update(entry, configuration, location);
+            return provider.update(entry, configuration, entry.location);
         });
         this.mutation = pending.catch(() => { });
         return pending;

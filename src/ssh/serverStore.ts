@@ -61,6 +61,13 @@ class ConnectionStore {
 
 	getLocation(id: string): string { return this.locations.location(id); }
 
+	async readText(id: string): Promise<string> {
+		const server = this.servers.find(candidate => candidate.id === id);
+		if (!server) throw new Error('Configuration was not found.');
+		const content = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(this.locations.directory(id), serverFileName(server)));
+		return Buffer.from(content).toString('utf8');
+	}
+
 	getServers(): Server[] {
 		return this.servers;
 	}

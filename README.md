@@ -10,25 +10,11 @@ Press **Ctrl+Shift+.** (macOS: **Cmd+Shift+.**) or run **Toolkit: Open Dashboard
 
 ### AI Configuration Tools
 
-`readConfigurations` returns JSON entries containing `type`, `id`, `location`, and `configuration`. All filters are optional and combined: `type` accepts `workflow`, `ssh`, `database`, `container`, or `credential`; `regex` is a JavaScript regular expression pattern matched case-insensitively against each entry's JSON text, so it can match any field, including `id`, `name`, `host`, or `database`. Pass regex patterns without `/` delimiters or flags, for example `{"type":"ssh","regex":"production|staging"}` or `{"regex":"server-\\d+"}`. Omitted or empty patterns match all entries; invalid patterns return an error. Connection results include only AI-enabled entries. Credential configurations contain only `id`, `name`, `type`, and `user`: secrets and passphrases are neither returned nor searched.
+`readConfigurations` returns each matching connection or workflow file as a separate JSON text block, preserving its original formatting without an array wrapper or an added `location` field. Optional `type` and case-insensitive JavaScript `regex` filters select entries; regex filtering uses the internal entry JSON. Connections with `aiEnabled: false` are readable, but cannot be edited or executed through AI tools. Credential results contain only metadata, never raw credential files or secrets. No matches returns `No matching configurations.`
 
-`createConfiguration` accepts `type`, a structured `configuration` object, and optional `location`. Only `workflow`, `ssh`, `database`, and `container` can be created. IDs are generated automatically; do not include `id`, `type`, or `location` inside `configuration`. Existing configurations are never replaced. New connections always have `aiEnabled: true`, set by the backend; this field is not a creation parameter. Reference credentials by `credentialId`, never by secret values. Omitted location uses global storage. Creation returns the new JSON entry without executing it. For example:
+Credentials are read-only for these tools: `editConfiguration` cannot write them. Manage credential contents through the credential editor. Connection configurations store `credentialId`, not `username` or `authType`, including within `proxy`. The backend validates credential references and resolves the current username and authentication type only when connecting. Legacy identity fields are ignored on load and omitted on save or export. MySQL requires a password credential. Local containers and containers using `sshServerId` do not require a primary credential reference.
 
-```json
-{
-  "type": "container",
-  "configuration": {
-    "name": "Local Docker",
-    "runtime": "docker",
-    "executablePath": "docker",
-    "connectionType": "local"
-  }
-}
-```
-
-Credentials are read-only for these tools: neither `createConfiguration` nor `editConfiguration` can write them. Manage credential contents through the credential editor. Connection configurations store `credentialId`, not `username` or `authType`, including within `proxy`. The backend validates credential references and resolves the current username and authentication type only when connecting. Legacy identity fields are ignored on load and omitted on save or export. MySQL requires a password credential. Local containers and containers using `sshServerId` do not require a primary credential reference.
-
-`editConfiguration` updates an existing ID with ordered `patches` string replacements. The target is the configuration object serialized as JSON with an additional `location` field, not the result envelope. Read the configuration first, then supply enough context for a unique match:
+`editConfiguration` updates an existing AI-enabled ID by reading its original configuration file text, applying ordered `patches` string replacements, validating the resulting JSON, and saving it. The target is the returned file text itself; `location` is storage metadata and is not part of the JSON. Read the configuration first, then supply enough context for a unique match:
 
 ```json
 {
@@ -45,6 +31,8 @@ Credentials are read-only for these tools: neither `createConfiguration` nor `ed
 Matching prefers exact text, then tolerates differences in indentation, spaces, tabs, and line breaks outside JSON strings. Spaces within commands and other string values remain significant. Missing or ambiguous matches, invalid JSON, invalid fields, and ID/type changes are rejected before saving. All patches must succeed; editing does not execute the configuration. `location` is empty for global storage or an open workspace folder URI for workspace storage.
 
 These tools replace `listWorkflows`, `getWorkflow`, `listSSHServers`, `listDatabaseConnections`, `listContainerConnections`, and `upsertWorkflow`; execution tools remain unchanged.
+
+`createWorkflow` creates a saved workflow without running it. The ID is generated automatically. Provide a `configuration` object with `name` and `steps`, optionally `description`, plus an optional workspace `location`. Command steps run locally; SSH and SFTP steps reference server IDs from `readConfigurations`. Creation requires confirmation.
 
 ### Dashboard
 

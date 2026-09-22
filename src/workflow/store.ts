@@ -17,6 +17,14 @@ export class WorkflowStore {
 
 	getLocation(id: string): string { return this.locations.location(id); }
 
+	readText(id: string): Promise<string> {
+		return this.enqueue(async () => {
+			await this.read();
+			const content = await vscode.workspace.fs.readFile(this.uriForId(id));
+			return Buffer.from(content).toString('utf8');
+		});
+	}
+
 	list(): Promise<Workflow[]> {
 		return this.enqueue(() => this.read());
 	}

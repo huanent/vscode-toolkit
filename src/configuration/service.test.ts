@@ -11,11 +11,31 @@ function setup() {
         entry = { ...entry, configuration, location };
         return entry;
     });
-    service.register('ssh', { list: async () => [entry], update });
+    service.register('ssh', { list: async () => [entry], readText: async () => JSON.stringify(entry.configuration), update });
     return { service, update };
 }
 
 describe('ConfigurationService', () => {
+    it('returns matching file text unchanged and keeps credentials metadata-only', async () => {
+        const service = new ConfigurationService();
+        const text = '{\r\n\t"id": "stored", "name": "Original"\r\n}\n';
+        const readText = vi.fn(async () => text);
+        service.register('workflow', {
+            list: async () => [{ type: 'workflow', id: 'stored', location: '', configuration: JSON.parse(text) }],
+            readText,
+        });
+        expect(await service.readTexts('workflow', 'Original')).toEqual([text]);
+        expect(await service.readTexts('workflow', 'missing')).toEqual([]);
+        expect(readText).toHaveBeenCalledOnce();
+        const readCredentialText = vi.fn(async () => '{"secret":"hidden"}');
+        service.register('credential', {
+            list: async () => [{ type: 'credential', id: 'login', location: '', configuration: { id: 'login', name: 'Login' } }],
+            readText: readCredentialText,
+        });
+        expect(await service.readTexts('credential')).toEqual([JSON.stringify({ id: 'login', name: 'Login' }, undefined, 2)]);
+        expect(readCredentialText).not.toHaveBeenCalled();
+    });
+
     it.each([
         ['ssh', 'ssh'],
         ['database', 'mysql'],
@@ -30,7 +50,7 @@ describe('ConfigurationService', () => {
         };
         const entry: ConfigurationEntry = { type, id: configuration.id, location: '', configuration };
         const update = vi.fn(async () => entry);
-        service.register(type, { list: async () => [entry], update });
+        service.register(type, { list: async () => [entry], readText: async () => JSON.stringify(entry.configuration), update });
         const invalidPatches = [
             { oldString: '"id": "immutable-id"', newString: '"id": "changed-id"' },
             { oldString: '"id": "immutable-id",', newString: '' },
@@ -94,7 +114,7 @@ describe('ConfigurationService', () => {
         const { service, update } = setup();
         await expect(service.edit('server-1', [{ oldString: '"server-1"', newString: '"changed"' }])).rejects.toThrow('Cannot change');
         await expect(service.edit('server-1', [])).rejects.toThrow('non-empty array');
-        await expect(service.edit('server-1', [{ oldString: '"location": ""', newString: '"location":null' }])).rejects.toThrow('location');
+        await expect(service.edit('server-1', [{ oldString: '"location": ""', newString: '"location":null' }])).rejects.toThrow('not found');
         await expect(service.edit('missing', [])).rejects.toThrow('not found');
         await expect(service.edit('server-1', [], () => true)).rejects.toThrow('cancelled');
         await expect(service.edit('server-1', [{ oldString: '"Production"', newString: '{' }])).rejects.toThrow();
@@ -110,7 +130,9 @@ describe('ConfigurationService', () => {
     it('rejects ambiguous IDs', async () => {
         const { service, update } = setup();
         service.register('workflow', {
-            list: async () => [{ type: 'workflow', id: 'server-1', location: '', configuration: {} }], update,
+            list: async () => [{ type: 'workflow', id: 'server-1', location: '', configuration: {} }],
+            readText: async () => '{}',
+            update,
         });
         await expect(service.edit('server-1', [])).rejects.toThrow('ambiguous');
         expect(update).not.toHaveBeenCalled();

@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "description": "Developer utilities for VS Code",
-  "version": "1.8.9",
+  "version": "1.8.10",
   "license": "MIT",
   "publisher": "huanent",
   "icon": "resources/logo.png",
@@ -794,7 +794,7 @@
         "toolReferenceName": "readConfigurations",
         "displayName": "Read Configurations",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read AI-enabled saved configurations as a flat JSON array. Each item is the editable configuration itself and includes its location; there is no configuration wrapper. Call this before using a connection, workflow, or credential ID. Optionally filter by type or a case-insensitive JavaScript regular expression. Credentials include metadata only, never secrets.",
+        "modelDescription": "Read matching saved configurations as separate JSON text blocks, preserving stored file text without an array wrapper or added fields. Includes connections with aiEnabled false; editing and execution still require AI access. Call this before using a configuration ID. Optionally filter by type or a case-insensitive JavaScript regular expression. Credentials return metadata only, never raw credential files or secrets.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -820,7 +820,7 @@
         "toolReferenceName": "editConfiguration",
         "displayName": "Edit Configuration",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Read the flat configuration with readConfigurations immediately before editing, then apply ordered text-replacement patches to that JSON. oldString and newString should be JSON text copied or adapted from the returned configuration; whitespace outside quoted strings is ignored, but ambiguous matches are rejected. Prefer one patch per field. Configuration ID and top-level type cannot change. Credentials are read-only. Returns the updated configuration.",
+        "modelDescription": "Read the original configuration file text with readConfigurations immediately before editing, then apply ordered text-replacement patches to that exact text. oldString and newString should be copied or adapted from the returned JSON; whitespace outside quoted strings is ignored, but ambiguous matches are rejected. The file's location is not a JSON field. Configuration ID and top-level type cannot change, unsupported fields are rejected, and credentials or AI-disabled configurations are read-only. Returns the updated configuration.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -856,425 +856,93 @@
         }
       },
       {
-        "name": "createConfiguration",
-        "toolReferenceName": "createConfiguration",
-        "displayName": "Create Configuration",
+        "name": "createWorkflow",
+        "toolReferenceName": "createWorkflow",
+        "displayName": "Create Workflow",
         "canBeReferencedInPrompt": true,
-        "modelDescription": "Create a new AI-enabled workflow, SSH connection, MySQL connection, or container connection. Call readConfigurations first when referring to saved credentials or SSH connections. Omit generated id, type, location, username, authentication type, passwords, and secrets. The operation changes local configuration state and requires confirmation.",
+        "modelDescription": "Create a saved workflow without running it. The ID is generated automatically; do not include id, type, or location inside configuration. Workflow steps may be local command steps or AI-enabled SSH/SFTP steps referencing server IDs from readConfigurations. The operation changes local storage and requires confirmation.",
         "inputSchema": {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "workflow",
-                "ssh",
-                "database",
-                "container"
-              ]
-            },
             "configuration": {
               "type": "object",
-              "description": "Configuration fields for the selected type; omit id, type and location."
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string"
+                },
+                "steps": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "command",
+                          "ssh",
+                          "sftp"
+                        ]
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "cwd": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "serverId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "action": {
+                        "type": "string",
+                        "enum": [
+                          "upload",
+                          "download"
+                        ]
+                      },
+                      "localPath": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "remotePath": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "type"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "steps"
+              ]
             },
             "location": {
               "type": "string",
-              "description": "Storage location: empty string for global storage, or an open workspace folder URI (not a filesystem path). Omit to preserve the existing location or default new workflows to global storage. Set a different location to move an existing workflow. Workspace storage requires workspace trust."
+              "description": "Storage location: empty string for global storage, or an open workspace folder URI. Omit for global storage."
             }
           },
           "required": [
-            "type",
             "configuration"
-          ],
-          "oneOf": [
-            {
-              "properties": {
-                "type": {
-                  "const": "workflow"
-                },
-                "configuration": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "Workflow purpose; defaults to empty."
-                    },
-                    "steps": {
-                      "type": "array",
-                      "items": {
-                        "oneOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "command"
-                                ]
-                              },
-                              "command": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "cwd": {
-                                "type": "string",
-                                "description": "Local working directory; supports VS Code variables such as ${workspaceFolder}. Must resolve to an absolute path."
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "type",
-                              "command",
-                              "cwd"
-                            ]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "ssh"
-                                ]
-                              },
-                              "serverId": {
-                                "type": "string",
-                                "description": "AI-enabled SSH server ID from readConfigurations."
-                              },
-                              "command": {
-                                "type": "string",
-                                "minLength": 1
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "type",
-                              "serverId",
-                              "command"
-                            ]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "sftp"
-                                ]
-                              },
-                              "serverId": {
-                                "type": "string",
-                                "description": "AI-enabled SSH server ID from readConfigurations."
-                              },
-                              "localPath": {
-                                "type": "string",
-                                "description": "Absolute local file path: upload source or download destination. Supports VS Code variables."
-                              },
-                              "action": {
-                                "type": "string",
-                                "enum": [
-                                  "upload",
-                                  "download"
-                                ],
-                                "description": "Transfer direction; defaults to upload. Transfers overwrite destination files. Downloads create local parent directories."
-                              },
-                              "remotePath": {
-                                "type": "string",
-                                "description": "Absolute remote POSIX file path: upload destination or download source. Supports VS Code variables. Upload requires an existing remote parent directory."
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "type",
-                              "serverId",
-                              "localPath",
-                              "remotePath"
-                            ]
-                          }
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "steps"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            {
-              "properties": {
-                "type": {
-                  "const": "ssh"
-                },
-                "configuration": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "group": {
-                      "type": "string"
-                    },
-                    "host": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "port": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 65535
-                    },
-                    "credentialId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                    },
-                    "proxy": {
-                      "type": "object",
-                      "properties": {
-                        "credentialId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                        },
-                        "host": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "port": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 65535
-                        }
-                      },
-                      "required": [
-                        "credentialId",
-                        "host",
-                        "port"
-                      ]
-                    },
-                    "proxyCommand": {
-                      "type": "string"
-                    },
-                    "commands": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "value": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "value"
-                        ]
-                      }
-                    },
-                    "favorites": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "host",
-                    "port",
-                    "credentialId"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            {
-              "properties": {
-                "type": {
-                  "const": "database"
-                },
-                "configuration": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "group": {
-                      "type": "string"
-                    },
-                    "host": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "port": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 65535
-                    },
-                    "credentialId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                    },
-                    "proxy": {
-                      "type": "object",
-                      "properties": {
-                        "credentialId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                        },
-                        "host": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "port": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 65535
-                        }
-                      },
-                      "required": [
-                        "credentialId",
-                        "host",
-                        "port"
-                      ]
-                    },
-                    "database": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "host",
-                    "port",
-                    "credentialId",
-                    "database"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            {
-              "properties": {
-                "type": {
-                  "const": "container"
-                },
-                "configuration": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "group": {
-                      "type": "string"
-                    },
-                    "host": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "port": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 65535
-                    },
-                    "credentialId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                    },
-                    "proxy": {
-                      "type": "object",
-                      "properties": {
-                        "credentialId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Saved credential ID from readConfigurations; username and authentication type are derived automatically. Never provide a password or secret."
-                        },
-                        "host": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "port": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 65535
-                        }
-                      },
-                      "required": [
-                        "credentialId",
-                        "host",
-                        "port"
-                      ]
-                    },
-                    "runtime": {
-                      "type": "string",
-                      "enum": [
-                        "docker",
-                        "podman",
-                        "apple"
-                      ]
-                    },
-                    "executablePath": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "connectionType": {
-                      "type": "string",
-                      "enum": [
-                        "local",
-                        "ssh"
-                      ]
-                    },
-                    "sshServerId": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "proxyCommand": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "runtime",
-                    "executablePath",
-                    "connectionType"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
           ]
         },
         "tags": [
-          "configuration"
+          "workflow"
         ]
       },
       {

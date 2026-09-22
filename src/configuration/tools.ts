@@ -33,21 +33,12 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
     ]);
     return vscode.Disposable.from(
         registerCredentialConfigurations(new CredentialStore(getStorageUri(context, 'credential').fsPath)),
-        vscode.lm.registerTool<{ type: WritableConfigurationType; configuration: Record<string, unknown>; location?: string }>('createConfiguration', {
-            prepareInvocation({ input }) {
-                return {
-                    invocationMessage: `Creating ${input.type} configuration`,
-                    confirmationMessages: { title: 'Create configuration?', message: JSON.stringify(input, undefined, 2) },
-                };
-            },
-            async invoke({ input }, token) {
-                return result(await configurations.create(input.type, input.configuration, input.location, () => token.isCancellationRequested));
-            },
-        }),
         vscode.lm.registerTool<{ type?: ConfigurationType; regex?: string }>('readConfigurations', {
             async invoke({ input }) {
-                const entries = await configurations.read(input.type, input.regex);
-                return result(entries.map(({ configuration, location }) => ({ ...configuration, location })));
+                const texts = await configurations.readTexts(input.type, input.regex);
+                return new vscode.LanguageModelToolResult(texts.length
+                    ? texts.map(text => new vscode.LanguageModelTextPart(text))
+                    : [new vscode.LanguageModelTextPart('No matching configurations.')]);
             },
         }),
         vscode.lm.registerTool<{ id: string; patches: ConfigurationPatch[] }>('editConfiguration', {
@@ -69,7 +60,7 @@ export function registerConfigurationTools(context: vscode.ExtensionContext): vs
 
 export function registerConnectionConfigurations<Server extends { id: string; aiEnabled: boolean }>(
     type: Exclude<WritableConfigurationType, 'workflow'>,
-    store: { getServers(): Server[]; getLocation(id: string): string; saveServer(server: Server, location?: string): Promise<void> },
+    store: { getServers(): Server[]; getLocation(id: string): string; readText(id: string): Promise<string>; saveServer(server: Server, location?: string): Promise<void> },
     parse: (value: unknown, credentials?: readonly CredentialSummary[]) => Server,
 ): vscode.Disposable {
     const entry = (server: Server) => ({
@@ -83,6 +74,7 @@ export function registerConnectionConfigurations<Server extends { id: string; ai
         return server;
     };
     return new vscode.Disposable(configurations.register(type, {
+        readText: id => store.readText(id),
         async create(configuration, location) {
             const candidate = { ...configuration, aiEnabled: true, type: type === 'database' ? 'mysql' : type };
             const server = await parseConfiguration(candidate);
@@ -90,7 +82,7 @@ export function registerConnectionConfigurations<Server extends { id: string; ai
             await store.saveServer(server, location);
             return entry(server);
         },
-        async list() { return store.getServers().filter(server => server.aiEnabled).map(server => entry(parse(server))); },
+        async list() { return store.getServers().map(server => entry(parse(server))); },
         async update(_current, configuration, location) {
             const server = await parseConfiguration(configuration);
             await store.saveServer(server, location);

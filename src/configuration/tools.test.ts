@@ -67,12 +67,14 @@ describe('connection configuration adapters', () => {
             ];
             const store = {
                 getServers: () => servers,
+                readText: async (id: string) => JSON.stringify(servers.find(server => server.id === id)),
                 getLocation: () => '',
                 saveServer: vi.fn(async () => { }),
             };
             disposables.push(registerConnectionConfigurations(type, store, parse));
-            expect(await configurations.read(type)).toHaveLength(1);
-            await expect(configurations.edit('disabled', [{ oldString: 'Private', newString: 'Changed' }])).rejects.toThrow('not found');
+            expect(await configurations.read(type)).toHaveLength(2);
+            expect((await configurations.read(type)).map(entry => entry.configuration.name)).toEqual(['Original', 'Private']);
+            await expect(configurations.edit('disabled', [{ oldString: 'Private', newString: 'Changed' }])).rejects.toThrow('not enabled for AI');
             const updated = await configurations.edit('enabled', [{ oldString: '"name":"Original"', newString: '"name":"Updated"' }]);
             expect(updated.configuration.name).toBe('Updated');
             expect(store.saveServer).toHaveBeenCalledWith({ ...servers[0], name: 'Updated' }, '');

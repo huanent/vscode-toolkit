@@ -33,6 +33,7 @@ export function registerWorkflowTools(
 	};
 	return vscode.Disposable.from(
 		new vscode.Disposable(configurations.register('workflow', {
+			readText: id => store.readText(id),
 			async create(configuration, location) {
 				if ((await store.list()).some(workflow => workflow.id === configuration.id)) throw new Error('Configuration ID already exists.');
 				return save(configuration, location);
@@ -47,6 +48,20 @@ export function registerWorkflowTools(
 				return save(configuration, location);
 			},
 		})),
+		vscode.lm.registerTool<{ configuration: Record<string, unknown>; location?: string }>('createWorkflow', {
+			prepareInvocation({ input }) {
+				return {
+					invocationMessage: `Creating workflow ${typeof input.configuration.name === 'string' ? input.configuration.name : ''}`.trim(),
+					confirmationMessages: {
+						title: 'Create workflow?',
+						message: JSON.stringify(input, undefined, 2),
+					},
+				};
+			},
+			async invoke({ input }, token) {
+				return result(await configurations.create('workflow', input.configuration, input.location, () => token.isCancellationRequested));
+			},
+		}),
 		vscode.lm.registerTool<{ id: string }>('runWorkflow', {
 			prepareInvocation({ input }) {
 				const saved = store.list().then(workflows => workflows.find(workflow => workflow.id === input.id));
