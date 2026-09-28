@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PageShell } from '@/webview/components/page-shell';
 import { TabPanel, Tabs, type Tab } from '@/webview/components/tabs';
 import { mountWebview } from '@/webview/bootstrap';
 import { ToolList } from '@/webview/pages/dashboard/components/tool-list';
@@ -17,7 +16,7 @@ function App() {
   const activeTool = tools.find((tool) => tool.id === activeToolId) ?? tools[0];
 
   return (
-    <PageShell>
+    <main>
       <Tabs tabs={tabs} activeTabId={activeTabId} onChange={setActiveTabId} />
 
       <div className="pt-5">
@@ -71,7 +70,7 @@ function App() {
           </section>
         </TabPanel>
       </div>
-    </PageShell>
+    </main>
   );
 }
 
