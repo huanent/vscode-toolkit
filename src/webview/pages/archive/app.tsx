@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { DisclosureIcon, FileIcon, FolderIcon } from '@/webview/components/icons';
-import { EmptyState } from '@/webview/components/empty-state';
+import { Empty } from '@/webview/components/empty';
+import { Loading } from '@/webview/components/loading';
 import { Tree } from '@/webview/components/tree';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
@@ -54,7 +55,7 @@ function App() {
               )}
             />
           ) : (
-            <EmptyState
+            <Empty
               label="Empty archive"
               title="Archive is empty"
               description="This archive contains no files or directories."
@@ -69,9 +70,7 @@ function App() {
   return (
     <main className="grid min-h-screen place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
       {state.status === 'loading' ? (
-        <p className="text-(--vscode-descriptionForeground)" role="status">
-          Reading archive...
-        </p>
+        <Loading label="Reading archive..." />
       ) : (
         <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
           {state.message}

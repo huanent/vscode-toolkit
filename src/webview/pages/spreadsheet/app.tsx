@@ -2,6 +2,7 @@ import { cn } from 'cn';
 import { useEffect, useState } from 'react';
 import type { SpreadsheetSheet } from '@/features/spreadsheet/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { Loading } from '@/webview/components/loading';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -21,7 +22,7 @@ function App() {
 
     return (
       <main
-        className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)"
+        className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground) p-2"
         aria-labelledby="spreadsheet-preview-title"
       >
         <div className="min-h-0 flex-1 overflow-auto">
@@ -65,9 +66,7 @@ function App() {
   return (
     <main className="grid min-h-screen place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
       {state.status === 'loading' ? (
-        <p className="text-(--vscode-descriptionForeground)" role="status">
-          Reading spreadsheet...
-        </p>
+        <Loading label="Reading spreadsheet..." />
       ) : (
         <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
           {state.message}

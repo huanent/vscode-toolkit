@@ -5,7 +5,7 @@ type EmptyStateProps = {
   icon: string;
 };
 
-export function EmptyState({ label, title, description, icon }: EmptyStateProps) {
+export function Empty({ label, title, description, icon }: EmptyStateProps) {
   return (
     <section
       className="mt-13 grid justify-items-center border border-dashed border-(--vscode-panel-border) px-4 py-6 text-center"

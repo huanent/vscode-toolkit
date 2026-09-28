@@ -1,4 +1,4 @@
-import { EmptyState } from '@/webview/components/empty-state';
+import { Empty } from '@/webview/components/empty';
 import { PageShell } from '@/webview/components/page-shell';
 import { mountWebview } from '@/webview/bootstrap';
 import '@/webview/styles.css';
@@ -6,7 +6,7 @@ import '@/webview/styles.css';
 function App() {
   return (
     <PageShell>
-      <EmptyState
+      <Empty
         label="No results"
         title="No results yet"
         description="Run a tool from Toolkit and its output will appear here."
