@@ -149,6 +149,12 @@
         "title": "Checkout to...",
         "icon": "$(git-branch)",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.archive.collapseAll",
+        "title": "Collapse All",
+        "icon": "$(collapse-all)",
+        "category": "Archive"
       }
     ],
     "submenus": [
@@ -158,6 +164,13 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "toolkit.archive.collapseAll",
+          "when": "activeCustomEditorId == toolkit.archiveEditor",
+          "group": "navigation@1"
+        }
+      ],
       "explorer/context": [
         {
           "submenu": "toolkit.sourceControl",

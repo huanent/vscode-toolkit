@@ -29,9 +29,9 @@ function createPanel() {
       return { dispose: disposeListener };
     },
   );
-  let disposePanel: (() => void) | undefined;
+  const disposeListeners: Array<() => void> = [];
   const onDidDispose = vi.fn<(listener: () => void) => { dispose: () => void }>((listener) => {
-    disposePanel = listener;
+    disposeListeners.push(listener);
     return { dispose: vi.fn<() => void>() };
   });
   const postMessage = vi.fn<(message: unknown) => Promise<boolean>>(async () => true);
@@ -43,7 +43,7 @@ function createPanel() {
     webview,
     postMessage,
     disposeListener,
-    disposePanel: () => disposePanel!(),
+    disposePanel: () => disposeListeners.forEach((listener) => listener()),
     ready: () => messageListener!({ type: 'ready' }),
   };
 }

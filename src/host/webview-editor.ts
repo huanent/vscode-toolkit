@@ -16,6 +16,8 @@ export interface WebviewEditorDefinition<TData> {
   load: (uri: vscode.Uri) => Promise<TData>;
   /** Values exposed on the root element; defaults to the document file name. */
   data?: (uri: vscode.Uri) => Record<string, string>;
+  /** Observes the resolved panel and can return cleanup logic for its lifetime. */
+  onPanelResolved?: (uri: vscode.Uri, panel: vscode.WebviewPanel) => vscode.Disposable | void;
 }
 
 /**
@@ -43,7 +45,9 @@ export function registerWebviewEditor<TData>(
         if (definition.icon) panel.iconPath = new vscode.ThemeIcon(definition.icon);
 
         const bridge = serveWebviewData(panel.webview, () => definition.load(uri));
+        const panelCleanup = definition.onPanelResolved?.(uri, panel);
         panel.onDidDispose(() => bridge.dispose());
+        panel.onDidDispose(() => panelCleanup?.dispose());
         panel.webview.html = getWebviewHtml(panel.webview, assetsUri, {
           page: definition.page,
           title: baseName(uri),

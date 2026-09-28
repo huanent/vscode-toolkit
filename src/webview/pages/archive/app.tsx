@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { DisclosureIcon, FileIcon, FolderIcon } from '@/webview/components/icons';
@@ -10,10 +10,19 @@ import '@/webview/styles.css';
 function App() {
   const state = useHostData<ArchiveTreeEntry[]>();
   const name = getRootData('name') ?? 'Archive';
+  const [collapseAllTrigger, setCollapseAllTrigger] = useState(0);
 
   useEffect(() => {
     document.title = name;
   }, [name]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent<{ type?: string }>) => {
+      if (event.data?.type === 'collapseAll') setCollapseAllTrigger((value) => value + 1);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   if (state.status === 'loaded') {
     return (
@@ -22,6 +31,7 @@ function App() {
           {state.data.length ? (
             <Tree
               ariaLabel={`${name} contents`}
+              collapseAllTrigger={collapseAllTrigger}
               items={state.data}
               getChildren={(entry) => entry.children ?? []}
               getKey={getArchiveEntryPath}

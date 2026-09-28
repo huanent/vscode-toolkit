@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type TreeItemRenderContext<TItem> = {
@@ -11,6 +11,7 @@ export type TreeItemRenderContext<TItem> = {
 type TreeProps<TItem> = {
   ariaLabel: string;
   className?: string;
+  collapseAllTrigger?: number;
   items: readonly TItem[];
   getChildren: (item: TItem) => readonly TItem[];
   getKey: (path: readonly TItem[]) => Key;
@@ -39,6 +40,7 @@ type TreeNodeModel<TItem> = {
 export function Tree<TItem>({
   ariaLabel,
   className,
+  collapseAllTrigger,
   items,
   getChildren,
   getKey,
@@ -53,6 +55,9 @@ export function Tree<TItem>({
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   const [selectedKey, setSelectedKey] = useState<Key | null>(null);
   const [treeHasFocus, setTreeHasFocus] = useState(false);
+  useEffect(() => {
+    setExpandedKeys(new Set());
+  }, [collapseAllTrigger]);
   const treeItems = createTreeNodes(items, [], null, expandedKeys, getChildren, getKey, getLabel, isBranch);
   const visibleItems = flattenTreeNodes(treeItems);
   const activeItem = visibleItems.find((node) => node.key === focusedKey) ?? visibleItems[0];

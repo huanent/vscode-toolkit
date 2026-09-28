@@ -11,6 +11,17 @@ vi.mock('vscode', () => ({
       dispose: vi.fn<() => void>(),
     })),
   },
+  commands: {
+    registerCommand: vi.fn<(...args: unknown[]) => { dispose: () => void }>(() => ({
+      dispose: vi.fn<() => void>(),
+    })),
+  },
+  TabInputCustom: class {
+    constructor(
+      readonly uri: vscode.Uri,
+      readonly viewType: string,
+    ) {}
+  },
   Uri: { joinPath: vi.fn<(...args: unknown[]) => vscode.Uri>(() => ({ fsPath: '/extension/dist' }) as vscode.Uri) },
   ThemeIcon: class {},
 }));
@@ -34,7 +45,10 @@ describe('Archive editor', () => {
   });
 
   it('delegates validation and loading to the archive service', async () => {
-    registerArchiveEditor({ extensionUri: { fsPath: '/extension' } } as vscode.ExtensionContext);
+    registerArchiveEditor({
+      extensionUri: { fsPath: '/extension' },
+      subscriptions: [],
+    } as unknown as vscode.ExtensionContext);
     const registration = vi.mocked(vscode.window.registerCustomEditorProvider).mock.calls.at(-1)!;
     const provider = registration[1] as vscode.CustomReadonlyEditorProvider;
     expect(registration[0]).toBe(archiveEditorViewType);
