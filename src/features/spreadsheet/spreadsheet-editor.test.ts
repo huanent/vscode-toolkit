@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as vscode from 'vscode';
 import { describe, expect, it, vi } from 'vitest';
-import { excelEditorViewType, registerExcelEditor } from './editor';
+import { registerSpreadsheetEditor, spreadsheetEditorViewType } from './editor';
 import type { SpreadsheetSheet } from './protocol';
 import { readSpreadsheet, validateSpreadsheetUri } from './service';
 
@@ -20,11 +20,11 @@ vi.mock('./service', () => ({
   readSpreadsheet: vi.fn<(uri: vscode.Uri) => Promise<SpreadsheetSheet[]>>(async () => []),
 }));
 
-describe('Excel editor', () => {
+describe('Spreadsheet editor', () => {
   it('registers XLSX and CSV files as the default editor', () => {
     const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
     const editor = manifest.contributes.customEditors.find(
-      (entry: { viewType: string }) => entry.viewType === excelEditorViewType,
+      (entry: { viewType: string }) => entry.viewType === spreadsheetEditorViewType,
     );
     expect(editor.priority).toBe('default');
     expect(editor.selector.map((entry: { filenamePattern: string }) => entry.filenamePattern)).toEqual([
@@ -34,7 +34,7 @@ describe('Excel editor', () => {
   });
 
   it('delegates document validation and loading to the spreadsheet service', async () => {
-    registerExcelEditor({ extensionUri: { fsPath: '/extension' } } as vscode.ExtensionContext);
+    registerSpreadsheetEditor({ extensionUri: { fsPath: '/extension' } } as vscode.ExtensionContext);
     const registration = vi.mocked(vscode.window.registerCustomEditorProvider).mock.calls.at(-1)!;
     const provider = registration[1] as vscode.CustomReadonlyEditorProvider;
     const uri = { scheme: 'file', path: '/sample.xlsx', fsPath: '/sample.xlsx' } as vscode.Uri;
@@ -43,7 +43,7 @@ describe('Excel editor', () => {
       {} as vscode.CustomDocumentOpenContext,
       {} as vscode.CancellationToken,
     );
-    expect(registration[0]).toBe(excelEditorViewType);
+    expect(registration[0]).toBe(spreadsheetEditorViewType);
     expect(validateSpreadsheetUri).toHaveBeenCalledWith(uri);
 
     let messageListener: ((message: { type?: string }) => Promise<void>) | undefined;

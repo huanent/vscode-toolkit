@@ -39,3 +39,7 @@ Use `kebab-case` for code filenames, Use `PascalCase` for React components and T
 Prefer built-in integer Tailwind tokens for dimensions, such as `mt-2`, `px-4`, `size-10`, and `text-sm`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens. Use VS Code CSS variables for colors so the webview follows the active VS Code theme.
 
 Before adding styles, check whether an existing integer Tailwind token or VS Code theme variable can be reused.
+
+### Compatibility
+
+- Refactors and renames do not need to preserve backward compatibility unless the user explicitly requests it.

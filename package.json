@@ -73,8 +73,8 @@
         "priority": "default"
       },
       {
-        "viewType": "toolkit.excelEditor",
-        "displayName": "Excel",
+        "viewType": "toolkit.spreadsheetEditor",
+        "displayName": "Spreadsheet",
         "selector": [
           {
             "filenamePattern": "*.xlsx"
