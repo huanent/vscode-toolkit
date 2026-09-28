@@ -44,6 +44,7 @@
     "@types/yauzl": "^3.4.0",
     "@types/yazl": "^3.3.1",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vscode/debugprotocol": "^1.68.0",
     "@vscode/vsce": "^4.0.0",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
@@ -196,8 +197,22 @@
           "group": "2_local@1"
         }
       ]
+    },
+    "configuration": {
+      "title": "Toolkit",
+      "properties": {
+        "toolkit.perftips.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show debug interval annotations while debugging. Changes apply to new debug sessions.",
+          "scope": "window"
+        }
+      }
     }
   },
+  "activationEvents": [
+    "onDebugAdapterProtocolTracker"
+  ],
   "extensionKind": [
     "ui"
   ],

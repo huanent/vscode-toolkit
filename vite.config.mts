@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
               'node:child_process',
               'node:fs',
               'node:os',
+              'node:perf_hooks',
               'node:path',
               'node:stream',
               'node:util',

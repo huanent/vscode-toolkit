@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerCommands } from '@/host/register-commands';
 import { registerWebviews } from '@/host/register-webviews';
+import { createPerfTipsTracker } from '@/features/perftips/perftips';
 import { registerSourceControl } from '@/features/git/source-control';
 import { registerXmlFormatter } from '@/features/xml/register-xml-formatter';
 import { registerArchiveEditor } from '@/features/archive/editor';
@@ -12,6 +13,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(registerArchiveEditor(context));
   context.subscriptions.push(registerSpreadsheetEditor(context));
   registerSourceControl(context);
+  context.subscriptions.push(
+    vscode.debug.registerDebugAdapterTrackerFactory('*', {
+      createDebugAdapterTracker(session) {
+        return createPerfTipsTracker(session);
+      },
+    }),
+  );
   registerWebviews(context);
 }
 
