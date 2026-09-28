@@ -4,16 +4,16 @@ import { mountWebview } from '@/webview/bootstrap';
 import '@/webview/styles.css';
 
 function App() {
-	return (
-		<PageShell>
-			<EmptyState
-				label="No results"
-				title="No results yet"
-				description="Run a tool from Toolkit and its output will appear here."
-				icon="↗"
-			/>
-		</PageShell>
-	);
+  return (
+    <PageShell>
+      <EmptyState
+        label="No results"
+        title="No results yet"
+        description="Run a tool from Toolkit and its output will appear here."
+        icon="↗"
+      />
+    </PageShell>
+  );
 }
 
 mountWebview('root', <App />);

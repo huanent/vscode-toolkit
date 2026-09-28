@@ -6,11 +6,11 @@ import { readArchiveTree, validateArchiveUri } from './service';
 export const archiveEditorViewType = 'toolkit.archiveEditor';
 
 export function registerArchiveEditor(context: vscode.ExtensionContext): vscode.Disposable {
-	return registerWebviewEditor<ArchiveTreeEntry[]>(context, {
-		viewType: archiveEditorViewType,
-		page: 'archive',
-		icon: 'file-zip',
-		validate: validateArchiveUri,
-		load: readArchiveTree,
-	});
+  return registerWebviewEditor<ArchiveTreeEntry[]>(context, {
+    viewType: archiveEditorViewType,
+    page: 'archive',
+    icon: 'file-zip',
+    validate: validateArchiveUri,
+    load: readArchiveTree,
+  });
 }

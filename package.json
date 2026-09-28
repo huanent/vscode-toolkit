@@ -1,192 +1,192 @@
 {
-	"name": "toolkit",
-	"displayName": "Toolkit",
-	"version": "1.8.10",
-	"description": "Developer utilities for VS Code",
-	"categories": [
-		"Other"
-	],
-	"homepage": "https://github.com/huanent/vscode-toolkit.git",
-	"license": "MIT",
-	"repository": {
-		"type": "github",
-		"url": "https://github.com/huanent/vscode-toolkit"
-	},
-	"publisher": "huanent",
-	"main": "./dist/extension.js",
-	"scripts": {
-		"vscode:prepublish": "npm run validate && npm run build:production",
-		"compile": "npm run validate && VITE_BUILD_TARGET=extension vite build --mode development && VITE_BUILD_TARGET=webview vite build --mode development",
-		"build:production": "VITE_BUILD_TARGET=extension vite build --mode production && VITE_BUILD_TARGET=webview vite build --mode production",
-		"package": "vsce package",
-		"format": "oxfmt .",
-		"pretest": "npm run validate",
-		"check-types": "tsc --noEmit",
-		"lint": "oxlint src",
-		"validate": "npm run check-types && npm run lint && npm run format",
-		"test": "vitest run"
-	},
-	"dependencies": {
-		"@vscode/codicons": "^0.0.46-24",
-		"cn": "^0.4.0",
-		"exceljs": "^4.4.0",
-		"react": "^19.3.0",
-		"react-dom": "^19.3.0",
-		"xml-formatter": "^3.7.0",
-		"yauzl": "^3.4.0"
-	},
-	"devDependencies": {
-		"@tailwindcss/vite": "^4.3.3",
-		"@types/node": "24.x",
-		"@types/react": "^19.3.0",
-		"@types/react-dom": "^19.3.0",
-		"@types/vscode": "^1.125.0",
-		"@types/yauzl": "^3.4.0",
-		"@types/yazl": "^3.3.1",
-		"@vitejs/plugin-react": "^6.1.1",
-		"@vscode/vsce": "^4.0.0",
-		"oxfmt": "^0.70.0",
-		"oxlint": "^1.85.0",
-		"tailwindcss": "^4.3.3",
-		"typescript": "^7.0.2",
-		"vite": "^8.3.1",
-		"vitest": "^5.0.2",
-		"yazl": "^3.3.1"
-	},
-	"overrides": {
-		"diff": "^8.0.4",
-		"serialize-javascript": "^7.0.6"
-	},
-	"contributes": {
-		"customEditors": [
-			{
-				"viewType": "toolkit.archiveEditor",
-				"displayName": "Archive",
-				"selector": [
-					{
-						"filenamePattern": "*.zip"
-					}
-				],
-				"priority": "default"
-			},
-			{
-				"viewType": "toolkit.excelEditor",
-				"displayName": "Excel",
-				"selector": [
-					{
-						"filenamePattern": "*.xlsx"
-					},
-					{
-						"filenamePattern": "*.csv"
-					}
-				],
-				"priority": "default"
-			}
-		],
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "toolkit_dashboard",
-					"title": "Toolkit",
-					"icon": "$(tools)"
-				}
-			],
-			"panel": [
-				{
-					"id": "toolkit_result",
-					"title": "Result",
-					"icon": "$(tools)"
-				}
-			]
-		},
-		"views": {
-			"toolkit_dashboard": [
-				{
-					"type": "webview",
-					"id": "toolkit.dashboard",
-					"name": "Toolkit",
-					"icon": "$(tools)"
-				}
-			],
-			"toolkit_result": [
-				{
-					"type": "webview",
-					"id": "toolkit.result",
-					"name": "Result",
-					"icon": "$(tools)"
-				}
-			]
-		},
-		"commands": [
-			{
-				"command": "toolkit.generateGitignore",
-				"title": "Generate .gitignore",
-				"category": "Toolkit"
-			},
-			{
-				"command": "toolkit.pullGitRepository",
-				"title": "Pull",
-				"icon": "$(cloud-download)",
-				"category": "Toolkit"
-			},
-			{
-				"command": "toolkit.pushGitRepository",
-				"title": "Push",
-				"icon": "$(cloud-upload)",
-				"category": "Toolkit"
-			},
-			{
-				"command": "toolkit.fetchGitRepository",
-				"title": "Fetch",
-				"icon": "$(sync)",
-				"category": "Toolkit"
-			},
-			{
-				"command": "toolkit.checkoutGitRepository",
-				"title": "Checkout to...",
-				"icon": "$(git-branch)",
-				"category": "Toolkit"
-			}
-		],
-		"submenus": [
-			{
-				"id": "toolkit.sourceControl",
-				"label": "Source Control"
-			}
-		],
-		"menus": {
-			"explorer/context": [
-				{
-					"submenu": "toolkit.sourceControl",
-					"when": "explorerResourceIsFolder && resourcePath in toolkit.gitRepositoryFolders",
-					"group": "navigation@9"
-				}
-			],
-			"toolkit.sourceControl": [
-				{
-					"command": "toolkit.pullGitRepository",
-					"group": "1_remote@1"
-				},
-				{
-					"command": "toolkit.pushGitRepository",
-					"group": "1_remote@2"
-				},
-				{
-					"command": "toolkit.fetchGitRepository",
-					"group": "1_remote@3"
-				},
-				{
-					"command": "toolkit.checkoutGitRepository",
-					"group": "2_local@1"
-				}
-			]
-		}
-	},
-	"extensionKind": [
-		"ui"
-	],
-	"icon": "resource/logo.png",
-	"engines": {
-		"vscode": "^1.125.0"
-	}
+  "name": "toolkit",
+  "displayName": "Toolkit",
+  "version": "1.8.10",
+  "description": "Developer utilities for VS Code",
+  "categories": [
+    "Other"
+  ],
+  "homepage": "https://github.com/huanent/vscode-toolkit.git",
+  "license": "MIT",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/huanent/vscode-toolkit"
+  },
+  "publisher": "huanent",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run validate && npm run build:production",
+    "compile": "npm run validate && VITE_BUILD_TARGET=extension vite build --mode development && VITE_BUILD_TARGET=webview vite build --mode development",
+    "build:production": "VITE_BUILD_TARGET=extension vite build --mode production && VITE_BUILD_TARGET=webview vite build --mode production",
+    "package": "mkdir -p packages && vsce package --out packages/toolkit-$npm_package_version.vsix",
+    "format": "oxfmt .",
+    "pretest": "npm run validate",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint src",
+    "validate": "npm run check-types && npm run lint && npm run format",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.46-24",
+    "cn": "^0.4.0",
+    "exceljs": "^4.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "xml-formatter": "^3.7.0",
+    "yauzl": "^3.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "24.x",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/vscode": "^1.125.0",
+    "@types/yauzl": "^3.4.0",
+    "@types/yazl": "^3.3.1",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vscode/vsce": "^4.0.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2",
+    "yazl": "^3.3.1"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "toolkit.archiveEditor",
+        "displayName": "Archive",
+        "selector": [
+          {
+            "filenamePattern": "*.zip"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "toolkit.excelEditor",
+        "displayName": "Excel",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.csv"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "toolkit_dashboard",
+          "title": "Toolkit",
+          "icon": "$(tools)"
+        }
+      ],
+      "panel": [
+        {
+          "id": "toolkit_result",
+          "title": "Result",
+          "icon": "$(tools)"
+        }
+      ]
+    },
+    "views": {
+      "toolkit_dashboard": [
+        {
+          "type": "webview",
+          "id": "toolkit.dashboard",
+          "name": "Toolkit",
+          "icon": "$(tools)"
+        }
+      ],
+      "toolkit_result": [
+        {
+          "type": "webview",
+          "id": "toolkit.result",
+          "name": "Result",
+          "icon": "$(tools)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "toolkit.generateGitignore",
+        "title": "Generate .gitignore",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.pullGitRepository",
+        "title": "Pull",
+        "icon": "$(cloud-download)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.pushGitRepository",
+        "title": "Push",
+        "icon": "$(cloud-upload)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.fetchGitRepository",
+        "title": "Fetch",
+        "icon": "$(sync)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.checkoutGitRepository",
+        "title": "Checkout to...",
+        "icon": "$(git-branch)",
+        "category": "Toolkit"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "toolkit.sourceControl",
+        "label": "Source Control"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "submenu": "toolkit.sourceControl",
+          "when": "explorerResourceIsFolder && resourcePath in toolkit.gitRepositoryFolders",
+          "group": "navigation@9"
+        }
+      ],
+      "toolkit.sourceControl": [
+        {
+          "command": "toolkit.pullGitRepository",
+          "group": "1_remote@1"
+        },
+        {
+          "command": "toolkit.pushGitRepository",
+          "group": "1_remote@2"
+        },
+        {
+          "command": "toolkit.fetchGitRepository",
+          "group": "1_remote@3"
+        },
+        {
+          "command": "toolkit.checkoutGitRepository",
+          "group": "2_local@1"
+        }
+      ]
+    }
+  },
+  "extensionKind": [
+    "ui"
+  ],
+  "icon": "resource/logo.png",
+  "engines": {
+    "vscode": "^1.125.0"
+  }
 }
