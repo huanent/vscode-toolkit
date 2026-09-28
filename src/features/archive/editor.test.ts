@@ -21,13 +21,16 @@ vi.mock('./service', () => ({
 }));
 
 describe('Archive editor', () => {
-  it('registers ZIP files as the default editor', () => {
+  it('registers ZIP and VSIX files as the default editor', () => {
     const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
     const editor = manifest.contributes.customEditors.find(
       (entry: { viewType: string }) => entry.viewType === archiveEditorViewType,
     );
     expect(editor.priority).toBe('default');
-    expect(editor.selector.map((entry: { filenamePattern: string }) => entry.filenamePattern)).toEqual(['*.zip']);
+    expect(editor.selector.map((entry: { filenamePattern: string }) => entry.filenamePattern)).toEqual([
+      '*.zip',
+      '*.vsix',
+    ]);
   });
 
   it('delegates validation and loading to the archive service', async () => {
@@ -36,7 +39,7 @@ describe('Archive editor', () => {
     const provider = registration[1] as vscode.CustomReadonlyEditorProvider;
     expect(registration[0]).toBe(archiveEditorViewType);
 
-    const uri = { scheme: 'file', path: '/sample.zip', fsPath: '/sample.zip' } as vscode.Uri;
+    const uri = { scheme: 'file', path: '/sample.vsix', fsPath: '/sample.vsix' } as vscode.Uri;
     const document = await provider.openCustomDocument(
       uri,
       {} as vscode.CustomDocumentOpenContext,

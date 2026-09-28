@@ -3,14 +3,14 @@ import * as yauzl from 'yauzl';
 import type { ArchiveTreeEntry } from './protocol';
 
 export function validateArchiveUri(uri: vscode.Uri): void {
-  if (!/\.zip$/i.test(uri.path)) throw new Error('Only ZIP archives can be previewed.');
+  if (!/\.(zip|vsix)$/i.test(uri.path)) throw new Error('Only ZIP or VSIX archives can be previewed.');
 }
 
 export async function readArchiveTree(uri: vscode.Uri): Promise<ArchiveTreeEntry[]> {
   validateArchiveUri(uri);
   if (uri.scheme !== 'file') {
     throw new Error(
-      'Remote ZIP preview requires a remote directory-reading connection. The archive will not be downloaded.',
+      'Remote ZIP or VSIX preview requires a remote directory-reading connection. The archive will not be downloaded.',
     );
   }
 

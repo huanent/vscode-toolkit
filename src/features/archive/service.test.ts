@@ -36,7 +36,7 @@ describe('ZIP directory reader', () => {
     expect(() => validateArchiveUri({ path: `/sample.${suffix}` } as Uri)).toThrow('Only ZIP');
   });
 
-  it.each(['zip', 'ZIP'])('accepts %s suffixes', (suffix) => {
+  it.each(['zip', 'ZIP', 'vsix', 'VSIX'])('accepts %s suffixes', (suffix) => {
     expect(() => validateArchiveUri({ path: `/sample.${suffix}` } as Uri)).not.toThrow();
   });
 
