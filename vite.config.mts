@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
               'vscode',
               'node:child_process',
               'node:fs',
+              'node:fs/promises',
               'node:os',
               'node:perf_hooks',
               'node:path',

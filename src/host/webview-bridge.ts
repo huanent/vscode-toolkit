@@ -16,22 +16,31 @@ export interface WebviewErrorMessage {
 
 export type WebviewHostMessage<TData> = WebviewLoadedMessage<TData> | WebviewErrorMessage;
 
+export interface WebviewDataOptions {
+  once?: boolean;
+}
+
 /**
  * Serves data to a webview using the shared `ready` → `loaded` / `error` protocol,
  * so pages only render the payload instead of re-implementing the handshake.
- * The load runs at most once per webview session; a failed load can be retried.
+ * Loads once by default; views can reload data when their webview context is recreated.
  */
-export function serveWebviewData<TData>(webview: vscode.Webview, load: () => Promise<TData>): vscode.Disposable {
+export function serveWebviewData<TData>(
+  webview: vscode.Webview,
+  load: () => Promise<TData>,
+  options: WebviewDataOptions = {},
+): vscode.Disposable {
+  const once = options.once ?? true;
   let disposed = false;
   let loading = false;
   let served = false;
 
   const listener = webview.onDidReceiveMessage(async (message: WebviewReadyMessage | undefined) => {
-    if (disposed || loading || served || message?.type !== 'ready') return;
+    if (disposed || loading || (once && served) || message?.type !== 'ready') return;
     loading = true;
     try {
       const data = await load();
-      served = true;
+      if (once) served = true;
       if (!disposed) await webview.postMessage({ type: 'loaded', data } satisfies WebviewLoadedMessage<TData>);
     } catch (error) {
       if (!disposed) {

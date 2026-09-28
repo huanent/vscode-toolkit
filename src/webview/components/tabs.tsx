@@ -16,14 +16,14 @@ type TabsProps = {
 export function Tabs({ tabs, activeTabId, onChange }: TabsProps) {
   return (
     <div className="border-b border-(--vscode-panel-border)" role="tablist" aria-label="Dashboard sections">
-      <div className="flex gap-1 overflow-x-auto">
+      <div className="flex w-full overflow-x-auto">
         {tabs.map((tab) => {
           const isActive = activeTabId === tab.id;
 
           return (
             <button
               className={cn(
-                'relative inline-flex shrink-0 cursor-pointer items-center gap-2 border-0 border-b-2 px-4    py-1 text-sm transition-colors',
+                'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 border-0 border-b-2 px-3 text-sm transition-colors',
                 isActive
                   ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
                   : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',
@@ -36,8 +36,12 @@ export function Tabs({ tabs, activeTabId, onChange }: TabsProps) {
               tabIndex={isActive ? 0 : -1}
               type="button"
             >
-              {tab.icon ? <span aria-hidden="true">{tab.icon}</span> : null}
-              {tab.label}
+              {tab.icon ? (
+                <span className="inline-flex size-4 items-center justify-center" aria-hidden="true">
+                  {tab.icon}
+                </span>
+              ) : null}
+              <span className="leading-none">{tab.label}</span>
             </button>
           );
         })}

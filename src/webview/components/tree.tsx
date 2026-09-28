@@ -17,6 +17,7 @@ type TreeProps<TItem> = {
   getKey: (path: readonly TItem[]) => Key;
   getLabel: (item: TItem) => string;
   isBranch: (item: TItem) => boolean;
+  onActivate?: (item: TItem, path: readonly TItem[]) => void;
   renderExpandIcon: (expanded: boolean) => ReactNode;
   renderItem: (item: TItem, context: TreeItemRenderContext<TItem>) => ReactNode;
 };
@@ -46,6 +47,7 @@ export function Tree<TItem>({
   getKey,
   getLabel,
   isBranch,
+  onActivate,
   renderExpandIcon,
   renderItem,
 }: TreeProps<TItem>) {
@@ -101,9 +103,12 @@ export function Tree<TItem>({
     }
     setSelectedKey(node.key);
     if (node.expandable) toggleExpanded(node.key);
+    else if (!node.isBranch) onActivate?.(node.item, node.path);
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const isTreeKey = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', ' '].includes(event.key);
+    const isTreeKey = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', ' '].includes(
+      event.key,
+    );
     if (!isTreeKey) return;
     event.preventDefault();
     event.stopPropagation();
@@ -136,6 +141,10 @@ export function Tree<TItem>({
         if (!currentItem?.expandable) break;
         if (currentItem.expanded) focusItem(currentItem.children[0]);
         else updateExpanded(currentItem.key, true);
+        break;
+      case 'Enter':
+        if (currentItem?.expandable) toggleExpanded(currentItem.key);
+        else if (currentItem && !currentItem.isBranch) onActivate?.(currentItem.item, currentItem.path);
         break;
       case ' ':
         if (currentItem?.expandable) toggleExpanded(currentItem.key);
@@ -293,7 +302,7 @@ function TreeRowIndentation<TItem>({
   renderExpandIcon,
 }: TreeRowIndentationProps<TItem>) {
   return (
-    <>
+    <div className="flex h-full shrink-0 items-center">
       <TreeIndentGuides path={node.path} getKey={getKey} activeIndentKeys={activeIndentKeys} />
       {node.path.slice(0, -1).map((_, index) => (
         <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-3')} aria-hidden="true" />
@@ -301,7 +310,7 @@ function TreeRowIndentation<TItem>({
       {node.isBranch ? (
         <span
           className={cn(
-            'relative z-10 mr-1 grid size-5 shrink-0 place-items-center',
+            'relative z-10 mr-1 grid size-5 shrink-0 place-items-center self-center',
             node.expandable && 'cursor-pointer',
           )}
           data-tree-expander
@@ -310,9 +319,9 @@ function TreeRowIndentation<TItem>({
           {renderExpandIcon(node.expanded)}
         </span>
       ) : (
-        <span className="relative z-10 mr-1 size-5 shrink-0" aria-hidden="true" />
+        <span className="relative z-10 mr-1 size-5 shrink-0 self-center" aria-hidden="true" />
       )}
-    </>
+    </div>
   );
 }
 
@@ -349,7 +358,7 @@ type TreeRowContentProps<TItem> = Pick<TreeProps<TItem>, 'renderItem'> & {
 
 function TreeRowContent<TItem>({ node, renderItem }: TreeRowContentProps<TItem>) {
   return (
-    <div className="relative z-10 flex min-w-0 flex-1 items-center gap-2">
+    <div className="relative z-10 flex h-full min-w-0 flex-1 items-center gap-1">
       {renderItem(node.item, { expanded: node.expanded, hasChildren: node.hasChildren, path: node.path })}
     </div>
   );

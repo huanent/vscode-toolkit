@@ -11,9 +11,9 @@ export type IconProps = {
 };
 
 const sizeClasses: Record<IconSize, string> = {
-  sm: 'size-3 text-xs',
-  md: 'size-4 text-base',
-  lg: 'size-5 text-xl',
+  sm: 'size-4 text-sm',
+  md: 'size-5 text-base',
+  lg: 'size-6 text-lg',
 };
 
 const variantClasses: Record<IconVariant, string> = {
@@ -25,7 +25,7 @@ export function Icon({ name, size = 'md', variant = 'default', className }: Icon
   return (
     <span
       className={cn(
-        'codicon inline-block shrink-0 leading-none',
+        'codicon inline-flex shrink-0 items-center justify-center leading-none',
         `codicon-${name}`,
         sizeClasses[size],
         variantClasses[variant],

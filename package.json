@@ -156,6 +156,12 @@
         "title": "Collapse All",
         "icon": "$(collapse-all)",
         "category": "Archive"
+      },
+      {
+        "command": "toolkit.createTempFile",
+        "title": "Create Temporary File",
+        "icon": "$(new-file)",
+        "category": "Toolkit"
       }
     ],
     "submenus": [
@@ -169,6 +175,13 @@
         {
           "command": "toolkit.archive.collapseAll",
           "when": "activeCustomEditorId == toolkit.archiveEditor",
+          "group": "navigation@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "toolkit.createTempFile",
+          "when": "view == toolkit.dashboard && toolkit.dashboard.tempActive",
           "group": "navigation@1"
         }
       ],
@@ -206,6 +219,12 @@
           "default": true,
           "markdownDescription": "Show debug interval annotations while debugging. Changes apply to new debug sessions.",
           "scope": "window"
+        },
+        "toolkit.storagePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Toolkit data directory. Supports `~`. Defaults to extension global storage.",
+          "scope": "machine"
         }
       }
     }
