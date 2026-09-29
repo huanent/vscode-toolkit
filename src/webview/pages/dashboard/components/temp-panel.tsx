@@ -1,4 +1,4 @@
-import { DisclosureIcon, FileIcon, FolderIcon } from '@/webview/components/icons';
+import { DisclosureIcon, FileIcon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
 import { Tree } from '@/webview/components/tree';
@@ -21,7 +21,7 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
       ) : loading ? (
         <Loading label="Reading temporary files..." />
       ) : entries?.length ? (
-        <div className="min-h-0 flex-1 overflow-auto p-2">
+        <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Temporary files"
             items={entries}
@@ -35,9 +35,9 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
               }
             }}
             renderExpandIcon={(expanded) => <DisclosureIcon expanded={expanded} />}
-            renderItem={(entry, { expanded, path }) => (
+            renderItem={(entry, { path }) => (
               <>
-                {entry.type === 'file' ? <FileIcon /> : <FolderIcon expanded={expanded} />}
+                {entry.type === 'file' && <FileIcon />}
                 <span
                   className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                   title={getTempEntryPath(path)}

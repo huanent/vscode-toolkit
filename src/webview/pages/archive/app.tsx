@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { DisclosureIcon, FileIcon, FolderIcon } from '@/webview/components/icons';
+import { DisclosureIcon, FileIcon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
 import { Tree } from '@/webview/components/tree';
@@ -39,9 +39,9 @@ function App() {
               getLabel={(entry) => entry.name}
               isBranch={(entry) => entry.type === 'directory'}
               renderExpandIcon={(expanded) => <DisclosureIcon expanded={expanded} size="lg" />}
-              renderItem={(entry, { expanded, path }) => (
+              renderItem={(entry, { path }) => (
                 <>
-                  {entry.type === 'file' ? <FileIcon size="lg" /> : <FolderIcon expanded={expanded} size="lg" />}
+                  {entry.type === 'file' && <FileIcon size="lg" />}
                   <span
                     className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                     title={getArchiveEntryPath(path)}

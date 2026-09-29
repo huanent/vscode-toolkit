@@ -45,11 +45,11 @@ function App() {
     tempError ?? (tempEntries === undefined && tempState.status === 'error' ? tempState.message : undefined);
 
   return (
-    <main>
-      <div className="px-1">
+    <main className="px-1">
+      <div>
         <Tabs tabs={tabs} activeTabId={activeTabId} onChange={setActiveTabId} />
       </div>
-      <div>
+      <div className="py-2">
         <TabPanel tabId="tools" activeTabId={activeTabId}>
           <section
             className="mb-5 flex items-end justify-between gap-4 border border-(--vscode-panel-border) bg-(--vscode-editor-background)/75 p-4"

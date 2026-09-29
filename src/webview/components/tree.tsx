@@ -305,7 +305,7 @@ function TreeRowIndentation<TItem>({
     <div className="flex h-full shrink-0 items-center">
       <TreeIndentGuides path={node.path} getKey={getKey} activeIndentKeys={activeIndentKeys} />
       {node.path.slice(0, -1).map((_, index) => (
-        <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-3')} aria-hidden="true" />
+        <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-4')} aria-hidden="true" />
       ))}
       {node.isBranch ? (
         <span
@@ -318,9 +318,7 @@ function TreeRowIndentation<TItem>({
         >
           {renderExpandIcon(node.expanded)}
         </span>
-      ) : (
-        <span className="relative z-10 mr-1 size-5 shrink-0 self-center" aria-hidden="true" />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -340,7 +338,7 @@ function TreeIndentGuides<TItem>({ path, getKey, activeIndentKeys }: TreeIndentG
             key={index}
             className={cn(
               'shrink-0 self-stretch border-l',
-              'w-3',
+              'w-4',
               active
                 ? 'border-(--vscode-tree-indentGuidesStroke) opacity-100'
                 : 'border-(--vscode-tree-inactiveIndentGuidesStroke) opacity-60',
