@@ -1,7 +1,6 @@
-import { Icon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
-import { Tree } from '@/webview/components/tree';
+import { Tree, type TreeItem } from '@/webview/components/tree';
 import type { OpenTempFileRequest, TempTreeEntry } from '@/features/temp/protocol';
 import { postToHost } from '@/webview/utils/host-data';
 
@@ -26,28 +25,12 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Temporary files"
-            items={entries}
-            getChildren={(entry) => entry.children ?? []}
-            getKey={getTempEntryPath}
-            getLabel={(entry) => entry.name}
-            getItemContext={(entry, path) => ({ tempEntryPath: getTempEntryPath(path), tempEntryType: entry.type })}
-            isBranch={(entry) => entry.type === 'directory'}
-            onActivate={(entry, path) => {
-              if (entry.type === 'file') {
-                postToHost({ type: 'openTempFile', path: getTempEntryPath(path) } satisfies OpenTempFileRequest);
+            items={toTempTreeItems(entries)}
+            onActivate={(item) => {
+              if (item.type === 'file') {
+                postToHost({ type: 'openTempFile', path: item.path } satisfies OpenTempFileRequest);
               }
             }}
-            renderItem={(entry, { path }) => (
-              <>
-                {entry.type === 'file' && <Icon name="file" />}
-                <span
-                  className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
-                  title={getTempEntryPath(path)}
-                >
-                  {entry.name}
-                </span>
-              </>
-            )}
           />
         </div>
       ) : (
@@ -63,6 +46,18 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
   );
 }
 
-function getTempEntryPath(path: readonly TempTreeEntry[]): string {
-  return path.map((entry) => entry.name).join('/');
+function toTempTreeItems(entries: readonly TempTreeEntry[], parentPath = ''): TreeItem[] {
+  return entries.map((entry) => {
+    const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
+    const context = { tempEntryPath: path, tempEntryType: entry.type };
+    return entry.type === 'directory'
+      ? {
+          path,
+          name: entry.name,
+          type: 'directory' as const,
+          context,
+          children: entry.children ? toTempTreeItems(entry.children, path) : undefined,
+        }
+      : { path, name: entry.name, type: 'file' as const, context };
+  });
 }

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Icon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
-import { Tree } from '@/webview/components/tree';
+import { Tree, type TreeItem } from '@/webview/components/tree';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import { formatSize } from '@/webview/utils/format';
 import '@/webview/styles.css';
@@ -34,25 +33,7 @@ function App() {
             <Tree
               ariaLabel={`${name} contents`}
               collapseAllTrigger={collapseAllTrigger}
-              items={state.data}
-              getChildren={(entry) => entry.children ?? []}
-              getKey={getArchiveEntryPath}
-              getLabel={(entry) => entry.name}
-              isBranch={(entry) => entry.type === 'directory'}
-              renderItem={(entry, { path }) => (
-                <>
-                  {entry.type === 'file' && <Icon name="file" />}
-                  <span
-                    className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
-                    title={getArchiveEntryPath(path)}
-                  >
-                    {entry.name}
-                  </span>
-                  <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
-                    {entry.type === 'file' ? formatSize(entry.size) : ''}
-                  </span>
-                </>
-              )}
+              items={toArchiveTreeItems(state.data)}
             />
           ) : (
             <Empty
@@ -80,8 +61,18 @@ function App() {
   );
 }
 
-function getArchiveEntryPath(path: readonly ArchiveTreeEntry[]): string {
-  return path.map((entry) => entry.name).join('/');
+function toArchiveTreeItems(entries: readonly ArchiveTreeEntry[], parentPath = ''): TreeItem[] {
+  return entries.map((entry) => {
+    const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
+    return entry.type === 'directory'
+      ? {
+          path,
+          name: entry.name,
+          type: 'directory' as const,
+          children: entry.children ? toArchiveTreeItems(entry.children, path) : undefined,
+        }
+      : { path, name: entry.name, type: 'file' as const, detail: formatSize(entry.size) };
+  });
 }
 
 mountWebview('root', <App />);

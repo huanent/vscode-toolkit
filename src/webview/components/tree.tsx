@@ -1,58 +1,40 @@
 import { cn } from 'cn';
-import { DisclosureIcon } from '@/webview/components/icons';
+import { DisclosureIcon, Icon } from '@/webview/components/icons';
 import { useEffect, useId, useRef, useState } from 'react';
-import type { Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import type { Key, KeyboardEvent, MouseEvent } from 'react';
 
-export type TreeItemRenderContext<TItem> = {
-  expanded: boolean;
-  hasChildren: boolean;
-  path: readonly TItem[];
+type TreeItemBase = {
+  path: string;
+  name: string;
+  context?: Readonly<Record<string, string | number | boolean>>;
 };
 
-type TreeProps<TItem> = {
+export type TreeItem =
+  | (TreeItemBase & { type: 'file'; detail?: string })
+  | (TreeItemBase & { type: 'directory'; children?: readonly TreeItem[] });
+
+type TreeFileItem = Extract<TreeItem, { type: 'file' }>;
+
+type TreeProps = {
   ariaLabel: string;
-  className?: string;
   collapseAllTrigger?: number;
-  items: readonly TItem[];
-  getChildren: (item: TItem) => readonly TItem[];
-  getKey: (path: readonly TItem[]) => Key;
-  getLabel: (item: TItem) => string;
-  /** VS Code webview context of a row, exposed as `data-vscode-context` for `webview/context` menus. */
-  getItemContext?: (item: TItem, path: readonly TItem[]) => Record<string, unknown> | undefined;
-  isBranch: (item: TItem) => boolean;
-  onActivate?: (item: TItem, path: readonly TItem[]) => void;
-  renderItem: (item: TItem, context: TreeItemRenderContext<TItem>) => ReactNode;
+  items: readonly TreeItem[];
+  onActivate?: (item: TreeFileItem) => void;
 };
 
-type TreeNodeModel<TItem> = {
-  item: TItem;
-  path: readonly TItem[];
+type TreeNodeModel = {
+  item: TreeItem;
   key: Key;
   parentKey: Key | null;
-  label: string;
-  children: TreeNodeModel<TItem>[];
+  children: TreeNodeModel[];
   level: number;
   position: number;
   setSize: number;
-  isBranch: boolean;
-  hasChildren: boolean;
   expandable: boolean;
   expanded: boolean;
 };
 
-export function Tree<TItem>({
-  ariaLabel,
-  className,
-  collapseAllTrigger,
-  items,
-  getChildren,
-  getKey,
-  getLabel,
-  getItemContext,
-  isBranch,
-  onActivate,
-  renderItem,
-}: TreeProps<TItem>) {
+export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeProps) {
   const treeId = useId();
   const treeRef = useRef<HTMLDivElement>(null);
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
@@ -62,7 +44,7 @@ export function Tree<TItem>({
   useEffect(() => {
     setExpandedKeys(new Set());
   }, [collapseAllTrigger]);
-  const treeItems = createTreeNodes(items, [], null, expandedKeys, getChildren, getKey, getLabel, isBranch);
+  const treeItems = createTreeNodes(items, null, expandedKeys);
   const visibleItems = flattenTreeNodes(treeItems);
   const activeItem = visibleItems.find((node) => node.key === focusedKey) ?? visibleItems[0];
   const activeIndentKeys = new Set<Key>();
@@ -90,12 +72,12 @@ export function Tree<TItem>({
       return next;
     });
   };
-  const focusItem = (node: TreeNodeModel<TItem> | undefined) => {
+  const focusItem = (node: TreeNodeModel | undefined) => {
     if (!node) return;
     setFocusedKey(node.key);
     setSelectedKey(node.key);
   };
-  const handleItemClick = (node: TreeNodeModel<TItem>, event: MouseEvent<HTMLDivElement>) => {
+  const handleItemClick = (node: TreeNodeModel, event: MouseEvent<HTMLDivElement>) => {
     const isExpanderClick = event.target instanceof Element && event.target.closest('[data-tree-expander]') !== null;
     treeRef.current?.focus();
     setFocusedKey(node.key);
@@ -105,7 +87,7 @@ export function Tree<TItem>({
     }
     setSelectedKey(node.key);
     if (node.expandable) toggleExpanded(node.key);
-    else if (!node.isBranch) onActivate?.(node.item, node.path);
+    else if (node.item.type === 'file') onActivate?.(node.item);
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const isTreeKey = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter', ' '].includes(
@@ -146,7 +128,7 @@ export function Tree<TItem>({
         break;
       case 'Enter':
         if (currentItem?.expandable) toggleExpanded(currentItem.key);
-        else if (currentItem && !currentItem.isBranch) onActivate?.(currentItem.item, currentItem.path);
+        else if (currentItem?.item.type === 'file') onActivate?.(currentItem.item);
         break;
       case ' ':
         if (currentItem?.expandable) toggleExpanded(currentItem.key);
@@ -157,7 +139,7 @@ export function Tree<TItem>({
   return (
     <div
       ref={treeRef}
-      className={cn('outline-none', className)}
+      className="outline-none"
       role="tree"
       aria-label={ariaLabel}
       aria-activedescendant={activeItem ? getTreeItemId(treeId, activeItem.key) : undefined}
@@ -176,13 +158,10 @@ export function Tree<TItem>({
           key={node.key}
           node={node}
           treeId={treeId}
-          getKey={getKey}
-          getItemContext={getItemContext}
           activeIndentKeys={activeIndentKeys}
           focusedKey={activeItem?.key ?? null}
           selectedKey={selectedKey}
           treeHasFocus={treeHasFocus}
-          renderItem={renderItem}
           onItemClick={handleItemClick}
         />
       ))}
@@ -190,44 +169,31 @@ export function Tree<TItem>({
   );
 }
 
-function createTreeNodes<TItem>(
-  items: readonly TItem[],
-  parentPath: readonly TItem[],
+function createTreeNodes(
+  items: readonly TreeItem[],
   parentKey: Key | null,
   expandedKeys: ReadonlySet<Key>,
-  getChildren: TreeProps<TItem>['getChildren'],
-  getKey: TreeProps<TItem>['getKey'],
-  getLabel: TreeProps<TItem>['getLabel'],
-  isBranch: TreeProps<TItem>['isBranch'],
-): TreeNodeModel<TItem>[] {
+): TreeNodeModel[] {
   return items.map((item, index) => {
-    const path = [...parentPath, item];
-    const key = getKey(path);
-    const children = getChildren(item);
-    const branch = isBranch(item);
-    const expandable = branch && children.length > 0;
+    const key = item.path;
+    const children = item.type === 'directory' ? (item.children ?? []) : [];
+    const expandable = item.type === 'directory' && children.length > 0;
     const expanded = expandable && expandedKeys.has(key);
     return {
       item,
-      path,
       key,
       parentKey,
-      label: getLabel(item),
-      children: expanded
-        ? createTreeNodes(children, path, key, expandedKeys, getChildren, getKey, getLabel, isBranch)
-        : [],
-      level: path.length,
+      children: expanded ? createTreeNodes(children, key, expandedKeys) : [],
+      level: getTreeDepth(item.path),
       position: index + 1,
       setSize: items.length,
-      isBranch: branch,
-      hasChildren: children.length > 0,
       expandable,
       expanded,
     };
   });
 }
 
-function flattenTreeNodes<TItem>(nodes: readonly TreeNodeModel<TItem>[]): TreeNodeModel<TItem>[] {
+function flattenTreeNodes(nodes: readonly TreeNodeModel[]): TreeNodeModel[] {
   return nodes.flatMap((node) => [node, ...flattenTreeNodes(node.children)]);
 }
 
@@ -235,33 +201,26 @@ function getTreeItemId(treeId: string, key: Key): string {
   return `${treeId}-item-${encodeURIComponent(String(key))}`;
 }
 
-type TreeRowProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'getItemContext' | 'renderItem'> & {
-  node: TreeNodeModel<TItem>;
+function getTreeDepth(path: string): number {
+  return path.split('/').filter(Boolean).length;
+}
+
+type TreeRowProps = {
+  node: TreeNodeModel;
   treeId: string;
   activeIndentKeys: ReadonlySet<Key>;
   focusedKey: Key | null;
   selectedKey: Key | null;
   treeHasFocus: boolean;
-  onItemClick: (node: TreeNodeModel<TItem>, event: MouseEvent<HTMLDivElement>) => void;
+  onItemClick: (node: TreeNodeModel, event: MouseEvent<HTMLDivElement>) => void;
 };
 
-function TreeRow<TItem>({
-  node,
-  treeId,
-  getKey,
-  getItemContext,
-  activeIndentKeys,
-  selectedKey,
-  treeHasFocus,
-  renderItem,
-  onItemClick,
-}: TreeRowProps<TItem>) {
+function TreeRow({ node, treeId, activeIndentKeys, selectedKey, treeHasFocus, onItemClick }: TreeRowProps) {
   const selected = node.key === selectedKey;
-  const itemContext = getItemContext?.(node.item, node.path);
   return (
     <div
       id={getTreeItemId(treeId, node.key)}
-      data-vscode-context={itemContext ? JSON.stringify(itemContext) : undefined}
+      data-vscode-context={node.item.context ? JSON.stringify(node.item.context) : undefined}
       className={cn(
         'relative flex h-7 w-full items-center rounded pl-2 pr-2 cursor-pointer',
         !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
@@ -273,32 +232,32 @@ function TreeRow<TItem>({
           'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
       )}
       role="treeitem"
-      aria-expanded={node.isBranch ? node.expanded : undefined}
+      aria-expanded={node.item.type === 'directory' ? node.expanded : undefined}
       aria-selected={selected}
       aria-level={node.level}
       aria-posinset={node.position}
       aria-setsize={node.setSize}
       onClick={(event) => onItemClick(node, event)}
     >
-      <TreeRowIndentation node={node} getKey={getKey} activeIndentKeys={activeIndentKeys} />
-      <TreeRowContent node={node} renderItem={renderItem} />
+      <TreeRowIndentation node={node} activeIndentKeys={activeIndentKeys} />
+      <TreeRowContent node={node} />
     </div>
   );
 }
 
-type TreeRowIndentationProps<TItem> = Pick<TreeProps<TItem>, 'getKey'> & {
-  node: TreeNodeModel<TItem>;
+type TreeRowIndentationProps = {
+  node: TreeNodeModel;
   activeIndentKeys: ReadonlySet<Key>;
 };
 
-function TreeRowIndentation<TItem>({ node, getKey, activeIndentKeys }: TreeRowIndentationProps<TItem>) {
+function TreeRowIndentation({ node, activeIndentKeys }: TreeRowIndentationProps) {
   return (
     <div className="flex h-full shrink-0 items-center">
-      <TreeIndentGuides path={node.path} getKey={getKey} activeIndentKeys={activeIndentKeys} />
-      {node.path.slice(0, -1).map((_, index) => (
+      <TreeIndentGuides itemPath={node.item.path} activeIndentKeys={activeIndentKeys} />
+      {Array.from({ length: node.level - 1 }, (_, index) => (
         <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-4')} aria-hidden="true" />
       ))}
-      {node.isBranch ? (
+      {node.item.type === 'directory' ? (
         <span
           className={cn(
             'relative z-10 mr-1 grid size-5 shrink-0 place-items-center self-center',
@@ -314,15 +273,17 @@ function TreeRowIndentation<TItem>({ node, getKey, activeIndentKeys }: TreeRowIn
   );
 }
 
-type TreeIndentGuidesProps<TItem> = Pick<TreeRowIndentationProps<TItem>, 'getKey' | 'activeIndentKeys'> & {
-  path: readonly TItem[];
+type TreeIndentGuidesProps = {
+  itemPath: string;
+  activeIndentKeys: ReadonlySet<Key>;
 };
 
-function TreeIndentGuides<TItem>({ path, getKey, activeIndentKeys }: TreeIndentGuidesProps<TItem>) {
+function TreeIndentGuides({ itemPath, activeIndentKeys }: TreeIndentGuidesProps) {
+  const pathSegments = itemPath.split('/').filter(Boolean);
   return (
     <div className="pointer-events-none absolute inset-y-0 left-4 z-0 flex" aria-hidden="true">
-      {path.slice(0, -1).map((_, index) => {
-        const guideKey = getKey(path.slice(0, index + 1));
+      {pathSegments.slice(0, -1).map((_, index) => {
+        const guideKey = pathSegments.slice(0, index + 1).join('/');
         const active = activeIndentKeys.has(guideKey);
         return (
           <span
@@ -341,14 +302,22 @@ function TreeIndentGuides<TItem>({ path, getKey, activeIndentKeys }: TreeIndentG
   );
 }
 
-type TreeRowContentProps<TItem> = Pick<TreeProps<TItem>, 'renderItem'> & {
-  node: TreeNodeModel<TItem>;
+type TreeRowContentProps = {
+  node: TreeNodeModel;
 };
 
-function TreeRowContent<TItem>({ node, renderItem }: TreeRowContentProps<TItem>) {
+function TreeRowContent({ node }: TreeRowContentProps) {
   return (
     <div className="relative z-10 flex h-full min-w-0 flex-1 items-center gap-1">
-      {renderItem(node.item, { expanded: node.expanded, hasChildren: node.hasChildren, path: node.path })}
+      {node.item.type === 'file' && <Icon name="file" />}
+      <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap" title={node.item.path}>
+        {node.item.name}
+      </span>
+      {node.item.type === 'file' && node.item.detail && (
+        <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+          {node.item.detail}
+        </span>
+      )}
     </div>
   );
 }
