@@ -1,19 +1,8 @@
 import { lstat, mkdir, readdir, writeFile } from 'node:fs/promises';
-import * as os from 'node:os';
 import * as path from 'node:path';
 import type { TempTreeEntry } from './protocol';
 
 const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
-
-export function resolveTempDirectory(
-  storagePath: string | undefined,
-  globalStoragePath: string,
-  homeDirectory = os.homedir(),
-): string {
-  const configuredPath = storagePath?.trim();
-  const rootPath = expandHome(configuredPath || globalStoragePath, homeDirectory);
-  return path.join(path.resolve(rootPath), 'temp');
-}
 
 export async function readTempTree(directory: string): Promise<TempTreeEntry[]> {
   await mkdir(directory, { recursive: true });
@@ -82,10 +71,4 @@ async function readDirectory(directory: string): Promise<TempTreeEntry[]> {
   return tree.sort((left, right) =>
     left.type === right.type ? entryNameCollator.compare(left.name, right.name) : left.type === 'directory' ? -1 : 1,
   );
-}
-
-function expandHome(value: string, homeDirectory: string): string {
-  if (value === '~') return homeDirectory;
-  if (value.startsWith('~/') || value.startsWith('~\\')) return path.join(homeDirectory, value.slice(2));
-  return value;
 }

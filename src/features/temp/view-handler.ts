@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
+import { resolveStorageDirectory } from '@/lib/storage';
 import type {
   CreateTempFileRequest,
   OpenTempFileRequest,
   SetTempTabActiveRequest,
   TempFilesWebviewMessage,
 } from './protocol';
-import { createTempFile, getTempFilePath, readTempTree, resolveTempDirectory, validateTempFileName } from './service';
+import { createTempFile, getTempFilePath, readTempTree, validateTempFileName } from './service';
 
 export function createTempFilesHandler(context: vscode.ExtensionContext): WebviewViewHandler {
   const getTempDirectory = () => {
-    const storagePath = vscode.workspace.getConfiguration('toolkit').get<string>('storagePath', '');
-    return resolveTempDirectory(storagePath, context.globalStorageUri.fsPath);
+    return resolveStorageDirectory(context, 'temp');
   };
 
   return {
@@ -66,8 +66,7 @@ export async function createTempFileFromInput(context: vscode.ExtensionContext):
 }
 
 async function createTempFileAndOpen(context: vscode.ExtensionContext, name: string): Promise<void> {
-  const storagePath = vscode.workspace.getConfiguration('toolkit').get<string>('storagePath', '');
-  const directory = resolveTempDirectory(storagePath, context.globalStorageUri.fsPath);
+  const directory = resolveStorageDirectory(context, 'temp');
   const filePath = await createTempFile(directory, name);
   const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
   await vscode.window.showTextDocument(document);

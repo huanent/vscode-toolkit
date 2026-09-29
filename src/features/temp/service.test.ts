@@ -2,19 +2,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createTempFile, getTempFilePath, readTempTree, resolveTempDirectory, validateTempFileName } from './service';
+import { createTempFile, getTempFilePath, readTempTree, validateTempFileName } from './service';
 
 describe('temporary file service', () => {
-  it('resolves the configured path, home shorthand, and global storage fallback', () => {
-    expect(resolveTempDirectory('/custom/toolkit', '/extension/global', '/Users/test')).toBe(
-      join('/custom/toolkit', 'temp'),
-    );
-    expect(resolveTempDirectory('~/toolkit-data', '/extension/global', '/Users/test')).toBe(
-      join('/Users/test/toolkit-data', 'temp'),
-    );
-    expect(resolveTempDirectory('', '/extension/global', '/Users/test')).toBe(join('/extension/global', 'temp'));
-  });
-
   it('reads nested files and creates the temp directory when it is missing', async () => {
     const root = await mkdtemp(join(tmpdir(), 'toolkit-temp-test-'));
     const directory = join(root, 'storage', 'temp');
