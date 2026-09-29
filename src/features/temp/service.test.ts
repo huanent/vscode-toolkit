@@ -8,6 +8,7 @@ import {
   deleteTempEntry,
   getTempFilePath,
   readTempTree,
+  resolveTempFileSystemPath,
   renameTempEntry,
   resolveTempDirectory,
   validateTempFileName,
@@ -86,6 +87,15 @@ describe('temporary file service', () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  });
+
+  it('maps virtual filesystem paths inside the temp directory', () => {
+    const directory = join('/storage', 'temp');
+    expect(resolveTempFileSystemPath(directory, '/folder/note.md')).toBe(join(directory, 'folder', 'note.md'));
+    expect(resolveTempFileSystemPath(directory, '/')).toBe(directory);
+    expect(() => resolveTempFileSystemPath(directory, '/../../outside.txt')).toThrow('Invalid temporary path.');
+    expect(() => resolveTempFileSystemPath(directory, '/folder\\..\\outside.txt')).toThrow('Invalid temporary path.');
+    expect(() => resolveTempFileSystemPath(directory, 'folder/note.md')).toThrow('Invalid temporary path.');
   });
 
   it.each(['', '.', '..', '../outside', 'nested\\file'])('rejects unsafe file name %j', (name) => {

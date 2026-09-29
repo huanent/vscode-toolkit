@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { OpenTempFileRequest, TempFilesWebviewMessage } from './protocol';
+import { createTempFileUri } from './file-system';
 import { getTempFilePath, readTempTree } from './service';
 
 let activeWebview: vscode.Webview | undefined;
@@ -19,8 +20,8 @@ export function createTempFilesHandler(context: vscode.ExtensionContext): Webvie
     onMessage: async (message, webview) => {
       if (!isOpenTempFileRequest(message)) return;
       try {
-        const filePath = await getTempFilePath(getTempDirectory(), message.path);
-        const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+        await getTempFilePath(getTempDirectory(), message.path);
+        const document = await vscode.workspace.openTextDocument(createTempFileUri(message.path));
         await vscode.window.showTextDocument(document);
       } catch (error) {
         await postTempFileError(webview, error);

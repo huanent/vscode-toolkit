@@ -77,6 +77,12 @@ export function validateTempFolderName(name: string): string | undefined {
   return validateTempEntryName(name, 'folder');
 }
 
+export function resolveTempFileSystemPath(directory: string, uriPath: string): string {
+  if (!uriPath.startsWith('/')) throw new Error('Invalid temporary path.');
+  const relativePath = uriPath.slice(1).replace(/\/+$/, '');
+  return relativePath ? resolveTempPath(directory, relativePath) : path.resolve(directory);
+}
+
 function validateTempEntryName(name: string, kind: 'file' | 'folder'): string | undefined {
   if (!name.trim()) return `Enter a ${kind} name.`;
   if (name === '.' || name === '..' || name.includes('/') || name.includes('\\') || name.includes('\0')) {
@@ -99,7 +105,9 @@ function resolveTempPath(directory: string, relativePath: string): string {
   const segments = relativePath.split('/');
   if (
     !relativePath ||
-    segments.some((segment) => !segment || segment === '.' || segment === '..' || segment.includes('\0'))
+    segments.some(
+      (segment) => !segment || segment === '.' || segment === '..' || segment.includes('\0') || segment.includes('\\'),
+    )
   ) {
     throw new Error('Invalid temporary path.');
   }

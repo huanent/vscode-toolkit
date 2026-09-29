@@ -1,12 +1,13 @@
-import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTempAutoSaveScheduler } from './auto-save';
+import { TEMP_FILE_SYSTEM_SCHEME } from './protocol';
 
-function createDocument(filePath: string) {
+function createDocument(uriPath: string, scheme = TEMP_FILE_SYSTEM_SCHEME) {
   const save = vi.fn<() => Promise<boolean>>(async () => true);
+  const uri = `${scheme}:${uriPath}`;
   return {
     document: {
-      uri: { scheme: 'file', fsPath: filePath, toString: () => filePath },
+      uri: { scheme, toString: () => uri },
       isDirty: true,
       save,
     },
@@ -21,9 +22,8 @@ describe('temporary file auto-save', () => {
 
   it('resets the timer on edits and saves after 500 ms of inactivity', () => {
     vi.useFakeTimers();
-    const tempDirectory = resolve('storage', 'temp');
-    const scheduler = createTempAutoSaveScheduler(tempDirectory);
-    const { document, save } = createDocument(join(tempDirectory, 'nested', 'note.md'));
+    const scheduler = createTempAutoSaveScheduler();
+    const { document, save } = createDocument('/nested/note.md');
 
     scheduler.schedule(document);
     vi.advanceTimersByTime(499);
@@ -38,12 +38,11 @@ describe('temporary file auto-save', () => {
     scheduler.dispose();
   });
 
-  it('ignores files outside the temp directory and cancels closed documents', () => {
+  it('ignores other schemes and cancels closed documents', () => {
     vi.useFakeTimers();
-    const tempDirectory = resolve('storage', 'temp');
-    const scheduler = createTempAutoSaveScheduler(tempDirectory);
-    const outsideDocument = createDocument(resolve(tempDirectory, '..', 'temp-other', 'note.md'));
-    const { document, save } = createDocument(join(tempDirectory, 'note.md'));
+    const scheduler = createTempAutoSaveScheduler();
+    const outsideDocument = createDocument('/note.md', 'file');
+    const { document, save } = createDocument('/note.md');
 
     scheduler.schedule(outsideDocument.document);
     scheduler.schedule(document);

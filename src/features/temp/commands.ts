@@ -3,11 +3,10 @@ import * as path from 'node:path';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { TempContextTarget, TempEntryType } from './protocol';
 import { createTempAutoSaveScheduler } from './auto-save';
+import { createTempFileUri, registerTempFileSystem } from './file-system';
 import {
   createTempDirectory,
   createTempFile,
-  deleteTempEntry,
-  renameTempEntry,
   resolveTempDirectory,
   validateTempFileName,
   validateTempFolderName,
@@ -20,8 +19,9 @@ import { refreshTempFiles } from './view-handler';
  * right-clicked entry as the command argument.
  */
 export function registerTempCommands(context: vscode.ExtensionContext): void {
-  const autoSaveScheduler = createTempAutoSaveScheduler(resolveStorageDirectory(context, 'temp'));
+  const autoSaveScheduler = createTempAutoSaveScheduler();
   context.subscriptions.push(
+    registerTempFileSystem(context),
     vscode.workspace.onDidChangeTextDocument(({ document }) => autoSaveScheduler.schedule(document)),
     vscode.workspace.onDidSaveTextDocument(autoSaveScheduler.cancel),
     vscode.workspace.onDidCloseTextDocument(autoSaveScheduler.cancel),
@@ -54,7 +54,8 @@ async function createTempEntry(context: vscode.ExtensionContext, type: TempEntry
   if (isFile) {
     const filePath = await createTempFile(directory, name);
     await refreshTempFiles(context);
-    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+    const relativePath = path.relative(resolveStorageDirectory(context, 'temp'), filePath);
+    const document = await vscode.workspace.openTextDocument(createTempFileUri(relativePath));
     await vscode.window.showTextDocument(document);
     return;
   }
@@ -85,7 +86,9 @@ async function renameTempEntryFromInput(context: vscode.ExtensionContext, target
   });
   if (name === undefined) return;
 
-  await renameTempEntry(resolveStorageDirectory(context, 'temp'), entry.tempEntryPath, name);
+  const parentPath = path.posix.dirname(entry.tempEntryPath);
+  const renamedPath = path.posix.join(parentPath, name.trim());
+  await vscode.workspace.fs.rename(createTempFileUri(entry.tempEntryPath), createTempFileUri(renamedPath));
   await refreshTempFiles(context);
 }
 
@@ -102,20 +105,22 @@ async function deleteTempEntryFromInput(context: vscode.ExtensionContext, target
   );
   if (confirmation !== 'Delete') return;
 
-  const deletedPath = await deleteTempEntry(resolveStorageDirectory(context, 'temp'), entry.tempEntryPath);
-  await closeTabsForPath(deletedPath);
+  await vscode.workspace.fs.delete(createTempFileUri(entry.tempEntryPath), { recursive: isFolder });
+  await closeTabsForPath(entry.tempEntryPath);
   await refreshTempFiles(context);
 }
 
 /** Keeps editors from lingering on files that no longer exist. */
-async function closeTabsForPath(targetPath: string): Promise<void> {
+async function closeTabsForPath(relativePath: string): Promise<void> {
+  const targetUri = createTempFileUri(relativePath);
+  const targetPath = targetUri.path.replace(/\/$/, '');
   const tabs = vscode.window.tabGroups.all
     .flatMap((group) => group.tabs)
     .filter((tab) => {
       const input = tab.input;
       if (!(input instanceof vscode.TabInputText)) return false;
-      const filePath = input.uri.fsPath;
-      return filePath === targetPath || filePath.startsWith(`${targetPath}${path.sep}`);
+      if (input.uri.scheme !== targetUri.scheme) return false;
+      return input.uri.path === targetPath || input.uri.path.startsWith(`${targetPath}/`);
     });
   if (tabs.length) await vscode.window.tabGroups.close(tabs);
 }

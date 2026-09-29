@@ -1,19 +1,17 @@
-import * as path from 'node:path';
+import { TEMP_FILE_SYSTEM_SCHEME } from './protocol';
 
 const TEMP_AUTO_SAVE_DELAY_MS = 500;
 
 interface TempAutoSaveDocument {
   uri: {
     scheme: string;
-    fsPath: string;
     toString(): string;
   };
   isDirty: boolean;
   save(): PromiseLike<boolean>;
 }
 
-export function createTempAutoSaveScheduler(tempDirectory: string) {
-  const rootPath = path.resolve(tempDirectory);
+export function createTempAutoSaveScheduler() {
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
   function cancel(document: TempAutoSaveDocument): void {
@@ -24,17 +22,7 @@ export function createTempAutoSaveScheduler(tempDirectory: string) {
   }
 
   function schedule(document: TempAutoSaveDocument): void {
-    if (document.uri.scheme !== 'file') return;
-
-    const relativePath = path.relative(rootPath, document.uri.fsPath);
-    if (
-      !relativePath ||
-      relativePath === '..' ||
-      relativePath.startsWith(`..${path.sep}`) ||
-      path.isAbsolute(relativePath)
-    ) {
-      return;
-    }
+    if (document.uri.scheme !== TEMP_FILE_SYSTEM_SCHEME) return;
 
     cancel(document);
     const documentKey = document.uri.toString();

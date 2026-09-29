@@ -1,3 +1,5 @@
+export const TEMP_FILE_SYSTEM_SCHEME = 'toolkit-temp';
+
 export type TempEntryType = 'file' | 'directory';
 
 export interface TempTreeEntry {

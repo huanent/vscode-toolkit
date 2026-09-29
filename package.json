@@ -454,6 +454,7 @@
   },
   "activationEvents": [
     "onDebugAdapterProtocolTracker",
+    "onFileSystem:toolkit-temp",
     "onStartupFinished"
   ],
   "extensionKind": [
