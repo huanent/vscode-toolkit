@@ -9,7 +9,7 @@ import { useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
-  { id: 'workflow', label: 'Workflow', icon: <Icon name="worktree" size="md" /> },
+  { id: 'workflow', label: 'Workflow', icon: <Icon name="debug-line-by-line" size="md" /> },
   { id: 'assets', label: 'Assets', icon: <Icon name="layers" size="md" /> },
   { id: 'temp', label: 'Temp', icon: <Icon name="history" size="md" /> },
 ];
@@ -46,7 +46,7 @@ function App() {
               label="Empty workflow"
               title="No workflow yet"
               description="Create a workflow to see it here."
-              icon="↗"
+              icon="debug-line-by-line"
             />
           </TabPanel>
 

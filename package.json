@@ -142,14 +142,14 @@
         {
           "id": "toolkit_dashboard",
           "title": "Toolkit",
-          "icon": "$(tools)"
+          "icon": "$(developer-tools)"
         }
       ],
       "panel": [
         {
           "id": "toolkit_result",
           "title": "Result",
-          "icon": "$(tools)"
+          "icon": "$(run-with-deps)"
         }
       ]
     },
@@ -159,7 +159,7 @@
           "type": "webview",
           "id": "toolkit.dashboard",
           "name": "Toolkit",
-          "icon": "$(tools)"
+          "icon": "$(developer-tools)"
         }
       ],
       "toolkit_result": [
@@ -167,7 +167,7 @@
           "type": "webview",
           "id": "toolkit.result",
           "name": "Result",
-          "icon": "$(tools)"
+          "icon": "$(run-with-deps)"
         }
       ]
     },
