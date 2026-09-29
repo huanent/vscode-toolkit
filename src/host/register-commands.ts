@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { generateGitignore } from '@/features/git/gitignore-service';
+import { registerScripts } from '@/features/scripts/register-scripts';
 import { registerTempCommands } from '@/features/temp/commands';
 
 export function registerCommands(context: vscode.ExtensionContext): void {
@@ -10,4 +11,5 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('toolkit.generateGitignore', () => generateGitignore(context.extensionUri)),
   );
   registerTempCommands(context);
+  registerScripts(context);
 }

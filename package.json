@@ -128,6 +128,48 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.runDotnetScript",
+        "title": "Run dotnet Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runShScript",
+        "title": "Run sh Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runBatScript",
+        "title": "Run bat Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runNodeScript",
+        "title": "Run node Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runBunScript",
+        "title": "Run bun Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runNpmScript",
+        "title": "Run package.json Script",
+        "icon": "$(terminal)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.runBunPackageScript",
+        "title": "Run package.json Script",
+        "icon": "$(terminal)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.pullGitRepository",
         "title": "Pull",
         "icon": "$(cloud-download)",
@@ -200,6 +242,22 @@
         {
           "command": "toolkit.temp.delete",
           "when": "false"
+        },
+        {
+          "command": "toolkit.runNodeScript",
+          "when": "toolkit.nodeAvailable && !toolkit.bunWorkspace"
+        },
+        {
+          "command": "toolkit.runBunScript",
+          "when": "toolkit.bunAvailable && toolkit.bunWorkspace"
+        },
+        {
+          "command": "toolkit.runNpmScript",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.runBunPackageScript",
+          "when": "false"
         }
       ],
       "webview/context": [
@@ -229,6 +287,41 @@
           "submenu": "toolkit.sourceControl",
           "when": "explorerResourceIsFolder && resourcePath in toolkit.gitRepositoryFolders",
           "group": "navigation@9"
+        },
+        {
+          "command": "toolkit.runDotnetScript",
+          "when": "resourceExtname == .cs",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runShScript",
+          "when": "resourceExtname == .sh && !isWindows",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runBatScript",
+          "when": "resourceExtname == .bat && isWindows",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runNodeScript",
+          "when": "(resourceLangId == javascript || resourceLangId == typescript) && toolkit.nodeAvailable && !toolkit.bunWorkspace",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runBunScript",
+          "when": "(resourceLangId == javascript || resourceLangId == typescript) && toolkit.bunAvailable && toolkit.bunWorkspace",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runNpmScript",
+          "when": "explorerResourceIsFolder && toolkit.npmAvailable && resourcePath in toolkit.npmScriptFolders",
+          "group": "navigation@12"
+        },
+        {
+          "command": "toolkit.runBunPackageScript",
+          "when": "explorerResourceIsFolder && toolkit.bunAvailable && resourcePath in toolkit.bunScriptFolders",
+          "group": "navigation@12"
         }
       ],
       "toolkit.sourceControl": [
@@ -269,7 +362,8 @@
     }
   },
   "activationEvents": [
-    "onDebugAdapterProtocolTracker"
+    "onDebugAdapterProtocolTracker",
+    "onStartupFinished"
   ],
   "extensionKind": [
     "ui"
