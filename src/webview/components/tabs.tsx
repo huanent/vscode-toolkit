@@ -36,12 +36,8 @@ export function Tabs({ tabs, activeTabId, onChange }: TabsProps) {
               tabIndex={isActive ? 0 : -1}
               type="button"
             >
-              {tab.icon ? (
-                <span className="inline-flex size-4 items-center justify-center" aria-hidden="true">
-                  {tab.icon}
-                </span>
-              ) : null}
-              <span className="leading-none">{tab.label}</span>
+              {tab.icon}
+              <span>{tab.label}</span>
             </button>
           );
         })}
