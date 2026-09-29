@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
-import { resolveStorageDirectory } from '@/lib/storage';
+import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { TempContextTarget, TempEntryType } from './protocol';
 import {
   createTempDirectory,

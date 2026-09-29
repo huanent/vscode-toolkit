@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
-import { resolveStorageDirectory } from '@/lib/storage';
+import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { OpenTempFileRequest, TempFilesWebviewMessage } from './protocol';
 import { getTempFilePath, readTempTree } from './service';
 
