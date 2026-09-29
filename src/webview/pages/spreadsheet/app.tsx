@@ -22,7 +22,7 @@ function App() {
 
     return (
       <main
-        className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground) p-2"
+        className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)"
         aria-labelledby="spreadsheet-preview-title"
       >
         <div className="min-h-0 flex-1 overflow-auto">
