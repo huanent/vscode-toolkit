@@ -1,3 +1,5 @@
+import { Icon } from './icons';
+
 type EmptyStateProps = {
   label: string;
   title: string;
@@ -15,7 +17,7 @@ export function Empty({ label, title, description, icon }: EmptyStateProps) {
         className="mb-4 grid size-10 place-items-center bg-(--vscode-textLink-foreground)/15 text-xl text-(--vscode-textLink-foreground)"
         aria-hidden="true"
       >
-        {icon}
+        <Icon name={icon} size="lg" />
       </div>
       <h2 className="mb-2 text-base font-semibold">{title}</h2>
       <p className="max-w-3xl leading-normal text-(--vscode-descriptionForeground)">{description}</p>

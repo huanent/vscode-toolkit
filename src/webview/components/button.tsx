@@ -17,8 +17,8 @@ const variantClasses = {
 } as const;
 
 const sizeClasses = {
-  sm: 'px-2 py-1 text-xs',
-  md: 'px-3 py-2 text-sm',
+  sm: 'px-2 py-1 text-sm rounded-sm',
+  md: 'px-3 py-2 text-md rounded-md',
 } as const;
 
 export function Button({ className, variant = 'primary', size = 'md', type = 'button', ...props }: ButtonProps) {

@@ -41,11 +41,13 @@ export default defineConfig(({ mode }) => {
             external: [
               'vscode',
               'node:child_process',
+              'node:crypto',
               'node:fs',
               'node:fs/promises',
               'node:os',
               'node:perf_hooks',
               'node:path',
+              'node:sqlite',
               'node:stream',
               'node:util',
               'yauzl',

@@ -2,6 +2,7 @@ import type { HttpRequestData, HttpResponseData } from './protocol';
 
 export interface ExecuteOptions {
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 export async function executeHttpRequest(
@@ -10,6 +11,9 @@ export async function executeHttpRequest(
 ): Promise<HttpResponseData> {
   const timeoutMs = options.timeoutMs ?? 60_000;
   const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abortFromCaller();
+  else options.signal?.addEventListener('abort', abortFromCaller, { once: true });
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const startTime = performance.now();
@@ -67,5 +71,6 @@ export async function executeHttpRequest(
     };
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', abortFromCaller);
   }
 }

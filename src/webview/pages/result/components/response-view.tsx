@@ -46,10 +46,6 @@ export function ResponseView({ response }: ResponseViewProps) {
     });
   };
 
-  const handleRerun = () => {
-    postToHost({ type: 'rerunRequest' });
-  };
-
   return (
     <div className="flex flex-col gap-3">
       {/* Summary Header */}
@@ -59,13 +55,6 @@ export function ResponseView({ response }: ResponseViewProps) {
             {response.request.method}
           </span>
           <span className="font-mono text-xs break-all text-(--vscode-foreground)">{response.request.url}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={handleRerun}>
-            <Icon name="refresh" size="sm" />
-            <span>Send Again</span>
-          </Button>
         </div>
       </div>
 

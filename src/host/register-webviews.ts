@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { createTempFilesHandler } from '@/features/temp/view-handler';
-import { createResultViewHandler } from '@/features/http/view-handler';
+import { createResultViewHandler } from '@/features/result/view-handler';
 import { webviewPages } from '@/host/webview-pages';
 import { WebviewViewProvider } from '@/host/webview-view-provider';
 

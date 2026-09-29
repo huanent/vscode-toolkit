@@ -25,6 +25,3 @@ body {
   min-height: 100vh;
   background-color: var(--vscode-sideBar-background);
 }
-button {
-  font: inherit;
-}

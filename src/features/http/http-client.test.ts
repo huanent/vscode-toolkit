@@ -62,4 +62,26 @@ describe('HTTP Client Execution', () => {
     expect(capturedInit?.body).toBe('{"foo":"bar"}');
     expect(res.isJson).toBe(false);
   });
+
+  it('aborts an in-flight request when the caller signal is cancelled', async () => {
+    globalThis.fetch = vi.fn<typeof fetch>(
+      async (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {
+            once: true,
+          });
+        }),
+    );
+
+    const controller = new AbortController();
+    const request: HttpRequestData = {
+      method: 'GET',
+      url: 'https://api.example.com/data',
+      headers: {},
+    };
+    const result = executeHttpRequest(request, { signal: controller.signal });
+    controller.abort();
+
+    await expect(result).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });

@@ -1,0 +1,102 @@
+import { readFileSync } from 'node:fs';
+import * as vscode from 'vscode';
+import { describe, expect, it, vi } from 'vitest';
+import { registerSqliteEditor, sqliteEditorViewType } from './sqlite-editor';
+import type { DatabaseDocument } from './protocol';
+import { registerSqliteQueryEditor } from './sqlite-query';
+import { readSqliteDatabase, validateSqliteUri } from './sqlite-service';
+
+vi.mock('vscode', () => ({
+  window: {
+    registerCustomEditorProvider: vi.fn<(...args: unknown[]) => { dispose: () => void }>(() => ({
+      dispose: vi.fn<() => void>(),
+    })),
+    showTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextEditor>>(async () => ({}) as vscode.TextEditor),
+  },
+  workspace: {
+    openTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextDocument>>(
+      async () => ({}) as vscode.TextDocument,
+    ),
+  },
+  Uri: { joinPath: vi.fn<(...args: unknown[]) => vscode.Uri>(() => ({ fsPath: '/extension/dist' }) as vscode.Uri) },
+  ThemeIcon: class {},
+}));
+vi.mock('@/host/webview-html', () => ({ getWebviewHtml: () => '<html></html>' }));
+vi.mock('./sqlite-service', () => ({
+  validateSqliteUri: vi.fn<(uri: vscode.Uri) => void>(),
+  readSqliteDatabase: vi.fn<(uri: vscode.Uri) => Promise<DatabaseDocument>>(async () => ({
+    engine: 'sqlite',
+    tables: [],
+  })),
+}));
+vi.mock('./sqlite-query', () => ({
+  registerSqliteQueryEditor: vi.fn<(...args: unknown[]) => (uri: vscode.Uri, tableName?: string) => Promise<void>>(),
+}));
+
+describe('SQLite editor', () => {
+  it('registers DB and SQLite files as the default editor', () => {
+    const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
+    const editor = manifest.contributes.customEditors.find(
+      (entry: { viewType: string }) => entry.viewType === sqliteEditorViewType,
+    );
+    expect(editor.priority).toBe('default');
+    expect(editor.selector.map((entry: { filenamePattern: string }) => entry.filenamePattern)).toEqual([
+      '*.db',
+      '*.sqlite',
+    ]);
+    expect(manifest.contributes.commands).toContainEqual({
+      command: 'toolkit.sqlite.executeQuery',
+      title: 'Run SQLite Query',
+      icon: '$(play)',
+      category: 'SQLite',
+    });
+    expect(manifest.contributes.keybindings).toContainEqual({
+      command: 'toolkit.sqlite.executeQuery',
+      key: 'ctrl+enter',
+      mac: 'cmd+enter',
+      when: 'toolkit.sqliteQueryEditor',
+    });
+  });
+
+  it('delegates document validation and loading to the SQLite service', async () => {
+    const openSqlQueryEditor = vi.fn<(uri: vscode.Uri, tableName?: string) => Promise<void>>(async () => undefined);
+    vi.mocked(registerSqliteQueryEditor).mockReturnValueOnce(openSqlQueryEditor);
+    registerSqliteEditor({ extensionUri: { fsPath: '/extension' } } as vscode.ExtensionContext);
+    const registration = vi.mocked(vscode.window.registerCustomEditorProvider).mock.calls.at(-1)!;
+    const provider = registration[1] as vscode.CustomReadonlyEditorProvider;
+    const uri = { scheme: 'file', path: '/sample.db', fsPath: '/sample.db' } as vscode.Uri;
+    const document = await provider.openCustomDocument(
+      uri,
+      {} as vscode.CustomDocumentOpenContext,
+      {} as vscode.CancellationToken,
+    );
+    expect(registration[0]).toBe(sqliteEditorViewType);
+    expect(validateSqliteUri).toHaveBeenCalledWith(uri);
+
+    const messageListeners: Array<(message: unknown) => void | Promise<void>> = [];
+    const postMessage = vi.fn<() => Promise<boolean>>(async () => true);
+    const panel = {
+      webview: {
+        onDidReceiveMessage: (listener: (message: unknown) => void | Promise<void>) => {
+          messageListeners.push(listener);
+          return { dispose: vi.fn<() => void>() };
+        },
+        postMessage,
+      },
+      onDidDispose: vi.fn<(listener: () => void) => vscode.Disposable>(() => ({
+        dispose: vi.fn<() => void>(),
+      })),
+    } as unknown as vscode.WebviewPanel;
+
+    await provider.resolveCustomEditor(document, panel, {} as vscode.CancellationToken);
+    await messageListeners[0]!({ type: 'ready' });
+    expect(readSqliteDatabase).toHaveBeenCalledWith(uri);
+    expect(postMessage).toHaveBeenCalledWith({ type: 'loaded', data: { engine: 'sqlite', tables: [] } });
+
+    await messageListeners[1]!({ type: 'unsupported' });
+    expect(openSqlQueryEditor).not.toHaveBeenCalled();
+
+    await messageListeners[1]!({ type: 'openSqlEditor', tableName: 'items' });
+    expect(openSqlQueryEditor).toHaveBeenCalledWith(uri, 'items');
+  });
+});

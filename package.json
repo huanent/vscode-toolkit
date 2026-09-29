@@ -122,6 +122,19 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "toolkit.sqliteEditor",
+        "displayName": "SQLite Database",
+        "selector": [
+          {
+            "filenamePattern": "*.db"
+          },
+          {
+            "filenamePattern": "*.sqlite"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "viewsContainers": {
@@ -261,6 +274,20 @@
         "title": "Send HTTP Request",
         "icon": "$(play)",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.sqlite.executeQuery",
+        "title": "Run SQLite Query",
+        "icon": "$(play)",
+        "category": "SQLite"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "toolkit.sqlite.executeQuery",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "toolkit.sqliteQueryEditor"
       }
     ],
     "submenus": [
@@ -280,6 +307,11 @@
           "command": "toolkit.archive.collapseAll",
           "when": "activeCustomEditorId == toolkit.archiveEditor",
           "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.sqlite.executeQuery",
+          "when": "editorLangId == sql && toolkit.sqliteQueryEditor",
+          "group": "navigation@3"
         }
       ],
       "editor/context": [
@@ -297,6 +329,10 @@
         {
           "command": "toolkit.temp.delete",
           "when": "false"
+        },
+        {
+          "command": "toolkit.sqlite.executeQuery",
+          "when": "toolkit.sqliteQueryEditor"
         },
         {
           "command": "toolkit.runNodeScript",
