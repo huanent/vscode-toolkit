@@ -23,7 +23,7 @@ const variantClasses: Record<IconVariant, string> = {
 
 export function Icon({ name, size = 'md', variant = 'default', className }: IconProps) {
   return (
-    <span
+    <i
       className={cn(
         'codicon inline-flex shrink-0 items-center justify-center leading-none',
         `codicon-${name}`,
