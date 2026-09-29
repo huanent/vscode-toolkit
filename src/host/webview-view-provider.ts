@@ -5,6 +5,7 @@ import type { WebviewPage } from '@/host/webview-pages';
 
 export interface WebviewViewHandler {
   load?: () => Promise<unknown>;
+  onResolve?: (webview: vscode.Webview) => void;
   onMessage?: (message: unknown, webview: vscode.Webview) => Promise<void> | void;
   onDispose?: () => void;
 }
@@ -22,6 +23,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.assetsUri],
     };
     const disposables: vscode.Disposable[] = [];
+    this.handler?.onResolve?.(webviewView.webview);
     if (this.handler?.load) {
       disposables.push(serveWebviewData(webviewView.webview, this.handler.load, { once: false }));
     }

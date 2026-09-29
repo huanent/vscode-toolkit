@@ -158,9 +158,23 @@
         "category": "Archive"
       },
       {
-        "command": "toolkit.createTempFile",
-        "title": "Create Temporary File",
-        "icon": "$(new-file)",
+        "command": "toolkit.temp.createFile",
+        "title": "New File",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.createFolder",
+        "title": "New Folder",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.rename",
+        "title": "Rename",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.delete",
+        "title": "Delete",
         "category": "Toolkit"
       }
     ],
@@ -178,11 +192,36 @@
           "group": "navigation@1"
         }
       ],
-      "view/title": [
+      "commandPalette": [
         {
-          "command": "toolkit.createTempFile",
-          "when": "view == toolkit.dashboard && toolkit.dashboard.tempActive",
-          "group": "navigation@1"
+          "command": "toolkit.temp.rename",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.delete",
+          "when": "false"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "toolkit.temp.createFile",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
+          "group": "1_create@1"
+        },
+        {
+          "command": "toolkit.temp.createFolder",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
+          "group": "1_create@2"
+        },
+        {
+          "command": "toolkit.temp.rename",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "toolkit.temp.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_edit@2"
         }
       ],
       "explorer/context": [

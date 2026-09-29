@@ -5,8 +5,8 @@ import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
 import { ToolList } from '@/webview/pages/dashboard/components/tool-list';
 import { tools } from '@/webview/pages/dashboard/model/tools';
-import type { SetTempTabActiveRequest, TempFilesWebviewMessage, TempTreeEntry } from '@/features/temp/protocol';
-import { postToHost, useHostData } from '@/webview/utils/host-data';
+import type { TempFilesWebviewMessage, TempTreeEntry } from '@/features/temp/protocol';
+import { useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
@@ -35,10 +35,6 @@ function App() {
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, []);
-
-  useEffect(() => {
-    postToHost({ type: 'setTempTabActive', active: activeTabId === 'temp' } satisfies SetTempTabActiveRequest);
-  }, [activeTabId]);
 
   const displayedTempEntries = tempEntries ?? (tempState.status === 'loaded' ? tempState.data : undefined);
   const displayedTempError =

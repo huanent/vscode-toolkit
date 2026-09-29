@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageDirectory } from '@/lib/storage';
-import type {
-  CreateTempFileRequest,
-  OpenTempFileRequest,
-  SetTempTabActiveRequest,
-  TempFilesWebviewMessage,
-} from './protocol';
-import { createTempFile, getTempFilePath, readTempTree, validateTempFileName } from './service';
+import type { OpenTempFileRequest, TempFilesWebviewMessage } from './protocol';
+import { getTempFilePath, readTempTree } from './service';
+
+let activeWebview: vscode.Webview | undefined;
 
 export function createTempFilesHandler(context: vscode.ExtensionContext): WebviewViewHandler {
   const getTempDirectory = () => {
@@ -16,30 +13,10 @@ export function createTempFilesHandler(context: vscode.ExtensionContext): Webvie
 
   return {
     load: () => readTempTree(getTempDirectory()),
+    onResolve: (webview) => {
+      activeWebview = webview;
+    },
     onMessage: async (message, webview) => {
-      if (isSetTempTabActiveRequest(message)) {
-        await vscode.commands.executeCommand('setContext', 'toolkit.dashboard.tempActive', message.active);
-        return;
-      }
-
-      if (isCreateTempFileRequest(message)) {
-        const name = await vscode.window.showInputBox({
-          prompt: 'Name the temporary file',
-          placeHolder: 'scratch.md',
-          validateInput: validateTempFileName,
-        });
-        if (name === undefined) return;
-
-        try {
-          await createTempFileAndOpen(context, name);
-          const entries = await readTempTree(getTempDirectory());
-          await webview.postMessage({ type: 'tempFilesUpdated', entries } satisfies TempFilesWebviewMessage);
-        } catch (error) {
-          await postTempFileError(webview, error);
-        }
-        return;
-      }
-
       if (!isOpenTempFileRequest(message)) return;
       try {
         const filePath = await getTempFilePath(getTempDirectory(), message.path);
@@ -50,41 +27,16 @@ export function createTempFilesHandler(context: vscode.ExtensionContext): Webvie
       }
     },
     onDispose: () => {
-      void vscode.commands.executeCommand('setContext', 'toolkit.dashboard.tempActive', false);
+      activeWebview = undefined;
     },
   };
 }
 
-export async function createTempFileFromInput(context: vscode.ExtensionContext): Promise<void> {
-  const name = await vscode.window.showInputBox({
-    prompt: 'Name the temporary file',
-    placeHolder: 'scratch.md',
-    validateInput: validateTempFileName,
-  });
-  if (name === undefined) return;
-  await createTempFileAndOpen(context, name);
-}
-
-async function createTempFileAndOpen(context: vscode.ExtensionContext, name: string): Promise<void> {
-  const directory = resolveStorageDirectory(context, 'temp');
-  const filePath = await createTempFile(directory, name);
-  const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
-  await vscode.window.showTextDocument(document);
-}
-
-function isCreateTempFileRequest(message: unknown): message is CreateTempFileRequest {
-  return typeof message === 'object' && message !== null && 'type' in message && message.type === 'createTempFile';
-}
-
-function isSetTempTabActiveRequest(message: unknown): message is SetTempTabActiveRequest {
-  return (
-    typeof message === 'object' &&
-    message !== null &&
-    'type' in message &&
-    message.type === 'setTempTabActive' &&
-    'active' in message &&
-    typeof message.active === 'boolean'
-  );
+/** Pushes the current temp tree to the visible dashboard webview, if it is open. */
+export async function refreshTempFiles(context: vscode.ExtensionContext): Promise<void> {
+  if (!activeWebview) return;
+  const entries = await readTempTree(resolveStorageDirectory(context, 'temp'));
+  await activeWebview.postMessage({ type: 'tempFilesUpdated', entries } satisfies TempFilesWebviewMessage);
 }
 
 function isOpenTempFileRequest(message: unknown): message is OpenTempFileRequest {

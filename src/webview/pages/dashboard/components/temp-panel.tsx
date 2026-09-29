@@ -11,9 +11,11 @@ type TempPanelProps = {
   loading: boolean;
 };
 
+const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultContextMenuItems: true });
+
 export function TempPanel({ entries, error, loading }: TempPanelProps) {
   return (
-    <section className="flex min-h-64 flex-col">
+    <section className="flex min-h-64 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
         <p className="wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
           {error}
@@ -28,6 +30,7 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
             getChildren={(entry) => entry.children ?? []}
             getKey={getTempEntryPath}
             getLabel={(entry) => entry.name}
+            getItemContext={(entry, path) => ({ tempEntryPath: getTempEntryPath(path), tempEntryType: entry.type })}
             isBranch={(entry) => entry.type === 'directory'}
             onActivate={(entry, path) => {
               if (entry.type === 'file') {

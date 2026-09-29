@@ -16,6 +16,8 @@ type TreeProps<TItem> = {
   getChildren: (item: TItem) => readonly TItem[];
   getKey: (path: readonly TItem[]) => Key;
   getLabel: (item: TItem) => string;
+  /** VS Code webview context of a row, exposed as `data-vscode-context` for `webview/context` menus. */
+  getItemContext?: (item: TItem, path: readonly TItem[]) => Record<string, unknown> | undefined;
   isBranch: (item: TItem) => boolean;
   onActivate?: (item: TItem, path: readonly TItem[]) => void;
   renderExpandIcon: (expanded: boolean) => ReactNode;
@@ -46,6 +48,7 @@ export function Tree<TItem>({
   getChildren,
   getKey,
   getLabel,
+  getItemContext,
   isBranch,
   onActivate,
   renderExpandIcon,
@@ -175,6 +178,7 @@ export function Tree<TItem>({
           node={node}
           treeId={treeId}
           getKey={getKey}
+          getItemContext={getItemContext}
           activeIndentKeys={activeIndentKeys}
           focusedKey={activeItem?.key ?? null}
           selectedKey={selectedKey}
@@ -233,7 +237,7 @@ function getTreeItemId(treeId: string, key: Key): string {
   return `${treeId}-item-${encodeURIComponent(String(key))}`;
 }
 
-type TreeRowProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'renderExpandIcon' | 'renderItem'> & {
+type TreeRowProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'getItemContext' | 'renderExpandIcon' | 'renderItem'> & {
   node: TreeNodeModel<TItem>;
   treeId: string;
   activeIndentKeys: ReadonlySet<Key>;
@@ -247,6 +251,7 @@ function TreeRow<TItem>({
   node,
   treeId,
   getKey,
+  getItemContext,
   activeIndentKeys,
   focusedKey,
   selectedKey,
@@ -257,9 +262,11 @@ function TreeRow<TItem>({
 }: TreeRowProps<TItem>) {
   const selected = node.key === selectedKey;
   const focused = node.key === focusedKey;
+  const itemContext = getItemContext?.(node.item, node.path);
   return (
     <div
       id={getTreeItemId(treeId, node.key)}
+      data-vscode-context={itemContext ? JSON.stringify(itemContext) : undefined}
       className={cn(
         'relative flex h-7 w-full items-center rounded pl-2 pr-2 cursor-pointer',
         !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',

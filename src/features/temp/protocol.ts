@@ -1,16 +1,19 @@
+export type TempEntryType = 'file' | 'directory';
+
 export interface TempTreeEntry {
   name: string;
-  type: 'file' | 'directory';
+  type: TempEntryType;
   children?: TempTreeEntry[];
 }
 
-export interface CreateTempFileRequest {
-  type: 'createTempFile';
-}
-
-export interface SetTempTabActiveRequest {
-  type: 'setTempTabActive';
-  active: boolean;
+/**
+ * `data-vscode-context` payload of a right-clicked temp entry. It is also the
+ * argument passed to the temp `webview/context` menu commands.
+ */
+export interface TempContextTarget {
+  /** Slash-separated path relative to the temp directory. */
+  tempEntryPath?: string;
+  tempEntryType?: TempEntryType;
 }
 
 export interface OpenTempFileRequest {
