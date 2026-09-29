@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TabPanel, Tabs, type Tab } from '@/webview/components/tabs';
 import { Icon } from '@/webview/components/icons';
+import { Empty } from '@/webview/components/empty';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
 import type { TempFilesWebviewMessage, TempTreeEntry } from '@/features/temp/protocol';
@@ -43,11 +44,21 @@ function App() {
       </div>
       <div className="py-2">
         <TabPanel tabId="workflow" activeTabId={activeTabId}>
-          <></>
+          <Empty
+            label="Empty workflow"
+            title="No workflow yet"
+            description="Create a workflow to see it here."
+            icon="↗"
+          />
         </TabPanel>
 
         <TabPanel tabId="assets" activeTabId={activeTabId}>
-          <></>
+          <Empty
+            label="Empty assets"
+            title="No assets yet"
+            description="Assets added to Toolkit will appear here."
+            icon="layers"
+          />
         </TabPanel>
 
         <TabPanel tabId="temp" activeTabId={activeTabId}>
