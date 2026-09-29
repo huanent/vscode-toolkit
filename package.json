@@ -60,6 +60,42 @@
     "serialize-javascript": "^7.0.6"
   },
   "contributes": {
+    "languages": [
+      {
+        "id": "http",
+        "aliases": [
+          "HTTP",
+          "http"
+        ],
+        "extensions": [
+          ".http",
+          ".rest"
+        ],
+        "mimetypes": [
+          "message/http",
+          "application/http"
+        ],
+        "firstLine": "^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\\s+(.*?)HTTP/[0-9\\.]+$",
+        "configuration": "./languages/http-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "http",
+        "scopeName": "source.http",
+        "path": "./syntaxes/http.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.json": "json",
+          "text.xml": "xml"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "http",
+        "path": "./snippets/http.json"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "toolkit.archiveEditor",
@@ -219,6 +255,12 @@
         "command": "toolkit.temp.delete",
         "title": "Delete",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.http.sendRequest",
+        "title": "Send HTTP Request",
+        "icon": "$(play)",
+        "category": "Toolkit"
       }
     ],
     "submenus": [
@@ -230,8 +272,20 @@
     "menus": {
       "editor/title": [
         {
+          "command": "toolkit.http.sendRequest",
+          "when": "editorLangId == http",
+          "group": "navigation@1"
+        },
+        {
           "command": "toolkit.archive.collapseAll",
           "when": "activeCustomEditorId == toolkit.archiveEditor",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "toolkit.http.sendRequest",
+          "when": "editorLangId == http",
           "group": "navigation@1"
         }
       ],

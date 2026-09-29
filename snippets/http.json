@@ -1,0 +1,66 @@
+{
+  "HTTP GET Request": {
+    "prefix": "get",
+    "body": ["GET ${1:https://api.example.com/endpoint} HTTP/1.1", "Accept: application/json", ""],
+    "description": "Create a GET request"
+  },
+  "HTTP POST JSON Request": {
+    "prefix": "post",
+    "body": [
+      "POST ${1:https://api.example.com/endpoint} HTTP/1.1",
+      "Content-Type: application/json",
+      "",
+      "{",
+      "  \"${2:key}\": \"${3:value}\"",
+      "}",
+      ""
+    ],
+    "description": "Create a POST request with JSON body"
+  },
+  "HTTP PUT JSON Request": {
+    "prefix": "put",
+    "body": [
+      "PUT ${1:https://api.example.com/endpoint} HTTP/1.1",
+      "Content-Type: application/json",
+      "",
+      "{",
+      "  \"${2:key}\": \"${3:value}\"",
+      "}",
+      ""
+    ],
+    "description": "Create a PUT request with JSON body"
+  },
+  "HTTP DELETE Request": {
+    "prefix": "delete",
+    "body": ["DELETE ${1:https://api.example.com/endpoint} HTTP/1.1", "Authorization: Bearer ${2:token}", ""],
+    "description": "Create a DELETE request"
+  },
+  "HTTP PATCH JSON Request": {
+    "prefix": "patch",
+    "body": [
+      "PATCH ${1:https://api.example.com/endpoint} HTTP/1.1",
+      "Content-Type: application/json",
+      "",
+      "{",
+      "  \"${2:key}\": \"${3:value}\"",
+      "}",
+      ""
+    ],
+    "description": "Create a PATCH request with JSON body"
+  },
+  "HTTP Request Separator": {
+    "prefix": "###",
+    "body": ["### ${1:Request Name}", ""],
+    "description": "Create a request separator with optional name"
+  },
+  "HTTP Variable Definition": {
+    "prefix": "var",
+    "body": ["@${1:variableName} = ${2:value}", ""],
+    "description": "Declare an HTTP file variable"
+  },
+  "HTTP Authorization Header": {
+    "prefix": "auth",
+    "body": ["Authorization: Bearer ${1:token}"],
+    "description": "Bearer token authorization header"
+  }
+}
