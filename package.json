@@ -27,6 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@vscode/codicons": "^0.0.46-24",
     "cn": "^0.4.0",
     "exceljs": "^4.4.0",

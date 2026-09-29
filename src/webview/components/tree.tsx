@@ -1,4 +1,5 @@
 import { cn } from 'cn';
+import { DisclosureIcon } from '@/webview/components/icons';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
@@ -20,7 +21,6 @@ type TreeProps<TItem> = {
   getItemContext?: (item: TItem, path: readonly TItem[]) => Record<string, unknown> | undefined;
   isBranch: (item: TItem) => boolean;
   onActivate?: (item: TItem, path: readonly TItem[]) => void;
-  renderExpandIcon: (expanded: boolean) => ReactNode;
   renderItem: (item: TItem, context: TreeItemRenderContext<TItem>) => ReactNode;
 };
 
@@ -51,7 +51,6 @@ export function Tree<TItem>({
   getItemContext,
   isBranch,
   onActivate,
-  renderExpandIcon,
   renderItem,
 }: TreeProps<TItem>) {
   const treeId = useId();
@@ -183,7 +182,6 @@ export function Tree<TItem>({
           focusedKey={activeItem?.key ?? null}
           selectedKey={selectedKey}
           treeHasFocus={treeHasFocus}
-          renderExpandIcon={renderExpandIcon}
           renderItem={renderItem}
           onItemClick={handleItemClick}
         />
@@ -237,7 +235,7 @@ function getTreeItemId(treeId: string, key: Key): string {
   return `${treeId}-item-${encodeURIComponent(String(key))}`;
 }
 
-type TreeRowProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'getItemContext' | 'renderExpandIcon' | 'renderItem'> & {
+type TreeRowProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'getItemContext' | 'renderItem'> & {
   node: TreeNodeModel<TItem>;
   treeId: string;
   activeIndentKeys: ReadonlySet<Key>;
@@ -253,15 +251,12 @@ function TreeRow<TItem>({
   getKey,
   getItemContext,
   activeIndentKeys,
-  focusedKey,
   selectedKey,
   treeHasFocus,
-  renderExpandIcon,
   renderItem,
   onItemClick,
 }: TreeRowProps<TItem>) {
   const selected = node.key === selectedKey;
-  const focused = node.key === focusedKey;
   const itemContext = getItemContext?.(node.item, node.path);
   return (
     <div
@@ -285,28 +280,18 @@ function TreeRow<TItem>({
       aria-setsize={node.setSize}
       onClick={(event) => onItemClick(node, event)}
     >
-      <TreeRowIndentation
-        node={node}
-        getKey={getKey}
-        activeIndentKeys={activeIndentKeys}
-        renderExpandIcon={renderExpandIcon}
-      />
+      <TreeRowIndentation node={node} getKey={getKey} activeIndentKeys={activeIndentKeys} />
       <TreeRowContent node={node} renderItem={renderItem} />
     </div>
   );
 }
 
-type TreeRowIndentationProps<TItem> = Pick<TreeProps<TItem>, 'getKey' | 'renderExpandIcon'> & {
+type TreeRowIndentationProps<TItem> = Pick<TreeProps<TItem>, 'getKey'> & {
   node: TreeNodeModel<TItem>;
   activeIndentKeys: ReadonlySet<Key>;
 };
 
-function TreeRowIndentation<TItem>({
-  node,
-  getKey,
-  activeIndentKeys,
-  renderExpandIcon,
-}: TreeRowIndentationProps<TItem>) {
+function TreeRowIndentation<TItem>({ node, getKey, activeIndentKeys }: TreeRowIndentationProps<TItem>) {
   return (
     <div className="flex h-full shrink-0 items-center">
       <TreeIndentGuides path={node.path} getKey={getKey} activeIndentKeys={activeIndentKeys} />
@@ -322,7 +307,7 @@ function TreeRowIndentation<TItem>({
           data-tree-expander
           aria-hidden="true"
         >
-          {renderExpandIcon(node.expanded)}
+          <DisclosureIcon expanded={node.expanded} />
         </span>
       ) : null}
     </div>

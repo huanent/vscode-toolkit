@@ -1,4 +1,4 @@
-import { DisclosureIcon, FileIcon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
 import { Tree } from '@/webview/components/tree';
@@ -37,10 +37,9 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
                 postToHost({ type: 'openTempFile', path: getTempEntryPath(path) } satisfies OpenTempFileRequest);
               }
             }}
-            renderExpandIcon={(expanded) => <DisclosureIcon expanded={expanded} />}
             renderItem={(entry, { path }) => (
               <>
-                {entry.type === 'file' && <FileIcon />}
+                {entry.type === 'file' && <Icon name="file" />}
                 <span
                   className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                   title={getTempEntryPath(path)}

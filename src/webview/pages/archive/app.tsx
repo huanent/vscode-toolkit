@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { DisclosureIcon, FileIcon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
 import { Tree } from '@/webview/components/tree';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
+import { formatSize } from '@/webview/utils/format';
 import '@/webview/styles.css';
 
 function App() {
@@ -38,10 +39,9 @@ function App() {
               getKey={getArchiveEntryPath}
               getLabel={(entry) => entry.name}
               isBranch={(entry) => entry.type === 'directory'}
-              renderExpandIcon={(expanded) => <DisclosureIcon expanded={expanded} size="lg" />}
               renderItem={(entry, { path }) => (
                 <>
-                  {entry.type === 'file' && <FileIcon size="lg" />}
+                  {entry.type === 'file' && <Icon name="file" />}
                   <span
                     className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                     title={getArchiveEntryPath(path)}
@@ -82,18 +82,6 @@ function App() {
 
 function getArchiveEntryPath(path: readonly ArchiveTreeEntry[]): string {
   return path.map((entry) => entry.name).join('/');
-}
-
-function formatSize(size: number): string {
-  if (size < 1024) return `${size} B`;
-  const units = ['KB', 'MB', 'GB', 'TB'];
-  let value = size;
-  let unitIndex = -1;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unitIndex]}`;
 }
 
 mountWebview('root', <App />);

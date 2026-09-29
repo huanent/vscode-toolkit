@@ -1,7 +1,9 @@
-import type { ButtonHTMLAttributes } from 'react';
+import { Button as BaseButton } from '@base-ui/react/button';
+import type { ButtonProps as BaseButtonProps } from '@base-ui/react/button';
 import { cn } from 'cn';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<BaseButtonProps, 'className'> & {
+  className?: string;
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md';
 };
@@ -21,7 +23,7 @@ const sizeClasses = {
 
 export function Button({ className, variant = 'primary', size = 'md', type = 'button', ...props }: ButtonProps) {
   return (
-    <button
+    <BaseButton
       className={cn(
         'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 border-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         variantClasses[variant],

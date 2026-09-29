@@ -26,6 +26,11 @@ Reuse existing components from `src/webview/components/` whenever possible. Extr
 
 Page entry files should compose components and manage page state rather than duplicate shared JSX.
 
+### Base UI
+
+- Use `@base-ui/react` primitives for interactive webview controls whenever an equivalent primitive exists. Prefer shared wrappers in `src/webview/components/` for consistent styling, and avoid hand-rolling controls that Base UI provides.
+- Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
+
 ### Import Aliases
 
 Use `@/` as the alias for the `src/` directory. Prefer imports such as `@/webview/components/button` over relative paths that traverse up multiple directories.

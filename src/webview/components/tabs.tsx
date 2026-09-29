@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Tabs as BaseTabs } from '@base-ui/react/tabs';
 import { cn } from 'cn';
 
 export type Tab = {
@@ -11,53 +12,50 @@ type TabsProps = {
   tabs: Tab[];
   activeTabId: string;
   onChange: (tabId: string) => void;
+  children: ReactNode;
 };
 
-export function Tabs({ tabs, activeTabId, onChange }: TabsProps) {
+export function Tabs({ tabs, activeTabId, onChange, children }: TabsProps) {
   return (
-    <div className="border-b border-(--vscode-panel-border)" role="tablist" aria-label="Dashboard sections">
-      <div className="flex w-full overflow-x-auto">
-        {tabs.map((tab) => {
-          const isActive = activeTabId === tab.id;
+    <BaseTabs.Root
+      value={activeTabId}
+      onValueChange={(value) => {
+        if (typeof value === 'string') onChange(value);
+      }}
+    >
+      <div className="border-b border-(--vscode-panel-border)">
+        <BaseTabs.List activateOnFocus={false} aria-label="Dashboard sections" className="flex w-full overflow-x-auto">
+          {tabs.map((tab) => {
+            const isActive = activeTabId === tab.id;
 
-          return (
-            <button
-              className={cn(
-                'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-0 border-b-2 px-3 text-sm transition-colors',
-                isActive
-                  ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
-                  : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',
-              )}
-              id={`tab-${tab.id}`}
-              key={tab.id}
-              onClick={() => onChange(tab.id)}
-              role="tab"
-              aria-selected={isActive}
-              tabIndex={isActive ? 0 : -1}
-              type="button"
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+            return (
+              <BaseTabs.Tab
+                className={cn(
+                  'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-0 border-b-2 px-3 text-sm transition-colors',
+                  isActive
+                    ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
+                    : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',
+                )}
+                key={tab.id}
+                value={tab.id}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </BaseTabs.Tab>
+            );
+          })}
+        </BaseTabs.List>
       </div>
-    </div>
+      {children}
+    </BaseTabs.Root>
   );
 }
 
 type TabPanelProps = {
   tabId: string;
-  activeTabId: string;
   children: ReactNode;
 };
 
-export function TabPanel({ tabId, activeTabId, children }: TabPanelProps) {
-  const isActive = tabId === activeTabId;
-
-  return (
-    <div role="tabpanel" hidden={!isActive} tabIndex={0} aria-labelledby={`tab-${tabId}`}>
-      {isActive ? children : null}
-    </div>
-  );
+export function TabPanel({ tabId, children }: TabPanelProps) {
+  return <BaseTabs.Panel value={tabId}>{children}</BaseTabs.Panel>;
 }

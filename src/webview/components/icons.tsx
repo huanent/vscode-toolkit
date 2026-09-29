@@ -41,22 +41,6 @@ export function Icon({ name, size = 'md', variant = 'default', className }: Icon
 
 type SizedIconProps = Pick<IconProps, 'size'>;
 
-export function FileIcon({ size = 'md' }: SizedIconProps = {}) {
-  return (
-    <Icon name="file" size={size} className="text-(--vscode-symbolIcon-fileForeground,var(--vscode-icon-foreground))" />
-  );
-}
-
-export function FolderIcon({ expanded = false, size = 'md' }: SizedIconProps & { expanded?: boolean }) {
-  return (
-    <Icon
-      name={expanded ? 'folder-opened' : 'folder'}
-      size={size}
-      className="text-(--vscode-symbolIcon-folderForeground,var(--vscode-icon-foreground))"
-    />
-  );
-}
-
 export function DisclosureIcon({ expanded, size = 'md' }: SizedIconProps & { expanded: boolean }) {
   return <Icon name="chevron-right" size={size} className={cn('transition-transform', expanded && 'rotate-90')} />;
 }

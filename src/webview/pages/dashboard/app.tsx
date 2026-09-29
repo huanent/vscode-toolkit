@@ -39,36 +39,35 @@ function App() {
 
   return (
     <main className="px-1">
-      <div>
-        <Tabs tabs={tabs} activeTabId={activeTabId} onChange={setActiveTabId} />
-      </div>
-      <div className="py-2">
-        <TabPanel tabId="workflow" activeTabId={activeTabId}>
-          <Empty
-            label="Empty workflow"
-            title="No workflow yet"
-            description="Create a workflow to see it here."
-            icon="↗"
-          />
-        </TabPanel>
+      <Tabs tabs={tabs} activeTabId={activeTabId} onChange={setActiveTabId}>
+        <div className="py-2">
+          <TabPanel tabId="workflow">
+            <Empty
+              label="Empty workflow"
+              title="No workflow yet"
+              description="Create a workflow to see it here."
+              icon="↗"
+            />
+          </TabPanel>
 
-        <TabPanel tabId="assets" activeTabId={activeTabId}>
-          <Empty
-            label="Empty assets"
-            title="No assets yet"
-            description="Assets added to Toolkit will appear here."
-            icon="layers"
-          />
-        </TabPanel>
+          <TabPanel tabId="assets">
+            <Empty
+              label="Empty assets"
+              title="No assets yet"
+              description="Assets added to Toolkit will appear here."
+              icon="layers"
+            />
+          </TabPanel>
 
-        <TabPanel tabId="temp" activeTabId={activeTabId}>
-          <TempPanel
-            entries={displayedTempEntries}
-            error={displayedTempError}
-            loading={tempState.status === 'loading' && tempEntries === undefined}
-          />
-        </TabPanel>
-      </div>
+          <TabPanel tabId="temp">
+            <TempPanel
+              entries={displayedTempEntries}
+              error={displayedTempError}
+              loading={tempState.status === 'loading' && tempEntries === undefined}
+            />
+          </TabPanel>
+        </div>
+      </Tabs>
     </main>
   );
 }
