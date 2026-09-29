@@ -9,9 +9,9 @@ import { useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
-  { id: 'workflow', label: 'Workflow', icon: <Icon name="worktree" size="sm" /> },
-  { id: 'assets', label: 'Assets', icon: <Icon name="layers" size="sm" /> },
-  { id: 'temp', label: 'Temp', icon: <Icon name="history" size="sm" /> },
+  { id: 'workflow', label: 'Workflow', icon: <Icon name="worktree" size="lg" /> },
+  { id: 'assets', label: 'Assets', icon: <Icon name="layers" size="lg" /> },
+  { id: 'temp', label: 'Temp', icon: <Icon name="history" size="lg" /> },
 ];
 
 function App() {

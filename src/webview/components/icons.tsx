@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 
-export type IconSize = 'sm' | 'md' | 'lg';
+export type IconSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 export type IconVariant = 'default' | 'muted';
 
 export type IconProps = {
@@ -11,9 +11,12 @@ export type IconProps = {
 };
 
 const sizeClasses: Record<IconSize, string> = {
-  sm: 'size-4 text-sm',
-  md: 'size-5 text-base',
-  lg: 'size-6 text-lg',
+  sm: '!text-sm',
+  md: '!text-base',
+  lg: '!text-lg',
+  xl: '!text-xl',
+  '2xl': '!text-2xl',
+  '3xl': '!text-3xl',
 };
 
 const variantClasses: Record<IconVariant, string> = {
@@ -25,7 +28,7 @@ export function Icon({ name, size = 'md', variant = 'default', className }: Icon
   return (
     <i
       className={cn(
-        'codicon inline-flex shrink-0 items-center justify-center leading-none',
+        'codicon shrink-0 leading-none',
         `codicon-${name}`,
         sizeClasses[size],
         variantClasses[variant],
