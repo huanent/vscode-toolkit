@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 @import '@vscode/codicons/dist/codicon.css';
 
+@layer base {
+  /* Inset ring so scroll containers never clip keyboard focus, matching VS Code. */
+  :focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+  }
+}
+
 :root {
   font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
   font-size: 13px;

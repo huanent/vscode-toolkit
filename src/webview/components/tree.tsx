@@ -276,7 +276,6 @@ function TreeRow<TItem>({
         selected &&
           !treeHasFocus &&
           'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
-        focused && treeHasFocus && !selected && 'outline outline-(--vscode-list-focusOutline)',
       )}
       role="treeitem"
       aria-expanded={node.isBranch ? node.expanded : undefined}

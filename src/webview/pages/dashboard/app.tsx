@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TabPanel, Tabs, type Tab } from '@/webview/components/tabs';
+import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
@@ -60,13 +61,7 @@ function App() {
               </h2>
               <p className="text-(--vscode-descriptionForeground)">Choose a tool below to make this space yours.</p>
             </div>
-            <button
-              className="shrink-0 cursor-pointer border-0 bg-(--vscode-button-background) px-3 py-2 text-(--vscode-button-foreground) hover:bg-(--vscode-button-hoverBackground)"
-              type="button"
-              onClick={() => setActiveToolId('command-palette')}
-            >
-              Open tool
-            </button>
+            <Button onClick={() => setActiveToolId('command-palette')}>Open tool</Button>
           </section>
 
           <ToolList activeToolId={activeTool.id} onSelect={setActiveToolId} />
