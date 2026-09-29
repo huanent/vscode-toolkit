@@ -23,7 +23,7 @@ export function Tabs({ tabs, activeTabId, onChange }: TabsProps) {
           return (
             <button
               className={cn(
-                'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 border-0 border-b-2 px-3 text-sm transition-colors',
+                'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-0 border-b-2 px-3 text-sm transition-colors',
                 isActive
                   ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
                   : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',

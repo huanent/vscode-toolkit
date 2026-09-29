@@ -11,12 +11,12 @@ export type IconProps = {
 };
 
 const sizeClasses: Record<IconSize, string> = {
-  sm: '!text-sm',
-  md: '!text-base',
-  lg: '!text-lg',
-  xl: '!text-xl',
-  '2xl': '!text-2xl',
-  '3xl': '!text-3xl',
+  sm: '!text-[12px]',
+  md: '!text-[16px]',
+  lg: '!text-[20px]',
+  xl: '!text-[24px]',
+  '2xl': '!text-[32px]',
+  '3xl': '!text-[40px]',
 };
 
 const variantClasses: Record<IconVariant, string> = {
