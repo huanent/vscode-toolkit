@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { TempContextTarget, TempEntryType } from './protocol';
+import { createTempAutoSaveScheduler } from './auto-save';
 import {
   createTempDirectory,
   createTempFile,
@@ -19,7 +20,12 @@ import { refreshTempFiles } from './view-handler';
  * right-clicked entry as the command argument.
  */
 export function registerTempCommands(context: vscode.ExtensionContext): void {
+  const autoSaveScheduler = createTempAutoSaveScheduler(resolveStorageDirectory(context, 'temp'));
   context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument(({ document }) => autoSaveScheduler.schedule(document)),
+    vscode.workspace.onDidSaveTextDocument(autoSaveScheduler.cancel),
+    vscode.workspace.onDidCloseTextDocument(autoSaveScheduler.cancel),
+    { dispose: () => autoSaveScheduler.dispose() },
     vscode.commands.registerCommand('toolkit.temp.createFile', (target: unknown) =>
       createTempEntry(context, 'file', target).catch(showTempCommandError),
     ),
