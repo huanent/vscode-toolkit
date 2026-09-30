@@ -3,7 +3,7 @@ import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';
 import { Loading } from '@/webview/components/loading';
 import type { ResultTask } from '@/features/result/protocol';
-import { HttpTaskResult } from './http/http-task-result';
+import { HttpTaskResult } from './http/http-content';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
 
 export type ResultTaskRenderer = ComponentType<{ task: ResultTask }>;
@@ -44,11 +44,11 @@ interface ResultPanelProps {
 export function TaskContent({ task, loading, error }: ResultPanelProps) {
   if (task) {
     return (
-      <div className="flex min-h-full flex-col">
-        <Header action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
-          <span className="px-1">{task.title}</span>
+      <div className="flex h-full min-h-0 flex-col">
+        <Header className="px-4 shrink-0" action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
+          {task.title}
         </Header>
-        <div className="min-h-0 flex-1">
+        <div className="min-h-0 flex-1 overflow-auto">
           <ResultTaskContent key={task.id} task={task} />
         </div>
       </div>

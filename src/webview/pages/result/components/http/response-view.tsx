@@ -1,30 +1,16 @@
+import { Toggle } from '@base-ui/react/toggle';
+import { ToggleGroup } from '@base-ui/react/toggle-group';
 import { useState } from 'react';
 import type { HttpResponseData } from '@/features/http/protocol';
-import { HeadersTable } from './headers-table';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { Tabs, TabPanel, type Tab } from '@/webview/components/tabs';
-import { postToHost } from '@/webview/utils/host-data';
+import { formatSize } from '@/webview/utils/format';
+import { Headers } from './headers';
 
 interface ResponseViewProps {
   response: HttpResponseData;
 }
 
-const tabs: Tab[] = [
-  { id: 'body', label: 'Body' },
-  { id: 'headers', label: 'Headers' },
-  { id: 'request', label: 'Request' },
-];
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export function ResponseView({ response }: ResponseViewProps) {
-  const [activeTab, setActiveTab] = useState('body');
-
+  const [side, setSide] = useState<'request' | 'response'>('response');
   const statusColorClass =
     response.status >= 200 && response.status < 300
       ? 'text-(--vscode-testing-iconPassed)'
@@ -33,84 +19,60 @@ export function ResponseView({ response }: ResponseViewProps) {
         : 'text-(--vscode-editorError-foreground)';
 
   const displayBody = response.formattedBody ?? response.body;
-
-  const handleCopyBody = () => {
-    postToHost({ type: 'copyToClipboard', text: displayBody });
-  };
-
-  const handleOpenEditor = () => {
-    postToHost({
-      type: 'openInEditor',
-      content: displayBody,
-      language: response.isJson ? 'json' : 'text',
-    });
-  };
+  const headers = side === 'request' ? response.request.headers : response.headers;
+  const body = side === 'request' ? response.request.body : displayBody;
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Status Bar */}
-      <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-        <div className="flex items-center gap-1">
-          <span className="text-(--vscode-descriptionForeground)">Status:</span>
-          <span className={statusColorClass}>
-            {response.status} {response.statusText}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-(--vscode-descriptionForeground)">Size:</span>
-          <span className="text-(--vscode-foreground)">{formatBytes(response.sizeBytes)}</span>
-        </div>
-      </div>
+    <div className="flex flex-col gap-3 px-4">
+      <Headers
+        headers={headers}
+        action={
+          <div className="flex items-center gap-2">
+            {side === 'response' && (
+              <span className="flex items-center gap-2 font-mono text-xs font-normal">
+                <span className="text-(--vscode-descriptionForeground)">Status:</span>
+                <span className={statusColorClass}>
+                  {response.status} {response.statusText}
+                </span>
+                <span className="text-(--vscode-descriptionForeground)">·</span>
+                <span className="text-(--vscode-descriptionForeground)">Size:</span>
+                <span className="text-(--vscode-foreground)">{formatSize(response.sizeBytes)}</span>
+              </span>
+            )}
+            <ToggleGroup
+              aria-label="HTTP message"
+              value={[side]}
+              onValueChange={(value) => {
+                if (value[0] === 'request' || value[0] === 'response') setSide(value[0]);
+              }}
+              className="flex shrink-0 items-center rounded border border-(--vscode-panel-border) p-px"
+            >
+              <Toggle
+                value="request"
+                className="cursor-pointer rounded px-2 py-1 text-xs text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+              >
+                Request
+              </Toggle>
+              <Toggle
+                value="response"
+                className="cursor-pointer rounded px-2 py-1 text-xs text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+              >
+                Response
+              </Toggle>
+            </ToggleGroup>
+          </div>
+        }
+      />
 
-      {/* Tabs */}
-      <Tabs tabs={tabs} activeTabId={activeTab} onChange={setActiveTab}>
-        <div className="py-2">
-          <TabPanel tabId="body">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={handleCopyBody}>
-                  <Icon name="copy" size="sm" />
-                  <span>Copy</span>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleOpenEditor}>
-                  <Icon name="link-external" size="sm" />
-                  <span>Open in Editor</span>
-                </Button>
-              </div>
-
-              {displayBody ? (
-                <pre className="max-h-125 overflow-auto rounded border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed text-(--vscode-editor-foreground) select-text whitespace-pre-wrap break-all">
-                  {displayBody}
-                </pre>
-              ) : (
-                <div className="p-3 text-sm text-(--vscode-descriptionForeground)">Empty response body</div>
-              )}
-            </div>
-          </TabPanel>
-
-          <TabPanel tabId="headers">
-            <HeadersTable headers={response.headers} />
-          </TabPanel>
-
-          <TabPanel tabId="request">
-            <div className="flex flex-col gap-3">
-              <div>
-                <h4 className="mb-1 text-xs font-semibold text-(--vscode-descriptionForeground)">Request Headers</h4>
-                <HeadersTable headers={response.request.headers} />
-              </div>
-
-              {response.request.body && (
-                <div>
-                  <h4 className="mb-1 text-xs font-semibold text-(--vscode-descriptionForeground)">Request Body</h4>
-                  <pre className="max-h-75 overflow-auto rounded border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed text-(--vscode-editor-foreground) select-text whitespace-pre-wrap break-all">
-                    {response.request.body}
-                  </pre>
-                </div>
-              )}
-            </div>
-          </TabPanel>
-        </div>
-      </Tabs>
+      <section className="flex flex-col gap-2 pb-4">
+        {body ? (
+          <pre className="bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed text-(--vscode-editor-foreground) select-text whitespace-pre-wrap break-all rounded-md">
+            {body}
+          </pre>
+        ) : (
+          <div className="p-3 text-sm text-(--vscode-descriptionForeground)">Empty {side} body</div>
+        )}
+      </section>
     </div>
   );
 }
