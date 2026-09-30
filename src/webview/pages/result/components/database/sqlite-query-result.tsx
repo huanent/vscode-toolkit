@@ -1,6 +1,7 @@
 import type { DatabaseCellValue, DatabaseQueryInput, DatabaseQueryResult } from '@/features/database/protocol';
 import type { ResultTask } from '@/features/result/protocol';
 import { Empty } from '@/webview/components/empty';
+import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
 
@@ -44,17 +45,18 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-(--vscode-panel-border) pb-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Icon name="database" variant="muted" size="sm" />
-          <span className="min-w-0 truncate text-sm font-semibold" title={input.databaseName}>
-            {input.databaseName}
-          </span>
-        </div>
-        <span className="shrink-0 text-xs tabular-nums text-(--vscode-descriptionForeground)">
-          {result.hasResultSet ? `${result.rowCount} rows` : `${result.changes} rows affected`} · {elapsed} ms
+      <Header
+        action={
+          <>
+            {result.hasResultSet ? `${result.rowCount} rows` : `${result.changes} rows affected`} · {elapsed} ms
+          </>
+        }
+      >
+        <Icon name="database" variant="muted" size="sm" />
+        <span className="min-w-0 truncate text-sm font-semibold" title={input.databaseName}>
+          {input.databaseName}
         </span>
-      </header>
+      </Header>
 
       <section>
         <h3 className="mb-1 text-xs font-semibold text-(--vscode-descriptionForeground)">SQL</h3>

@@ -9,7 +9,7 @@ interface TaskHistoryPanelProps {
   selectedTaskId?: string;
 }
 
-export function TaskHistoryPanel({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
+export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
   return (
     <aside className="flex h-72 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) md:h-full md:w-72 md:border-l md:border-t-0">
       <Header action={tasks.length}>Tasks</Header>

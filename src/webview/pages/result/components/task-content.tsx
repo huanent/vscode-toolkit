@@ -1,4 +1,6 @@
 import type { ComponentType } from 'react';
+import { Empty } from '@/webview/components/empty';
+import { Loading } from '@/webview/components/loading';
 import type { ResultTask } from '@/features/result/protocol';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
@@ -13,11 +15,7 @@ export function registerResultTaskRenderer(kind: string, renderer: ResultTaskRen
   taskRenderers.set(kind, renderer);
 }
 
-interface ResultTaskContentProps {
-  task: ResultTask;
-}
-
-export function ResultTaskContent({ task }: ResultTaskContentProps) {
+function ResultTaskContent({ task }: { task: ResultTask }) {
   const Renderer = taskRenderers.get(task.kind);
   if (Renderer) return <Renderer task={task} />;
 
@@ -34,5 +32,31 @@ export function ResultTaskContent({ task }: ResultTaskContentProps) {
         </pre>
       )}
     </div>
+  );
+}
+
+interface ResultPanelProps {
+  task: ResultTask | undefined;
+  loading: boolean;
+  error: string | undefined;
+}
+
+export function TaskContent({ task, loading, error }: ResultPanelProps) {
+  if (task) {
+    return <ResultTaskContent key={task.id} task={task} />;
+  }
+
+  if (loading) {
+    return <Loading label="Loading task history..." className="p-4 text-sm" />;
+  }
+
+  if (error) {
+    return (
+      <Empty label="Task history unavailable" title="Could not load task history" description={error} icon="warning" />
+    );
+  }
+
+  return (
+    <Empty label="No results" title="No results yet" description="Task output will appear here." icon="cloud-upload" />
   );
 }
