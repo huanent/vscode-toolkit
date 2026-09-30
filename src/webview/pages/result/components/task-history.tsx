@@ -60,23 +60,21 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
             {task.status === 'running' && (
               <Button
                 variant="ghost"
-                size="sm"
                 title="Terminate task"
                 aria-label={`Terminate ${task.title}`}
                 onClick={() => terminateTask(task.id)}
-              >
-                <Icon name="debug-stop" size="sm" />
-              </Button>
+                size="sm"
+                icon={<Icon name="debug-stop" />}
+              ></Button>
             )}
             <Button
               variant="ghost"
-              size="sm"
               title="Delete task"
               aria-label={`Delete ${task.title}`}
               onClick={() => deleteTask(task.id)}
-            >
-              <Icon name="trash" size="sm" />
-            </Button>
+              size="sm"
+              icon={<Icon name="trash" />}
+            ></Button>
           </>
         ),
       };

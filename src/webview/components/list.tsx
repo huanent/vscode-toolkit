@@ -141,60 +141,91 @@ export function List<T>({
               <div className="px-2 pb-1 pt-3 text-xs font-medium text-(--vscode-descriptionForeground)">
                 {group.label}
               </div>
-              {group.items.map((listItem) => renderListItem(listItem))}
+              {group.items.map((listItem) => (
+                <ListItem
+                  key={listItem.key}
+                  listItem={listItem}
+                  listId={listId}
+                  itemRole={itemRole}
+                  selected={listItem.key === selectedKey}
+                  focused={listItem.key === activeKey}
+                  listHasFocus={listHasFocus}
+                  onClick={(event) => handleItemClick(listItem, event)}
+                />
+              ))}
             </div>
           ))
-        : items.map((listItem) => renderListItem(listItem))}
+        : items.map((listItem) => (
+            <ListItem
+              key={listItem.key}
+              listItem={listItem}
+              listId={listId}
+              itemRole={itemRole}
+              selected={listItem.key === selectedKey}
+              focused={listItem.key === activeKey}
+              listHasFocus={listHasFocus}
+              onClick={(event) => handleItemClick(listItem, event)}
+            />
+          ))}
     </div>
   );
+}
 
-  function renderListItem(listItem: ListItem<T>) {
-    const selected = listItem.key === selectedKey;
-    const state = { focused: listItem.key === activeKey, selected, listHasFocus };
-    const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
-    return (
-      <div
-        key={listItem.key}
-        id={getListItemId(listId, listItem.key)}
-        data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
-        className={cn(
-          'relative flex h-7 w-full items-center rounded px-2 cursor-pointer',
-          !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
-          selected &&
-            listHasFocus &&
-            'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
-          selected &&
-            !listHasFocus &&
-            'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
-        )}
-        role={itemRole}
-        aria-selected={selected}
-        aria-expanded={listItem.expanded}
-        aria-level={listItem.level}
-        aria-posinset={listItem.position}
-        aria-setsize={listItem.setSize}
-        onClick={(event) => handleItemClick(listItem, event)}
-      >
-        {icon}
-        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
-        {listItem.description !== undefined && (
-          <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
-            {listItem.description}
-          </span>
-        )}
-        {listItem.actions && (
-          <span
-            className="ml-1 flex shrink-0 items-center"
-            data-list-actions
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            {listItem.actions}
-          </span>
-        )}
-      </div>
-    );
-  }
+type ListItemProps<T> = {
+  listItem: ListItem<T>;
+  listId: string;
+  itemRole: AriaRole;
+  selected: boolean;
+  focused: boolean;
+  listHasFocus: boolean;
+  onClick: (event: MouseEvent<HTMLDivElement>) => void;
+};
+
+function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFocus, onClick }: ListItemProps<T>) {
+  const state = { focused, selected, listHasFocus };
+  const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
+
+  return (
+    <div
+      id={getListItemId(listId, listItem.key)}
+      data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
+      className={cn(
+        'group relative flex h-7 w-full items-center rounded px-2 cursor-pointer gap-1',
+        !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
+        selected &&
+          listHasFocus &&
+          'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
+        selected &&
+          !listHasFocus &&
+          'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
+      )}
+      role={itemRole}
+      aria-selected={selected}
+      aria-expanded={listItem.expanded}
+      aria-level={listItem.level}
+      aria-posinset={listItem.position}
+      aria-setsize={listItem.setSize}
+      onClick={onClick}
+    >
+      {icon}
+      <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
+      {listItem.description !== undefined && (
+        <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+          {listItem.description}
+        </span>
+      )}
+      {listItem.actions && (
+        <div
+          className="flex shrink-0 items-center opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+          data-list-actions
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          {listItem.actions}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function getListItemId(listId: string, key: Key): string {

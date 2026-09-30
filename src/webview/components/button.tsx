@@ -1,11 +1,13 @@
 import { Button as BaseButton } from '@base-ui/react/button';
 import type { ButtonProps as BaseButtonProps } from '@base-ui/react/button';
 import { cn } from 'cn';
+import type { ReactNode } from 'react';
 
 type ButtonProps = Omit<BaseButtonProps, 'className'> & {
   className?: string;
+  icon?: ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 };
 
 const variantClasses = {
@@ -17,11 +19,20 @@ const variantClasses = {
 } as const;
 
 const sizeClasses = {
-  sm: 'px-2 py-1 text-sm rounded-sm',
-  md: 'px-3 py-2 text-md rounded-md',
+  sm: 'p-1 text-md rounded-sm',
+  md: 'p-2 text-md rounded-md',
+  lg: 'p-3 text-lg rounded-md',
 } as const;
 
-export function Button({ className, variant = 'primary', size = 'md', type = 'button', ...props }: ButtonProps) {
+export function Button({
+  className,
+  icon,
+  children,
+  variant = 'primary',
+  size = 'md',
+  type = 'button',
+  ...props
+}: ButtonProps) {
   return (
     <BaseButton
       className={cn(
@@ -32,6 +43,9 @@ export function Button({ className, variant = 'primary', size = 'md', type = 'bu
       )}
       type={type}
       {...props}
-    />
+    >
+      {icon}
+      {children}
+    </BaseButton>
   );
 }
