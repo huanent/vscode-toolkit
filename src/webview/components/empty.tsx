@@ -13,14 +13,11 @@ export function Empty({ label, title, description, icon }: EmptyStateProps) {
       className="mt-13 grid justify-items-center border border-dashed border-(--vscode-panel-border) px-4 py-6 text-center"
       aria-label={label}
     >
-      <div
-        className="mb-4 grid size-10 place-items-center bg-(--vscode-textLink-foreground)/15 text-xl text-(--vscode-textLink-foreground)"
-        aria-hidden="true"
-      >
+      <div className="mb-3 grid size-10 place-items-center " aria-hidden="true">
         <Icon name={icon} size="lg" />
       </div>
       <h2 className="mb-2 text-base font-semibold">{title}</h2>
-      <p className="max-w-3xl leading-normal text-(--vscode-descriptionForeground)">{description}</p>
+      <p className="max-w-3xl text-sm text-(--vscode-descriptionForeground)">{description}</p>
     </section>
   );
 }

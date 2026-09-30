@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { Empty } from '@/webview/components/empty';
+import { Header } from '@/webview/components/header';
 import { Loading } from '@/webview/components/loading';
 import type { ResultTask } from '@/features/result/protocol';
 import { HttpTaskResult } from './http/http-task-result';
@@ -22,7 +23,6 @@ function ResultTaskContent({ task }: { task: ResultTask }) {
   const content = task.output ?? task.error ?? task.input;
   return (
     <div className="flex flex-col gap-3 p-1">
-      <div className="text-sm font-semibold">{task.title}</div>
       <div className="text-xs text-(--vscode-descriptionForeground)">
         No result renderer is registered for &quot;{task.kind}&quot;.
       </div>
@@ -43,7 +43,16 @@ interface ResultPanelProps {
 
 export function TaskContent({ task, loading, error }: ResultPanelProps) {
   if (task) {
-    return <ResultTaskContent key={task.id} task={task} />;
+    return (
+      <div className="flex min-h-full flex-col">
+        <Header action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
+          <span className="px-1">{task.title}</span>
+        </Header>
+        <div className="min-h-0 flex-1">
+          <ResultTaskContent key={task.id} task={task} />
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

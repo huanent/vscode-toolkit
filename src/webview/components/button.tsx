@@ -15,7 +15,7 @@ const variantClasses = {
     'bg-(--vscode-button-background) text-(--vscode-button-foreground) hover:bg-(--vscode-button-hoverBackground)',
   secondary:
     'border border-(--vscode-button-secondaryBackground) bg-(--vscode-button-secondaryBackground) text-(--vscode-button-secondaryForeground) hover:bg-(--vscode-button-secondaryHoverBackground)',
-  ghost: 'bg-transparent text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground)',
+  ghost: 'bg-transparent text-(--vscode-foreground) hover:bg-(--vscode-toolbar-hoverBackground)',
 } as const;
 
 const sizeClasses = {

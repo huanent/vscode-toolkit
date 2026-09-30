@@ -1,8 +1,6 @@
 import type { DatabaseCellValue, DatabaseQueryInput, DatabaseQueryResult } from '@/features/database/protocol';
 import type { ResultTask } from '@/features/result/protocol';
 import { Empty } from '@/webview/components/empty';
-import { Header } from '@/webview/components/header';
-import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
 
 export function SqliteQueryResultView({ task }: { task: ResultTask }) {
@@ -41,25 +39,16 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   }
 
   const result = task.output;
-  const elapsed = Math.max(0, task.updatedAt - task.createdAt);
 
   return (
     <div className="flex flex-col gap-3">
-      <Header
-        action={
-          <>
-            {result.hasResultSet ? `${result.rowCount} rows` : `${result.changes} rows affected`} · {elapsed} ms
-          </>
-        }
-      >
-        <Icon name="database" variant="muted" size="sm" />
-        <span className="min-w-0 truncate text-sm font-semibold" title={input.databaseName}>
-          {input.databaseName}
-        </span>
-      </Header>
-
       <section>
-        <h3 className="mb-1 text-xs font-semibold text-(--vscode-descriptionForeground)">SQL</h3>
+        <div className="mb-1 flex items-center justify-between text-xs text-(--vscode-descriptionForeground)">
+          <h3 className="font-semibold">SQL</h3>
+          <span className="font-mono">
+            {result.hasResultSet ? `${result.rowCount} rows` : `${result.changes} rows affected`}
+          </span>
+        </div>
         <pre className="max-h-50 overflow-auto border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
           {input.sql}
         </pre>

@@ -1,5 +1,7 @@
 import type { ResultTaskStatus, ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
+import type { WebviewReadyMessage } from '@/host/webview-bridge';
 import { Button } from '@/webview/components/button';
+import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
 import { List, type ListGroup } from '@/webview/components/list';
@@ -15,13 +17,23 @@ interface TaskHistoryPanelProps {
 export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
   return (
     <aside className="flex h-72 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) md:h-full md:w-72 md:border-l md:border-t-0">
-      <Header action={tasks.length}>Tasks</Header>
+      <Header
+        action={
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Refresh tasks"
+            aria-label="Refresh tasks"
+            icon={<Icon name="refresh" />}
+            onClick={() => postToHost({ type: 'ready' } satisfies WebviewReadyMessage)}
+          />
+        }
+      >
+        Tasks
+      </Header>
 
       {tasks.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center gap-2 p-4 text-sm text-(--vscode-descriptionForeground)">
-          <Icon name="history" size="sm" variant="muted" />
-          <span>No tasks yet</span>
-        </div>
+        <Empty label="Task history" title="No tasks yet" description="Task history will appear here." icon="history" />
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-2">
           <List
