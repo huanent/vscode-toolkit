@@ -98,7 +98,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
         icon: (state) => (
           <>
             <TreeRowIndentation node={node} state={state} />
-            {node.item.type === 'file' && <Icon name="file" />}
+            {node.item.type === 'file' && <Icon className="py-1" name="file" />}
           </>
         ),
         label: node.item.name,
@@ -168,12 +168,12 @@ function TreeRowIndentation({ node, state }: TreeRowIndentationProps) {
     <div className="flex h-full shrink-0 items-center">
       <TreeIndentGuides itemPath={node.item.path} activeIndentKeys={activeIndentKeys} />
       {Array.from({ length: node.level - 1 }, (_, index) => (
-        <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-4')} aria-hidden="true" />
+        <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-5')} aria-hidden="true" />
       ))}
       {node.item.type === 'directory' ? (
         <span
           className={cn(
-            'relative z-10 mr-1 grid size-5 shrink-0 place-items-center self-center',
+            'relative z-10 py-1 ml-1 grid shrink-0 place-items-center self-center',
             node.expandable && 'cursor-pointer',
           )}
           data-tree-expander
@@ -194,7 +194,7 @@ type TreeIndentGuidesProps = {
 function TreeIndentGuides({ itemPath, activeIndentKeys }: TreeIndentGuidesProps) {
   const pathSegments = itemPath.split('/').filter(Boolean);
   return (
-    <div className="pointer-events-none absolute inset-y-0 left-4 z-0 flex" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-y-0 left-5 z-0 flex" aria-hidden="true">
       {pathSegments.slice(0, -1).map((_, index) => {
         const guideKey = pathSegments.slice(0, index + 1).join('/');
         const active = activeIndentKeys.has(guideKey);
@@ -203,7 +203,7 @@ function TreeIndentGuides({ itemPath, activeIndentKeys }: TreeIndentGuidesProps)
             key={index}
             className={cn(
               'shrink-0 self-stretch border-l',
-              'w-4',
+              'w-5',
               active
                 ? 'border-(--vscode-tree-indentGuidesStroke) opacity-100'
                 : 'border-(--vscode-tree-inactiveIndentGuidesStroke) opacity-60',

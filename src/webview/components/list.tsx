@@ -190,7 +190,7 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex h-7 w-full items-center rounded px-2 cursor-pointer gap-1',
+        'group relative flex w-full items-center rounded p-1 cursor-pointer gap-1',
         !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
         selected &&
           listHasFocus &&

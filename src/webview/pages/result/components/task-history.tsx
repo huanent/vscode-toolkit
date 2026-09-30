@@ -5,6 +5,7 @@ import { Icon } from '@/webview/components/icons';
 import { List, type ListGroup } from '@/webview/components/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
+import { cn } from 'cn';
 
 interface TaskHistoryPanelProps {
   tasks: ResultTaskSummary[];
@@ -53,7 +54,7 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
       return {
         key: task.id,
         data: task,
-        icon: <Icon name={presentation.icon} className={presentation.className} />,
+        icon: <Icon name={presentation.icon} className={cn(presentation.className, 'p-1')} />,
         label: task.title,
         actions: (
           <>
