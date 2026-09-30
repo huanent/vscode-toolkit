@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { AriaRole, Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type ListItemState = {
@@ -22,9 +22,15 @@ export type ListItem<T> = {
   setSize?: number;
 };
 
-type ListProps<T> = {
-  ariaLabel: string;
+export type ListGroup<T> = {
+  key: Key;
+  label: ReactNode;
   items: readonly ListItem<T>[];
+};
+
+type ListPropsBase<T> = {
+  ariaLabel: string;
+  selectedKey?: Key;
   role?: AriaRole;
   itemRole?: AriaRole;
   onActivate?: (item: T) => void;
@@ -36,20 +42,30 @@ type ListProps<T> = {
   ) => void;
 };
 
+type ListProps<T> =
+  | (ListPropsBase<T> & { items: readonly ListItem<T>[]; groups?: never })
+  | (ListPropsBase<T> & { items?: never; groups: readonly ListGroup<T>[] });
+
 export function List<T>({
   ariaLabel,
-  items,
+  items: itemsProp,
+  groups = [],
+  selectedKey: selectedKeyProp,
   role = 'listbox',
   itemRole = 'option',
   onActivate,
   onItemClick,
   onKeyDown,
 }: ListProps<T>) {
+  const items = itemsProp ?? groups.flatMap((group) => group.items);
   const listId = useId();
   const listRef = useRef<HTMLDivElement>(null);
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
-  const [selectedKey, setSelectedKey] = useState<Key | null>(null);
+  const [selectedKey, setSelectedKey] = useState<Key | null>(selectedKeyProp ?? null);
   const [listHasFocus, setListHasFocus] = useState(false);
+  useEffect(() => {
+    setSelectedKey(selectedKeyProp ?? null);
+  }, [selectedKeyProp]);
   const activeListItem = items.find((item) => item.key === focusedKey) ?? items[0];
   const activeKey = activeListItem?.key ?? null;
   const activeItem = activeListItem?.data;
@@ -119,55 +135,66 @@ export function List<T>({
       onBlur={() => setListHasFocus(false)}
       onKeyDown={handleKeyDown}
     >
-      {items.map((listItem) => {
-        const selected = listItem.key === selectedKey;
-        const state = { focused: listItem.key === activeKey, selected, listHasFocus };
-        const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
-        return (
-          <div
-            key={listItem.key}
-            id={getListItemId(listId, listItem.key)}
-            data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
-            className={cn(
-              'relative flex h-7 w-full items-center rounded px-2 cursor-pointer',
-              !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
-              selected &&
-                listHasFocus &&
-                'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
-              selected &&
-                !listHasFocus &&
-                'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
-            )}
-            role={itemRole}
-            aria-selected={selected}
-            aria-expanded={listItem.expanded}
-            aria-level={listItem.level}
-            aria-posinset={listItem.position}
-            aria-setsize={listItem.setSize}
-            onClick={(event) => handleItemClick(listItem, event)}
-          >
-            {icon}
-            <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
-            {listItem.description !== undefined && (
-              <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
-                {listItem.description}
-              </span>
-            )}
-            {listItem.actions && (
-              <span
-                className="ml-1 flex shrink-0 items-center"
-                data-list-actions
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
-              >
-                {listItem.actions}
-              </span>
-            )}
-          </div>
-        );
-      })}
+      {groups.length > 0
+        ? groups.map((group) => (
+            <div key={group.key} role="group" aria-label={typeof group.label === 'string' ? group.label : undefined}>
+              <div className="px-2 pb-1 pt-3 text-xs font-medium text-(--vscode-descriptionForeground)">
+                {group.label}
+              </div>
+              {group.items.map((listItem) => renderListItem(listItem))}
+            </div>
+          ))
+        : items.map((listItem) => renderListItem(listItem))}
     </div>
   );
+
+  function renderListItem(listItem: ListItem<T>) {
+    const selected = listItem.key === selectedKey;
+    const state = { focused: listItem.key === activeKey, selected, listHasFocus };
+    const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
+    return (
+      <div
+        key={listItem.key}
+        id={getListItemId(listId, listItem.key)}
+        data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
+        className={cn(
+          'relative flex h-7 w-full items-center rounded px-2 cursor-pointer',
+          !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
+          selected &&
+            listHasFocus &&
+            'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
+          selected &&
+            !listHasFocus &&
+            'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
+        )}
+        role={itemRole}
+        aria-selected={selected}
+        aria-expanded={listItem.expanded}
+        aria-level={listItem.level}
+        aria-posinset={listItem.position}
+        aria-setsize={listItem.setSize}
+        onClick={(event) => handleItemClick(listItem, event)}
+      >
+        {icon}
+        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
+        {listItem.description !== undefined && (
+          <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+            {listItem.description}
+          </span>
+        )}
+        {listItem.actions && (
+          <span
+            className="ml-1 flex shrink-0 items-center"
+            data-list-actions
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            {listItem.actions}
+          </span>
+        )}
+      </div>
+    );
+  }
 }
 
 function getListItemId(listId: string, key: Key): string {

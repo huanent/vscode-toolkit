@@ -2,6 +2,8 @@ import type { ResultTaskStatus, ResultTaskSummary, ResultWebviewMessage } from '
 import { Button } from '@/webview/components/button';
 import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
+import { List, type ListGroup } from '@/webview/components/list';
+import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface TaskHistoryPanelProps {
@@ -20,79 +22,88 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
           <span>No tasks yet</span>
         </div>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-auto">
-          {tasks.map((task) => {
-            const isSelected = task.id === selectedTaskId;
-            return (
-              <li key={task.id} className="flex items-center gap-1 border-b border-(--vscode-panel-border) pr-1">
-                <button
-                  type="button"
-                  aria-pressed={isSelected}
-                  className={`min-w-0 flex-1 px-3 py-2 text-left ${isSelected ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)' : 'hover:bg-(--vscode-list-hoverBackground)'}`}
-                  onClick={() => postToHost({ type: 'selectTask', taskId: task.id } satisfies ResultWebviewMessage)}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="shrink-0 text-xs text-(--vscode-descriptionForeground)">{task.kind}</span>
-                    <span className="min-w-0 truncate text-sm">{task.title}</span>
-                  </span>
-                  <span className="mt-1 flex items-center justify-between gap-2 text-xs">
-                    <span className={taskStatusPresentation[task.status].className}>
-                      {taskStatusPresentation[task.status].label}
-                    </span>
-                    <time
-                      className="truncate text-(--vscode-descriptionForeground)"
-                      dateTime={new Date(task.createdAt).toISOString()}
-                    >
-                      {formatCreatedAt(task.createdAt)}
-                    </time>
-                  </span>
-                </button>
-                <div className="flex shrink-0 items-center">
-                  {task.status === 'running' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      title="Terminate task"
-                      aria-label={`Terminate ${task.title}`}
-                      onClick={() =>
-                        postToHost({ type: 'terminateTask', taskId: task.id } satisfies ResultWebviewMessage)
-                      }
-                    >
-                      <Icon name="debug-stop" size="sm" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    title="Delete task"
-                    aria-label={`Delete ${task.title}`}
-                    onClick={() => postToHost({ type: 'deleteTask', taskId: task.id } satisfies ResultWebviewMessage)}
-                  >
-                    <Icon name="trash" size="sm" />
-                  </Button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="min-h-0 flex-1 overflow-auto px-2">
+          <List
+            ariaLabel="Task history"
+            groups={toTaskListGroups(tasks)}
+            selectedKey={selectedTaskId}
+            onActivate={(task) => selectTask(task.id)}
+            onItemClick={(task) => selectTask(task.id)}
+          />
+        </div>
       )}
     </aside>
   );
 }
 
-const taskStatusPresentation: Record<ResultTaskStatus, { label: string; className: string }> = {
-  running: { label: 'Running', className: 'text-(--vscode-progressBar-background)' },
-  completed: { label: 'Completed', className: 'text-(--vscode-testing-iconPassed)' },
-  failed: { label: 'Failed', className: 'text-(--vscode-errorForeground)' },
-  cancelled: { label: 'Cancelled', className: 'text-(--vscode-descriptionForeground)' },
-  interrupted: { label: 'Interrupted', className: 'text-(--vscode-errorForeground)' },
-};
+function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<ResultTaskSummary>[] {
+  const groups = new Map<string, ResultTaskSummary[]>();
+  for (const task of tasks) {
+    const dateGroup = getDateGroup(task.createdAt);
+    const groupTasks = groups.get(dateGroup.key) ?? [];
+    groupTasks.push(task);
+    groups.set(dateGroup.key, groupTasks);
+  }
 
-function formatCreatedAt(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(timestamp);
+  return Array.from(groups, ([groupKey, groupTasks]) => ({
+    key: groupKey,
+    label: getDateGroup(groupTasks[0].createdAt).label,
+    items: groupTasks.map((task) => {
+      const presentation = taskStatusPresentation[task.status];
+      return {
+        key: task.id,
+        data: task,
+        icon: <Icon name={presentation.icon} size="sm" className={presentation.className} />,
+        label: (
+          <span className="block min-w-0 truncate text-sm" title={`${task.kind}: ${task.title}`}>
+            {task.title}
+          </span>
+        ),
+        actions: (
+          <>
+            {task.status === 'running' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Terminate task"
+                aria-label={`Terminate ${task.title}`}
+                onClick={() => terminateTask(task.id)}
+              >
+                <Icon name="debug-stop" size="sm" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Delete task"
+              aria-label={`Delete ${task.title}`}
+              onClick={() => deleteTask(task.id)}
+            >
+              <Icon name="trash" size="sm" />
+            </Button>
+          </>
+        ),
+      };
+    }),
+  }));
 }
+
+function selectTask(taskId: string) {
+  postToHost({ type: 'selectTask', taskId } satisfies ResultWebviewMessage);
+}
+
+function terminateTask(taskId: string) {
+  postToHost({ type: 'terminateTask', taskId } satisfies ResultWebviewMessage);
+}
+
+function deleteTask(taskId: string) {
+  postToHost({ type: 'deleteTask', taskId } satisfies ResultWebviewMessage);
+}
+
+const taskStatusPresentation: Record<ResultTaskStatus, { label: string; icon: string; className: string }> = {
+  running: { label: 'Running', icon: 'loading', className: 'text-(--vscode-progressBar-background)' },
+  completed: { label: 'Completed', icon: 'check', className: 'text-(--vscode-testing-iconPassed)' },
+  failed: { label: 'Failed', icon: 'error', className: 'text-(--vscode-errorForeground)' },
+  cancelled: { label: 'Cancelled', icon: 'circle-slash', className: 'text-(--vscode-descriptionForeground)' },
+  interrupted: { label: 'Interrupted', icon: 'debug-pause', className: 'text-(--vscode-errorForeground)' },
+};
