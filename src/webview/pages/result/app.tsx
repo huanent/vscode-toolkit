@@ -26,7 +26,7 @@ function App() {
 
   return (
     <main className="flex h-screen min-h-0 flex-col md:flex-row">
-      <section className="min-h-0 min-w-0 flex-1 overflow-auto p-3">
+      <section className="min-h-0 min-w-0 flex-1 overflow-auto">
         {activeState?.selectedTask ? (
           <ResultTaskContent key={activeState.selectedTask.id} task={activeState.selectedTask} />
         ) : initial.status === 'loading' && !activeState ? (

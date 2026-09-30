@@ -1,5 +1,6 @@
 import type { ResultTaskStatus, ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
 import { Button } from '@/webview/components/button';
+import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
 import { postToHost } from '@/webview/utils/host-data';
 
@@ -11,10 +12,7 @@ interface TaskHistoryPanelProps {
 export function TaskHistoryPanel({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
   return (
     <aside className="flex h-72 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) md:h-full md:w-72 md:border-l md:border-t-0">
-      <header className="flex shrink-0 items-center justify-between border-b border-(--vscode-panel-border) px-3 py-2">
-        <h2 className="text-sm font-semibold">Tasks</h2>
-        <span className="font-mono text-xs text-(--vscode-descriptionForeground)">{tasks.length}</span>
-      </header>
+      <Header action={tasks.length}>Tasks</Header>
 
       {tasks.length === 0 ? (
         <div className="flex flex-1 items-center justify-center gap-2 p-4 text-sm text-(--vscode-descriptionForeground)">

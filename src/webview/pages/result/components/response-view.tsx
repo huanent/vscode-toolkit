@@ -5,6 +5,7 @@ import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { Tabs, TabPanel, type Tab } from '@/webview/components/tabs';
 import { postToHost } from '@/webview/utils/host-data';
+import { Header } from '@/webview/components/header';
 
 interface ResponseViewProps {
   response: HttpResponseData;
@@ -48,15 +49,12 @@ export function ResponseView({ response }: ResponseViewProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Summary Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-(--vscode-panel-border) pb-3">
-        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-          <span className="font-mono text-xs uppercase px-1 py-0.5 rounded bg-(--vscode-badge-background) text-(--vscode-badge-foreground)">
-            {response.request.method}
-          </span>
-          <span className="font-mono text-xs break-all text-(--vscode-foreground)">{response.request.url}</span>
-        </div>
-      </div>
+      <Header>
+        <span className="font-mono text-xs uppercase px-1 py-0.5 rounded bg-(--vscode-badge-background) text-(--vscode-badge-foreground)">
+          {response.request.method}
+        </span>
+        <span className="font-mono text-xs break-all text-(--vscode-foreground)">{response.request.url}</span>
+      </Header>
 
       {/* Status Bar */}
       <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
