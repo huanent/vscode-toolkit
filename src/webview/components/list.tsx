@@ -1,0 +1,175 @@
+import { cn } from 'cn';
+import { useId, useRef, useState } from 'react';
+import type { AriaRole, Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
+
+export type ListItemState = {
+  focused: boolean;
+  selected: boolean;
+  listHasFocus: boolean;
+};
+
+export type ListItem<T> = {
+  key: Key;
+  data: T;
+  icon?: ReactNode | ((state: ListItemState) => ReactNode);
+  label: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  context?: Readonly<Record<string, string | number | boolean>>;
+  expanded?: boolean;
+  level?: number;
+  position?: number;
+  setSize?: number;
+};
+
+type ListProps<T> = {
+  ariaLabel: string;
+  items: readonly ListItem<T>[];
+  role?: AriaRole;
+  itemRole?: AriaRole;
+  onActivate?: (item: T) => void;
+  onItemClick?: (item: T, event: MouseEvent<HTMLDivElement>) => void;
+  onKeyDown?: (
+    event: KeyboardEvent<HTMLDivElement>,
+    item: T | undefined,
+    focusItem: (item: T | undefined) => void,
+  ) => void;
+};
+
+export function List<T>({
+  ariaLabel,
+  items,
+  role = 'listbox',
+  itemRole = 'option',
+  onActivate,
+  onItemClick,
+  onKeyDown,
+}: ListProps<T>) {
+  const listId = useId();
+  const listRef = useRef<HTMLDivElement>(null);
+  const [focusedKey, setFocusedKey] = useState<Key | null>(null);
+  const [selectedKey, setSelectedKey] = useState<Key | null>(null);
+  const [listHasFocus, setListHasFocus] = useState(false);
+  const activeListItem = items.find((item) => item.key === focusedKey) ?? items[0];
+  const activeKey = activeListItem?.key ?? null;
+  const activeItem = activeListItem?.data;
+
+  const focusItem = (item: T | undefined) => {
+    if (item === undefined) return;
+    const key = items.find((listItem) => listItem.data === item)?.key;
+    if (key === undefined) return;
+    setFocusedKey(key);
+    setSelectedKey(key);
+  };
+
+  const handleItemClick = (listItem: ListItem<T>, event: MouseEvent<HTMLDivElement>) => {
+    listRef.current?.focus();
+    setFocusedKey(listItem.key);
+    setSelectedKey(listItem.key);
+    onItemClick?.(listItem.data, event);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const isListKey = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(event.key);
+    if (!isListKey) {
+      onKeyDown?.(event, activeItem, focusItem);
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (!items.length) return;
+
+    const activeIndex = activeListItem === undefined ? -1 : items.indexOf(activeListItem);
+    switch (event.key) {
+      case 'ArrowDown':
+        focusItem(items[Math.min(activeIndex < 0 ? 0 : activeIndex + 1, items.length - 1)].data);
+        break;
+      case 'ArrowUp':
+        focusItem(items[Math.max(activeIndex < 0 ? items.length - 1 : activeIndex - 1, 0)].data);
+        break;
+      case 'Home':
+        focusItem(items[0].data);
+        break;
+      case 'End':
+        focusItem(items[items.length - 1].data);
+        break;
+      case 'Enter':
+        if (activeItem !== undefined) onActivate?.(activeItem);
+        break;
+      case ' ':
+        if (activeItem !== undefined) onActivate?.(activeItem);
+        break;
+    }
+  };
+
+  return (
+    <div
+      ref={listRef}
+      className="outline-none"
+      role={role}
+      aria-label={ariaLabel}
+      aria-activedescendant={activeKey === null ? undefined : getListItemId(listId, activeKey)}
+      tabIndex={items.length ? 0 : -1}
+      onFocus={() => {
+        setListHasFocus(true);
+        if (!items.some((item) => item.key === focusedKey)) {
+          setFocusedKey(items[0]?.key ?? null);
+        }
+      }}
+      onBlur={() => setListHasFocus(false)}
+      onKeyDown={handleKeyDown}
+    >
+      {items.map((listItem) => {
+        const selected = listItem.key === selectedKey;
+        const state = { focused: listItem.key === activeKey, selected, listHasFocus };
+        const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
+        return (
+          <div
+            key={listItem.key}
+            id={getListItemId(listId, listItem.key)}
+            data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
+            className={cn(
+              'relative flex h-7 w-full items-center rounded px-2 cursor-pointer',
+              !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
+              selected &&
+                listHasFocus &&
+                'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
+              selected &&
+                !listHasFocus &&
+                'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
+            )}
+            role={itemRole}
+            aria-selected={selected}
+            aria-expanded={listItem.expanded}
+            aria-level={listItem.level}
+            aria-posinset={listItem.position}
+            aria-setsize={listItem.setSize}
+            onClick={(event) => handleItemClick(listItem, event)}
+          >
+            {icon}
+            <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
+            {listItem.description !== undefined && (
+              <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+                {listItem.description}
+              </span>
+            )}
+            {listItem.actions && (
+              <span
+                className="ml-1 flex shrink-0 items-center"
+                data-list-actions
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                {listItem.actions}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getListItemId(listId: string, key: Key): string {
+  return `${listId}-item-${encodeURIComponent(String(key))}`;
+}
