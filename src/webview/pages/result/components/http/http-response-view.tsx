@@ -3,13 +3,13 @@ import { ToggleGroup } from '@base-ui/react/toggle-group';
 import { useState } from 'react';
 import type { HttpResponseData } from '@/features/http/protocol';
 import { formatSize } from '@/webview/utils/format';
-import { Headers } from './headers';
+import { HttpHeaders } from './http-headers';
 
-interface ResponseViewProps {
+interface HttpResponseViewProps {
   response: HttpResponseData;
 }
 
-export function ResponseView({ response }: ResponseViewProps) {
+export function HttpResponseView({ response }: HttpResponseViewProps) {
   const [side, setSide] = useState<'request' | 'response'>('response');
   const statusColorClass =
     response.status >= 200 && response.status < 300
@@ -24,7 +24,7 @@ export function ResponseView({ response }: ResponseViewProps) {
 
   return (
     <div className="flex flex-col gap-3 px-4">
-      <Headers
+      <HttpHeaders
         headers={headers}
         action={
           <div className="flex items-center gap-2">

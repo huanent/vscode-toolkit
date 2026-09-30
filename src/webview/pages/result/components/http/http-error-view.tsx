@@ -2,12 +2,12 @@ import type { HttpErrorData } from '@/features/http/protocol';
 import type { ResultTaskStatus } from '@/features/result/protocol';
 import { Icon } from '@/webview/components/icons';
 
-interface ErrorViewProps {
+interface HttpErrorViewProps {
   error: HttpErrorData;
   status: ResultTaskStatus;
 }
 
-export function ErrorView({ error, status }: ErrorViewProps) {
+export function HttpErrorView({ error, status }: HttpErrorViewProps) {
   const title =
     status === 'cancelled' ? 'Request Cancelled' : status === 'interrupted' ? 'Request Interrupted' : 'Request Failed';
 

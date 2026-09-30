@@ -3,7 +3,7 @@ import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';
 import { Loading } from '@/webview/components/loading';
 import type { ResultTask } from '@/features/result/protocol';
-import { HttpTaskResult } from './http/http-content';
+import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
 
 export type ResultTaskRenderer = ComponentType<{ task: ResultTask }>;

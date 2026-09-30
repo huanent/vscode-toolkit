@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 
-interface HeadersProps {
+interface HttpHeadersProps {
   headers: Record<string, string>;
   action?: ReactNode;
 }
 
-export function Headers({ headers, action }: HeadersProps) {
+export function HttpHeaders({ headers, action }: HttpHeadersProps) {
   const entries = Object.entries(headers);
 
   return (

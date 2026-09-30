@@ -2,8 +2,8 @@ import type { ResultTask } from '@/features/result/protocol';
 import type { HttpErrorData, HttpRequestData, HttpResponseData } from '@/features/http/protocol';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
-import { ErrorView } from './error-view';
-import { ResponseView } from './response-view';
+import { HttpErrorView } from './http-error-view';
+import { HttpResponseView } from './http-response-view';
 
 interface HttpTaskResultProps {
   task: ResultTask;
@@ -22,7 +22,7 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
   }
 
   if (task.status === 'completed') {
-    if (isHttpResponseData(task.output)) return <ResponseView response={task.output} />;
+    if (isHttpResponseData(task.output)) return <HttpResponseView response={task.output} />;
     return (
       <Empty
         label="HTTP result unavailable"
@@ -49,7 +49,7 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
     timestamp: task.updatedAt,
     request,
   };
-  return <ErrorView error={error} status={task.status} />;
+  return <HttpErrorView error={error} status={task.status} />;
 }
 
 function isHttpRequestData(value: unknown): value is HttpRequestData {
