@@ -26,6 +26,10 @@ Reuse existing components from `src/webview/components/` whenever possible. Extr
 
 Page entry files should compose components and manage page state rather than duplicate shared JSX.
 
+### Testing
+
+UI components do not need tests unless they contain non-trivial business logic or behavior that is not covered elsewhere.
+
 ### Base UI
 
 - Use `@base-ui/react` primitives for interactive webview controls whenever an equivalent primitive exists. Prefer shared wrappers in `src/webview/components/` for consistent styling, and avoid hand-rolling controls that Base UI provides.

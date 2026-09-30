@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { ResultTask } from '@/features/result/protocol';
-import { HttpTaskResult } from './http-task-result';
-import { SqliteQueryResultView } from './sqlite-query-result';
+import { HttpTaskResult } from './http/http-task-result';
+import { SqliteQueryResultView } from './database/sqlite-query-result';
 
 export type ResultTaskRenderer = ComponentType<{ task: ResultTask }>;
 

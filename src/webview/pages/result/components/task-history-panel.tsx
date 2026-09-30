@@ -36,7 +36,9 @@ export function TaskHistoryPanel({ tasks, selectedTaskId }: TaskHistoryPanelProp
                     <span className="min-w-0 truncate text-sm">{task.title}</span>
                   </span>
                   <span className="mt-1 flex items-center justify-between gap-2 text-xs">
-                    <span className={getStatusClass(task.status)}>{getStatusLabel(task.status)}</span>
+                    <span className={taskStatusPresentation[task.status].className}>
+                      {taskStatusPresentation[task.status].label}
+                    </span>
                     <time
                       className="truncate text-(--vscode-descriptionForeground)"
                       dateTime={new Date(task.createdAt).toISOString()}
@@ -78,34 +80,13 @@ export function TaskHistoryPanel({ tasks, selectedTaskId }: TaskHistoryPanelProp
   );
 }
 
-function getStatusLabel(status: ResultTaskStatus): string {
-  switch (status) {
-    case 'running':
-      return 'Running';
-    case 'completed':
-      return 'Completed';
-    case 'failed':
-      return 'Failed';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'interrupted':
-      return 'Interrupted';
-  }
-}
-
-function getStatusClass(status: ResultTaskStatus): string {
-  switch (status) {
-    case 'running':
-      return 'text-(--vscode-progressBar-background)';
-    case 'completed':
-      return 'text-(--vscode-testing-iconPassed)';
-    case 'failed':
-    case 'interrupted':
-      return 'text-(--vscode-errorForeground)';
-    case 'cancelled':
-      return 'text-(--vscode-descriptionForeground)';
-  }
-}
+const taskStatusPresentation: Record<ResultTaskStatus, { label: string; className: string }> = {
+  running: { label: 'Running', className: 'text-(--vscode-progressBar-background)' },
+  completed: { label: 'Completed', className: 'text-(--vscode-testing-iconPassed)' },
+  failed: { label: 'Failed', className: 'text-(--vscode-errorForeground)' },
+  cancelled: { label: 'Cancelled', className: 'text-(--vscode-descriptionForeground)' },
+  interrupted: { label: 'Interrupted', className: 'text-(--vscode-errorForeground)' },
+};
 
 function formatCreatedAt(timestamp: number): string {
   return new Intl.DateTimeFormat(undefined, {
