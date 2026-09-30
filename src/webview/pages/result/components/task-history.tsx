@@ -53,12 +53,8 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
       return {
         key: task.id,
         data: task,
-        icon: <Icon name={presentation.icon} size="sm" className={presentation.className} />,
-        label: (
-          <span className="block min-w-0 truncate text-sm" title={`${task.kind}: ${task.title}`}>
-            {task.title}
-          </span>
-        ),
+        icon: <Icon name={presentation.icon} className={presentation.className} />,
+        label: task.title,
         actions: (
           <>
             {task.status === 'running' && (
