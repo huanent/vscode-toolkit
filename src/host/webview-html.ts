@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 
 export interface WebviewHtmlOptions {
-  /** Page directory name under `src/webview/pages`, which also names the built entry. */
+  /** Page directory name under `src/webview/pages`, which also names the built entry under `dist`. */
   page: string;
   title?: string;
   /** Values exposed on the root element as `data-*` attributes, readable through `getRootData`. */
@@ -20,7 +20,7 @@ export function getWebviewHtml(webview: vscode.Webview, assetsUri: vscode.Uri, o
   const asset = (relativePath: string) =>
     webview.asWebviewUri(vscode.Uri.joinPath(assetsUri, ...relativePath.split('/'))).toString();
 
-  let html = readFileSync(join(assetsUri.fsPath, 'webview', 'pages', page, 'index.html'), 'utf8');
+  let html = readFileSync(join(assetsUri.fsPath, page, 'index.html'), 'utf8');
   html = html.replace(/\b(src|href)="\/([^"]+)"/g, (_match, attribute: string, path: string) => {
     return `${attribute}="${asset(path)}"`;
   });

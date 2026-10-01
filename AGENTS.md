@@ -16,7 +16,7 @@ Do not re-implement webview plumbing per feature. The shared layer under `src/ho
 - `src/host/webview-editor.ts` registers a read-only custom editor from a small definition (`viewType`, `page`, `icon`, `validate`, `load`, `data`).
 - `src/webview/utils/host-data.ts` implements the webview side: `useHostData<TData>()` for the payload state and `getRootData()` for host-provided `data-*` values.
 
-Adding a custom editor therefore means: create the page under `src/webview/pages/<page>/`, declare `contributes.customEditors` in `package.json`, and call `registerWebviewEditor` with a `load` function. Adding a webview page needs no `vite.config.mts` change because entries are discovered from `src/webview/pages/*/index.html`.
+Adding a custom editor therefore means: create the page under `src/webview/pages/<page>/`, including its `app.tsx`, declare `contributes.customEditors` in `package.json`, and call `registerWebviewEditor` with a `load` function. Adding a webview page needs no `vite.config.mts` change because entries are discovered from `src/webview/pages/*/app.tsx`; the shared `src/webview/index.html` template is applied during the webview build.
 
 Never use inline `style` attributes in webview JSX; pages are served under a strict CSP with `default-src 'none'`.
 

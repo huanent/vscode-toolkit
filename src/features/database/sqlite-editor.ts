@@ -47,7 +47,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
 
   const databaseEditor = registerWebviewEditor<DatabaseDocument>(context, {
     viewType: sqliteEditorViewType,
-    page: 'database',
+    page: 'database/table',
     icon: 'database',
     validate: validateSqliteUri,
     load: readSqliteDatabase,
@@ -73,7 +73,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
 
   const tableEditor = registerWebviewEditor(context, {
     viewType: sqliteTableEditorViewType,
-    page: 'database-table',
+    page: 'database/data',
     icon: 'table',
     validate: validateSqliteTableUri,
     load: readSqliteTable,

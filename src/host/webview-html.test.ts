@@ -18,9 +18,11 @@ const builtPage = [
   '</html>',
 ].join('\n');
 
-vi.mock('node:fs', () => ({
+const { readFileSync } = vi.hoisted(() => ({
   readFileSync: vi.fn<(...args: unknown[]) => string>(() => builtPage),
 }));
+
+vi.mock('node:fs', () => ({ readFileSync }));
 vi.mock('vscode', () => ({
   Uri: {
     joinPath: vi.fn<(...args: unknown[]) => vscode.Uri>(
@@ -39,6 +41,12 @@ function createWebview(): vscode.Webview {
 const assetsUri = { fsPath: '/extension/dist' } as vscode.Uri;
 
 describe('getWebviewHtml', () => {
+  it('reads the built page from the dist root', () => {
+    getWebviewHtml(createWebview(), assetsUri, { page: 'database/data' });
+
+    expect(readFileSync).toHaveBeenCalledWith('/extension/dist/database/data/index.html', 'utf8');
+  });
+
   it('rewrites every root-absolute asset URL emitted by Vite', () => {
     const html = getWebviewHtml(createWebview(), assetsUri, { page: 'archive' });
 

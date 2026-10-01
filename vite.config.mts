@@ -1,19 +1,63 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { cp } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { defineConfig, type UserConfig } from 'vite';
+import { relative, resolve, sep } from 'node:path';
+import { defineConfig, type Plugin, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-/** Every `src/webview/pages/<page>/index.html` becomes a build entry, so pages need no config edit. */
+/** Every `src/webview/pages/<page>/app.tsx` becomes a build entry, so pages need no config edit. */
+const webviewPagesRoot = resolve(import.meta.dirname, 'src/webview/pages');
+
 function discoverWebviewPages(): Record<string, string> {
-  const pagesRoot = resolve(import.meta.dirname, 'src/webview/pages');
   const entries: Record<string, string> = {};
-  for (const entry of readdirSync(pagesRoot, { withFileTypes: true })) {
-    const htmlPath = resolve(pagesRoot, entry.name, 'index.html');
-    if (entry.isDirectory() && existsSync(htmlPath)) entries[entry.name] = htmlPath;
+
+  function visit(directory: string): void {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = resolve(directory, entry.name);
+      if (entry.isDirectory()) visit(entryPath);
+      else if (entry.name === 'app.tsx') {
+        const page = relative(webviewPagesRoot, directory).split(sep).join('/');
+        entries[page] = entryPath;
+      }
+    }
   }
+
+  visit(webviewPagesRoot);
   return entries;
+}
+
+function emitWebviewHtml(): Plugin {
+  const template = readFileSync(resolve(import.meta.dirname, 'src/webview/index.html'), 'utf8');
+
+  return {
+    name: 'emit-webview-html',
+    generateBundle(_options, bundle) {
+      const stylesheets = Object.values(bundle)
+        .filter((output) => output.type === 'asset' && output.fileName.endsWith('.css'))
+        .map((output) => `<link rel="stylesheet" crossorigin href="/${output.fileName}">`)
+        .join('\n    ');
+
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'chunk' || !output.isEntry || !output.facadeModuleId) continue;
+
+        const page = relative(webviewPagesRoot, resolve(output.facadeModuleId, '..')).split(sep).join('/');
+        if (!page || page.startsWith('../')) continue;
+
+        const html = template
+          .replace('<title>SQLite Table</title>', `<title>${page}</title>`)
+          .replace(
+            '</head>',
+            `${stylesheets ? `\n    ${stylesheets}` : ''}\n    <script type="module" crossorigin src="/${output.fileName}"></script>\n  </head>`,
+          );
+
+        this.emitFile({
+          type: 'asset',
+          fileName: `${page}/index.html`,
+          source: html,
+        });
+      }
+    },
+  };
 }
 
 export default defineConfig(({ mode }) => {
@@ -61,13 +105,17 @@ export default defineConfig(({ mode }) => {
         },
       }
     : {
-        plugins: [react(), tailwindcss()],
+        plugins: [react(), tailwindcss(), emitWebviewHtml()],
         build: {
           rollupOptions: {
             input: discoverWebviewPages(),
             output: {
               format: 'es',
-              entryFileNames: (chunk) => `${chunk.name}/[name].js`,
+              entryFileNames: (chunk) => {
+                const page = relative(webviewPagesRoot, resolve(chunk.facadeModuleId!, '..')).split(sep).join('/');
+                const pageName = page.split('/').at(-1);
+                return `${page}/${pageName}.js`;
+              },
               chunkFileNames: '[name]/[name].js',
               assetFileNames: '[name]/[name][extname]',
               sourcemapExcludeSources: true,
