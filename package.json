@@ -135,6 +135,16 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "toolkit.sqliteTableEditor",
+        "displayName": "SQLite Table",
+        "selector": [
+          {
+            "filenamePattern": "*.sqlite-table"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "viewsContainers": {
@@ -280,6 +290,12 @@
         "title": "Run SQLite Query",
         "icon": "$(play)",
         "category": "SQLite"
+      },
+      {
+        "command": "toolkit.sqlite.openSqlEditor",
+        "title": "Open SQL Editor",
+        "icon": "$(code)",
+        "category": "SQLite"
       }
     ],
     "keybindings": [
@@ -312,6 +328,11 @@
           "command": "toolkit.sqlite.executeQuery",
           "when": "editorLangId == sql && toolkit.sqliteQueryEditor",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.sqlite.openSqlEditor",
+          "when": "activeCustomEditorId == toolkit.sqliteEditor",
+          "group": "navigation@1"
         }
       ],
       "editor/context": [
@@ -333,6 +354,10 @@
         {
           "command": "toolkit.sqlite.executeQuery",
           "when": "toolkit.sqliteQueryEditor"
+        },
+        {
+          "command": "toolkit.sqlite.openSqlEditor",
+          "when": "activeCustomEditorId == toolkit.sqliteEditor"
         },
         {
           "command": "toolkit.runNodeScript",

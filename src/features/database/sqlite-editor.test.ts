@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as vscode from 'vscode';
 import { describe, expect, it, vi } from 'vitest';
-import { registerSqliteEditor, sqliteEditorViewType } from './sqlite-editor';
+import { registerSqliteEditor, sqliteEditorViewType, sqliteOpenSqlEditorCommand } from './sqlite-editor';
 import type { DatabaseDocument } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
 import { readSqliteDatabase, validateSqliteUri } from './sqlite-service';
@@ -12,6 +12,10 @@ vi.mock('vscode', () => ({
       dispose: vi.fn<() => void>(),
     })),
     showTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextEditor>>(async () => ({}) as vscode.TextEditor),
+    tabGroups: { activeTabGroup: { activeTab: undefined } },
+  },
+  commands: {
+    registerCommand: vi.fn<(...args: unknown[]) => vscode.Disposable>(() => ({ dispose: vi.fn<() => void>() })),
   },
   workspace: {
     openTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextDocument>>(
@@ -24,10 +28,13 @@ vi.mock('vscode', () => ({
 vi.mock('@/host/webview-html', () => ({ getWebviewHtml: () => '<html></html>' }));
 vi.mock('./sqlite-service', () => ({
   validateSqliteUri: vi.fn<(uri: vscode.Uri) => void>(),
+  validateSqliteTableUri: vi.fn<(uri: vscode.Uri) => void>(),
   readSqliteDatabase: vi.fn<(uri: vscode.Uri) => Promise<DatabaseDocument>>(async () => ({
     engine: 'sqlite',
     tables: [],
   })),
+  readSqliteTable: vi.fn(),
+  createSqliteTableUri: vi.fn(),
 }));
 vi.mock('./sqlite-query', () => ({
   registerSqliteQueryEditor: vi.fn<(...args: unknown[]) => (uri: vscode.Uri, tableName?: string) => Promise<void>>(),
@@ -44,6 +51,12 @@ describe('SQLite editor', () => {
       '*.db',
       '*.sqlite',
     ]);
+    expect(manifest.contributes.customEditors).toContainEqual({
+      viewType: 'toolkit.sqliteTableEditor',
+      displayName: 'SQLite Table',
+      selector: [{ filenamePattern: '*.sqlite-table' }],
+      priority: 'default',
+    });
     expect(manifest.contributes.commands).toContainEqual({
       command: 'toolkit.sqlite.executeQuery',
       title: 'Run SQLite Query',
@@ -56,13 +69,30 @@ describe('SQLite editor', () => {
       mac: 'cmd+enter',
       when: 'toolkit.sqliteQueryEditor',
     });
+    expect(manifest.contributes.commands).toContainEqual({
+      command: sqliteOpenSqlEditorCommand,
+      title: 'Open SQL Editor',
+      icon: '$(code)',
+      category: 'SQLite',
+    });
+    expect(manifest.contributes.menus['editor/title']).toContainEqual({
+      command: sqliteOpenSqlEditorCommand,
+      when: 'activeCustomEditorId == toolkit.sqliteEditor',
+      group: 'navigation@1',
+    });
   });
 
   it('delegates document validation and loading to the SQLite service', async () => {
     const openSqlQueryEditor = vi.fn<(uri: vscode.Uri, tableName?: string) => Promise<void>>(async () => undefined);
     vi.mocked(registerSqliteQueryEditor).mockReturnValueOnce(openSqlQueryEditor);
-    registerSqliteEditor({ extensionUri: { fsPath: '/extension' } } as vscode.ExtensionContext);
-    const registration = vi.mocked(vscode.window.registerCustomEditorProvider).mock.calls.at(-1)!;
+    registerSqliteEditor({
+      extensionUri: { fsPath: '/extension' },
+      subscriptions: [],
+    } as unknown as vscode.ExtensionContext);
+    const commandHandler = vi.mocked(vscode.commands.registerCommand).mock.calls.at(-1)![1] as () => Promise<void>;
+    const registration = vi
+      .mocked(vscode.window.registerCustomEditorProvider)
+      .mock.calls.find(([viewType]) => viewType === sqliteEditorViewType)!;
     const provider = registration[1] as vscode.CustomReadonlyEditorProvider;
     const uri = { scheme: 'file', path: '/sample.db', fsPath: '/sample.db' } as vscode.Uri;
     const document = await provider.openCustomDocument(
@@ -96,7 +126,11 @@ describe('SQLite editor', () => {
     await messageListeners[1]!({ type: 'unsupported' });
     expect(openSqlQueryEditor).not.toHaveBeenCalled();
 
-    await messageListeners[1]!({ type: 'openSqlEditor', tableName: 'items' });
+    await messageListeners[1]!({ type: 'activeTableChanged', tableName: 'items' });
+    (vscode.window.tabGroups as unknown as { activeTabGroup: { activeTab: vscode.Tab } }).activeTabGroup.activeTab = {
+      input: { viewType: sqliteEditorViewType, uri },
+    } as unknown as vscode.Tab;
+    await commandHandler();
     expect(openSqlQueryEditor).toHaveBeenCalledWith(uri, 'items');
   });
 });

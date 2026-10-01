@@ -8,6 +8,7 @@ import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable } from './pro
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;
 const maxQueryResultRows = 1000;
+export const sqliteTableScheme = 'toolkit-sqlite-table';
 
 export function validateSqliteUri(uri: vscode.Uri): void {
   if (!['.db', '.sqlite'].includes(path.posix.extname(uri.path).toLowerCase())) {
@@ -28,6 +29,24 @@ export async function readSqliteDatabase(uri: vscode.Uri): Promise<DatabaseDocum
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
+}
+
+export function createSqliteTableUri(databaseUri: vscode.Uri, tableName: string): vscode.Uri {
+  return vscode.Uri.parse(
+    `${sqliteTableScheme}:/table?database=${encodeURIComponent(databaseUri.toString())}&name=${encodeURIComponent(tableName)}`,
+  );
+}
+
+export async function readSqliteTable(uri: vscode.Uri): Promise<DatabaseTable> {
+  const { databaseUri, tableName } = parseSqliteTableUri(uri);
+  const database = await readSqliteDatabase(databaseUri);
+  const table = database.tables.find((candidate) => candidate.name === tableName);
+  if (!table) throw new Error(`SQLite table not found: ${tableName}`);
+  return table;
+}
+
+export function validateSqliteTableUri(uri: vscode.Uri): void {
+  parseSqliteTableUri(uri);
 }
 
 export async function executeSqliteQuery(uri: vscode.Uri, sql: string): Promise<DatabaseQueryResult> {
@@ -135,6 +154,17 @@ function readDatabase(databasePath: string): DatabaseDocument {
   } finally {
     database.close();
   }
+}
+
+function parseSqliteTableUri(uri: vscode.Uri): { databaseUri: vscode.Uri; tableName: string } {
+  if (uri.scheme !== sqliteTableScheme) throw new Error('The SQLite table editor received an invalid URI.');
+  const query = new URLSearchParams(uri.query);
+  const database = query.get('database');
+  const tableName = query.get('name');
+  if (!database || !tableName) throw new Error('The SQLite table URI is missing database or table information.');
+  const databaseUri = vscode.Uri.parse(database);
+  validateSqliteUri(databaseUri);
+  return { databaseUri, tableName };
 }
 
 function readTable(database: DatabaseSync, name: string): DatabaseTable {
