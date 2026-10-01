@@ -45,7 +45,7 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
   if (task) {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <Header className="px-4 shrink-0" action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
+        <Header className="py-3 px-4 shrink-0" action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
           {task.title}
         </Header>
         <div className="min-h-0 flex-1 overflow-auto">
