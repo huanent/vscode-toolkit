@@ -3,8 +3,56 @@ import type { DatabaseDocument } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
+import { Table, type TableColumn } from '@/webview/components/table';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
+
+const tableColumns: readonly TableColumn<DatabaseDocument['tables'][number]>[] = [
+  {
+    key: 'name',
+    header: 'Table',
+    width: '24rem',
+    className: 'min-w-56',
+    cell: (table) => (
+      <div className="flex min-w-0 items-center gap-2">
+        <Icon name="table" variant="muted" size="sm" />
+        <span className="min-w-0 truncate font-medium">{table.name}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'columns',
+    header: 'Columns',
+    align: 'right',
+    width: '7rem',
+    className: 'tabular-nums',
+    cell: (table) => table.columnCount,
+  },
+  {
+    key: 'primaryKey',
+    header: 'Primary key',
+    width: '12rem',
+    className: 'min-w-36',
+    cell: (table) => {
+      const primaryKeys = table.columns.filter((column) => column.primaryKey).map((column) => column.name);
+      return primaryKeys.length ? (
+        <span className="truncate" title={primaryKeys.join(', ')}>
+          {primaryKeys.join(', ')}
+        </span>
+      ) : (
+        <span className="text-(--vscode-descriptionForeground)">None</span>
+      );
+    },
+  },
+  {
+    key: 'rows',
+    header: 'Rows',
+    align: 'right',
+    width: '8rem',
+    className: 'tabular-nums',
+    cell: (table) => table.rowCount.toLocaleString(),
+  },
+];
 
 function App() {
   const state = useHostData<DatabaseDocument>();
@@ -14,32 +62,22 @@ function App() {
   }, [name]);
 
   if (state.status === 'loaded') {
+    const tables = state.data.tables;
+
     return (
       <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
         <section aria-label="Database tables" className="flex min-h-0 flex-1 flex-col">
-          <div className="flex h-10 shrink-0 items-center justify-between border-b border-(--vscode-panel-border) px-3">
-            <h1 className="text-sm font-semibold">Tables</h1>
-            <span className="text-xs tabular-nums text-(--vscode-descriptionForeground)">
-              {state.data.tables.length}
-            </span>
-          </div>
-          {state.data.tables.length ? (
+          {tables.length ? (
             <div className="min-h-0 flex-1 overflow-auto">
-              {state.data.tables.map((table) => (
-                <button
-                  key={table.name}
-                  type="button"
-                  onClick={() => postToHost({ type: 'openTable', tableName: table.name })}
-                  className="flex h-10 w-full min-w-0 items-center gap-3 border-b border-(--vscode-panel-border) px-3 text-left text-sm hover:bg-(--vscode-list-hoverBackground)"
-                >
-                  <Icon name="table" variant="muted" size="sm" />
-                  <span className="min-w-0 flex-1 truncate">{table.name}</span>
-                  <span className="shrink-0 tabular-nums text-xs text-(--vscode-descriptionForeground)">
-                    {table.rowCount} rows
-                  </span>
-                  <Icon name="chevron-right" variant="muted" size="sm" />
-                </button>
-              ))}
+              <Table
+                ariaLabel="SQLite database tables"
+                columns={tableColumns}
+                rows={tables}
+                rowKey={(table) => table.name}
+                onRowClick={(table) => postToHost({ type: 'openTable', tableName: table.name })}
+                emptyMessage="No tables found."
+                className="min-w-full"
+              />
             </div>
           ) : (
             <div className="grid min-h-0 flex-1 place-items-center px-4 text-center">
