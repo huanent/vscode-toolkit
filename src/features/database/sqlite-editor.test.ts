@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import * as vscode from 'vscode';
 import { describe, expect, it, vi } from 'vitest';
 import { registerSqliteEditor, sqliteEditorViewType, sqliteOpenSqlEditorCommand } from './sqlite-editor';
-import type { DatabaseDocument } from './protocol';
+import type { DatabaseDocument, DatabaseTable } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
-import { readSqliteDatabase, validateSqliteUri } from './sqlite-service';
+import { readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
 
 vi.mock('vscode', () => ({
   window: {
@@ -12,6 +12,7 @@ vi.mock('vscode', () => ({
       dispose: vi.fn<() => void>(),
     })),
     showTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextEditor>>(async () => ({}) as vscode.TextEditor),
+    showErrorMessage: vi.fn<(...args: unknown[]) => Promise<string | undefined>>(async () => undefined),
     tabGroups: { activeTabGroup: { activeTab: undefined } },
   },
   commands: {
@@ -33,8 +34,9 @@ vi.mock('./sqlite-service', () => ({
     engine: 'sqlite',
     tables: [],
   })),
-  readSqliteTable: vi.fn(),
-  createSqliteTableUri: vi.fn(),
+  readSqliteTable: vi.fn<() => Promise<DatabaseTable>>(),
+  createSqliteTableUri: vi.fn<() => vscode.Uri>(),
+  updateSqliteTableSchema: vi.fn<() => Promise<void>>(async () => undefined),
 }));
 vi.mock('./sqlite-query', () => ({
   registerSqliteQueryEditor: vi.fn<(...args: unknown[]) => (uri: vscode.Uri, tableName?: string) => Promise<void>>(),
@@ -132,5 +134,33 @@ describe('SQLite editor', () => {
     } as unknown as vscode.Tab;
     await commandHandler();
     expect(openSqlQueryEditor).toHaveBeenCalledWith(uri, 'items');
+
+    // Test schema update success
+    await messageListeners[1]!({
+      type: 'updateTableSchema',
+      tableName: 'items',
+      newTableName: 'products',
+      columns: [{ name: 'id', type: 'INTEGER', primaryKey: true, notNull: false }],
+    });
+    expect(updateSqliteTableSchema).toHaveBeenCalledWith(uri, {
+      tableName: 'items',
+      newTableName: 'products',
+      columns: [{ name: 'id', type: 'INTEGER', primaryKey: true, notNull: false }],
+    });
+    expect(postMessage).toHaveBeenCalledWith({ type: 'schemaUpdateResult', success: true });
+
+    // Test schema update failure
+    vi.mocked(updateSqliteTableSchema).mockRejectedValueOnce(new Error('Syntax error'));
+    await messageListeners[1]!({
+      type: 'updateTableSchema',
+      tableName: 'items',
+      newTableName: 'invalid',
+      columns: [],
+    });
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'schemaUpdateResult',
+      success: false,
+      error: 'Syntax error',
+    });
   });
 });

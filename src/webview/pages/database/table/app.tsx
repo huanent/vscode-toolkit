@@ -1,65 +1,94 @@
-import { useEffect } from 'react';
-import type { DatabaseDocument } from '@/features/database/protocol';
+import { useEffect, useMemo, useState } from 'react';
+import type { DatabaseDocument, DatabaseTable } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
 import { Table, type TableColumn } from '@/webview/components/table';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
+import { TableSchemaDialog } from './components/table-schema-dialog';
 import '@/webview/styles.css';
 
-const tableColumns: readonly TableColumn<DatabaseDocument['tables'][number]>[] = [
-  {
-    key: 'name',
-    header: 'Table',
-    width: '24rem',
-    className: 'min-w-56',
-    cell: (table) => (
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon name="table" variant="muted" size="sm" />
-        <span className="min-w-0 truncate font-medium">{table.name}</span>
-      </div>
-    ),
-  },
-  {
-    key: 'columns',
-    header: 'Columns',
-    align: 'right',
-    width: '7rem',
-    className: 'tabular-nums',
-    cell: (table) => table.columnCount,
-  },
-  {
-    key: 'primaryKey',
-    header: 'Primary key',
-    width: '12rem',
-    className: 'min-w-36',
-    cell: (table) => {
-      const primaryKeys = table.columns.filter((column) => column.primaryKey).map((column) => column.name);
-      return primaryKeys.length ? (
-        <span className="truncate" title={primaryKeys.join(', ')}>
-          {primaryKeys.join(', ')}
-        </span>
-      ) : (
-        <span className="text-(--vscode-descriptionForeground)">None</span>
-      );
+function getTableColumns(
+  onEditSchema: (table: DatabaseTable) => void,
+): readonly TableColumn<DatabaseDocument['tables'][number]>[] {
+  return [
+    {
+      key: 'name',
+      header: 'Table',
+      width: '24rem',
+      className: 'min-w-56',
+      cell: (table) => (
+        <div className="flex min-w-0 items-center gap-2">
+          <Icon name="table" variant="muted" size="sm" />
+          <span className="min-w-0 truncate font-medium">{table.name}</span>
+        </div>
+      ),
     },
-  },
-  {
-    key: 'rows',
-    header: 'Rows',
-    align: 'right',
-    width: '8rem',
-    className: 'tabular-nums',
-    cell: (table) => table.rowCount.toLocaleString(),
-  },
-];
+    {
+      key: 'columns',
+      header: 'Columns',
+      align: 'right',
+      width: '7rem',
+      className: 'tabular-nums',
+      cell: (table) => table.columnCount,
+    },
+    {
+      key: 'primaryKey',
+      header: 'Primary key',
+      width: '12rem',
+      className: 'min-w-36',
+      cell: (table) => {
+        const primaryKeys = table.columns.filter((column) => column.primaryKey).map((column) => column.name);
+        return primaryKeys.length ? (
+          <span className="truncate" title={primaryKeys.join(', ')}>
+            {primaryKeys.join(', ')}
+          </span>
+        ) : (
+          <span className="text-(--vscode-descriptionForeground)">None</span>
+        );
+      },
+    },
+    {
+      key: 'rows',
+      header: 'Rows',
+      align: 'right',
+      width: '8rem',
+      className: 'tabular-nums',
+      cell: (table) => table.rowCount.toLocaleString(),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '6rem',
+      align: 'center',
+      headerClassName: 'text-center',
+      cell: (table) => (
+        <button
+          type="button"
+          title="Edit schema"
+          aria-label={`Edit schema for ${table.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditSchema(table);
+          }}
+          className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+        >
+          <Icon name="edit" size="sm" />
+        </button>
+      ),
+    },
+  ];
+}
 
 function App() {
   const state = useHostData<DatabaseDocument>();
+  const [editingTable, setEditingTable] = useState<DatabaseTable | null>(null);
   const name = getRootData('name') ?? 'SQLite Database';
   useEffect(() => {
     document.title = name;
   }, [name]);
+
+  const tableColumns = useMemo(() => getTableColumns(setEditingTable), []);
 
   if (state.status === 'loaded') {
     const tables = state.data.tables;
@@ -91,6 +120,16 @@ function App() {
             </div>
           )}
         </section>
+        {editingTable && (
+          <TableSchemaDialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) setEditingTable(null);
+            }}
+            table={editingTable}
+            onClose={() => setEditingTable(null)}
+          />
+        )}
       </main>
     );
   }

@@ -34,3 +34,28 @@ export interface DatabaseQueryResult {
   changes: number | string;
   lastInsertRowId?: number | string;
 }
+
+export interface SqliteTableColumnDefinition {
+  name: string;
+  type: string;
+  notNull: boolean;
+  primaryKey: boolean;
+  originalName?: string;
+}
+
+export interface UpdateSqliteTableSchemaOptions {
+  tableName: string;
+  newTableName: string;
+  columns: SqliteTableColumnDefinition[];
+}
+
+export interface UpdateTableSchemaMessage {
+  type: 'updateTableSchema';
+  tableName: string;
+  newTableName: string;
+  columns: SqliteTableColumnDefinition[];
+}
+
+export type DatabaseWebviewMessage =
+  | { type: 'schemaUpdateResult'; success: true }
+  | { type: 'schemaUpdateResult'; success: false; error: string };

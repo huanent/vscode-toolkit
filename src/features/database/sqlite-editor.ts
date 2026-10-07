@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
-import type { DatabaseDocument } from './protocol';
+import type { DatabaseDocument, UpdateTableSchemaMessage } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
 import {
   createSqliteTableUri,
   readSqliteDatabase,
   readSqliteTable,
+  updateSqliteTableSchema,
   validateSqliteTableUri,
   validateSqliteUri,
 } from './sqlite-service';
@@ -53,12 +54,30 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
     load: readSqliteDatabase,
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
-      const messageListener = panel.webview.onDidReceiveMessage((message: unknown) => {
+      const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (isActiveTableChangedMessage(message)) {
           if (message.tableName) activeTableNames.set(uriKey, message.tableName);
           else activeTableNames.delete(uriKey);
         } else if (isOpenTableMessage(message)) {
           void vscode.commands.executeCommand(sqliteOpenTableCommand, uri, message.tableName);
+        } else if (isUpdateTableSchemaMessage(message)) {
+          try {
+            await updateSqliteTableSchema(uri, {
+              tableName: message.tableName,
+              newTableName: message.newTableName,
+              columns: message.columns,
+            });
+            if (activeTableNames.get(uriKey) === message.tableName && message.tableName !== message.newTableName) {
+              activeTableNames.set(uriKey, message.newTableName);
+            }
+            const data = await readSqliteDatabase(uri);
+            await panel.webview.postMessage({ type: 'loaded', data });
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            void vscode.window.showErrorMessage(`Failed to update schema: ${errorMessage}`);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
+          }
         }
       });
 
@@ -98,5 +117,16 @@ function isActiveTableChangedMessage(message: unknown): message is { type: 'acti
   return (
     message.type === 'activeTableChanged' &&
     (!('tableName' in message) || message.tableName === undefined || typeof message.tableName === 'string')
+  );
+}
+
+function isUpdateTableSchemaMessage(message: unknown): message is UpdateTableSchemaMessage {
+  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
+  const candidate = message as Partial<UpdateTableSchemaMessage>;
+  return (
+    candidate.type === 'updateTableSchema' &&
+    typeof candidate.tableName === 'string' &&
+    typeof candidate.newTableName === 'string' &&
+    Array.isArray(candidate.columns)
   );
 }

@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { executeSqliteQuery, readSqliteDatabase, validateSqliteUri } from './sqlite-service';
+import { executeSqliteQuery, readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -114,6 +114,107 @@ describe('SQLite service', () => {
     expect((await executeSqliteQuery(writtenUri, 'SELECT title FROM "odd "" table" WHERE id = 1')).rows).toEqual([
       ['remote'],
     ]);
+  });
+
+  it('updates table schema by renaming table and altering columns while preserving data', async () => {
+    const databasePath = path.join(temporaryDirectory, 'schema.db');
+    const database = new DatabaseSync(databasePath);
+    database.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER)');
+    database.exec("INSERT INTO users VALUES (1, 'Alice', 25), (2, 'Bob', 30)");
+    database.close();
+
+    const uri = { scheme: 'file', path: databasePath, fsPath: databasePath } as vscode.Uri;
+
+    await updateSqliteTableSchema(uri, {
+      tableName: 'users',
+      newTableName: 'accounts',
+      columns: [
+        { name: 'id', type: 'INTEGER', primaryKey: true, notNull: false, originalName: 'id' },
+        { name: 'username', type: 'TEXT', primaryKey: false, notNull: true, originalName: 'name' },
+        { name: 'email', type: 'TEXT', primaryKey: false, notNull: false },
+      ],
+    });
+
+    const doc = await readSqliteDatabase(uri);
+    expect(doc.tables).toHaveLength(1);
+    const table = doc.tables[0]!;
+    expect(table.name).toBe('accounts');
+    expect(table.columns).toEqual([
+      { name: 'id', type: 'INTEGER', primaryKey: true, notNull: false },
+      { name: 'username', type: 'TEXT', primaryKey: false, notNull: true },
+      { name: 'email', type: 'TEXT', primaryKey: false, notNull: false },
+    ]);
+    expect(table.rows).toEqual([
+      [1, 'Alice', null],
+      [2, 'Bob', null],
+    ]);
+  });
+
+  it('validates table schema update options', async () => {
+    const databasePath = path.join(temporaryDirectory, 'validation.db');
+    const database = new DatabaseSync(databasePath);
+    database.exec('CREATE TABLE items (id INTEGER PRIMARY KEY)');
+    database.close();
+
+    const uri = { scheme: 'file', path: databasePath, fsPath: databasePath } as vscode.Uri;
+
+    await expect(
+      updateSqliteTableSchema(uri, {
+        tableName: '',
+        newTableName: 'new_items',
+        columns: [{ name: 'id', type: 'INTEGER', primaryKey: true, notNull: false }],
+      }),
+    ).rejects.toThrow('Table name is required.');
+
+    await expect(
+      updateSqliteTableSchema(uri, {
+        tableName: 'items',
+        newTableName: 'items',
+        columns: [],
+      }),
+    ).rejects.toThrow('The table must have at least one column.');
+
+    await expect(
+      updateSqliteTableSchema(uri, {
+        tableName: 'items',
+        newTableName: 'items',
+        columns: [
+          { name: 'col', type: 'TEXT', primaryKey: false, notNull: false },
+          { name: 'col', type: 'INTEGER', primaryKey: false, notNull: false },
+        ],
+      }),
+    ).rejects.toThrow('Duplicate column name: "col".');
+
+    await expect(
+      updateSqliteTableSchema(uri, {
+        tableName: 'non_existent',
+        newTableName: 'new_name',
+        columns: [{ name: 'id', type: 'INTEGER', primaryKey: true, notNull: false }],
+      }),
+    ).rejects.toThrow('SQLite table not found: non_existent');
+  });
+
+  it('updates table schema on remote database URIs and persists changes', async () => {
+    const databasePath = path.join(temporaryDirectory, 'remote-schema.sqlite');
+    const database = new DatabaseSync(databasePath);
+    database.exec('CREATE TABLE test (id INTEGER PRIMARY KEY, note TEXT)');
+    database.exec("INSERT INTO test VALUES (1, 'hello')");
+    database.close();
+
+    const uri = { scheme: 'vscode-remote', path: '/workspace/remote-schema.sqlite' } as vscode.Uri;
+    vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(await readFile(databasePath));
+
+    await updateSqliteTableSchema(uri, {
+      tableName: 'test',
+      newTableName: 'test_updated',
+      columns: [
+        { name: 'id', type: 'INTEGER', primaryKey: true, notNull: false, originalName: 'id' },
+        { name: 'note', type: 'TEXT', primaryKey: false, notNull: false, originalName: 'note' },
+        { name: 'extra', type: 'TEXT', primaryKey: false, notNull: false },
+      ],
+    });
+
+    expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(uri, expect.any(Uint8Array));
   });
 });
 

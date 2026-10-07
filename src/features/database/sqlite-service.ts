@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import * as vscode from 'vscode';
-import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable } from './protocol';
+import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable, UpdateSqliteTableSchemaOptions } from './protocol';
 
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;
@@ -70,6 +70,122 @@ export async function executeSqliteQuery(uri: vscode.Uri, sql: string): Promise<
     return result;
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
+export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {
+  validateSqliteUri(uri);
+  validateSchemaOptions(options);
+
+  if (uri.scheme === 'file') {
+    const file = await stat(uri.fsPath);
+    if (!file.isFile()) throw new Error('The SQLite database URI must point to a file.');
+    applySqliteTableSchema(uri.fsPath, options);
+    return;
+  }
+
+  const originalData = await vscode.workspace.fs.readFile(uri);
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'toolkit-sqlite-'));
+  const temporaryPath = path.join(temporaryDirectory, path.posix.basename(uri.path) || 'database.sqlite');
+  try {
+    await writeFile(temporaryPath, originalData);
+    applySqliteTableSchema(temporaryPath, options);
+    const updatedData = await readFile(temporaryPath);
+    if (!Buffer.from(originalData).equals(updatedData)) {
+      await vscode.workspace.fs.writeFile(uri, updatedData);
+    }
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
+function validateSchemaOptions(options: UpdateSqliteTableSchemaOptions): void {
+  const tableName = options.tableName?.trim();
+  if (!tableName) throw new Error('Table name is required.');
+  const newTableName = options.newTableName?.trim();
+  if (!newTableName) throw new Error('New table name is required.');
+  if (!options.columns || options.columns.length === 0) {
+    throw new Error('The table must have at least one column.');
+  }
+
+  const seen = new Set<string>();
+  for (const column of options.columns) {
+    const name = column.name?.trim();
+    if (!name) throw new Error('Column name cannot be empty.');
+    const lower = name.toLowerCase();
+    if (seen.has(lower)) throw new Error(`Duplicate column name: "${name}".`);
+    seen.add(lower);
+  }
+}
+
+function applySqliteTableSchema(databasePath: string, options: UpdateSqliteTableSchemaOptions): void {
+  const database = new DatabaseSync(databasePath);
+  try {
+    const tableExists = database
+      .prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?")
+      .get(options.tableName);
+    if (!tableExists) throw new Error(`SQLite table not found: ${options.tableName}`);
+
+    if (options.newTableName !== options.tableName) {
+      const targetExists = database
+        .prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?")
+        .get(options.newTableName);
+      if (targetExists) throw new Error(`Table already exists: ${options.newTableName}`);
+    }
+
+    const oldColumnRows = database.prepare(`PRAGMA table_info(${quoteIdentifier(options.tableName)})`).all();
+    const oldColumnNames = oldColumnRows.map((row) => String(row.name));
+
+    const tempName = `__toolkit_temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const pkCols = options.columns.filter((col) => col.primaryKey);
+    const columnDefs = options.columns.map((col) => {
+      let def = quoteIdentifier(col.name.trim());
+      if (col.type?.trim()) def += ` ${col.type.trim()}`;
+      if (pkCols.length === 1 && col.primaryKey) def += ' PRIMARY KEY';
+      if (col.notNull) def += ' NOT NULL';
+      return def;
+    });
+    if (pkCols.length > 1) {
+      columnDefs.push(`PRIMARY KEY (${pkCols.map((col) => quoteIdentifier(col.name.trim())).join(', ')})`);
+    }
+
+    const createSql = `CREATE TABLE ${quoteIdentifier(tempName)} (${columnDefs.join(', ')})`;
+
+    const mappings: Array<{ target: string; source: string }> = [];
+    for (const col of options.columns) {
+      const name = col.name.trim();
+      const source =
+        col.originalName && oldColumnNames.includes(col.originalName)
+          ? col.originalName
+          : oldColumnNames.includes(name)
+            ? name
+            : undefined;
+      if (source) {
+        mappings.push({ target: name, source });
+      }
+    }
+
+    let copySql = '';
+    if (mappings.length > 0) {
+      copySql = `INSERT INTO ${quoteIdentifier(tempName)} (${mappings.map((m) => quoteIdentifier(m.target)).join(', ')}) SELECT ${mappings.map((m) => quoteIdentifier(m.source)).join(', ')} FROM ${quoteIdentifier(options.tableName)}`;
+    }
+
+    database.exec('PRAGMA foreign_keys = OFF');
+    database.exec('BEGIN TRANSACTION');
+    try {
+      database.exec(createSql);
+      if (copySql) database.exec(copySql);
+      database.exec(`DROP TABLE ${quoteIdentifier(options.tableName)}`);
+      database.exec(`ALTER TABLE ${quoteIdentifier(tempName)} RENAME TO ${quoteIdentifier(options.newTableName)}`);
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    } finally {
+      database.exec('PRAGMA foreign_keys = ON');
+    }
+  } finally {
+    database.close();
   }
 }
 
