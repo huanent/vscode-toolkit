@@ -1,5 +1,25 @@
 import type { TempTreeEntry } from '@/features/temp/protocol';
 
+export interface AssetFormValues {
+  name: string;
+  host: string;
+  port: number;
+  user: string;
+  database: string;
+  tls: boolean;
+  privateKeyPath: string;
+  password: string;
+}
+
+export interface AssetEditorData {
+  assetType: string;
+  label: string;
+  editing: boolean;
+  values: AssetFormValues;
+}
+
+export type AssetEditorMessage = { type: 'saveError'; message: string } | { type: 'privateKeySelected'; path: string };
+
 export interface AssetViewEntry {
   path: string;
   name: string;

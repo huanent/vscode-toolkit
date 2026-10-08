@@ -5,7 +5,11 @@ import type {
   DatabaseTable,
   UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
-import { buildSqliteTableSchemaStatements, quoteIdentifier, sqliteTemporaryTablePrefix } from '@/features/database/sqlite-schema';
+import {
+  buildSqliteTableSchemaStatements,
+  quoteIdentifier,
+  sqliteTemporaryTablePrefix,
+} from '@/features/database/sqlite-schema';
 
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;

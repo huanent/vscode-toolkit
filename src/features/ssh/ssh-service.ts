@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { AssetProvider } from '@/features/assets/asset-provider';
-import type { AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
+import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 
@@ -22,59 +21,34 @@ export class SshService implements AssetProvider {
     });
   }
 
-  async configure(record?: AssetRecord): Promise<boolean> {
+  getFormValues(record?: AssetRecord): AssetFormValues {
     const previous = record ? requireSshConfiguration(record) : undefined;
-    const name = await prompt('Connection name', previous?.name ?? 'SSH');
-    if (name === undefined) return false;
-    const host = await prompt('Host', previous?.host ?? 'localhost', (value) =>
-      validHost(value) ? undefined : 'Enter a hostname or IP address without SSH options.',
-    );
-    if (host === undefined) return false;
-    const port = await prompt('Port', String(previous?.port ?? 22), (value) =>
-      /^\d+$/.test(value) && Number(value) > 0 && Number(value) <= 65535
-        ? undefined
-        : 'Enter a port between 1 and 65535.',
-    );
-    if (port === undefined) return false;
-    const user = await prompt('User', previous?.user ?? os.userInfo().username, (value) =>
-      validUser(value) ? undefined : 'Enter a valid SSH username.',
-    );
-    if (user === undefined) return false;
-    const authentication = await vscode.window.showQuickPick(
-      [
-        { label: 'SSH agent / default keys / password', key: false },
-        { label: 'Private key file', key: true },
-      ],
-      { title: 'SSH authentication' },
-    );
-    if (!authentication) return false;
-    let privateKeyPath: string | undefined;
-    if (authentication.key) {
-      const files = await vscode.window.showOpenDialog({
-        title: 'SSH private key',
-        canSelectMany: false,
-        canSelectFiles: true,
-        canSelectFolders: false,
-        defaultUri: previous?.privateKeyPath
-          ? vscode.Uri.file(previous.privateKeyPath)
-          : vscode.Uri.file(path.join(os.homedir(), '.ssh')),
-      });
-      if (!files?.[0]) return false;
-      if (files[0].scheme !== 'file') throw new Error('Select a key file accessible to the extension host.');
-      privateKeyPath = files[0].fsPath;
-    }
+    return {
+      name: previous?.name ?? 'SSH',
+      host: previous?.host ?? 'localhost',
+      port: previous?.port ?? 22,
+      user: previous?.user ?? os.userInfo().username,
+      privateKeyPath: previous?.privateKeyPath ?? '',
+      database: '',
+      tls: false,
+      password: '',
+    };
+  }
+
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+    const previous = record ? requireSshConfiguration(record) : undefined;
     const asset: SshConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
       type: this.type,
-      name: name.trim(),
-      host: host.trim(),
-      port: Number(port),
-      user: user.trim(),
-      privateKeyPath,
+      name: values.name.trim(),
+      host: values.host.trim(),
+      port: values.port,
+      user: values.user.trim(),
+      privateKeyPath: values.privateKeyPath.trim() || undefined,
     };
+    requireSshConfiguration(asset);
     await this.assets.save(asset);
     this.invalidate(asset.id);
-    return true;
   }
 
   toViewEntry(record: AssetRecord): AssetViewEntry {
@@ -141,15 +115,4 @@ function requireSshConfiguration(value: AssetRecord): SshConnectionConfiguration
   )
     throw new Error(`Invalid SSH configuration: ${value.name}`);
   return value as SshConnectionConfiguration;
-}
-function prompt(
-  title: string,
-  value: string,
-  validate?: (value: string) => string | undefined,
-): Thenable<string | undefined> {
-  return vscode.window.showInputBox({
-    title: `SSH ${title}`,
-    value,
-    validateInput: (input) => (!input.trim() ? `${title} is required.` : validate?.(input.trim())),
-  });
 }

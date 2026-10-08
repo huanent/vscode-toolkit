@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { escapeId } from 'mysql2';
 import { createConnection, type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import type { DatabaseQueryResult, DatabaseSchema, MysqlConnectionConfiguration } from './protocol';
-import type { AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
+import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { ResultTaskService } from '@/features/result/task-service';
@@ -20,56 +20,37 @@ export class MysqlService implements AssetProvider {
     private readonly tasks: ResultTaskService,
   ) {}
 
-  async configure(record?: AssetRecord): Promise<boolean> {
+  getFormValues(record?: AssetRecord): AssetFormValues {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
-    const name = await prompt('Connection name', previous?.name ?? 'MySQL');
-    if (name === undefined) return false;
-    const host = await prompt('Host', previous?.host ?? 'localhost');
-    if (host === undefined) return false;
-    const port = await vscode.window.showInputBox({
-      title: 'MySQL port',
-      value: String(previous?.port ?? 3306),
-      validateInput: (value) =>
-        /^\d+$/.test(value) && Number(value) > 0 && Number(value) <= 65535
-          ? undefined
-          : 'Enter a port between 1 and 65535.',
-    });
-    if (port === undefined) return false;
-    const user = await prompt('User', previous?.user ?? 'root');
-    if (user === undefined) return false;
-    const database = await vscode.window.showInputBox({
-      title: 'Default database (optional)',
-      value: previous?.database ?? '',
-    });
-    if (database === undefined) return false;
-    const tls = await vscode.window.showQuickPick(
-      [
-        { label: 'TLS', description: 'Verify the server certificate', enabled: true },
-        { label: 'No TLS', description: 'Unencrypted connection', enabled: false },
-      ],
-      { title: 'MySQL transport security', placeHolder: previous?.tls ? 'Current: TLS' : 'Current: No TLS' },
-    );
-    if (!tls) return false;
-    const password = await vscode.window.showInputBox({
-      title: previous ? 'Password (leave empty to keep the saved password)' : 'Password',
-      password: true,
-      ignoreFocusOut: true,
-    });
-    if (password === undefined) return false;
+    return {
+      name: previous?.name ?? 'MySQL',
+      host: previous?.host ?? 'localhost',
+      port: previous?.port ?? 3306,
+      user: previous?.user ?? 'root',
+      database: previous?.database ?? '',
+      tls: previous?.tls ?? false,
+      privateKeyPath: '',
+      password: '',
+    };
+  }
+
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+    const previous = record ? requireMysqlConfiguration(record) : undefined;
     const asset: MysqlConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
       type: 'mysql',
-      name: name.trim(),
-      host: host.trim(),
-      port: Number(port),
-      user: user.trim(),
-      database: database.trim() || undefined,
-      tls: tls.enabled,
+      name: values.name.trim(),
+      host: values.host.trim(),
+      port: values.port,
+      user: values.user.trim(),
+      database: values.database.trim() || undefined,
+      tls: values.tls,
     };
-    if (!previous || password !== '') await this.assets.setSecret(asset, password);
+    requireMysqlConfiguration(asset);
+    if (!asset.name || !asset.host || !asset.user) throw new Error('Name, host and user are required.');
+    if (!previous || values.password !== '') await this.assets.setSecret(asset, values.password);
     await this.assets.save(asset);
     this.schemas.delete(asset.id);
-    return true;
   }
 
   invalidate(id?: string): void {
@@ -259,14 +240,6 @@ function isMysqlAsset(value: unknown): value is MysqlConnectionConfiguration {
     typeof asset.tls === 'boolean' &&
     (asset.database === undefined || typeof asset.database === 'string')
   );
-}
-
-function prompt(title: string, value: string): Thenable<string | undefined> {
-  return vscode.window.showInputBox({
-    title: `MySQL ${title}`,
-    value,
-    validateInput: (input) => (input.trim() ? undefined : `${title} is required.`),
-  });
 }
 
 function requireMysqlConfiguration(value: AssetRecord): MysqlConnectionConfiguration {

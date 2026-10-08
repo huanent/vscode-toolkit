@@ -3,6 +3,7 @@ import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import type { AssetRequest, AssetsMessage, AssetViewEntry } from './protocol';
 import type { AssetProvider } from './asset-provider';
 import type { AssetService } from './service';
+import { openAssetEditor } from './editor';
 
 export function createAssetsView(
   context: vscode.ExtensionContext,
@@ -33,14 +34,15 @@ export function createAssetsView(
               { title: 'Asset type' },
             );
         const provider = selected && ('provider' in selected ? selected.provider : selected);
-        if (provider && (await provider.configure())) await refresh();
+        if (provider) openAssetEditor(context, service, provider, refresh);
         return;
       }
       if (!request.id) return;
       const asset = await service.get(request.id);
       const provider = providerFor(asset.type);
       if (request.action === 'edit') {
-        if (!(await provider.configure(asset))) return;
+        openAssetEditor(context, service, provider, refresh, asset);
+        return;
       } else if (request.action === 'delete') {
         if (
           (await vscode.window.showWarningMessage(`Delete asset "${asset.name}"?`, { modal: true }, 'Delete')) !==
