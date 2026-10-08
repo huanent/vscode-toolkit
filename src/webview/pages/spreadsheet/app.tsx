@@ -1,9 +1,8 @@
-import { Tabs as BaseTabs } from '@base-ui/react/tabs';
-import { cn } from 'cn';
 import { useEffect, useState } from 'react';
 import type { SpreadsheetSheet } from '@/features/spreadsheet/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Loading } from '@/webview/components/loading';
+import { TabPanel, Tabs } from '@/webview/components/tabs';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -24,53 +23,34 @@ function App() {
         className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)"
         aria-labelledby="spreadsheet-preview-title"
       >
-        <BaseTabs.Root
-          value={String(activeSheetIndex)}
-          onValueChange={(value) => setActiveSheetIndex(Number(value))}
+        <Tabs
+          tabs={state.data.map((item, index) => ({ id: String(index), label: item.name }))}
+          activeTabId={String(activeSheetIndex)}
+          onChange={(value) => setActiveSheetIndex(Number(value))}
+          ariaLabel="Worksheets"
+          placement="bottom"
+          hideSingleTab
           className="flex min-h-0 flex-1 flex-col"
+          contentClassName="min-h-0 flex-1 overflow-auto"
         >
-          <div className="min-h-0 flex-1 overflow-auto">
-            {state.data.length ? (
-              state.data.map((item, index) => (
-                <BaseTabs.Panel key={`${item.name}-${index}`} value={String(index)}>
-                  {item.rows.length ? (
-                    <SpreadsheetTable rows={item.rows} />
-                  ) : (
-                    <div className="grid h-full place-items-center text-(--vscode-descriptionForeground)">
-                      This spreadsheet is empty.
-                    </div>
-                  )}
-                </BaseTabs.Panel>
-              ))
-            ) : (
-              <div className="grid h-full place-items-center text-(--vscode-descriptionForeground)">
-                This spreadsheet is empty.
-              </div>
-            )}
-          </div>
-          {state.data.length > 1 && (
-            <BaseTabs.List
-              activateOnFocus={false}
-              aria-label="Worksheets"
-              className="flex h-9 shrink-0 items-start gap-0.5 overflow-x-auto border-t border-(--vscode-panel-border) px-2"
-            >
-              {state.data.map((item, index) => (
-                <BaseTabs.Tab
-                  key={`${item.name}-${index}`}
-                  value={String(index)}
-                  className={cn(
-                    'h-8 shrink-0 cursor-pointer border-0 border-t-2 bg-transparent px-3 text-sm',
-                    index === activeSheetIndex
-                      ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
-                      : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',
-                  )}
-                >
-                  {item.name}
-                </BaseTabs.Tab>
-              ))}
-            </BaseTabs.List>
+          {state.data.length ? (
+            state.data.map((item, index) => (
+              <TabPanel key={`${item.name}-${index}`} tabId={String(index)}>
+                {item.rows.length ? (
+                  <SpreadsheetTable rows={item.rows} />
+                ) : (
+                  <div className="grid h-full place-items-center text-(--vscode-descriptionForeground)">
+                    This spreadsheet is empty.
+                  </div>
+                )}
+              </TabPanel>
+            ))
+          ) : (
+            <div className="grid h-full place-items-center text-(--vscode-descriptionForeground)">
+              This spreadsheet is empty.
+            </div>
           )}
-        </BaseTabs.Root>
+        </Tabs>
       </main>
     );
   }

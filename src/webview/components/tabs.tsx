@@ -14,25 +14,52 @@ type TabsProps = {
   onChange: (tabId: string) => void;
   children: ReactNode;
   ariaLabel?: string;
+  placement?: 'top' | 'bottom';
+  hideSingleTab?: boolean;
+  className?: string;
+  contentClassName?: string;
 };
 
-export function Tabs({ tabs, activeTabId, onChange, children, ariaLabel = 'Sections' }: TabsProps) {
+export function Tabs({
+  tabs,
+  activeTabId,
+  onChange,
+  children,
+  ariaLabel = 'Sections',
+  placement = 'top',
+  hideSingleTab = false,
+  className,
+  contentClassName,
+}: TabsProps) {
+  const bottom = placement === 'bottom';
   return (
     <BaseTabs.Root
+      className={cn('flex min-w-0 flex-col', className)}
       value={activeTabId}
       onValueChange={(value) => {
         if (typeof value === 'string') onChange(value);
       }}
     >
-      <div className="border-b border-(--vscode-panel-border)">
-        <BaseTabs.List activateOnFocus={false} aria-label={ariaLabel} className="flex w-full overflow-x-auto">
+      <div
+        className={cn(
+          bottom ? 'order-last border-t' : 'border-b',
+          'shrink-0 border-(--vscode-panel-border)',
+          hideSingleTab && tabs.length <= 1 && 'hidden',
+        )}
+      >
+        <BaseTabs.List
+          activateOnFocus={false}
+          aria-label={ariaLabel}
+          className={cn('flex w-full overflow-x-auto', bottom && 'h-9 items-start px-2')}
+        >
           {tabs.map((tab) => {
             const isActive = activeTabId === tab.id;
 
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-8 shrink-0 flex-1 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 border-b px-3 text-xs',
+                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 px-3',
+                  bottom ? 'border-t-2 text-sm' : 'flex-1 border-b text-xs',
                   isActive
                     ? 'border-(--vscode-panelTitle-activeBorder,var(--vscode-focusBorder)) text-(--vscode-panelTitle-activeForeground,var(--vscode-foreground))'
                     : 'border-transparent text-(--vscode-panelTitle-inactiveForeground,var(--vscode-descriptionForeground)) hover:text-(--vscode-foreground)',
@@ -47,7 +74,7 @@ export function Tabs({ tabs, activeTabId, onChange, children, ariaLabel = 'Secti
           })}
         </BaseTabs.List>
       </div>
-      {children}
+      <div className={cn('min-w-0', contentClassName)}>{children}</div>
     </BaseTabs.Root>
   );
 }
@@ -55,11 +82,12 @@ export function Tabs({ tabs, activeTabId, onChange, children, ariaLabel = 'Secti
 type TabPanelProps = {
   tabId: string;
   children: ReactNode;
+  className?: string;
 };
 
-export function TabPanel({ tabId, children }: TabPanelProps) {
+export function TabPanel({ tabId, children, className }: TabPanelProps) {
   return (
-    <BaseTabs.Panel value={tabId} className="min-w-0">
+    <BaseTabs.Panel value={tabId} className={cn('min-w-0', className)}>
       {children}
     </BaseTabs.Panel>
   );

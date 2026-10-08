@@ -1,7 +1,6 @@
-import { Toggle } from '@base-ui/react/toggle';
-import { ToggleGroup } from '@base-ui/react/toggle-group';
 import { useState } from 'react';
 import type { HttpResponseData } from '@/features/http/protocol';
+import { SegmentedControl } from '@/webview/components/segmented-control';
 import { formatSize } from '@/webview/utils/format';
 import { HttpHeaders } from './http-headers';
 
@@ -39,27 +38,15 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
                 <span className="text-(--vscode-foreground)">{formatSize(response.sizeBytes)}</span>
               </span>
             )}
-            <ToggleGroup
-              aria-label="HTTP message"
-              value={[side]}
-              onValueChange={(value) => {
-                if (value[0] === 'request' || value[0] === 'response') setSide(value[0]);
-              }}
-              className="flex shrink-0 items-center rounded border border-(--vscode-panel-border) p-px"
-            >
-              <Toggle
-                value="request"
-                className="cursor-pointer rounded px-2 py-1 text-xs text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
-              >
-                Request
-              </Toggle>
-              <Toggle
-                value="response"
-                className="cursor-pointer rounded px-2 py-1 text-xs text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
-              >
-                Response
-              </Toggle>
-            </ToggleGroup>
+            <SegmentedControl
+              ariaLabel="HTTP message"
+              value={side}
+              onValueChange={setSide}
+              options={[
+                { value: 'request', label: 'Request' },
+                { value: 'response', label: 'Response' },
+              ]}
+            />
           </div>
         }
       />

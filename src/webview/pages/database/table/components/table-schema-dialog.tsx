@@ -5,11 +5,13 @@ import {
   buildSqliteTableSchemaStatements,
   sqliteTemporaryTablePrefix,
 } from '@/features/database/sqlite-schema';
+import { Autocomplete } from '@/webview/components/autocomplete';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
 import { Dialog } from '@/webview/components/dialog';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
+import { Table, type TableColumn } from '@/webview/components/table';
 import { TabPanel, Tabs } from '@/webview/components/tabs';
 import { postToHost } from '@/webview/utils/host-data';
 
@@ -33,6 +35,8 @@ const tabs = [
   { id: 'columns', label: 'Columns' },
   { id: 'sql', label: 'SQL Preview' },
 ];
+
+const sqliteDataTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'DATETIME'];
 
 function generatePreviewSql(table: DatabaseTable | undefined, tableName: string, columns: EditableColumn[]): string {
   if (!table) return `${buildSqliteCreateTableStatement({ tableName, columns })};`;
@@ -161,6 +165,91 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
 
   const validationError = validateSchema();
   const previewSql = validationError ?? generatePreviewSql(table, tableName.trim(), columns);
+  const tableColumns: TableColumn<EditableColumn>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      className: 'border-b border-(--vscode-panel-border) p-1',
+      cell: (col, index) => (
+        <Input
+          value={col.name}
+          onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
+          placeholder="Column name"
+          aria-label={`Column ${index + 1} name`}
+        />
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      className: 'border-b border-(--vscode-panel-border) p-1',
+      cell: (col, index) => (
+        <Autocomplete
+          items={sqliteDataTypes}
+          value={col.type}
+          onValueChange={(type) => handleColumnChange(col.id, { type })}
+          disabled={isSubmitting}
+          placeholder="Data type"
+          aria-label={`Column ${index + 1} type`}
+        />
+      ),
+    },
+    {
+      key: 'primaryKey',
+      header: 'PK',
+      align: 'center',
+      headerClassName: 'min-w-0',
+      className: 'border-b border-(--vscode-panel-border) p-1',
+      cell: (col, index) => (
+        <div className="flex justify-center">
+          <Checkbox
+            disabled={isSubmitting}
+            checked={col.primaryKey}
+            onCheckedChange={(checked) => handleColumnChange(col.id, { primaryKey: Boolean(checked) })}
+            ariaLabel={`Column ${col.name || index + 1} primary key`}
+          />
+        </div>
+      ),
+    },
+    {
+      key: 'notNull',
+      header: 'Not Null',
+      align: 'center',
+      headerClassName: 'min-w-0 whitespace-nowrap',
+      className: 'border-b border-(--vscode-panel-border) p-1',
+      cell: (col, index) => (
+        <div className="flex justify-center">
+          <Checkbox
+            disabled={isSubmitting}
+            checked={col.notNull}
+            onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
+            ariaLabel={`Column ${col.name || index + 1} not null`}
+          />
+        </div>
+      ),
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      align: 'center',
+      headerClassName: 'min-w-0',
+      className: 'border-b border-(--vscode-panel-border) p-1',
+      cell: (col, index) => (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => handleRemoveColumn(col.id)}
+          disabled={isSubmitting || columns.length <= 1}
+          className="size-6 text-(--vscode-descriptionForeground) hover:text-(--vscode-errorForeground)"
+          title="Remove column"
+          aria-label={`Remove column ${col.name || index + 1}`}
+        >
+          <Icon name="trash" size="sm" />
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <Dialog
@@ -198,98 +287,13 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
                 </Button>
               </div>
 
-              <div className="max-h-64 overflow-auto rounded border border-(--vscode-panel-border)">
-                <table className="w-full min-w-112 border-separate border-spacing-0 text-xs" aria-label="Columns">
-                  <thead className="sticky top-0 z-10 bg-(--vscode-editor-background)">
-                    <tr>
-                      <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-left font-medium text-(--vscode-descriptionForeground)">
-                        Name
-                      </th>
-                      <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-left font-medium text-(--vscode-descriptionForeground)">
-                        Type
-                      </th>
-                      <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-center font-medium text-(--vscode-descriptionForeground)">
-                        PK
-                      </th>
-                      <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-center font-medium text-(--vscode-descriptionForeground)">
-                        Not Null
-                      </th>
-                      <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-center font-medium text-(--vscode-descriptionForeground)">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {columns.map((col, index) => (
-                      <tr key={col.id} className="hover:bg-(--vscode-list-hoverBackground)">
-                        <td className="border-b border-(--vscode-panel-border) p-1">
-                          <Input
-                            value={col.name}
-                            onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
-                            placeholder="Column name"
-                            aria-label={`Column ${index + 1} name`}
-                          />
-                        </td>
-                        <td className="border-b border-(--vscode-panel-border) p-1">
-                          <Input
-                            list="sqlite-data-types"
-                            value={col.type}
-                            onChange={(e) => handleColumnChange(col.id, { type: e.target.value })}
-                            placeholder="Data type"
-                            aria-label={`Column ${index + 1} type`}
-                          />
-                        </td>
-                        <td className="border-b border-(--vscode-panel-border) p-1 text-center">
-                          <div className="flex justify-center">
-                            <Checkbox
-                              disabled={isSubmitting}
-                              checked={col.primaryKey}
-                              onCheckedChange={(checked) =>
-                                handleColumnChange(col.id, { primaryKey: Boolean(checked) })
-                              }
-                              ariaLabel={`Column ${col.name || index + 1} primary key`}
-                            />
-                          </div>
-                        </td>
-                        <td className="border-b border-(--vscode-panel-border) p-1 text-center">
-                          <div className="flex justify-center">
-                            <Checkbox
-                              disabled={isSubmitting}
-                              checked={col.notNull}
-                              onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
-                              ariaLabel={`Column ${col.name || index + 1} not null`}
-                            />
-                          </div>
-                        </td>
-                        <td className="border-b border-(--vscode-panel-border) p-1 text-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveColumn(col.id)}
-                            disabled={isSubmitting || columns.length <= 1}
-                            className="size-6 text-(--vscode-descriptionForeground) hover:text-(--vscode-errorForeground)"
-                            title="Remove column"
-                            aria-label={`Remove column ${col.name || index + 1}`}
-                          >
-                            <Icon name="trash" size="sm" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <datalist id="sqlite-data-types">
-                <option value="INTEGER" />
-                <option value="TEXT" />
-                <option value="REAL" />
-                <option value="BLOB" />
-                <option value="NUMERIC" />
-                <option value="BOOLEAN" />
-                <option value="DATETIME" />
-              </datalist>
+              <Table
+                ariaLabel="Columns"
+                columns={tableColumns}
+                rows={columns}
+                rowKey={(col) => col.id}
+                className="max-h-64 rounded border border-(--vscode-panel-border)"
+              />
             </div>
           </TabPanel>
 
