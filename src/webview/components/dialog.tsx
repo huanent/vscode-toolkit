@@ -36,7 +36,7 @@ export function Dialog({ open, onOpenChange, title, description, children, class
               className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
               aria-label="Close"
             >
-              <Icon name="close" size="sm" />
+              <Icon name="close" size="md" />
             </BaseDialog.Close>
           </div>
           {children}

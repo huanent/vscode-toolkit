@@ -19,7 +19,7 @@ const variantClasses = {
 } as const;
 
 const sizeClasses = {
-  sm: 'p-1 text-md rounded-sm',
+  sm: 'p-2 text-sm rounded-sm',
   md: 'p-2 text-md rounded-md',
   lg: 'p-3 text-lg rounded-md',
 } as const;
@@ -39,6 +39,7 @@ export function Button({
         'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 border-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         variantClasses[variant],
         sizeClasses[size],
+        'leading-none',
         className,
       )}
       type={type}

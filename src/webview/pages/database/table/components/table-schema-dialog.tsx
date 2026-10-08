@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
+import { buildSqliteTableSchemaStatements, sqliteTemporaryTablePrefix } from '@/features/database/sqlite-schema';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
 import { Dialog } from '@/webview/components/dialog';
@@ -29,19 +30,14 @@ const tabs = [
   { id: 'sql', label: 'SQL Preview' },
 ];
 
-function generatePreviewSql(tableName: string, columns: EditableColumn[]): string {
-  const pkCols = columns.filter((col) => col.primaryKey);
-  const columnDefs = columns.map((col) => {
-    let def = `"${col.name.replaceAll('"', '""')}"`;
-    if (col.type.trim()) def += ` ${col.type.trim()}`;
-    if (pkCols.length === 1 && col.primaryKey) def += ' PRIMARY KEY';
-    if (col.notNull) def += ' NOT NULL';
-    return def;
-  });
-  if (pkCols.length > 1) {
-    columnDefs.push(`PRIMARY KEY (${pkCols.map((col) => `"${col.name.replaceAll('"', '""')}"`).join(', ')})`);
-  }
-  return `CREATE TABLE "${tableName.replaceAll('"', '""')}" (\n  ${columnDefs.join(',\n  ')}\n);`;
+function generatePreviewSql(table: DatabaseTable, tableName: string, columns: EditableColumn[]): string {
+  return buildSqliteTableSchemaStatements(
+    { tableName: table.name, newTableName: tableName, columns },
+    table.columns.map((col) => col.name),
+    sqliteTemporaryTablePrefix,
+  )
+    .map((statement) => `${statement};`)
+    .join('\n');
 }
 
 export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableSchemaDialogProps) {
@@ -163,7 +159,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
     });
   };
 
-  const previewSql = generatePreviewSql(tableName.trim() || table.name, columns);
+  const previewSql = generatePreviewSql(table, tableName.trim() || table.name, columns);
 
   return (
     <Dialog
@@ -309,12 +305,15 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         )}
 
         <div className="mt-2 flex items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </Button>
+          {activeTab === 'sql' ? (
+            <Button size="sm" variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save'}
+            </Button>
+          ) : (
+            <Button size="sm" variant="primary" onClick={() => setActiveTab('sql')}>
+              Preview SQL
+            </Button>
+          )}
         </div>
       </div>
     </Dialog>

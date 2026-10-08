@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import * as vscode from 'vscode';
 import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable, UpdateSqliteTableSchemaOptions } from './protocol';
+import { buildSqliteTableSchemaStatements, quoteIdentifier, sqliteTemporaryTablePrefix } from './sqlite-schema';
 
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;
@@ -136,47 +137,13 @@ function applySqliteTableSchema(databasePath: string, options: UpdateSqliteTable
     const oldColumnRows = database.prepare(`PRAGMA table_info(${quoteIdentifier(options.tableName)})`).all();
     const oldColumnNames = oldColumnRows.map((row) => String(row.name));
 
-    const tempName = `__toolkit_temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const pkCols = options.columns.filter((col) => col.primaryKey);
-    const columnDefs = options.columns.map((col) => {
-      let def = quoteIdentifier(col.name.trim());
-      if (col.type?.trim()) def += ` ${col.type.trim()}`;
-      if (pkCols.length === 1 && col.primaryKey) def += ' PRIMARY KEY';
-      if (col.notNull) def += ' NOT NULL';
-      return def;
-    });
-    if (pkCols.length > 1) {
-      columnDefs.push(`PRIMARY KEY (${pkCols.map((col) => quoteIdentifier(col.name.trim())).join(', ')})`);
-    }
-
-    const createSql = `CREATE TABLE ${quoteIdentifier(tempName)} (${columnDefs.join(', ')})`;
-
-    const mappings: Array<{ target: string; source: string }> = [];
-    for (const col of options.columns) {
-      const name = col.name.trim();
-      const source =
-        col.originalName && oldColumnNames.includes(col.originalName)
-          ? col.originalName
-          : oldColumnNames.includes(name)
-            ? name
-            : undefined;
-      if (source) {
-        mappings.push({ target: name, source });
-      }
-    }
-
-    let copySql = '';
-    if (mappings.length > 0) {
-      copySql = `INSERT INTO ${quoteIdentifier(tempName)} (${mappings.map((m) => quoteIdentifier(m.target)).join(', ')}) SELECT ${mappings.map((m) => quoteIdentifier(m.source)).join(', ')} FROM ${quoteIdentifier(options.tableName)}`;
-    }
+    const tempName = `${sqliteTemporaryTablePrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const statements = buildSqliteTableSchemaStatements(options, oldColumnNames, tempName);
 
     database.exec('PRAGMA foreign_keys = OFF');
     database.exec('BEGIN TRANSACTION');
     try {
-      database.exec(createSql);
-      if (copySql) database.exec(copySql);
-      database.exec(`DROP TABLE ${quoteIdentifier(options.tableName)}`);
-      database.exec(`ALTER TABLE ${quoteIdentifier(tempName)} RENAME TO ${quoteIdentifier(options.newTableName)}`);
+      for (const statement of statements) database.exec(statement);
       database.exec('COMMIT');
     } catch (error) {
       database.exec('ROLLBACK');
@@ -307,10 +274,6 @@ function readTable(database: DatabaseSync, name: string): DatabaseTable {
     columns,
     rows,
   };
-}
-
-function quoteIdentifier(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
 }
 
 function toDisplayValue(value: unknown): string | number | null {
