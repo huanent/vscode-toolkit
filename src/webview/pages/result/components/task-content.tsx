@@ -13,6 +13,7 @@ export type ResultTaskRenderer = ComponentType<{ task: ResultTask }>;
 const taskRenderers = new Map<string, ResultTaskRenderer>();
 registerResultTaskRenderer('http', HttpTaskResult);
 registerResultTaskRenderer('sqlite', SqliteQueryResultView);
+registerResultTaskRenderer('mysql', SqliteQueryResultView);
 
 export function registerResultTaskRenderer(kind: string, renderer: ResultTaskRenderer): void {
   taskRenderers.set(kind, renderer);

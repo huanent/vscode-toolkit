@@ -4,6 +4,7 @@ import { Icon } from '@/webview/components/icons';
 import { Empty } from '@/webview/components/empty';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
+import { AssetsPanel } from '@/webview/pages/dashboard/components/assets-panel';
 import { useTempState } from './use-temp-state';
 import '@/webview/styles.css';
 
@@ -31,12 +32,7 @@ function App() {
           </TabPanel>
 
           <TabPanel tabId="assets">
-            <Empty
-              label="Empty assets"
-              title="No assets yet"
-              description="Assets added to Toolkit will appear here."
-              icon="layers"
-            />
+            <AssetsPanel entries={tempState.assets} error={tempState.error} loading={tempState.loading} />
           </TabPanel>
 
           <TabPanel tabId="temp">

@@ -6,12 +6,13 @@ import { ResultText } from '../result-text';
 import { taskStatusPresentation } from '../../task-presentation';
 
 export function SqliteQueryResultView({ task }: { task: ResultTask }) {
+  const engine = task.kind === 'mysql' ? 'MySQL' : 'SQLite';
   const input = isDatabaseQueryInput(task.input) ? task.input : undefined;
 
   if (task.status === 'running') {
     return (
       <Loading
-        label={input ? `Running query on ${input.databaseName}...` : 'Running SQLite query...'}
+        label={input ? `Running query on ${input.databaseName}...` : `Running ${engine} query...`}
         className="p-4 text-sm"
       />
     );
@@ -37,8 +38,8 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   if (!input || !isDatabaseQueryResult(task.output)) {
     return (
       <Empty
-        label="SQLite result unavailable"
-        title="Could not display this SQLite query"
+        label={`${engine} result unavailable`}
+        title={`Could not display this ${engine} query`}
         description="The saved query input or result is missing or invalid."
         icon="warning"
       />
@@ -63,7 +64,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
 
       {result.hasResultSet && result.columns.length ? (
         <section
-          aria-label="SQLite query results"
+          aria-label={`${engine} query results`}
           tabIndex={0}
           className="max-h-125 overflow-auto border border-(--vscode-panel-border)"
         >

@@ -1,5 +1,21 @@
 export type DatabaseCellValue = string | number | null;
 
+export interface MysqlConnectionConfiguration {
+  id: string;
+  type: 'mysql';
+  name: string;
+  host: string;
+  port: number;
+  user: string;
+  database?: string;
+  tls: boolean;
+}
+
+export interface DatabaseSchema {
+  name: string;
+  tables: string[];
+}
+
 export interface DatabaseColumn {
   name: string;
   type: string;

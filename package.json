@@ -31,6 +31,7 @@
     "@vscode/codicons": "^0.0.46-24",
     "cn": "^0.4.0",
     "exceljs": "^4.4.0",
+    "mysql2": "^3.24.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "xml-formatter": "^3.7.0",
@@ -179,6 +180,36 @@
       ]
     },
     "commands": [
+      {
+        "command": "toolkit.assets.add",
+        "title": "Add Asset",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.edit",
+        "title": "Edit Connection",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.delete",
+        "title": "Delete Connection",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.connect",
+        "title": "Connect / Refresh",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.disconnect",
+        "title": "Disconnect",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.query",
+        "title": "Run SQL Query",
+        "category": "Assets"
+      },
       {
         "command": "toolkit.generateGitignore",
         "title": "Generate .gitignore",
@@ -336,6 +367,26 @@
       ],
       "commandPalette": [
         {
+          "command": "toolkit.assets.edit",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.connect",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.disconnect",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.query",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.rename",
           "when": "false"
         },
@@ -369,6 +420,36 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.assets.add",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
+          "group": "1_create@1"
+        },
+        {
+          "command": "toolkit.assets.connect",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
+          "group": "2_connection@1"
+        },
+        {
+          "command": "toolkit.assets.disconnect",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetConnected && !assetDatabase",
+          "group": "2_connection@2"
+        },
+        {
+          "command": "toolkit.assets.query",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetType == mysql",
+          "group": "3_query@1"
+        },
+        {
+          "command": "toolkit.assets.edit",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
+          "group": "4_edit@1"
+        },
+        {
+          "command": "toolkit.assets.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
+          "group": "4_edit@2"
+        },
         {
           "command": "toolkit.temp.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",

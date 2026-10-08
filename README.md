@@ -2,6 +2,16 @@
 
 Developer utilities for VS Code, with extension-host services and React webviews.
 
+## Assets
+
+Manage MySQL and SSH connections in Dashboard > Assets. Add Asset selects the connection type. Activate a MySQL connection to load databases and tables, and select a table to preview up to 1000 rows. The context menu provides editing, deletion, connection, disconnection, and MySQL SQL queries. Query results appear in Result and running queries can be cancelled.
+
+Connection configuration is stored as `assets/<id>.mysql.json` under `toolkit.storagePath` (or the extension's global storage when unset). Passwords are stored separately in VS Code SecretStorage and are never sent to the webview. Moving the storage directory requires re-entering saved passwords. TLS connections verify server certificates. Arbitrary SQL queries can modify data; the driver allows one statement per request.
+
+SSH configuration uses `assets/<id>.ssh.json` in the same storage directory. Activate an SSH asset to open an integrated terminal running the system OpenSSH client. Authentication supports SSH agent/default keys, a selected private key file, or interactive passwords. Passwords, key passphrases, and host-key confirmation are handled directly by OpenSSH in the terminal. OpenSSH must be available on the extension host. Disconnect, editing, deletion, storage-directory changes, and extension disposal close terminals managed by that SSH asset.
+
+Assets owns generic record persistence, secret storage, and provider dispatch. MySQL configuration, schema browsing, and query execution belong to `src/features/database/`; SSH configuration and terminal lifecycle belong to `src/features/ssh/`. The application layer injects these providers and composes Assets and Temp into the Dashboard handler. Assets and its tree renderer do not import concrete connection implementations.
+
 ## Development
 
 - `npm ci`: install the locked dependencies.

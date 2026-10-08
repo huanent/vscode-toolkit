@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { cp } from 'node:fs/promises';
+import { builtinModules } from 'node:module';
 import { relative, resolve, sep } from 'node:path';
 import { defineConfig, type Plugin, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -84,16 +85,9 @@ export default defineConfig(({ mode }) => {
           rollupOptions: {
             external: [
               'vscode',
-              'node:child_process',
-              'node:crypto',
-              'node:fs',
-              'node:fs/promises',
-              'node:os',
-              'node:perf_hooks',
-              'node:path',
+              ...builtinModules,
+              ...builtinModules.map((name) => `node:${name}`),
               'node:sqlite',
-              'node:stream',
-              'node:util',
               'yauzl',
             ],
             output: {
