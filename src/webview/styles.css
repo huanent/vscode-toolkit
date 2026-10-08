@@ -9,6 +9,18 @@
   }
 }
 
+@layer utilities {
+  .overflow-auto,
+  .overflow-scroll,
+  .overflow-x-auto,
+  .overflow-x-scroll,
+  .overflow-y-auto,
+  .overflow-y-scroll {
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+}
+
 :root {
   font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
   font-size: 13px;

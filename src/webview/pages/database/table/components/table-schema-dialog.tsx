@@ -1,10 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
-import {
-  buildSqliteCreateTableStatement,
-  buildSqliteTableSchemaStatements,
-  sqliteTemporaryTablePrefix,
-} from '@/features/database/sqlite-schema';
 import { Autocomplete } from '@/webview/components/autocomplete';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
@@ -12,7 +7,6 @@ import { Dialog } from '@/webview/components/dialog';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Table, type TableColumn } from '@/webview/components/table';
-import { TabPanel, Tabs } from '@/webview/components/tabs';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface EditableColumn {
@@ -31,23 +25,7 @@ interface TableSchemaDialogProps {
   onClose: () => void;
 }
 
-const tabs = [
-  { id: 'columns', label: 'Columns' },
-  { id: 'sql', label: 'SQL Preview' },
-];
-
 const sqliteDataTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'DATETIME'];
-
-function generatePreviewSql(table: DatabaseTable | undefined, tableName: string, columns: EditableColumn[]): string {
-  if (!table) return `${buildSqliteCreateTableStatement({ tableName, columns })};`;
-  return buildSqliteTableSchemaStatements(
-    { tableName: table.name, newTableName: tableName, columns },
-    table.columns.map((col) => col.name),
-    sqliteTemporaryTablePrefix,
-  )
-    .map((statement) => `${statement};`)
-    .join('\n');
-}
 
 export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableSchemaDialogProps) {
   const [tableName, setTableName] = useState(table?.name ?? '');
@@ -63,9 +41,9 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         }))
       : [{ id: crypto.randomUUID(), name: 'id', type: 'INTEGER', primaryKey: true, notNull: true }],
   );
-  const [activeTab, setActiveTab] = useState('columns');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const pendingColumnFocus = useRef<string | null>(null);
 
   useEffect(() => {
     const handler = (event: MessageEvent<DatabaseWebviewMessage>) => {
@@ -88,6 +66,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
   };
 
   const handleAddColumn = () => {
+    const id = crypto.randomUUID();
+    pendingColumnFocus.current = id;
     setColumns((prev) => {
       const names = new Set(prev.map((column) => column.name.trim().toLowerCase()));
       let suffix = prev.length + 1;
@@ -95,7 +75,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
       return [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id,
           name: `column_${suffix}`,
           type: 'TEXT',
           primaryKey: false,
@@ -164,7 +144,6 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
   };
 
   const validationError = validateSchema();
-  const previewSql = validationError ?? generatePreviewSql(table, tableName.trim(), columns);
   const tableColumns: TableColumn<EditableColumn>[] = [
     {
       key: 'name',
@@ -172,6 +151,13 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
         <Input
+          ref={(input) => {
+            if (!input || pendingColumnFocus.current !== col.id) return;
+            pendingColumnFocus.current = null;
+            input.closest('tr')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            input.focus({ preventScroll: true });
+            input.select();
+          }}
           value={col.name}
           onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
           placeholder="Column name"
@@ -258,8 +244,22 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         if (!isSubmitting) onOpenChange(nextOpen);
       }}
       title={table ? `Edit Schema: ${table.name}` : 'Create Table'}
-      description={table ? 'Modify the table name, columns, and constraints.' : undefined}
-      className="w-176 max-w-full max-h-full overflow-y-auto"
+      className="w-176 max-w-full max-h-full"
+      footer={
+        <>
+          <Button size="sm" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={isSubmitting || Boolean(validationError)}
+          >
+            {isSubmitting ? (table ? 'Saving...' : 'Creating...') : table ? 'Save' : 'Create Table'}
+          </Button>
+        </>
+      }
     >
       <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
         <div className="flex flex-col gap-1">
@@ -277,34 +277,22 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
           />
         </div>
 
-        <Tabs tabs={tabs} activeTabId={activeTab} onChange={setActiveTab}>
-          <TabPanel tabId="columns">
-            <div className="flex flex-col gap-2 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
-                <Button variant="secondary" size="sm" icon={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
-                  Add Column
-                </Button>
-              </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
+            <Button variant="secondary" size="sm" icon={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
+              Add Column
+            </Button>
+          </div>
 
-              <Table
-                ariaLabel="Columns"
-                columns={tableColumns}
-                rows={columns}
-                rowKey={(col) => col.id}
-                className="max-h-64 rounded border border-(--vscode-panel-border)"
-              />
-            </div>
-          </TabPanel>
-
-          <TabPanel tabId="sql">
-            <div className="py-2">
-              <pre className="max-h-64 overflow-auto rounded border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed text-(--vscode-foreground) select-text whitespace-pre-wrap break-all">
-                {previewSql}
-              </pre>
-            </div>
-          </TabPanel>
-        </Tabs>
+          <Table
+            ariaLabel="Columns"
+            columns={tableColumns}
+            rows={columns}
+            rowKey={(col) => col.id}
+            className="max-h-64 rounded border border-(--vscode-panel-border)"
+          />
+        </div>
 
         {error && (
           <div
@@ -314,33 +302,6 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
             {error}
           </div>
         )}
-
-        <div className="mt-2 flex items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
-          <Button size="sm" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          {activeTab === 'sql' ? (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={isSubmitting || Boolean(validationError)}
-            >
-              {isSubmitting ? (table ? 'Saving...' : 'Creating...') : table ? 'Save' : 'Create Table'}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => {
-                if (validationError) setError(validationError);
-                else setActiveTab('sql');
-              }}
-            >
-              Preview SQL
-            </Button>
-          )}
-        </div>
       </fieldset>
     </Dialog>
   );

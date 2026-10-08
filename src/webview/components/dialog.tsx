@@ -9,17 +9,18 @@ export interface DialogProps {
   title: ReactNode;
   description?: ReactNode;
   children: ReactNode;
+  footer?: ReactNode;
   className?: string;
 }
 
-export function Dialog({ open, onOpenChange, title, description, children, className }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, description, children, footer, className }: DialogProps) {
   return (
-    <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
+    <BaseDialog.Root open={open} onOpenChange={onOpenChange} disablePointerDismissal>
       <BaseDialog.Portal>
         <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-(--vscode-editor-background) opacity-60" />
         <BaseDialog.Popup
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-y-auto rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) p-3 text-(--vscode-editorWidget-foreground,var(--vscode-foreground)) shadow-sm focus:outline-none',
+            'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) p-3 text-(--vscode-editorWidget-foreground,var(--vscode-foreground)) shadow-sm focus:outline-none',
             className,
           )}
         >
@@ -39,7 +40,12 @@ export function Dialog({ open, onOpenChange, title, description, children, class
               <Icon name="close" size="md" />
             </BaseDialog.Close>
           </div>
-          {children}
+          <div className="min-h-0 min-w-0 overflow-auto">{children}</div>
+          {footer != null && (
+            <div className="mt-3 flex shrink-0 items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
+              {footer}
+            </div>
+          )}
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>

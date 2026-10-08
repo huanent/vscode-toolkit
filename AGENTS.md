@@ -43,7 +43,8 @@ Reuse the shared webview infrastructure; do not re-implement it per feature:
 
 ## Webview UI and Styling
 
-- Use `@base-ui/react` primitives whenever an equivalent interactive control exists. Prefer shared wrappers in `src/webview/components/` over hand-rolled controls.
+- Prefer `@base-ui/react` primitives when building shared components in `src/webview/components/` whenever an equivalent control exists.
+- Prefer shared components from `src/webview/components/` when implementing UI. If a reusable control is missing, add or extend a shared component before using Base UI primitives directly or hand-rolling controls in pages.
 - Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
 - Never use inline `style` attributes in webview JSX; the CSP uses `default-src 'none'`.
 - Use VS Code CSS variables for colors so the webview follows the active theme.
