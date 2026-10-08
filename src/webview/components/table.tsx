@@ -39,7 +39,7 @@ export function Table<T>({
 }: TableProps<T>) {
   return (
     <div className={cn('min-w-0 overflow-auto', border && 'border border-(--vscode-panel-border)', className)}>
-      <table className="w-max min-w-full border-separate border-spacing-0 text-xs" aria-label={ariaLabel}>
+      <table className="w-max min-w-full border-separate border-spacing-0 text-md" aria-label={ariaLabel}>
         <thead className="sticky top-0 z-10">
           <tr>
             {columns.map((column) => (

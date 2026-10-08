@@ -138,7 +138,7 @@ export function List<T>({
       {groups.length > 0
         ? groups.map((group) => (
             <div key={group.key} role="group" aria-label={typeof group.label === 'string' ? group.label : undefined}>
-              <div className="px-2 py-1 text-xs font-semibold text-(--vscode-descriptionForeground)">{group.label}</div>
+              <div className="px-2 py-1 text-sm font-semibold text-(--vscode-descriptionForeground)">{group.label}</div>
               {group.items.map((listItem) => (
                 <ListItem
                   key={listItem.key}
@@ -188,7 +188,7 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 text-xs',
+        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 text-sm',
         focused &&
           listHasFocus &&
           'outline -outline-offset-1 outline-(--vscode-list-focusOutline,var(--vscode-focusBorder))',
@@ -211,7 +211,7 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       {icon}
       <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
       {listItem.description !== undefined && (
-        <span className="w-20 shrink-0 overflow-hidden text-right text-xs text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
+        <span className="w-20 shrink-0 overflow-hidden text-right text-sm text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
           {listItem.description}
         </span>
       )}
