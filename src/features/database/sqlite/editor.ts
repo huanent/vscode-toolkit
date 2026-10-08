@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
-import type { CreateTableMessage, DatabaseDocument, DeleteTableMessage, UpdateTableSchemaMessage } from './protocol';
-import { registerSqliteQueryEditor } from './sqlite-query';
+import type {
+  CreateTableMessage,
+  DatabaseDocument,
+  DeleteTableMessage,
+  UpdateTableSchemaMessage,
+} from '@/features/database/protocol';
+import { registerSqliteQueryEditor } from './query-editor';
 import {
   createSqliteTableUri,
   createSqliteTable,
@@ -12,7 +17,7 @@ import {
   updateSqliteTableSchema,
   validateSqliteTableUri,
   validateSqliteUri,
-} from './sqlite-service';
+} from './service';
 
 export const sqliteEditorViewType = 'toolkit.sqliteEditor';
 export const sqliteTableEditorViewType = 'toolkit.sqliteTableEditor';

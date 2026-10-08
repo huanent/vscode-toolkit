@@ -1,6 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
-import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable, UpdateSqliteTableSchemaOptions } from './protocol';
-import { buildSqliteTableSchemaStatements, quoteIdentifier, sqliteTemporaryTablePrefix } from './sqlite-schema';
+import type {
+  DatabaseDocument,
+  DatabaseQueryResult,
+  DatabaseTable,
+  UpdateSqliteTableSchemaOptions,
+} from '@/features/database/protocol';
+import { buildSqliteTableSchemaStatements, quoteIdentifier, sqliteTemporaryTablePrefix } from '@/features/database/sqlite-schema';
 
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;

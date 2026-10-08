@@ -6,7 +6,7 @@ import { registerSourceControl } from '@/features/git/source-control';
 import { registerXmlFormatter } from '@/features/xml/register-xml-formatter';
 import { registerArchiveEditor } from '@/features/archive/editor';
 import { registerSpreadsheetEditor } from '@/features/spreadsheet/editor';
-import { registerSqliteEditor } from '@/features/database/sqlite-editor';
+import { registerSqliteEditor } from '@/features/database/sqlite/editor';
 import { registerHttpLanguage } from '@/features/http/register-http';
 import { HttpResultService } from '@/features/http/result-service';
 import { ResultTaskService } from '@/features/result/task-service';

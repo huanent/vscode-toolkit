@@ -1,8 +1,8 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ResultTaskService } from '@/features/result/task-service';
-import type { DatabaseQueryInput, DatabaseQueryResult } from './protocol';
-import { executeSqliteQuery } from './sqlite-service';
+import type { DatabaseQueryInput, DatabaseQueryResult } from '@/features/database/protocol';
+import { executeSqliteQuery } from './service';
 
 export async function submitSqliteQuery(
   resultTaskService: ResultTaskService,

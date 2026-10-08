@@ -1,15 +1,15 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { withSqliteFile } from './sqlite-file-access';
-import { applySqliteTableDeletion, applySqliteTableSchema, readDatabase, runSqliteQuery } from './sqlite-engine';
+import { withSqliteFile } from './file-access';
+import { applySqliteTableDeletion, applySqliteTableSchema, readDatabase, runSqliteQuery } from './engine';
 import type {
   CreateSqliteTableOptions,
   DatabaseDocument,
   DatabaseQueryResult,
   DatabaseTable,
   UpdateSqliteTableSchemaOptions,
-} from './protocol';
-import { buildSqliteCreateTableStatement } from './sqlite-schema';
+} from '@/features/database/protocol';
+import { buildSqliteCreateTableStatement } from '@/features/database/sqlite-schema';
 export const sqliteTableScheme = 'toolkit-sqlite-table';
 
 export function validateSqliteUri(uri: vscode.Uri): void {

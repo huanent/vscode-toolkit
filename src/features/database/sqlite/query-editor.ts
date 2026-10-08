@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { submitSqliteQuery } from './sqlite-result-service';
+import { submitSqliteQuery } from './result-service';
 import type { ResultTaskService } from '@/features/result/task-service';
 
 export const sqliteExecuteQueryCommand = 'toolkit.sqlite.executeQuery';
