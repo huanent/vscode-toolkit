@@ -4,7 +4,13 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { executeSqliteQuery, readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
+import {
+  deleteSqliteTable,
+  executeSqliteQuery,
+  readSqliteDatabase,
+  updateSqliteTableSchema,
+  validateSqliteUri,
+} from './sqlite-service';
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -215,6 +221,42 @@ describe('SQLite service', () => {
     });
 
     expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(uri, expect.any(Uint8Array));
+  });
+
+  it('deletes a table and its data from a local database', async () => {
+    const databasePath = path.join(temporaryDirectory, 'delete.db');
+    const database = new DatabaseSync(databasePath);
+    database.exec('CREATE TABLE "odd "" table" (id INTEGER PRIMARY KEY)');
+    database.exec('INSERT INTO "odd "" table" VALUES (1)');
+    database.exec('CREATE TABLE keep (id INTEGER PRIMARY KEY)');
+    database.close();
+    const uri = { scheme: 'file', path: databasePath, fsPath: databasePath } as vscode.Uri;
+
+    await deleteSqliteTable(uri, 'odd " table');
+
+    expect((await readSqliteDatabase(uri)).tables.map((table) => table.name)).toEqual(['keep']);
+  });
+
+  it('deletes a table from a remote database and persists the changes', async () => {
+    const databasePath = path.join(temporaryDirectory, 'remote-delete.sqlite');
+    const database = new DatabaseSync(databasePath);
+    database.exec('CREATE TABLE remove_me (id INTEGER PRIMARY KEY)');
+    database.close();
+    const uri = { scheme: 'vscode-remote', path: '/workspace/remote-delete.sqlite' } as vscode.Uri;
+    vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(await readFile(databasePath));
+
+    await deleteSqliteTable(uri, 'remove_me');
+
+    expect(vscode.workspace.fs.writeFile).toHaveBeenCalledWith(uri, expect.any(Uint8Array));
+    const writtenData = vi.mocked(vscode.workspace.fs.writeFile).mock.calls[0]![1];
+    const writtenDatabasePath = path.join(temporaryDirectory, 'written-delete.sqlite');
+    await writeFileToDisk(writtenDatabasePath, writtenData);
+    const writtenUri = {
+      scheme: 'file',
+      path: writtenDatabasePath,
+      fsPath: writtenDatabasePath,
+    } as vscode.Uri;
+    expect((await readSqliteDatabase(writtenUri)).tables).toEqual([]);
   });
 });
 

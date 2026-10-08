@@ -43,13 +43,13 @@ export function Table<T>({
       <table className="w-max min-w-full border-separate border-spacing-0 text-xs" aria-label={ariaLabel}>
         <thead className="sticky top-0 z-10">
           <tr>
-            {columns.map((column) => (
+            {columns.map((column, columnIndex) => (
               <th
                 key={column.key}
                 className={cn(
                   'h-8 min-w-36 border-b border-(--vscode-panel-border) px-2 font-medium text-(--vscode-descriptionForeground)',
                   border && 'border-r',
-                  alignmentClasses[column.align ?? 'left'],
+                  alignmentClasses[column.align ?? (columnIndex === columns.length - 1 ? 'right' : 'left')],
                   column.headerClassName,
                 )}
                 style={column.width ? { width: column.width } : undefined}
@@ -70,13 +70,13 @@ export function Table<T>({
               )}
               onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
             >
-              {columns.map((column) => (
+              {columns.map((column, columnIndex) => (
                 <td
                   key={column.key}
                   className={cn(
-                    'h-8 max-w-80 overflow-hidden border-b border-(--vscode-panel-border) px-2 text-ellipsis whitespace-nowrap',
-                    border && 'border-r',
-                    alignmentClasses[column.align ?? 'left'],
+                    'h-8 max-w-80 overflow-hidden px-2 text-ellipsis whitespace-nowrap',
+                    border && 'border-b border-r border-(--vscode-panel-border)',
+                    alignmentClasses[column.align ?? (columnIndex === columns.length - 1 ? 'right' : 'left')],
                     column.className,
                   )}
                 >

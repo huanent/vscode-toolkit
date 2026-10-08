@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
-import type { DatabaseDocument, UpdateTableSchemaMessage } from './protocol';
+import type { DatabaseDocument, DeleteTableMessage, UpdateTableSchemaMessage } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
 import {
   createSqliteTableUri,
+  deleteSqliteTable,
   readSqliteDatabase,
   readSqliteTable,
   updateSqliteTableSchema,
@@ -60,6 +61,22 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
           else activeTableNames.delete(uriKey);
         } else if (isOpenTableMessage(message)) {
           void vscode.commands.executeCommand(sqliteOpenTableCommand, uri, message.tableName);
+        } else if (isDeleteTableMessage(message)) {
+          const confirmation = await vscode.window.showWarningMessage(
+            `Delete table "${message.tableName}"?`,
+            { modal: true, detail: 'This permanently deletes the table and all of its data.' },
+            'Delete',
+          );
+          if (confirmation !== 'Delete') return;
+
+          try {
+            await deleteSqliteTable(uri, message.tableName);
+            const data = await readSqliteDatabase(uri);
+            await panel.webview.postMessage({ type: 'loaded', data });
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`);
+          }
         } else if (isUpdateTableSchemaMessage(message)) {
           try {
             await updateSqliteTableSchema(uri, {
@@ -110,6 +127,12 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
 function isOpenTableMessage(message: unknown): message is { type: 'openTable'; tableName: string } {
   if (typeof message !== 'object' || message === null || !('type' in message)) return false;
   return message.type === 'openTable' && 'tableName' in message && typeof message.tableName === 'string';
+}
+
+function isDeleteTableMessage(message: unknown): message is DeleteTableMessage {
+  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
+  const candidate = message as Partial<DeleteTableMessage>;
+  return candidate.type === 'deleteTable' && typeof candidate.tableName === 'string';
 }
 
 function isActiveTableChangedMessage(message: unknown): message is { type: 'activeTableChanged'; tableName?: string } {

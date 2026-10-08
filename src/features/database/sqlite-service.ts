@@ -100,6 +100,32 @@ export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSq
   }
 }
 
+export async function deleteSqliteTable(uri: vscode.Uri, tableName: string): Promise<void> {
+  validateSqliteUri(uri);
+  if (!tableName.trim()) throw new Error('Table name is required.');
+
+  if (uri.scheme === 'file') {
+    const file = await stat(uri.fsPath);
+    if (!file.isFile()) throw new Error('The SQLite database URI must point to a file.');
+    applySqliteTableDeletion(uri.fsPath, tableName);
+    return;
+  }
+
+  const originalData = await vscode.workspace.fs.readFile(uri);
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'toolkit-sqlite-'));
+  const temporaryPath = path.join(temporaryDirectory, path.posix.basename(uri.path) || 'database.sqlite');
+  try {
+    await writeFile(temporaryPath, originalData);
+    applySqliteTableDeletion(temporaryPath, tableName);
+    const updatedData = await readFile(temporaryPath);
+    if (!Buffer.from(originalData).equals(updatedData)) {
+      await vscode.workspace.fs.writeFile(uri, updatedData);
+    }
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
 function validateSchemaOptions(options: UpdateSqliteTableSchemaOptions): void {
   const tableName = options.tableName?.trim();
   if (!tableName) throw new Error('Table name is required.');
@@ -116,6 +142,19 @@ function validateSchemaOptions(options: UpdateSqliteTableSchemaOptions): void {
     const lower = name.toLowerCase();
     if (seen.has(lower)) throw new Error(`Duplicate column name: "${name}".`);
     seen.add(lower);
+  }
+}
+
+function applySqliteTableDeletion(databasePath: string, tableName: string): void {
+  const database = new DatabaseSync(databasePath);
+  try {
+    const tableExists = database
+      .prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?")
+      .get(tableName);
+    if (!tableExists) throw new Error(`SQLite table not found: ${tableName}`);
+    database.exec(`DROP TABLE ${quoteIdentifier(tableName)}`);
+  } finally {
+    database.close();
   }
 }
 

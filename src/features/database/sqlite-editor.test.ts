@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { registerSqliteEditor, sqliteEditorViewType, sqliteOpenSqlEditorCommand } from './sqlite-editor';
 import type { DatabaseDocument, DatabaseTable } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
-import { readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
+import { deleteSqliteTable, readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
 
 vi.mock('vscode', () => ({
   window: {
@@ -13,6 +13,7 @@ vi.mock('vscode', () => ({
     })),
     showTextDocument: vi.fn<(...args: unknown[]) => Promise<vscode.TextEditor>>(async () => ({}) as vscode.TextEditor),
     showErrorMessage: vi.fn<(...args: unknown[]) => Promise<string | undefined>>(async () => undefined),
+    showWarningMessage: vi.fn<(...args: unknown[]) => Promise<string | undefined>>(async () => 'Delete'),
     tabGroups: { activeTabGroup: { activeTab: undefined } },
   },
   commands: {
@@ -37,6 +38,7 @@ vi.mock('./sqlite-service', () => ({
   readSqliteTable: vi.fn<() => Promise<DatabaseTable>>(),
   createSqliteTableUri: vi.fn<() => vscode.Uri>(),
   updateSqliteTableSchema: vi.fn<() => Promise<void>>(async () => undefined),
+  deleteSqliteTable: vi.fn<() => Promise<void>>(async () => undefined),
 }));
 vi.mock('./sqlite-query', () => ({
   registerSqliteQueryEditor: vi.fn<(...args: unknown[]) => (uri: vscode.Uri, tableName?: string) => Promise<void>>(),
@@ -162,5 +164,14 @@ describe('SQLite editor', () => {
       success: false,
       error: 'Syntax error',
     });
+
+    await messageListeners[1]!({ type: 'deleteTable', tableName: 'products' });
+    expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+      'Delete table "products"?',
+      { modal: true, detail: 'This permanently deletes the table and all of its data.' },
+      'Delete',
+    );
+    expect(deleteSqliteTable).toHaveBeenCalledWith(uri, 'products');
+    expect(postMessage).toHaveBeenCalledWith({ type: 'loaded', data: { engine: 'sqlite', tables: [] } });
   });
 });

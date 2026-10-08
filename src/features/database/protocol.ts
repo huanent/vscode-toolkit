@@ -56,6 +56,11 @@ export interface UpdateTableSchemaMessage {
   columns: SqliteTableColumnDefinition[];
 }
 
+export interface DeleteTableMessage {
+  type: 'deleteTable';
+  tableName: string;
+}
+
 export type DatabaseWebviewMessage =
   | { type: 'schemaUpdateResult'; success: true }
   | { type: 'schemaUpdateResult'; success: false; error: string };
