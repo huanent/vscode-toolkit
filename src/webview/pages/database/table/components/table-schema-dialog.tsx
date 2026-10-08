@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
-import { buildSqliteTableSchemaStatements, sqliteTemporaryTablePrefix } from '@/features/database/sqlite-schema';
+import {
+  buildSqliteCreateTableStatement,
+  buildSqliteTableSchemaStatements,
+  sqliteTemporaryTablePrefix,
+} from '@/features/database/sqlite-schema';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
 import { Dialog } from '@/webview/components/dialog';
@@ -21,7 +25,7 @@ interface EditableColumn {
 interface TableSchemaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  table: DatabaseTable;
+  table?: DatabaseTable;
   onClose: () => void;
 }
 
@@ -30,7 +34,8 @@ const tabs = [
   { id: 'sql', label: 'SQL Preview' },
 ];
 
-function generatePreviewSql(table: DatabaseTable, tableName: string, columns: EditableColumn[]): string {
+function generatePreviewSql(table: DatabaseTable | undefined, tableName: string, columns: EditableColumn[]): string {
+  if (!table) return `${buildSqliteCreateTableStatement({ tableName, columns })};`;
   return buildSqliteTableSchemaStatements(
     { tableName: table.name, newTableName: tableName, columns },
     table.columns.map((col) => col.name),
@@ -41,16 +46,18 @@ function generatePreviewSql(table: DatabaseTable, tableName: string, columns: Ed
 }
 
 export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableSchemaDialogProps) {
-  const [tableName, setTableName] = useState(table.name);
+  const [tableName, setTableName] = useState(table?.name ?? '');
   const [columns, setColumns] = useState<EditableColumn[]>(() =>
-    table.columns.map((col) => ({
-      id: crypto.randomUUID(),
-      name: col.name,
-      type: col.type,
-      primaryKey: col.primaryKey,
-      notNull: col.notNull,
-      originalName: col.name,
-    })),
+    table
+      ? table.columns.map((col) => ({
+          id: crypto.randomUUID(),
+          name: col.name,
+          type: col.type,
+          primaryKey: col.primaryKey,
+          notNull: col.notNull,
+          originalName: col.name,
+        }))
+      : [{ id: crypto.randomUUID(), name: 'id', type: 'INTEGER', primaryKey: true, notNull: true }],
   );
   const [activeTab, setActiveTab] = useState('columns');
   const [error, setError] = useState<string | null>(null);
@@ -139,8 +146,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
     setIsSubmitting(true);
     setError(null);
     postToHost({
-      type: 'updateTableSchema',
-      tableName: table.name,
+      type: table ? 'updateTableSchema' : 'createTable',
+      tableName: table ? table.name : tableName.trim(),
       newTableName: tableName.trim(),
       columns: columns.map((col) => ({
         name: col.name.trim(),
@@ -161,8 +168,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
       onOpenChange={(nextOpen) => {
         if (!isSubmitting) onOpenChange(nextOpen);
       }}
-      title={`Edit Schema: ${table.name}`}
-      description="Modify the table name, columns, and constraints."
+      title={table ? `Edit Schema: ${table.name}` : 'Create Table'}
+      description={table ? 'Modify the table name, columns, and constraints.' : undefined}
       className="w-176 max-w-full max-h-full overflow-y-auto"
     >
       <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
@@ -315,7 +322,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
               onClick={handleSubmit}
               disabled={isSubmitting || Boolean(validationError)}
             >
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? (table ? 'Saving...' : 'Creating...') : table ? 'Save' : 'Create Table'}
             </Button>
           ) : (
             <Button

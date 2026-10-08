@@ -1,4 +1,4 @@
-import type { UpdateSqliteTableSchemaOptions } from './protocol';
+import type { CreateSqliteTableOptions, UpdateSqliteTableSchemaOptions } from './protocol';
 
 export const sqliteTemporaryTablePrefix = '__toolkit_temp';
 
@@ -6,11 +6,7 @@ export function quoteIdentifier(identifier: string): string {
   return `"${identifier.replaceAll('"', '""')}"`;
 }
 
-export function buildSqliteTableSchemaStatements(
-  options: UpdateSqliteTableSchemaOptions,
-  existingColumnNames: readonly string[],
-  temporaryTableName: string,
-): string[] {
+export function buildSqliteCreateTableStatement(options: CreateSqliteTableOptions): string {
   const pkCols = options.columns.filter((col) => col.primaryKey);
   const columnDefs = options.columns.map((col) => {
     let def = quoteIdentifier(col.name.trim());
@@ -23,6 +19,14 @@ export function buildSqliteTableSchemaStatements(
     columnDefs.push(`PRIMARY KEY (${pkCols.map((col) => quoteIdentifier(col.name.trim())).join(', ')})`);
   }
 
+  return `CREATE TABLE ${quoteIdentifier(options.tableName)} (${columnDefs.join(', ')})`;
+}
+
+export function buildSqliteTableSchemaStatements(
+  options: UpdateSqliteTableSchemaOptions,
+  existingColumnNames: readonly string[],
+  temporaryTableName: string,
+): string[] {
   const mappings: Array<{ target: string; source: string }> = [];
   for (const col of options.columns) {
     const name = col.name.trim();
@@ -38,7 +42,7 @@ export function buildSqliteTableSchemaStatements(
   }
 
   const temporaryTable = quoteIdentifier(temporaryTableName);
-  const statements = [`CREATE TABLE ${temporaryTable} (${columnDefs.join(', ')})`];
+  const statements = [buildSqliteCreateTableStatement({ tableName: temporaryTableName, columns: options.columns })];
   if (mappings.length > 0) {
     const targets = mappings.map((m) => quoteIdentifier(m.target)).join(', ');
     const sources = mappings.map((m) => quoteIdentifier(m.source)).join(', ');

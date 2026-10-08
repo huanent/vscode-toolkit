@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { registerSqliteEditor, sqliteEditorViewType, sqliteOpenSqlEditorCommand } from './sqlite-editor';
 import type { DatabaseDocument, DatabaseTable } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
-import { deleteSqliteTable, readSqliteDatabase, updateSqliteTableSchema, validateSqliteUri } from './sqlite-service';
+import {
+  createSqliteTable,
+  deleteSqliteTable,
+  readSqliteDatabase,
+  updateSqliteTableSchema,
+  validateSqliteUri,
+} from './sqlite-service';
 
 vi.mock('vscode', () => ({
   window: {
@@ -39,6 +45,7 @@ vi.mock('./sqlite-service', () => ({
   createSqliteTableUri: vi.fn<() => vscode.Uri>(),
   updateSqliteTableSchema: vi.fn<() => Promise<void>>(async () => undefined),
   deleteSqliteTable: vi.fn<() => Promise<void>>(async () => undefined),
+  createSqliteTable: vi.fn<() => Promise<void>>(async () => undefined),
 }));
 vi.mock('./sqlite-query', () => ({
   registerSqliteQueryEditor: vi.fn<(...args: unknown[]) => (uri: vscode.Uri, tableName?: string) => Promise<void>>(),
@@ -79,7 +86,7 @@ describe('SQLite editor', () => {
       icon: '$(code)',
       category: 'SQLite',
     });
-    expect(manifest.contributes.menus['editor/title']).toContainEqual({
+    expect(manifest.contributes.menus['editor/title']).not.toContainEqual({
       command: sqliteOpenSqlEditorCommand,
       when: 'activeCustomEditorId == toolkit.sqliteEditor',
       group: 'navigation@1',
@@ -130,7 +137,12 @@ describe('SQLite editor', () => {
     await messageListeners[1]!({ type: 'unsupported' });
     expect(openSqlQueryEditor).not.toHaveBeenCalled();
 
+    await messageListeners[1]!({ type: 'openSqlEditor' });
+    expect(openSqlQueryEditor).toHaveBeenCalledWith(uri, undefined);
+
     await messageListeners[1]!({ type: 'activeTableChanged', tableName: 'items' });
+    await messageListeners[1]!({ type: 'openSqlEditor' });
+    expect(openSqlQueryEditor).toHaveBeenLastCalledWith(uri, 'items');
     (vscode.window.tabGroups as unknown as { activeTabGroup: { activeTab: vscode.Tab } }).activeTabGroup.activeTab = {
       input: { viewType: sqliteEditorViewType, uri },
     } as unknown as vscode.Tab;
@@ -166,6 +178,24 @@ describe('SQLite editor', () => {
     });
 
     await messageListeners[1]!({ type: 'deleteTable', tableName: 'products' });
+    const createMessage = {
+      type: 'createTable',
+      tableName: 'new_table',
+      columns: [{ name: 'id', type: 'INTEGER', primaryKey: true, notNull: true }],
+    };
+    await messageListeners[1]!(createMessage);
+    expect(createSqliteTable).toHaveBeenCalledWith(uri, {
+      tableName: createMessage.tableName,
+      columns: createMessage.columns,
+    });
+    expect(postMessage).toHaveBeenLastCalledWith({ type: 'schemaUpdateResult', success: true });
+    vi.mocked(createSqliteTable).mockRejectedValueOnce(new Error('Table already exists'));
+    await messageListeners[1]!(createMessage);
+    expect(postMessage).toHaveBeenLastCalledWith({
+      type: 'schemaUpdateResult',
+      success: false,
+      error: 'Table already exists',
+    });
     expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
       'Delete table "products"?',
       { modal: true, detail: 'This permanently deletes the table and all of its data.' },

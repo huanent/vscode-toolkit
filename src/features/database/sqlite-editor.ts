@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
-import type { DatabaseDocument, DeleteTableMessage, UpdateTableSchemaMessage } from './protocol';
+import type { CreateTableMessage, DatabaseDocument, DeleteTableMessage, UpdateTableSchemaMessage } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
 import {
   createSqliteTableUri,
+  createSqliteTable,
   deleteSqliteTable,
   readSqliteDatabase,
   readSqliteTable,
@@ -56,7 +57,9 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
       const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
-        if (isActiveTableChangedMessage(message)) {
+        if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'openSqlEditor') {
+          await openSqlQueryEditor(uri, activeTableNames.get(uriKey));
+        } else if (isActiveTableChangedMessage(message)) {
           if (message.tableName) activeTableNames.set(uriKey, message.tableName);
           else activeTableNames.delete(uriKey);
         } else if (isOpenTableMessage(message)) {
@@ -76,6 +79,16 @@ export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.D
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`);
+          }
+        } else if (isCreateTableMessage(message)) {
+          try {
+            await createSqliteTable(uri, { tableName: message.tableName, columns: message.columns });
+            const data = await readSqliteDatabase(uri);
+            await panel.webview.postMessage({ type: 'loaded', data });
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
           }
         } else if (isUpdateTableSchemaMessage(message)) {
           try {
@@ -140,6 +153,14 @@ function isActiveTableChangedMessage(message: unknown): message is { type: 'acti
   return (
     message.type === 'activeTableChanged' &&
     (!('tableName' in message) || message.tableName === undefined || typeof message.tableName === 'string')
+  );
+}
+
+function isCreateTableMessage(message: unknown): message is CreateTableMessage {
+  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
+  const candidate = message as Partial<CreateTableMessage>;
+  return (
+    candidate.type === 'createTable' && typeof candidate.tableName === 'string' && Array.isArray(candidate.columns)
   );
 }
 

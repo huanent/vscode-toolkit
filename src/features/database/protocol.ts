@@ -43,6 +43,15 @@ export interface SqliteTableColumnDefinition {
   originalName?: string;
 }
 
+export interface CreateSqliteTableOptions {
+  tableName: string;
+  columns: SqliteTableColumnDefinition[];
+}
+
+export interface CreateTableMessage extends CreateSqliteTableOptions {
+  type: 'createTable';
+}
+
 export interface UpdateSqliteTableSchemaOptions {
   tableName: string;
   newTableName: string;

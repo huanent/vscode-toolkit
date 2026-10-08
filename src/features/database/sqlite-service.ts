@@ -3,8 +3,19 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import * as vscode from 'vscode';
-import type { DatabaseDocument, DatabaseQueryResult, DatabaseTable, UpdateSqliteTableSchemaOptions } from './protocol';
-import { buildSqliteTableSchemaStatements, quoteIdentifier, sqliteTemporaryTablePrefix } from './sqlite-schema';
+import type {
+  CreateSqliteTableOptions,
+  DatabaseDocument,
+  DatabaseQueryResult,
+  DatabaseTable,
+  UpdateSqliteTableSchemaOptions,
+} from './protocol';
+import {
+  buildSqliteCreateTableStatement,
+  buildSqliteTableSchemaStatements,
+  quoteIdentifier,
+  sqliteTemporaryTablePrefix,
+} from './sqlite-schema';
 
 const maxPreviewRows = 100;
 const maxPreviewColumns = 50;
@@ -72,6 +83,11 @@ export async function executeSqliteQuery(uri: vscode.Uri, sql: string): Promise<
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
+}
+
+export async function createSqliteTable(uri: vscode.Uri, options: CreateSqliteTableOptions): Promise<void> {
+  validateSchemaOptions({ ...options, newTableName: options.tableName });
+  await executeSqliteQuery(uri, buildSqliteCreateTableStatement({ ...options, tableName: options.tableName.trim() }));
 }
 
 export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {

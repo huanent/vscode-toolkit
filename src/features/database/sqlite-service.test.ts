@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  createSqliteTable,
   deleteSqliteTable,
   executeSqliteQuery,
   readSqliteDatabase,
@@ -68,6 +69,39 @@ describe('SQLite service', () => {
 
     expectPreview(document);
     expect(vscode.workspace.fs.readFile).toHaveBeenCalledWith(uri);
+  });
+
+  it.each(['file', 'vscode-remote'])('creates tables in %s databases and rejects invalid schemas', async (scheme) => {
+    const databasePath = path.join(temporaryDirectory, 'create.db');
+    createSampleDatabase(databasePath);
+    const uri = { scheme, path: databasePath, fsPath: databasePath } as vscode.Uri;
+    if (scheme !== 'file') {
+      vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(await readFile(databasePath));
+      vi.mocked(vscode.workspace.fs.writeFile).mockImplementation(async (_uri, data) => {
+        vi.mocked(vscode.workspace.fs.readFile).mockResolvedValue(data as Uint8Array);
+      });
+    }
+    const options = {
+      tableName: 'new " table',
+      columns: [
+        { name: 'id', type: 'INTEGER', primaryKey: true, notNull: true },
+        { name: 'title', type: 'TEXT', primaryKey: false, notNull: false },
+      ],
+    };
+    await createSqliteTable(uri, options);
+    const document = await readSqliteDatabase(uri);
+    expect(document.tables.find((table) => table.name === options.tableName)).toMatchObject({
+      rowCount: 0,
+      columnCount: 2,
+      columns: options.columns,
+    });
+    await expect(createSqliteTable(uri, options)).rejects.toThrow('already exists');
+    await expect(createSqliteTable(uri, { ...options, tableName: '' })).rejects.toThrow('Table name is required');
+    await expect(createSqliteTable(uri, { ...options, columns: [] })).rejects.toThrow('at least one column');
+    await expect(
+      createSqliteTable(uri, { ...options, columns: [options.columns[0]!, options.columns[0]!] }),
+    ).rejects.toThrow('Duplicate column');
+    expect((await readSqliteDatabase(uri)).tables).toHaveLength(document.tables.length);
   });
 
   it('returns query rows and persists local database changes', async () => {

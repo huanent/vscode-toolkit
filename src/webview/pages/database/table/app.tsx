@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { DatabaseDocument, DatabaseTable } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
-import { getRootData, useHostData } from '@/webview/utils/host-data';
+import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { TableSchemaDialog } from './components/table-schema-dialog';
 import { TableManagement } from './components/table-management';
 import '@/webview/styles.css';
@@ -12,6 +13,7 @@ import '@/webview/styles.css';
 function App() {
   const state = useHostData<DatabaseDocument>();
   const [editingTable, setEditingTable] = useState<DatabaseTable | null>(null);
+  const [creatingTable, setCreatingTable] = useState(false);
   const [search, setSearch] = useState('');
   const name = getRootData('name') ?? 'SQLite Database';
   useEffect(() => {
@@ -26,30 +28,43 @@ function App() {
 
     return (
       <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
-        <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-(--vscode-panel-border) px-3 py-2">
-          <Icon name="database" variant="muted" />
-          <h1 className="min-w-0 flex-1 truncate text-sm font-semibold" title={name}>
-            {name}
-          </h1>
-          <span className="shrink-0 text-xs text-(--vscode-descriptionForeground)">SQLite</span>
-        </header>
-        {tables.length > 0 && (
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-(--vscode-panel-border) px-3 py-2">
-            <div className="flex w-full items-center gap-2 sm:w-64">
-              <Icon name="search" size="sm" variant="muted" />
-              <Input
-                type="search"
-                aria-label="Filter tables"
-                placeholder="Filter tables..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </div>
-            <span className="text-xs tabular-nums text-(--vscode-descriptionForeground)">
-              {tables.length.toLocaleString()} tables · {rowCount.toLocaleString()} rows
-            </span>
+        <div
+          role="toolbar"
+          aria-label="Database tools"
+          className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-3 py-2"
+        >
+          <div className="min-w-0 max-w-64 flex-1">
+            <Input
+              type="search"
+              startSlot={<Icon name="search" size="sm" variant="muted" />}
+              aria-label="Filter tables"
+              placeholder="Filter tables..."
+              value={search}
+              disabled={tables.length === 0}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
-        )}
+          <div role="group" aria-label="Database actions" className="ml-auto flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="md"
+              className="size-7 p-0"
+              title="Create table"
+              aria-label="Create table"
+              icon={<Icon name="add" />}
+              onClick={() => setCreatingTable(true)}
+            />
+            <Button
+              variant="ghost"
+              size="md"
+              className="size-7 p-0"
+              title="Open SQL Editor"
+              aria-label="Open SQL Editor"
+              icon={<Icon name="code" />}
+              onClick={() => postToHost({ type: 'openSqlEditor' })}
+            />
+          </div>
+        </div>
         <section aria-label="Database tables" className="flex min-h-0 flex-1 flex-col">
           {tables.length ? (
             <div className="min-h-0 flex-1 overflow-auto">
@@ -67,20 +82,29 @@ function App() {
             </div>
           )}
         </section>
-        <footer className="flex min-h-8 shrink-0 items-center border-t border-(--vscode-panel-border) px-3 text-xs tabular-nums text-(--vscode-descriptionForeground)">
-          {query
-            ? `${visibleTables.length.toLocaleString()} of ${tables.length.toLocaleString()} tables`
-            : `${tables.length.toLocaleString()} tables`}
+        <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1 text-xs tabular-nums text-(--vscode-descriptionForeground)">
+          <span>
+            {query
+              ? `${visibleTables.length.toLocaleString()} of ${tables.length.toLocaleString()} tables`
+              : `${tables.length.toLocaleString()} tables`}
+          </span>
+          <span>{rowCount.toLocaleString()} rows</span>
         </footer>
-        {editingTable && (
+        {(editingTable || creatingTable) && (
           <TableSchemaDialog
-            key={editingTable.name}
+            key={editingTable?.name ?? 'create-table'}
             open={true}
             onOpenChange={(open) => {
-              if (!open) setEditingTable(null);
+              if (!open) {
+                setEditingTable(null);
+                setCreatingTable(false);
+              }
             }}
-            table={editingTable}
-            onClose={() => setEditingTable(null)}
+            table={editingTable ?? undefined}
+            onClose={() => {
+              setEditingTable(null);
+              setCreatingTable(false);
+            }}
           />
         )}
       </main>

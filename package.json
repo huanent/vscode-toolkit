@@ -328,11 +328,6 @@
           "command": "toolkit.sqlite.executeQuery",
           "when": "editorLangId == sql && toolkit.sqliteQueryEditor",
           "group": "navigation@3"
-        },
-        {
-          "command": "toolkit.sqlite.openSqlEditor",
-          "when": "activeCustomEditorId == toolkit.sqliteEditor",
-          "group": "navigation@1"
         }
       ],
       "editor/context": [
