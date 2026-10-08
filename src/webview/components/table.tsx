@@ -8,7 +8,6 @@ export type TableColumn<T> = {
   className?: string;
   headerClassName?: string;
   align?: 'left' | 'center' | 'right';
-  width?: string;
 };
 
 type TableProps<T> = {
@@ -39,20 +38,19 @@ export function Table<T>({
   className,
 }: TableProps<T>) {
   return (
-    <div className={cn('overflow-auto', border && 'border border-(--vscode-panel-border)', className)}>
+    <div className={cn('min-w-0 overflow-auto', border && 'border border-(--vscode-panel-border)', className)}>
       <table className="w-max min-w-full border-separate border-spacing-0 text-xs" aria-label={ariaLabel}>
         <thead className="sticky top-0 z-10">
           <tr>
-            {columns.map((column, columnIndex) => (
+            {columns.map((column) => (
               <th
                 key={column.key}
                 className={cn(
-                  'h-8 min-w-36 border-b border-(--vscode-panel-border) px-2 font-medium text-(--vscode-descriptionForeground)',
+                  'h-7 min-w-36 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) px-2 text-left font-medium text-(--vscode-descriptionForeground)',
                   border && 'border-r',
-                  alignmentClasses[column.align ?? (columnIndex === columns.length - 1 ? 'right' : 'left')],
+                  alignmentClasses[column.align ?? 'left'],
                   column.headerClassName,
                 )}
-                style={column.width ? { width: column.width } : undefined}
                 scope="col"
               >
                 {column.header}
@@ -70,13 +68,13 @@ export function Table<T>({
               )}
               onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
             >
-              {columns.map((column, columnIndex) => (
+              {columns.map((column) => (
                 <td
                   key={column.key}
                   className={cn(
-                    'h-8 max-w-80 overflow-hidden px-2 text-ellipsis whitespace-nowrap',
+                    'h-7 max-w-80 overflow-hidden px-2 text-ellipsis whitespace-nowrap',
                     border && 'border-b border-r border-(--vscode-panel-border)',
-                    alignmentClasses[column.align ?? (columnIndex === columns.length - 1 ? 'right' : 'left')],
+                    alignmentClasses[column.align ?? 'left'],
                     column.className,
                   )}
                 >
@@ -87,7 +85,10 @@ export function Table<T>({
           ))}
           {!rows.length && (
             <tr>
-              <td colSpan={columns.length} className="h-14 text-center text-(--vscode-descriptionForeground)">
+              <td
+                colSpan={Math.max(1, columns.length)}
+                className="h-14 px-3 text-center text-(--vscode-descriptionForeground)"
+              >
                 {emptyMessage}
               </td>
             </tr>

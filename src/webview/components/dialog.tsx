@@ -16,24 +16,24 @@ export function Dialog({ open, onOpenChange, title, description, children, class
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-black opacity-50" />
+        <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-(--vscode-editor-background) opacity-60" />
         <BaseDialog.Popup
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 flex max-h-160 w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col rounded-md border border-(--vscode-widget-border) bg-(--vscode-editor-background) p-4 text-(--vscode-foreground) shadow-lg focus:outline-none',
+            'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-y-auto rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) p-3 text-(--vscode-editorWidget-foreground,var(--vscode-foreground)) shadow-sm focus:outline-none',
             className,
           )}
         >
-          <div className="flex shrink-0 items-center justify-between pb-3">
-            <div>
-              <BaseDialog.Title className="text-sm font-semibold text-(--vscode-foreground)">{title}</BaseDialog.Title>
+          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-(--vscode-panel-border) pb-3">
+            <div className="min-w-0 flex-1">
+              <BaseDialog.Title className="break-words text-sm font-semibold">{title}</BaseDialog.Title>
               {description && (
-                <BaseDialog.Description className="mt-1 text-xs text-(--vscode-descriptionForeground)">
+                <BaseDialog.Description className="mt-1 break-words text-xs text-(--vscode-descriptionForeground)">
                   {description}
                 </BaseDialog.Description>
               )}
             </div>
             <BaseDialog.Close
-              className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+              className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground)"
               aria-label="Close"
             >
               <Icon name="close" size="md" />

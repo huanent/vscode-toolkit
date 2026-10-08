@@ -9,12 +9,12 @@ type LoadingProps = {
 export function Loading({ label, className }: LoadingProps) {
   return (
     <div
-      className={cn('inline-flex items-center gap-2 text-(--vscode-descriptionForeground)', className)}
+      className={cn('inline-flex min-w-0 items-center gap-2 text-xs text-(--vscode-descriptionForeground)', className)}
       role="status"
       aria-live="polite"
     >
       <Icon name="loading" size="md" className="codicon-modifier-spin" />
-      <span>{label}</span>
+      <span className="min-w-0 break-words">{label}</span>
     </div>
   );
 }

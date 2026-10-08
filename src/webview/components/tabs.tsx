@@ -13,9 +13,10 @@ type TabsProps = {
   activeTabId: string;
   onChange: (tabId: string) => void;
   children: ReactNode;
+  ariaLabel?: string;
 };
 
-export function Tabs({ tabs, activeTabId, onChange, children }: TabsProps) {
+export function Tabs({ tabs, activeTabId, onChange, children, ariaLabel = 'Sections' }: TabsProps) {
   return (
     <BaseTabs.Root
       value={activeTabId}
@@ -24,17 +25,17 @@ export function Tabs({ tabs, activeTabId, onChange, children }: TabsProps) {
       }}
     >
       <div className="border-b border-(--vscode-panel-border)">
-        <BaseTabs.List activateOnFocus={false} aria-label="Dashboard sections" className="flex w-full overflow-x-auto">
+        <BaseTabs.List activateOnFocus={false} aria-label={ariaLabel} className="flex w-full overflow-x-auto">
           {tabs.map((tab) => {
             const isActive = activeTabId === tab.id;
 
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-0 border-b-2 px-3 text-sm transition-colors',
+                  'relative inline-flex h-8 shrink-0 flex-1 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 border-b px-3 text-xs',
                   isActive
-                    ? 'border-(--vscode-focusBorder) text-(--vscode-foreground)'
-                    : 'border-transparent text-(--vscode-descriptionForeground) hover:text-(--vscode-foreground)',
+                    ? 'border-(--vscode-panelTitle-activeBorder,var(--vscode-focusBorder)) text-(--vscode-panelTitle-activeForeground,var(--vscode-foreground))'
+                    : 'border-transparent text-(--vscode-panelTitle-inactiveForeground,var(--vscode-descriptionForeground)) hover:text-(--vscode-foreground)',
                 )}
                 key={tab.id}
                 value={tab.id}
@@ -57,5 +58,9 @@ type TabPanelProps = {
 };
 
 export function TabPanel({ tabId, children }: TabPanelProps) {
-  return <BaseTabs.Panel value={tabId}>{children}</BaseTabs.Panel>;
+  return (
+    <BaseTabs.Panel value={tabId} className="min-w-0">
+      {children}
+    </BaseTabs.Panel>
+  );
 }

@@ -41,7 +41,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   const result = task.output;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 p-4 pt-0">
       <section>
         <div className="mb-1 flex items-center justify-between text-xs text-(--vscode-descriptionForeground)">
           <h3 className="font-semibold">SQL</h3>

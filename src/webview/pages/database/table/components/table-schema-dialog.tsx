@@ -57,23 +57,6 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setTableName(table.name);
-    setColumns(
-      table.columns.map((col) => ({
-        id: crypto.randomUUID(),
-        name: col.name,
-        type: col.type,
-        primaryKey: col.primaryKey,
-        notNull: col.notNull,
-        originalName: col.name,
-      })),
-    );
-    setError(null);
-    setIsSubmitting(false);
-    setActiveTab('columns');
-  }, [table]);
-
-  useEffect(() => {
     const handler = (event: MessageEvent<DatabaseWebviewMessage>) => {
       if (event.data?.type === 'schemaUpdateResult') {
         setIsSubmitting(false);
@@ -94,16 +77,21 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
   };
 
   const handleAddColumn = () => {
-    setColumns((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: `column_${prev.length + 1}`,
-        type: 'TEXT',
-        primaryKey: false,
-        notNull: false,
-      },
-    ]);
+    setColumns((prev) => {
+      const names = new Set(prev.map((column) => column.name.trim().toLowerCase()));
+      let suffix = prev.length + 1;
+      while (names.has(`column_${suffix}`)) suffix += 1;
+      return [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          name: `column_${suffix}`,
+          type: 'TEXT',
+          primaryKey: false,
+          notNull: false,
+        },
+      ];
+    });
     setError(null);
   };
 
@@ -116,20 +104,17 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
     setError(null);
   };
 
-  const handleSubmit = () => {
+  const validateSchema = (): string | null => {
     const trimmedTableName = tableName.trim();
     if (!trimmedTableName) {
-      setError('Table name cannot be empty.');
-      return;
+      return 'Table name cannot be empty.';
     }
     if (columns.length === 0) {
-      setError('A table must have at least one column.');
-      return;
+      return 'A table must have at least one column.';
     }
     for (const col of columns) {
       if (!col.name.trim()) {
-        setError('Column name cannot be empty.');
-        return;
+        return 'Column name cannot be empty.';
       }
     }
 
@@ -137,18 +122,26 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
     for (const col of columns) {
       const lower = col.name.trim().toLowerCase();
       if (seen.has(lower)) {
-        setError(`Duplicate column name: "${col.name.trim()}".`);
-        return;
+        return `Duplicate column name: "${col.name.trim()}".`;
       }
       seen.add(lower);
     }
+    return null;
+  };
 
+  const handleSubmit = () => {
+    if (isSubmitting) return;
+    const validationError = validateSchema();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     postToHost({
       type: 'updateTableSchema',
       tableName: table.name,
-      newTableName: trimmedTableName,
+      newTableName: tableName.trim(),
       columns: columns.map((col) => ({
         name: col.name.trim(),
         type: col.type.trim(),
@@ -159,17 +152,20 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
     });
   };
 
-  const previewSql = generatePreviewSql(table, tableName.trim() || table.name, columns);
+  const validationError = validateSchema();
+  const previewSql = validationError ?? generatePreviewSql(table, tableName.trim(), columns);
 
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(nextOpen) => {
+        if (!isSubmitting) onOpenChange(nextOpen);
+      }}
       title={`Edit Schema: ${table.name}`}
       description="Modify the table name, columns, and constraints."
-      className="w-176 max-w-full"
+      className="w-176 max-w-full max-h-full overflow-y-auto"
     >
-      <div className="flex flex-col gap-3 pt-2">
+      <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="schema-table-name" className="text-xs font-medium text-(--vscode-descriptionForeground)">
             Table Name
@@ -195,8 +191,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
                 </Button>
               </div>
 
-              <div className="max-h-64 overflow-y-auto rounded border border-(--vscode-panel-border)">
-                <table className="w-full border-separate border-spacing-0 text-xs" aria-label="Columns">
+              <div className="max-h-64 overflow-auto rounded border border-(--vscode-panel-border)">
+                <table className="w-full min-w-112 border-separate border-spacing-0 text-xs" aria-label="Columns">
                   <thead className="sticky top-0 z-10 bg-(--vscode-editor-background)">
                     <tr>
                       <th className="h-7 border-b border-(--vscode-panel-border) px-2 text-left font-medium text-(--vscode-descriptionForeground)">
@@ -239,6 +235,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
                         <td className="border-b border-(--vscode-panel-border) p-1 text-center">
                           <div className="flex justify-center">
                             <Checkbox
+                              disabled={isSubmitting}
                               checked={col.primaryKey}
                               onCheckedChange={(checked) =>
                                 handleColumnChange(col.id, { primaryKey: Boolean(checked) })
@@ -250,6 +247,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
                         <td className="border-b border-(--vscode-panel-border) p-1 text-center">
                           <div className="flex justify-center">
                             <Checkbox
+                              disabled={isSubmitting}
                               checked={col.notNull}
                               onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
                               ariaLabel={`Column ${col.name || index + 1} not null`}
@@ -257,16 +255,18 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
                           </div>
                         </td>
                         <td className="border-b border-(--vscode-panel-border) p-1 text-center">
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleRemoveColumn(col.id)}
-                            disabled={columns.length <= 1}
-                            className="inline-flex size-6 cursor-pointer items-center justify-center rounded text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-errorForeground) disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+                            disabled={isSubmitting || columns.length <= 1}
+                            className="size-6 text-(--vscode-descriptionForeground) hover:text-(--vscode-errorForeground)"
                             title="Remove column"
                             aria-label={`Remove column ${col.name || index + 1}`}
                           >
                             <Icon name="trash" size="sm" />
-                          </button>
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -305,17 +305,32 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         )}
 
         <div className="mt-2 flex items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
+          <Button size="sm" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
           {activeTab === 'sql' ? (
-            <Button size="sm" variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleSubmit}
+              disabled={isSubmitting || Boolean(validationError)}
+            >
               {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           ) : (
-            <Button size="sm" variant="primary" onClick={() => setActiveTab('sql')}>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                if (validationError) setError(validationError);
+                else setActiveTab('sql');
+              }}
+            >
               Preview SQL
             </Button>
           )}
         </div>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

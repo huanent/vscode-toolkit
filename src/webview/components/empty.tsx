@@ -9,15 +9,12 @@ type EmptyStateProps = {
 
 export function Empty({ label, title, description, icon }: EmptyStateProps) {
   return (
-    <section
-      className="mt-13 grid justify-items-center border border-dashed border-(--vscode-panel-border) px-4 py-6 text-center"
-      aria-label={label}
-    >
-      <div className="mb-3 grid size-10 place-items-center " aria-hidden="true">
-        <Icon name={icon} size="lg" />
+    <section className="grid min-w-0 justify-items-center gap-2 px-4 py-6 text-center" aria-label={label}>
+      <div className="grid size-8 place-items-center" aria-hidden="true">
+        <Icon name={icon} size="xl" variant="muted" />
       </div>
-      <h2 className="mb-2 text-base font-semibold">{title}</h2>
-      <p className="max-w-3xl text-sm text-(--vscode-descriptionForeground)">{description}</p>
+      <h2 className="max-w-full break-words text-sm font-semibold">{title}</h2>
+      <p className="max-w-lg break-words text-xs text-(--vscode-descriptionForeground)">{description}</p>
     </section>
   );
 }

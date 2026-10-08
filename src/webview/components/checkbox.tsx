@@ -13,13 +13,13 @@ export function Checkbox({ className, ariaLabel, ...props }: CheckboxProps) {
     <BaseCheckbox.Root
       aria-label={ariaLabel}
       className={cn(
-        'flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border border-(--vscode-checkbox-border) bg-(--vscode-checkbox-background) text-(--vscode-checkbox-foreground) focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder) data-checked:border-transparent data-checked:bg-(--vscode-button-background) data-checked:text-(--vscode-button-foreground) disabled:cursor-not-allowed disabled:opacity-50',
+        'flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-(--vscode-checkbox-border) bg-(--vscode-checkbox-background) text-(--vscode-checkbox-foreground) data-disabled:cursor-not-allowed data-disabled:opacity-50',
         className,
       )}
       {...props}
     >
       <BaseCheckbox.Indicator className="grid place-items-center">
-        <Icon name="check" size="sm" />
+        <Icon name={props.indeterminate ? 'remove' : 'check'} size="sm" />
       </BaseCheckbox.Indicator>
     </BaseCheckbox.Root>
   );

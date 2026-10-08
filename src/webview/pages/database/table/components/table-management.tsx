@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
@@ -15,12 +14,24 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
     {
       key: 'name',
       header: 'Table',
-      width: '24rem',
+      headerClassName: 'min-w-56 bg-(--vscode-editor-background)',
       className: 'min-w-56',
       cell: (table) => (
         <div className="flex min-w-0 items-center gap-2">
           <Icon name="table" variant="muted" size="sm" />
-          <span className="min-w-0 truncate font-medium">{table.name}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="min-w-0 justify-start"
+            title={`Open ${table.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              postToHost({ type: 'activeTableChanged', tableName: table.name });
+              postToHost({ type: 'openTable', tableName: table.name });
+            }}
+          >
+            <span className="truncate font-medium">{table.name}</span>
+          </Button>
         </div>
       ),
     },
@@ -28,14 +39,14 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       key: 'columns',
       header: 'Columns',
       align: 'right',
-      width: '7rem',
+      headerClassName: 'bg-(--vscode-editor-background)',
       className: 'tabular-nums',
       cell: (table) => table.columnCount,
     },
     {
       key: 'primaryKey',
       header: 'Primary key',
-      width: '12rem',
+      headerClassName: 'bg-(--vscode-editor-background)',
       className: 'min-w-36',
       cell: (table) => {
         const primaryKeys = table.columns.filter((column) => column.primaryKey).map((column) => column.name);
@@ -52,14 +63,14 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       key: 'rows',
       header: 'Rows',
       align: 'right',
-      width: '8rem',
+      headerClassName: 'bg-(--vscode-editor-background)',
       className: 'tabular-nums',
       cell: (table) => table.rowCount.toLocaleString(),
     },
     {
       key: 'actions',
       header: 'Actions',
-      width: '8rem',
+      headerClassName: 'bg-(--vscode-editor-background)',
       align: 'right',
       cell: (table) => (
         <div className="flex justify-end gap-1">
@@ -95,7 +106,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
 }
 
 export function TableManagement({ tables, onEditSchema }: TableManagementProps) {
-  const columns = useMemo(() => getTableColumns(onEditSchema), [onEditSchema]);
+  const columns = getTableColumns(onEditSchema);
 
   return (
     <Table
@@ -103,8 +114,11 @@ export function TableManagement({ tables, onEditSchema }: TableManagementProps) 
       columns={columns}
       rows={tables}
       rowKey={(table) => table.name}
-      onRowClick={(table) => postToHost({ type: 'openTable', tableName: table.name })}
-      emptyMessage="No tables found."
+      onRowClick={(table) => {
+        postToHost({ type: 'activeTableChanged', tableName: table.name });
+        postToHost({ type: 'openTable', tableName: table.name });
+      }}
+      emptyMessage="No matching tables."
       className="min-w-full"
     />
   );

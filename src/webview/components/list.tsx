@@ -138,7 +138,7 @@ export function List<T>({
       {groups.length > 0
         ? groups.map((group) => (
             <div key={group.key} role="group" aria-label={typeof group.label === 'string' ? group.label : undefined}>
-              <div className="px-2 py-1 text-sm font-medium text-(--vscode-descriptionForeground)">{group.label}</div>
+              <div className="px-2 py-1 text-xs font-semibold text-(--vscode-descriptionForeground)">{group.label}</div>
               {group.items.map((listItem) => (
                 <ListItem
                   key={listItem.key}
@@ -188,7 +188,10 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex w-full items-center rounded px-1 cursor-pointer gap-1',
+        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 text-xs',
+        focused &&
+          listHasFocus &&
+          'outline -outline-offset-1 outline-(--vscode-list-focusOutline,var(--vscode-focusBorder))',
         !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
         selected &&
           listHasFocus &&
