@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
-import type { WebviewPage } from '@/host/webview-pages';
 
 export interface WebviewViewHandler {
   load?: () => Promise<unknown>;
@@ -13,7 +12,7 @@ export interface WebviewViewHandler {
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly assetsUri: vscode.Uri,
-    private readonly page: WebviewPage,
+    private readonly page: string,
     private readonly handler?: WebviewViewHandler,
   ) {}
 
@@ -44,7 +43,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       this.handler?.onDispose?.();
     });
     webviewView.webview.html = getWebviewHtml(webviewView.webview, this.assetsUri, {
-      page: this.page.page,
+      page: this.page,
     });
   }
 }

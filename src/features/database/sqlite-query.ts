@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import { submitSqliteQuery } from './sqlite-result-service';
+import type { ResultTaskService } from '@/features/result/task-service';
 
 export const sqliteExecuteQueryCommand = 'toolkit.sqlite.executeQuery';
 export const sqliteQueryEditorContext = 'toolkit.sqliteQueryEditor';
 
 export function registerSqliteQueryEditor(
   context: vscode.ExtensionContext,
+  tasks: ResultTaskService,
 ): (databaseUri: vscode.Uri, tableName?: string) => Promise<void> {
   const databasesByDocument = new WeakMap<vscode.TextDocument, vscode.Uri>();
   const updateContext = (document?: vscode.TextDocument) =>
@@ -31,7 +33,7 @@ export function registerSqliteQueryEditor(
     }
 
     try {
-      await submitSqliteQuery(databaseUri, query);
+      await submitSqliteQuery(tasks, databaseUri, query);
     } catch (error) {
       void vscode.window.showErrorMessage(`Could not start SQLite query: ${getErrorMessage(error)}`);
     }

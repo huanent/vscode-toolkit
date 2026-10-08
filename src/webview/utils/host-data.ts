@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import type { WebviewHostMessage, WebviewReadyMessage } from '@/host/webview-bridge';
+import { useEffect, useEffectEvent, useState } from 'react';
+import type { WebviewHostMessage, WebviewReadyMessage } from '@/shared/webview-protocol';
 
 interface VsCodeApi {
   postMessage(message: unknown): void;
@@ -13,26 +13,34 @@ declare global {
 
 export type HostDataState<TData> =
   | { status: 'loading' }
-  | { status: 'loaded'; data: TData }
+  | { status: 'loaded'; data: TData; error?: string }
   | { status: 'error'; message: string };
 
 /**
  * Requests the host payload using the shared `ready` → `loaded` / `error` protocol.
  * Pages stay declarative: they render `status` instead of wiring message listeners.
  */
-export function useHostData<TData>(): HostDataState<TData> {
+export function useHostData<TData, TMessage = never>(
+  update?: (message: TMessage, state: HostDataState<TData>) => HostDataState<TData> | undefined,
+): HostDataState<TData> {
   const [state, setState] = useState<HostDataState<TData>>({ status: 'loading' });
 
-  useEffect(() => {
-    const onMessage = (event: MessageEvent<WebviewHostMessage<TData>>) => {
-      const message = event.data;
-      if (message?.type === 'loaded') {
-        setState({ status: 'loaded', data: message.data });
-      } else if (message?.type === 'error') {
-        setState({ status: 'error', message: message.message });
-      }
-    };
+  const onMessage = useEffectEvent((event: MessageEvent<WebviewHostMessage<TData> | TMessage>) => {
+    const message = event.data;
+    if (!message || typeof message !== 'object' || !('type' in message)) return;
+    if (message.type === 'loaded' && 'data' in message) {
+      setState({ status: 'loaded', data: message.data as TData });
+    } else if (message.type === 'error' && 'message' in message && typeof message.message === 'string') {
+      const error = message.message;
+      setState((previous) =>
+        previous.status === 'loaded' ? { ...previous, error } : { status: 'error', message: error },
+      );
+    } else if (update) {
+      setState((previous) => update(message as TMessage, previous) ?? previous);
+    }
+  });
 
+  useEffect(() => {
     window.addEventListener('message', onMessage);
     postToHost({ type: 'ready' } satisfies WebviewReadyMessage);
     return () => window.removeEventListener('message', onMessage);

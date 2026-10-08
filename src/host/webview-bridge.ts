@@ -1,20 +1,5 @@
 import type * as vscode from 'vscode';
-
-export interface WebviewReadyMessage {
-  type: 'ready';
-}
-
-export interface WebviewLoadedMessage<TData> {
-  type: 'loaded';
-  data: TData;
-}
-
-export interface WebviewErrorMessage {
-  type: 'error';
-  message: string;
-}
-
-export type WebviewHostMessage<TData> = WebviewLoadedMessage<TData> | WebviewErrorMessage;
+import type { WebviewErrorMessage, WebviewLoadedMessage, WebviewReadyMessage } from '@/shared/webview-protocol';
 
 export interface WebviewDataOptions {
   once?: boolean;
@@ -35,16 +20,25 @@ export function serveWebviewData<TData>(
   let loading = false;
   let served = false;
 
+  async function postMessage(message: WebviewLoadedMessage<TData> | WebviewErrorMessage): Promise<boolean> {
+    if (disposed) return false;
+    try {
+      return await webview.postMessage(message);
+    } catch {
+      return false;
+    }
+  }
+
   const listener = webview.onDidReceiveMessage(async (message: WebviewReadyMessage | undefined) => {
     if (disposed || loading || (once && served) || message?.type !== 'ready') return;
     loading = true;
     try {
       const data = await load();
-      if (once) served = true;
-      if (!disposed) await webview.postMessage({ type: 'loaded', data } satisfies WebviewLoadedMessage<TData>);
+      const delivered = await postMessage({ type: 'loaded', data });
+      if (once && delivered) served = true;
     } catch (error) {
       if (!disposed) {
-        await webview.postMessage({
+        await postMessage({
           type: 'error',
           message: error instanceof Error ? error.message : String(error),
         } satisfies WebviewErrorMessage);

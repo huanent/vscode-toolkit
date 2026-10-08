@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type { CreateTableMessage, DatabaseDocument, DeleteTableMessage, UpdateTableSchemaMessage } from './protocol';
 import { registerSqliteQueryEditor } from './sqlite-query';
@@ -18,8 +19,8 @@ export const sqliteTableEditorViewType = 'toolkit.sqliteTableEditor';
 export const sqliteOpenSqlEditorCommand = 'toolkit.sqlite.openSqlEditor';
 export const sqliteOpenTableCommand = 'toolkit.sqlite.openTable';
 
-export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.Disposable {
-  const openSqlQueryEditor = registerSqliteQueryEditor(context);
+export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: ResultTaskService): vscode.Disposable {
+  const openSqlQueryEditor = registerSqliteQueryEditor(context, tasks);
   const activeTableNames = new Map<string, string>();
   const openTableCommand = vscode.commands.registerCommand(
     sqliteOpenTableCommand,

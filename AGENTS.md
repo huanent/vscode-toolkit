@@ -13,7 +13,17 @@ These instructions apply to the entire repository. Webview-specific rules apply 
 
 - Run `npm run check-types` and `npm run lint` to validate code changes without formatting files.
 - Run `npm run compile` when changes require checking the extension and webview builds.
-- `npm run format` formats the entire repository. Both `npm run validate` and `npm run compile` invoke it; keep unrelated formatting changes out of the patch.
+- `npm run check-types` checks the host and webview independently using `tsconfig.host.json` and `tsconfig.webview.json`.
+- `npm run validate` and `npm run compile` do not format files. Run `npm run format` only when formatting is intended; it formats the entire repository.
+
+## Runtime Boundaries
+
+- `src/shared/` and feature `protocol.ts` files contain runtime-independent contracts. The generic webview handshake types live in `src/shared/webview-protocol.ts`.
+- Webviews must not import host or application implementations, VS Code, or Node built-ins. Feature imports are limited to `protocol.ts` and the browser-safe `database/sqlite-schema.ts`.
+- Host code must not import webview implementations. Shared code must not depend on Node, VS Code, React, or host/webview adapters.
+- Import restrictions are checked by lint. Keep cross-directory imports explicit using `@/`.
+- `src/app/` owns application composition and concrete feature registration. Host infrastructure must not import features or application composition; features must not import the application layer.
+- Register extension resources with `ExtensionContext.subscriptions`. Service instance ownership and shutdown belong to application composition, not webview resolution.
 
 ## Webview Architecture
 

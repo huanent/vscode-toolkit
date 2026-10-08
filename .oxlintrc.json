@@ -1,3 +1,170 @@
 {
-  "plugins": ["typescript"]
+  "plugins": ["typescript"],
+  "overrides": [
+    {
+      "files": ["src/webview/**/*.ts", "src/webview/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "vscode",
+                  "node:*",
+                  "assert",
+                  "assert/**",
+                  "buffer",
+                  "child_process",
+                  "cluster",
+                  "console",
+                  "crypto",
+                  "dgram",
+                  "diagnostics_channel",
+                  "dns",
+                  "dns/**",
+                  "events",
+                  "fs",
+                  "fs/**",
+                  "http",
+                  "http2",
+                  "https",
+                  "inspector",
+                  "inspector/**",
+                  "module",
+                  "net",
+                  "os",
+                  "path",
+                  "path/**",
+                  "perf_hooks",
+                  "process",
+                  "punycode",
+                  "querystring",
+                  "readline",
+                  "readline/**",
+                  "repl",
+                  "sqlite",
+                  "stream",
+                  "stream/**",
+                  "string_decoder",
+                  "timers",
+                  "timers/**",
+                  "tls",
+                  "trace_events",
+                  "tty",
+                  "url",
+                  "util",
+                  "util/**",
+                  "v8",
+                  "vm",
+                  "wasi",
+                  "worker_threads",
+                  "zlib"
+                ],
+                "message": "Webview code must not depend on extension-host implementations."
+              },
+              {
+                "regex": "(^|/)(host|app)(/|$)",
+                "message": "Webview code must not import host or application modules, including through relative paths."
+              },
+              {
+                "group": [
+                  "**/features/**",
+                  "!**/features/*/protocol",
+                  "!**/features/*/protocol.ts",
+                  "!**/features/database/sqlite-schema",
+                  "!**/features/database/sqlite-schema.ts"
+                ],
+                "message": "Webview code may only import feature protocols and browser-safe schema logic."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**/*.ts", "src/features/*/protocol.ts", "src/features/database/sqlite-schema.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["vscode", "node:*", "react", "react/**", "react-dom", "react-dom/**"],
+                "message": "Shared contracts and pure logic must remain runtime-independent."
+              },
+              {
+                "regex": "(^|/)(host|app|webview)(/|$)",
+                "message": "Shared code must not depend on host, application, or webview modules."
+              },
+              {
+                "regex": "^(assert|buffer|child_process|cluster|console|crypto|dgram|diagnostics_channel|dns|events|fs|http|http2|https|inspector|module|net|os|path|perf_hooks|process|punycode|querystring|readline|repl|sqlite|stream|string_decoder|timers|tls|trace_events|tty|url|util|v8|vm|wasi|worker_threads|zlib)(/|$)",
+                "message": "Shared code must not import Node built-ins, including unprefixed imports."
+              },
+              {
+                "group": [
+                  "**/features/**",
+                  "!**/features/*/protocol",
+                  "!**/features/*/protocol.ts",
+                  "!**/features/database/sqlite-schema",
+                  "!**/features/database/sqlite-schema.ts"
+                ],
+                "message": "Shared code must not import feature implementations."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/host/**/*.ts", "src/features/**/*.ts", "src/app/**/*.ts", "src/extension.ts"],
+      "excludeFiles": ["src/features/*/protocol.ts", "src/features/database/sqlite-schema.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)webview(/|$)",
+                "message": "Extension-host code must not import browser implementations. Use shared contracts instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/host/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)(features|app|webview)(/|$)",
+                "message": "Host infrastructure must not depend on features, application composition, or browser implementations."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/**/*.ts"],
+      "excludeFiles": ["src/features/*/protocol.ts", "src/features/database/sqlite-schema.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)(app|webview)(/|$)",
+                "message": "Features must not depend on application composition or browser implementations."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -1,24 +1,25 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
-import { resolveStorageDirectory } from '@/host/utils/storage';
-import type { ResultWebviewMessage } from './protocol';
-import { resultTaskService } from './task-service';
+import type { ResultHostMessage, ResultWebviewMessage } from './protocol';
+import type { ResultTaskService } from './task-service';
 
-export function createResultViewHandler(context: vscode.ExtensionContext): WebviewViewHandler {
-  context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.result.focus', () =>
-      vscode.commands.executeCommand('workbench.view.extension.toolkit_result'),
-    ),
-  );
-  const initialized = resultTaskService.initialize(resolveStorageDirectory(context, 'result2'));
+export function createResultViewHandler(resultTaskService: ResultTaskService): WebviewViewHandler {
+  let subscription: { dispose(): void } | undefined;
 
   return {
-    load: async () => {
-      await initialized;
-      return resultTaskService.getState();
-    },
+    load: async () => resultTaskService.getState(),
     onResolve: (webview) => {
-      resultTaskService.setActiveWebview(webview);
+      subscription?.dispose();
+      subscription = resultTaskService.subscribe(() => {
+        void Promise.resolve()
+          .then(() =>
+            webview.postMessage({
+              type: 'resultStateUpdated',
+              state: resultTaskService.getState(),
+            } satisfies ResultHostMessage),
+          )
+          .catch(() => undefined);
+      });
     },
     onMessage: async (message) => {
       if (!isResultWebviewMessage(message)) return;
@@ -52,7 +53,8 @@ export function createResultViewHandler(context: vscode.ExtensionContext): Webvi
       }
     },
     onDispose: () => {
-      resultTaskService.setActiveWebview(undefined);
+      subscription?.dispose();
+      subscription = undefined;
     },
   };
 }

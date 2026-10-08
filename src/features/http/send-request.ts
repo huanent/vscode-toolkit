@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { buildHttpRequestData, findRequestAtLine, parseFileVariables, parseHttpDocument } from './http-parser';
-import { HttpResultService } from './result-service';
+import type { HttpResultService } from './result-service';
 
-export async function sendHttpRequest(targetLine?: number): Promise<void> {
+export async function sendHttpRequest(results: HttpResultService, targetLine?: number): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     void vscode.window.showWarningMessage('No active editor found to send HTTP request.');
@@ -29,5 +29,5 @@ export async function sendHttpRequest(targetLine?: number): Promise<void> {
   const variables = parseFileVariables(content);
   const requestData = buildHttpRequestData(request, variables);
 
-  await HttpResultService.getInstance().sendRequest(requestData);
+  await results.sendRequest(requestData);
 }

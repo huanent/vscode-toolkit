@@ -20,9 +20,11 @@
     "build:production": "VITE_BUILD_TARGET=extension vite build --mode production && VITE_BUILD_TARGET=webview vite build --mode production",
     "package": "mkdir -p packages && vsce package --out packages/toolkit-$npm_package_version.vsix",
     "format": "oxfmt .",
-    "check-types": "tsc --noEmit",
+    "check-types": "npm run check-types:host && npm run check-types:webview",
+    "check-types:host": "tsc --noEmit -p tsconfig.host.json",
+    "check-types:webview": "tsc --noEmit -p tsconfig.webview.json",
     "lint": "oxlint src",
-    "validate": "npm run check-types && npm run lint && npm run format"
+    "validate": "npm run check-types && npm run lint"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

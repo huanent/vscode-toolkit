@@ -11,14 +11,13 @@ import {
   validateTempFileName,
   validateTempFolderName,
 } from './service';
-import { refreshTempFiles } from './view-handler';
 
 /**
  * Registers the temp commands. They are invoked from the native
  * `webview/context` menu of the dashboard temp panel, which passes the
  * right-clicked entry as the command argument.
  */
-export function registerTempCommands(context: vscode.ExtensionContext): void {
+export function registerTempCommands(context: vscode.ExtensionContext, refresh: () => Promise<void>): void {
   const autoSaveScheduler = createTempAutoSaveScheduler();
   context.subscriptions.push(
     registerTempFileSystem(context),
@@ -27,21 +26,26 @@ export function registerTempCommands(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidCloseTextDocument(autoSaveScheduler.cancel),
     { dispose: () => autoSaveScheduler.dispose() },
     vscode.commands.registerCommand('toolkit.temp.createFile', (target: unknown) =>
-      createTempEntry(context, 'file', target).catch(showTempCommandError),
+      createTempEntry(context, refresh, 'file', target).catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.createFolder', (target: unknown) =>
-      createTempEntry(context, 'directory', target).catch(showTempCommandError),
+      createTempEntry(context, refresh, 'directory', target).catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.rename', (target: unknown) =>
-      renameTempEntryFromInput(context, target).catch(showTempCommandError),
+      renameTempEntryFromInput(refresh, target).catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.delete', (target: unknown) =>
-      deleteTempEntryFromInput(context, target).catch(showTempCommandError),
+      deleteTempEntryFromInput(refresh, target).catch(showTempCommandError),
     ),
   );
 }
 
-async function createTempEntry(context: vscode.ExtensionContext, type: TempEntryType, target: unknown): Promise<void> {
+async function createTempEntry(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  type: TempEntryType,
+  target: unknown,
+): Promise<void> {
   const isFile = type === 'file';
   const directory = await resolveTargetDirectory(context, parseTempTarget(target));
   const name = await vscode.window.showInputBox({
@@ -53,7 +57,7 @@ async function createTempEntry(context: vscode.ExtensionContext, type: TempEntry
 
   if (isFile) {
     const filePath = await createTempFile(directory, name);
-    await refreshTempFiles(context);
+    await refresh();
     const relativePath = path.relative(resolveStorageDirectory(context, 'temp'), filePath);
     const document = await vscode.workspace.openTextDocument(createTempFileUri(relativePath));
     await vscode.window.showTextDocument(document);
@@ -61,7 +65,7 @@ async function createTempEntry(context: vscode.ExtensionContext, type: TempEntry
   }
 
   await createTempDirectory(directory, name);
-  await refreshTempFiles(context);
+  await refresh();
 }
 
 /** New entries go into the right-clicked folder, or next to the right-clicked file. */
@@ -72,7 +76,7 @@ async function resolveTargetDirectory(context: vscode.ExtensionContext, target: 
   return resolveTempDirectory(directory, relativePath);
 }
 
-async function renameTempEntryFromInput(context: vscode.ExtensionContext, target: unknown): Promise<void> {
+async function renameTempEntryFromInput(refresh: () => Promise<void>, target: unknown): Promise<void> {
   const entry = parseTempTarget(target);
   if (!entry.tempEntryPath) return;
 
@@ -89,10 +93,10 @@ async function renameTempEntryFromInput(context: vscode.ExtensionContext, target
   const parentPath = path.posix.dirname(entry.tempEntryPath);
   const renamedPath = path.posix.join(parentPath, name.trim());
   await vscode.workspace.fs.rename(createTempFileUri(entry.tempEntryPath), createTempFileUri(renamedPath));
-  await refreshTempFiles(context);
+  await refresh();
 }
 
-async function deleteTempEntryFromInput(context: vscode.ExtensionContext, target: unknown): Promise<void> {
+async function deleteTempEntryFromInput(refresh: () => Promise<void>, target: unknown): Promise<void> {
   const entry = parseTempTarget(target);
   if (!entry.tempEntryPath) return;
 
@@ -107,7 +111,7 @@ async function deleteTempEntryFromInput(context: vscode.ExtensionContext, target
 
   await vscode.workspace.fs.delete(createTempFileUri(entry.tempEntryPath), { recursive: isFolder });
   await closeTabsForPath(entry.tempEntryPath);
-  await refreshTempFiles(context);
+  await refresh();
 }
 
 /** Keeps editors from lingering on files that no longer exist. */

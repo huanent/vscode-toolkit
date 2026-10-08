@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type * as vscode from 'vscode';
-import type { ResultHostMessage, ResultTask, ResultTaskSummary, ResultViewState } from './protocol';
+import type { ResultTask, ResultTaskSummary, ResultViewState } from './protocol';
 import { ResultTaskStore } from './task-store';
 
 export interface ResultTaskDefinition<TInput, TOutput> {
@@ -16,8 +15,16 @@ export class ResultTaskService {
   private readonly taskOperations = new Map<string, Promise<void>>();
   private store: ResultTaskStore | undefined;
   private initialization: Promise<void> | undefined;
-  private activeWebview: vscode.Webview | undefined;
+  private readonly listeners = new Set<() => void>();
   private selectedTaskId: string | undefined;
+  private disposed = false;
+
+  public dispose(): void {
+    this.disposed = true;
+    this.listeners.clear();
+    for (const controller of this.controllers.values()) controller.abort();
+    this.controllers.clear();
+  }
 
   public initialize(directory: string): Promise<void> {
     if (!this.initialization) {
@@ -39,8 +46,14 @@ export class ResultTaskService {
     return this.tasks.get(taskId);
   }
 
-  public setActiveWebview(webview: vscode.Webview | undefined): void {
-    this.activeWebview = webview;
+  public subscribe(listener: () => void): { dispose(): void } {
+    if (this.disposed) throw new Error('Result task service has been disposed.');
+    this.listeners.add(listener);
+    return {
+      dispose: () => {
+        this.listeners.delete(listener);
+      },
+    };
   }
 
   public async startTask<TInput, TOutput>(definition: ResultTaskDefinition<TInput, TOutput>): Promise<string> {
@@ -69,6 +82,7 @@ export class ResultTaskService {
       throw error;
     }
     await this.publish();
+    if (this.disposed) return task.id;
     void this.executeTask(task, definition.run, controller);
     return task.id;
   }
@@ -142,11 +156,11 @@ export class ResultTaskService {
     try {
       const output = await run(controller.signal);
       const currentTask = this.tasks.get(task.id);
-      if (!currentTask || currentTask.status !== 'running') return;
+      if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       await this.updateTask({ ...currentTask, status: 'completed', output, updatedAt: Date.now() });
     } catch (error) {
       const currentTask = this.tasks.get(task.id);
-      if (!currentTask || currentTask.status !== 'running') return;
+      if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       await this.updateTask({
         ...currentTask,
         status: controller.signal.aborted ? 'cancelled' : 'failed',
@@ -159,10 +173,11 @@ export class ResultTaskService {
   }
 
   private async updateTask(task: ResultTask): Promise<void> {
+    if (this.disposed) return;
     const store = await this.getStore();
     await this.runTaskOperation(task.id, async () => {
       const currentTask = this.tasks.get(task.id);
-      if (!currentTask || currentTask.status !== 'running') return;
+      if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       await store.save(task);
       this.tasks.set(task.id, task);
     });
@@ -186,18 +201,14 @@ export class ResultTaskService {
   }
 
   private async publish(): Promise<void> {
-    const webview = this.activeWebview;
-    if (!webview) return;
-    try {
-      await webview.postMessage({ type: 'resultStateUpdated', state: this.getState() } satisfies ResultHostMessage);
-    } catch {
-      if (this.activeWebview === webview) this.activeWebview = undefined;
-    }
+    for (const listener of this.listeners) listener();
   }
 
   private async getStore(): Promise<ResultTaskStore> {
+    if (this.disposed) throw new Error('Result task service has been disposed.');
     if (!this.initialization) throw new Error('Result task storage has not been initialized.');
     await this.initialization;
+    if (this.disposed) throw new Error('Result task service has been disposed.');
     if (!this.store) throw new Error('Result task storage is not initialized.');
     return this.store;
   }
@@ -215,5 +226,3 @@ function toSummary(task: ResultTask): ResultTaskSummary {
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
-
-export const resultTaskService = new ResultTaskService();

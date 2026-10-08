@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
-import type { WebviewReadyMessage } from '@/host/webview-bridge';
+import type { WebviewReadyMessage } from '@/shared/webview-protocol';
 import { Button } from '@/webview/components/button';
 import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';

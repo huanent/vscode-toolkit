@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import * as vscode from 'vscode';
+import { createContextRefresh } from './context-refresh';
 
 const nodeAvailableContext = 'toolkit.nodeAvailable';
 const npmAvailableContext = 'toolkit.npmAvailable';
@@ -10,11 +11,12 @@ const bunMarkers = ['bun.lock', 'bunfig.toml'];
 export type ScriptRuntime = 'node' | 'bun';
 
 export function registerScriptRuntimeWatcher(context: vscode.ExtensionContext): void {
+  const refresh = createContextRefresh(refreshScriptRuntimeContexts);
   const watcher = vscode.workspace.createFileSystemWatcher('**/{bun.lock,bunfig.toml}');
-  watcher.onDidCreate(refreshScriptRuntimeContexts, undefined, context.subscriptions);
-  watcher.onDidDelete(refreshScriptRuntimeContexts, undefined, context.subscriptions);
-  context.subscriptions.push(watcher, vscode.workspace.onDidChangeWorkspaceFolders(refreshScriptRuntimeContexts));
-  void refreshScriptRuntimeContexts();
+  watcher.onDidCreate(refresh.schedule, undefined, context.subscriptions);
+  watcher.onDidDelete(refresh.schedule, undefined, context.subscriptions);
+  context.subscriptions.push(refresh, watcher, vscode.workspace.onDidChangeWorkspaceFolders(refresh.schedule));
+  refresh.schedule();
 }
 
 export async function getScriptRuntime(uri: vscode.Uri): Promise<ScriptRuntime> {
@@ -78,12 +80,13 @@ function isCommandAvailable(command: ScriptRuntime | 'npm'): boolean {
   }
 }
 
-async function refreshScriptRuntimeContexts(): Promise<void> {
+async function refreshScriptRuntimeContexts(isCurrent: () => boolean): Promise<void> {
   const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
   const bunWorkspace =
     workspaceFolders.length > 0 &&
     (await Promise.all(workspaceFolders.map((folder) => isBunWorkspaceFolder(folder.uri)))).every(Boolean);
 
+  if (!isCurrent()) return;
   await Promise.all([
     vscode.commands.executeCommand('setContext', nodeAvailableContext, isCommandAvailable('node')),
     vscode.commands.executeCommand('setContext', npmAvailableContext, isCommandAvailable('npm')),

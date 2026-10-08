@@ -22,11 +22,14 @@ export function registerTempFileSystem(context: vscode.ExtensionContext): vscode
 
 class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Disposable {
   private readonly fileChangeEmitter = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+  private readonly watchers = new Set<FSWatcher>();
+  private disposed = false;
   readonly onDidChangeFile = this.fileChangeEmitter.event;
 
   constructor(private readonly getTempDirectory: () => string) {}
 
   watch(uri: vscode.Uri, options: { recursive: boolean; excludes: readonly string[] }): vscode.Disposable {
+    if (this.disposed) return new vscode.Disposable(() => {});
     const storagePath = this.getStoragePath(uri);
     let isDirectory = false;
     try {
@@ -39,6 +42,7 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
     let watcher: FSWatcher;
     try {
       watcher = watchFileSystem(watchedPath, { recursive: isDirectory && options.recursive }, (eventType, filename) => {
+        if (this.disposed) return;
         const changedPath = filename ? path.resolve(watchedPath, filename.toString()) : storagePath;
         if (!isDirectory && changedPath !== storagePath) return;
 
@@ -57,6 +61,8 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
       return new vscode.Disposable(() => {});
     }
 
+    this.watchers.add(watcher);
+    watcher.on('close', () => this.watchers.delete(watcher));
     watcher.on('error', () => watcher.close());
     return new vscode.Disposable(() => watcher.close());
   }
@@ -181,6 +187,9 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
   }
 
   dispose(): void {
+    this.disposed = true;
+    for (const watcher of this.watchers) watcher.close();
+    this.watchers.clear();
     this.fileChangeEmitter.dispose();
   }
 

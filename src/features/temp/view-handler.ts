@@ -5,17 +5,22 @@ import type { OpenTempFileRequest, TempFilesWebviewMessage } from './protocol';
 import { createTempFileUri } from './file-system';
 import { getTempFilePath, readTempTree } from './service';
 
-let activeWebview: vscode.Webview | undefined;
+export interface TempFilesView extends vscode.Disposable {
+  handler: WebviewViewHandler;
+  refresh(): Promise<void>;
+}
 
-export function createTempFilesHandler(context: vscode.ExtensionContext): WebviewViewHandler {
+export function createTempFilesView(context: vscode.ExtensionContext): TempFilesView {
+  let activeWebview: vscode.Webview | undefined;
+  let disposed = false;
   const getTempDirectory = () => {
     return resolveStorageDirectory(context, 'temp');
   };
 
-  return {
+  const handler: WebviewViewHandler = {
     load: () => readTempTree(getTempDirectory()),
     onResolve: (webview) => {
-      activeWebview = webview;
+      if (!disposed) activeWebview = webview;
     },
     onMessage: async (message, webview) => {
       if (!isOpenTempFileRequest(message)) return;
@@ -31,13 +36,21 @@ export function createTempFilesHandler(context: vscode.ExtensionContext): Webvie
       activeWebview = undefined;
     },
   };
-}
 
-/** Pushes the current temp tree to the visible dashboard webview, if it is open. */
-export async function refreshTempFiles(context: vscode.ExtensionContext): Promise<void> {
-  if (!activeWebview) return;
-  const entries = await readTempTree(resolveStorageDirectory(context, 'temp'));
-  await activeWebview.postMessage({ type: 'tempFilesUpdated', entries } satisfies TempFilesWebviewMessage);
+  return {
+    handler,
+    refresh: async () => {
+      const webview = activeWebview;
+      if (!webview || disposed) return;
+      const entries = await readTempTree(getTempDirectory());
+      if (disposed || activeWebview !== webview) return;
+      await webview.postMessage({ type: 'tempFilesUpdated', entries } satisfies TempFilesWebviewMessage);
+    },
+    dispose: () => {
+      disposed = true;
+      activeWebview = undefined;
+    },
+  };
 }
 
 function isOpenTempFileRequest(message: unknown): message is OpenTempFileRequest {

@@ -6,15 +6,19 @@ import { registerScriptRuntimeWatcher } from './script-runtime';
 const scriptCommands = ['runDotnetScript', 'runShScript', 'runBatScript', 'runNodeScript', 'runBunScript'];
 
 export function registerScripts(context: vscode.ExtensionContext): void {
+  const refreshPackageScripts = registerPackageScriptWatcher(context);
   context.subscriptions.push(
     ...scriptCommands.map((command) =>
       vscode.commands.registerCommand(`toolkit.${command}`, (uri, selectedUris) =>
         runScript(context, uri, selectedUris),
       ),
     ),
-    vscode.commands.registerCommand('toolkit.runNpmScript', runPackageScript),
-    vscode.commands.registerCommand('toolkit.runBunPackageScript', runPackageScript),
+    vscode.commands.registerCommand('toolkit.runNpmScript', (uri: vscode.Uri | undefined) =>
+      runPackageScript(uri, refreshPackageScripts),
+    ),
+    vscode.commands.registerCommand('toolkit.runBunPackageScript', (uri: vscode.Uri | undefined) =>
+      runPackageScript(uri, refreshPackageScripts),
+    ),
   );
-  registerPackageScriptWatcher(context);
   registerScriptRuntimeWatcher(context);
 }
