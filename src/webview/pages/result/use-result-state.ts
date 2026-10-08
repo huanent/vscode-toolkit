@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ResultHostMessage, ResultViewState } from '@/features/result/protocol';
+import type { WebviewHostMessage } from '@/host/webview-bridge';
 import { useHostData } from '@/webview/utils/host-data';
 
 export function useResultState(): {
@@ -11,9 +12,11 @@ export function useResultState(): {
   const [updatedState, setUpdatedState] = useState<ResultViewState>();
 
   useEffect(() => {
-    const onMessage = (event: MessageEvent<ResultHostMessage>) => {
+    const onMessage = (event: MessageEvent<ResultHostMessage | WebviewHostMessage<ResultViewState>>) => {
       if (event.data?.type === 'resultStateUpdated') {
         setUpdatedState(event.data.state);
+      } else if (event.data?.type === 'loaded') {
+        setUpdatedState(event.data.data);
       }
     };
 
@@ -23,7 +26,7 @@ export function useResultState(): {
 
   return {
     state: updatedState ?? (initial.status === 'loaded' ? initial.data : undefined),
-    loading: initial.status === 'loading',
-    error: initial.status === 'error' ? initial.message : undefined,
+    loading: !updatedState && initial.status === 'loading',
+    error: !updatedState && initial.status === 'error' ? initial.message : undefined,
   };
 }

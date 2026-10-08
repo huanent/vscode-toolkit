@@ -2,12 +2,19 @@ import type { DatabaseCellValue, DatabaseQueryInput, DatabaseQueryResult } from 
 import type { ResultTask } from '@/features/result/protocol';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
+import { ResultText } from '../result-text';
+import { taskStatusPresentation } from '../../task-presentation';
 
 export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   const input = isDatabaseQueryInput(task.input) ? task.input : undefined;
 
   if (task.status === 'running') {
-    return <Loading label={input ? `Running query on ${input.databaseName}...` : 'Running SQLite query...'} />;
+    return (
+      <Loading
+        label={input ? `Running query on ${input.databaseName}...` : 'Running SQLite query...'}
+        className="p-4 text-sm"
+      />
+    );
   }
 
   if (task.status !== 'completed') {
@@ -19,10 +26,10 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
           : 'Query failed';
     return (
       <Empty
-        label="SQLite query failed"
+        label={title}
         title={title}
         description={task.error ?? 'The query did not complete.'}
-        icon="warning"
+        icon={taskStatusPresentation[task.status].icon}
       />
     );
   }
@@ -41,28 +48,33 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   const result = task.output;
 
   return (
-    <div className="flex flex-col gap-3 p-4 pt-0">
-      <section>
-        <div className="mb-1 flex items-center justify-between text-xs text-(--vscode-descriptionForeground)">
-          <h3 className="font-semibold">SQL</h3>
-          <span className="font-mono">
+    <div className="flex min-w-0 flex-col gap-2 px-3 py-2">
+      <ResultText
+        title="SQL"
+        description={<span title={input.databaseName}>{input.databaseName}</span>}
+        content={input.sql}
+        language="sql"
+        action={
+          <span className="mr-2 font-mono">
             {result.hasResultSet ? `${result.rowCount} rows` : `${result.changes} rows affected`}
           </span>
-        </div>
-        <pre className="max-h-50 overflow-auto border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
-          {input.sql}
-        </pre>
-      </section>
+        }
+      />
 
       {result.hasResultSet && result.columns.length ? (
-        <section aria-label="SQLite query results" className="overflow-auto border border-(--vscode-panel-border)">
-          <table className="w-max min-w-full border-separate border-spacing-0 text-xs">
+        <section
+          aria-label="SQLite query results"
+          tabIndex={0}
+          className="max-h-125 overflow-auto border border-(--vscode-panel-border)"
+        >
+          <table className="w-max min-w-full border-separate border-spacing-0 text-xs select-text">
             <thead className="sticky top-0 z-10">
               <tr>
                 {result.columns.map((column, index) => (
                   <th
                     key={`${index}:${column}`}
-                    className="h-9 min-w-36 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-left font-medium"
+                    scope="col"
+                    className="h-7 min-w-36 max-w-80 break-words border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-left font-medium"
                   >
                     {column}
                   </th>
@@ -71,14 +83,20 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
             </thead>
             <tbody>
               {result.rows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
+                <tr key={rowIndex} className="hover:bg-(--vscode-list-hoverBackground)">
                   {result.columns.map((column, columnIndex) => (
                     <td
                       key={`${columnIndex}:${column}`}
                       className="h-7 max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 font-mono text-ellipsis whitespace-nowrap"
                       title={formatCell(row[columnIndex] ?? null)}
                     >
-                      {formatCell(row[columnIndex] ?? null)}
+                      <span
+                        className={
+                          row[columnIndex] == null ? 'italic text-(--vscode-descriptionForeground)' : undefined
+                        }
+                      >
+                        {formatCell(row[columnIndex] ?? null)}
+                      </span>
                     </td>
                   ))}
                 </tr>

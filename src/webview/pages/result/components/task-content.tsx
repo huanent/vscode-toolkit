@@ -1,10 +1,12 @@
 import type { ComponentType } from 'react';
 import { Empty } from '@/webview/components/empty';
-import { Header } from '@/webview/components/header';
 import { Loading } from '@/webview/components/loading';
+import { Icon } from '@/webview/components/icons';
 import type { ResultTask } from '@/features/result/protocol';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
+import { ResultText } from './result-text';
+import { formatTaskDuration, formatTaskKind, taskStatusPresentation } from '../task-presentation';
 
 export type ResultTaskRenderer = ComponentType<{ task: ResultTask }>;
 
@@ -22,14 +24,16 @@ function ResultTaskContent({ task }: { task: ResultTask }) {
 
   const content = task.output ?? task.error ?? task.input;
   return (
-    <div className="flex flex-col gap-3 p-1">
+    <div className="flex flex-col gap-3 p-4">
       <div className="text-xs text-(--vscode-descriptionForeground)">
         No result renderer is registered for &quot;{task.kind}&quot;.
       </div>
       {content !== undefined && (
-        <pre className="max-h-125 overflow-auto rounded border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-3 font-mono text-xs leading-relaxed text-(--vscode-editor-foreground) select-text whitespace-pre-wrap break-all">
-          {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
-        </pre>
+        <ResultText
+          title="Output"
+          content={typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+          language={typeof content === 'string' ? undefined : 'json'}
+        />
       )}
     </div>
   );
@@ -43,14 +47,30 @@ interface ResultPanelProps {
 
 export function TaskContent({ task, loading, error }: ResultPanelProps) {
   if (task) {
+    const presentation = taskStatusPresentation[task.status];
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <Header className="py-3 px-4 shrink-0" action={`${Math.max(0, task.updatedAt - task.createdAt)} ms`}>
-          {task.title}
-        </Header>
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto" aria-busy={task.status === 'running'}>
           <ResultTaskContent key={task.id} task={task} />
         </div>
+        <footer
+          aria-label="Task status"
+          className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1 text-xs text-(--vscode-descriptionForeground)"
+        >
+          <span className={`flex items-center gap-1 ${presentation.className}`} role="status">
+            <Icon
+              name={presentation.icon}
+              size="sm"
+              className={task.status === 'running' ? 'animate-spin' : undefined}
+            />
+            {presentation.label}
+          </span>
+          <span>{formatTaskKind(task.kind)}</span>
+          <time dateTime={new Date(task.createdAt).toISOString()}>{new Date(task.createdAt).toLocaleString()}</time>
+          {task.status !== 'running' && (
+            <span className="font-mono tabular-nums">{formatTaskDuration(task.updatedAt - task.createdAt)}</span>
+          )}
+        </footer>
       </div>
     );
   }

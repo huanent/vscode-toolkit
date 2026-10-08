@@ -1,13 +1,16 @@
-import type { ResultTaskStatus, ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
+import { useState } from 'react';
+import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
 import type { WebviewReadyMessage } from '@/host/webview-bridge';
 import { Button } from '@/webview/components/button';
 import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
+import { Input } from '@/webview/components/input';
 import { List, type ListGroup } from '@/webview/components/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
 import { cn } from 'cn';
+import { formatTaskKind, taskStatusPresentation } from '../task-presentation';
 
 interface TaskHistoryPanelProps {
   tasks: ResultTaskSummary[];
@@ -15,8 +18,18 @@ interface TaskHistoryPanelProps {
 }
 
 export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLowerCase();
+  const filteredTasks = tasks.filter((task) =>
+    `${task.title} ${formatTaskKind(task.kind)} ${taskStatusPresentation[task.status].label}`
+      .toLowerCase()
+      .includes(query),
+  );
   return (
-    <aside className="flex h-72 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) md:h-full md:w-72 md:border-l md:border-t-0">
+    <aside
+      aria-label="Task history"
+      className="flex h-48 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) bg-(--vscode-sideBar-background) md:h-full md:w-72 md:border-l md:border-t-0"
+    >
       <Header
         action={
           <Button
@@ -30,15 +43,34 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
         }
       >
         Tasks
+        <span className="rounded-sm bg-(--vscode-badge-background) px-1 text-(--vscode-badge-foreground)">
+          {tasks.length}
+        </span>
       </Header>
+
+      {tasks.length > 0 && (
+        <div className="px-3 pb-2">
+          <Input
+            aria-label="Filter tasks"
+            placeholder="Filter tasks"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            startSlot={<Icon name="search" size="sm" />}
+          />
+        </div>
+      )}
 
       {tasks.length === 0 ? (
         <Empty label="Task history" title="No tasks yet" description="Task history will appear here." icon="history" />
+      ) : filteredTasks.length === 0 ? (
+        <div className="p-3 text-xs text-(--vscode-descriptionForeground)" role="status">
+          No matching tasks
+        </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-2">
           <List
             ariaLabel="Task history"
-            groups={toTaskListGroups(tasks)}
+            groups={toTaskListGroups(filteredTasks)}
             selectedKey={selectedTaskId}
             onActivate={(task) => selectTask(task.id)}
             onItemClick={(task) => selectTask(task.id)}
@@ -66,20 +98,32 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
       return {
         key: task.id,
         data: task,
-        icon: <Icon name={presentation.icon} className={cn(presentation.className, 'p-1')} />,
-        label: task.title,
-        actions: (
-          <>
-            {task.status === 'running' && (
-              <Button
-                variant="ghost"
-                title="Terminate task"
-                aria-label={`Terminate ${task.title}`}
-                onClick={() => terminateTask(task.id)}
-                size="sm"
-                icon={<Icon name="debug-stop" />}
-              ></Button>
-            )}
+        icon: (
+          <Icon
+            name={presentation.icon}
+            className={cn(presentation.className, 'shrink-0 p-1', task.status === 'running' && 'animate-spin')}
+          />
+        ),
+        label: (
+          <span className="flex min-w-0 flex-col gap-1 py-2" title={task.title}>
+            <span className="truncate">{task.title}</span>
+            <span className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
+              <span>{formatTaskKind(task.kind)}</span>
+              <span>{presentation.label}</span>
+            </span>
+          </span>
+        ),
+        actions:
+          task.status === 'running' ? (
+            <Button
+              variant="ghost"
+              title="Terminate task"
+              aria-label={`Terminate ${task.title}`}
+              onClick={() => terminateTask(task.id)}
+              size="sm"
+              icon={<Icon name="debug-stop" />}
+            />
+          ) : (
             <Button
               variant="ghost"
               title="Delete task"
@@ -87,9 +131,8 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
               onClick={() => deleteTask(task.id)}
               size="sm"
               icon={<Icon name="trash" />}
-            ></Button>
-          </>
-        ),
+            />
+          ),
       };
     }),
   }));
@@ -106,11 +149,3 @@ function terminateTask(taskId: string) {
 function deleteTask(taskId: string) {
   postToHost({ type: 'deleteTask', taskId } satisfies ResultWebviewMessage);
 }
-
-const taskStatusPresentation: Record<ResultTaskStatus, { label: string; icon: string; className: string }> = {
-  running: { label: 'Running', icon: 'loading', className: 'text-(--vscode-progressBar-background)' },
-  completed: { label: 'Completed', icon: 'check', className: 'text-(--vscode-testing-iconPassed)' },
-  failed: { label: 'Failed', icon: 'error', className: 'text-(--vscode-errorForeground)' },
-  cancelled: { label: 'Cancelled', icon: 'circle-slash', className: 'text-(--vscode-descriptionForeground)' },
-  interrupted: { label: 'Interrupted', icon: 'debug-pause', className: 'text-(--vscode-errorForeground)' },
-};

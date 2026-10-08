@@ -9,7 +9,7 @@ function App() {
 
   return (
     <main className="flex h-screen min-h-0 flex-col md:flex-row">
-      <section className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <section aria-label="Task result" className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <TaskContent
           task={state?.selectedTask}
           loading={loading && !state}

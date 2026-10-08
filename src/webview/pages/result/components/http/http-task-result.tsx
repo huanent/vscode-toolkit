@@ -16,7 +16,7 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
     return (
       <Loading
         label={request ? `Sending ${request.method} ${request.url}...` : 'Running HTTP request...'}
-        className="p-1 text-sm"
+        className="p-4 text-sm"
       />
     );
   }
@@ -58,8 +58,8 @@ function isHttpRequestData(value: unknown): value is HttpRequestData {
   return (
     typeof request.method === 'string' &&
     typeof request.url === 'string' &&
-    typeof request.headers === 'object' &&
-    request.headers !== null
+    isHeaders(request.headers) &&
+    (request.body === undefined || typeof request.body === 'string')
   );
 }
 
@@ -69,8 +69,21 @@ function isHttpResponseData(value: unknown): value is HttpResponseData {
   return (
     typeof response.status === 'number' &&
     typeof response.statusText === 'string' &&
+    isHeaders(response.headers) &&
     typeof response.body === 'string' &&
-    typeof response.request === 'object' &&
-    response.request !== null
+    (response.formattedBody === undefined || typeof response.formattedBody === 'string') &&
+    typeof response.sizeBytes === 'number' &&
+    Number.isFinite(response.sizeBytes) &&
+    response.sizeBytes >= 0 &&
+    isHttpRequestData(response.request)
+  );
+}
+
+function isHeaders(value: unknown): value is Record<string, string> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((header) => typeof header === 'string')
   );
 }
