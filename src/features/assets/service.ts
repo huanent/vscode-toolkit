@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, unlink, writeFile, lstat } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
@@ -17,14 +17,30 @@ export class AssetService {
   async list(): Promise<AssetRecord[]> {
     await mkdir(this.directory, { recursive: true });
     const entries: AssetRecord[] = [];
-    for (const file of await readdir(this.directory)) {
-      if (!file.endsWith('.json')) continue;
-      const value: unknown = JSON.parse(await readFile(path.join(this.directory, file), 'utf8'));
-      if (!isAssetRecord(value) || file !== `${value.id}.${value.type}.json`) {
-        throw new Error(`Invalid asset: ${file}`);
+
+    const traverse = async (dir: string, parentId?: string) => {
+      const files = await readdir(dir, { withFileTypes: true });
+      for (const file of files) {
+        if (file.isDirectory()) {
+          const folderId = parentId ? `${parentId}/${file.name}` : file.name;
+          entries.push({ id: folderId, type: 'folder', name: file.name, parentId });
+          await traverse(path.join(dir, file.name), folderId);
+        } else if (file.isFile() && file.name.endsWith('.json')) {
+          try {
+            const value: any = JSON.parse(await readFile(path.join(dir, file.name), 'utf8'));
+            if (value && typeof value === 'object' && typeof value.id === 'string' && typeof value.type === 'string') {
+              value.name = file.name.slice(0, -5);
+              value.parentId = parentId;
+              entries.push(value);
+            }
+          } catch {
+            // Ignore invalid files
+          }
+        }
       }
-      entries.push(value);
-    }
+    };
+
+    await traverse(this.directory);
     return entries.sort((first, second) => first.name.localeCompare(second.name));
   }
 
@@ -44,23 +60,55 @@ export class AssetService {
       Array.from(trimmed).some((character) => character.charCodeAt(0) < 32)
     )
       throw new Error('Enter a valid folder name.');
-    const entries = await this.list();
-    if (parentId && !entries.some((entry) => entry.id === parentId && entry.type === 'folder'))
-      throw new Error('Parent folder no longer exists.');
-    if (entries.some((entry) => entry.parentId === parentId && entry.name === trimmed))
+
+    const dir = parentId ? path.join(this.directory, parentId) : this.directory;
+    const target = path.join(dir, trimmed);
+
+    try {
+      await lstat(target);
       throw new Error('An asset or folder with this name already exists.');
-    await this.save({ id: randomUUID(), type: 'folder', name: trimmed, parentId });
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+
+    await mkdir(target, { recursive: true });
   }
 
   async save(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
-    if (asset.parentId && !(await this.list()).some((entry) => entry.id === asset.parentId && entry.type === 'folder'))
-      throw new Error('Parent folder no longer exists.');
-    await mkdir(this.directory, { recursive: true });
-    const target = path.join(this.directory, `${asset.id}.${asset.type}.json`);
+
+    const existing = await this.get(asset.id).catch(() => undefined);
+
+    const dir = asset.parentId ? path.join(this.directory, asset.parentId) : this.directory;
+    await mkdir(dir, { recursive: true });
+
+    const target = path.join(dir, `${asset.name}.json`);
+
+    if (existing) {
+      const oldDir = existing.parentId ? path.join(this.directory, existing.parentId) : this.directory;
+      const oldTarget = path.join(oldDir, `${existing.name}.json`);
+      if (oldTarget !== target) {
+        try {
+          await lstat(target);
+          throw new Error('An asset with this name already exists.');
+        } catch (e: any) {
+          if (e.code !== 'ENOENT') throw e;
+        }
+        await rename(oldTarget, target);
+      }
+    } else {
+      try {
+        await lstat(target);
+        throw new Error('An asset with this name already exists.');
+      } catch (e: any) {
+        if (e.code !== 'ENOENT') throw e;
+      }
+    }
+
     const temporary = `${target}.${randomUUID()}.tmp`;
     try {
-      await writeFile(temporary, JSON.stringify(asset, null, 2), { mode: 0o600 });
+      const { name: _name, parentId: _parentId, ...rest } = asset as any;
+      await writeFile(temporary, JSON.stringify(rest, null, 2), { mode: 0o600 });
       await rename(temporary, target);
     } finally {
       await unlink(temporary).catch(() => undefined);
@@ -68,22 +116,25 @@ export class AssetService {
   }
 
   async delete(asset: AssetRecord): Promise<void> {
-    if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
-    const entries = await this.list();
-    const children = new Map<string, AssetRecord[]>();
-    for (const entry of entries) {
-      if (!entry.parentId) continue;
-      const siblings = children.get(entry.parentId) ?? [];
-      siblings.push(entry);
-      children.set(entry.parentId, siblings);
-    }
+    if (asset.type !== 'folder' && !isAssetRecord(asset)) throw new Error('Invalid asset.');
 
-    const pending = [asset];
-    while (pending.length) {
-      const entry = pending.pop()!;
-      await unlink(path.join(this.directory, `${entry.id}.${entry.type}.json`));
-      await this.context.secrets.delete(this.secretKey(entry));
-      if (entry.type === 'folder') pending.push(...(children.get(entry.id) ?? []));
+    if (asset.type === 'folder') {
+      const target = asset.id ? path.join(this.directory, asset.id) : this.directory;
+      const entries = await this.list();
+      const toDelete = entries.filter(
+        (e) => e.id === asset.id || e.parentId?.startsWith(asset.id + '/') || e.parentId === asset.id,
+      );
+      for (const entry of toDelete) {
+        if (entry.type !== 'folder') {
+          await this.context.secrets.delete(this.secretKey(entry));
+        }
+      }
+      await rm(target, { recursive: true, force: true });
+    } else {
+      const dir = asset.parentId ? path.join(this.directory, asset.parentId) : this.directory;
+      const target = path.join(dir, `${asset.name}.json`);
+      await unlink(target);
+      await this.context.secrets.delete(this.secretKey(asset));
     }
   }
 
@@ -113,7 +164,6 @@ function isAssetRecord(value: unknown): value is AssetRecord {
     typeof asset.type === 'string' &&
     /^[a-zA-Z0-9-]+$/.test(asset.type) &&
     typeof asset.name === 'string' &&
-    asset.name.trim().length > 0 &&
-    (asset.parentId === undefined || (typeof asset.parentId === 'string' && /^[a-zA-Z0-9-]+$/.test(asset.parentId)))
+    asset.name.trim().length > 0
   );
 }
