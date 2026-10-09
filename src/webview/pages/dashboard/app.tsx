@@ -5,7 +5,7 @@ import { Empty } from '@/webview/components/empty';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
 import { AssetsPanel } from '@/webview/pages/dashboard/components/assets-panel';
-import { useTempState } from './use-temp-state';
+import { useDashboardState } from './use-dashboard-state';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
@@ -16,7 +16,7 @@ const tabs: Tab[] = [
 
 function App() {
   const [activeTabId, setActiveTabId] = useState('workflow');
-  const tempState = useTempState();
+  const dashboardState = useDashboardState();
 
   return (
     <main className="flex h-screen flex-col overflow-hidden px-1">
@@ -38,11 +38,19 @@ function App() {
           </TabPanel>
 
           <TabPanel tabId="assets" className="h-full">
-            <AssetsPanel entries={tempState.assets} error={tempState.error} loading={tempState.loading} />
+            <AssetsPanel
+              entries={dashboardState.assets}
+              error={dashboardState.error}
+              loading={dashboardState.loading}
+            />
           </TabPanel>
 
           <TabPanel tabId="temp" className="h-full">
-            <TempPanel entries={tempState.entries} error={tempState.error} loading={tempState.loading} />
+            <TempPanel
+              entries={dashboardState.tempEntries}
+              error={dashboardState.error}
+              loading={dashboardState.loading}
+            />
           </TabPanel>
         </div>
       </Tabs>

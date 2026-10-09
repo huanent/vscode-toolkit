@@ -4,11 +4,12 @@ import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
 import { MysqlService } from '@/features/database/mysql-service';
 import { SshService } from '@/features/ssh/ssh-service';
-import type { DashboardData, AssetViewEntry } from '@/features/assets/protocol';
+import type { AssetViewEntry } from '@/features/assets/protocol';
 import type { TempTreeEntry } from '@/features/temp/protocol';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler } from '@/host/webview-view-provider';
+import type { DashboardData } from '@/shared/dashboard-protocol';
 
 interface WebviewRegistration {
   id: string;

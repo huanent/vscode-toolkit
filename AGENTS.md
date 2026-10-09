@@ -7,6 +7,8 @@ These instructions apply to the entire repository. Webview-specific rules apply 
 - Do not add tests unless the user explicitly requests them, including during bug fixes, feature work, and refactors.
 - Refactors and renames do not need to preserve backward compatibility unless the user explicitly requests it.
 - Use `kebab-case` for code filenames, `PascalCase` for React components and TypeScript types, and `camelCase` for functions and variables.
+- When a file's responsibility changes, promptly rename it to reflect its current responsibility.
+- When a file accumulates too many responsibilities, split it into focused files with clear ownership.
 - Use `@/` for imports from `src/`. Prefer imports such as `@/webview/components/button` over relative paths that traverse up multiple directories.
 
 ## Validation

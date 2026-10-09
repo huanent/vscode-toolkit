@@ -1,5 +1,3 @@
-import type { TempTreeEntry } from '@/features/temp/protocol';
-
 export interface AssetFormValues {
   name: string;
   host: string;
@@ -27,11 +25,6 @@ export interface AssetViewEntry {
   detail?: string;
   context: Record<string, string | number | boolean>;
   children?: AssetViewEntry[];
-}
-
-export interface DashboardData {
-  temp: TempTreeEntry[];
-  assets: AssetViewEntry[];
 }
 
 export type AssetsMessage =
