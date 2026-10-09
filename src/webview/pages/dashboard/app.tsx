@@ -19,9 +19,15 @@ function App() {
   const tempState = useTempState();
 
   return (
-    <main className="px-1">
-      <Tabs tabs={tabs} activeTabId={activeTabId} onChange={setActiveTabId}>
-        <div className="py-2">
+    <main className="flex h-screen flex-col overflow-hidden px-1">
+      <Tabs
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onChange={setActiveTabId}
+        className="min-h-0 flex-1"
+        contentClassName="min-h-0 flex-1"
+      >
+        <div className="h-full overflow-auto py-2">
           <TabPanel tabId="workflow">
             <Empty
               label="Empty workflow"
@@ -35,7 +41,7 @@ function App() {
             <AssetsPanel entries={tempState.assets} error={tempState.error} loading={tempState.loading} />
           </TabPanel>
 
-          <TabPanel tabId="temp">
+          <TabPanel tabId="temp" className="h-full">
             <TempPanel entries={tempState.entries} error={tempState.error} loading={tempState.loading} />
           </TabPanel>
         </div>

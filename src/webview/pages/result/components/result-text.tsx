@@ -51,7 +51,7 @@ export function ResultText({ title, content, language, action, description }: Re
         </div>
       </div>
       {content ? (
-        <pre className="max-h-125 overflow-auto rounded-sm border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 font-mono text-xs text-(--vscode-editor-foreground) select-text whitespace-pre-wrap break-words">
+        <pre className="max-h-125 overflow-auto rounded-sm border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 font-mono text-xs text-(--vscode-editor-foreground) select-text whitespace-pre-wrap wrap-break-word">
           {content}
         </pre>
       ) : (

@@ -33,6 +33,7 @@ type ListPropsBase<T> = {
   selectedKey?: Key;
   role?: AriaRole;
   itemRole?: AriaRole;
+  onFocusedKeyChange?: (key: Key | null) => void;
   onActivate?: (item: T) => void;
   onItemClick?: (item: T, event: MouseEvent<HTMLDivElement>) => void;
   onKeyDown?: (
@@ -53,6 +54,7 @@ export function List<T>({
   selectedKey: selectedKeyProp,
   role = 'listbox',
   itemRole = 'option',
+  onFocusedKeyChange,
   onActivate,
   onItemClick,
   onKeyDown,
@@ -69,6 +71,9 @@ export function List<T>({
   const activeListItem = items.find((item) => item.key === focusedKey) ?? items[0];
   const activeKey = activeListItem?.key ?? null;
   const activeItem = activeListItem?.data;
+  useEffect(() => {
+    onFocusedKeyChange?.(activeKey);
+  }, [activeKey, onFocusedKeyChange]);
 
   const focusItem = (item: T | undefined) => {
     if (item === undefined) return;

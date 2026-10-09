@@ -145,7 +145,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           )}
         </fieldset>
         {error && (
-          <p role="alert" className="mt-4 break-words text-xs text-(--vscode-errorForeground)">
+          <p role="alert" className="mt-4 wrap-break-word text-xs text-(--vscode-errorForeground)">
             {error}
           </p>
         )}

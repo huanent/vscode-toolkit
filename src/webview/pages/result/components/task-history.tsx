@@ -55,7 +55,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
             placeholder="Filter tasks"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            startSlot={<Icon name="search" size="sm" />}
+            prefix={<Icon name="search" size="sm" />}
           />
         </div>
       )}

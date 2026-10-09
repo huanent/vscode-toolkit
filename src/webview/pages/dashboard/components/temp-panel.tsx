@@ -14,7 +14,7 @@ const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultCont
 
 export function TempPanel({ entries, error, loading }: TempPanelProps) {
   return (
-    <section className="flex min-h-64 flex-col" data-vscode-context={panelContext}>
+    <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
         <p className="wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
           {error}

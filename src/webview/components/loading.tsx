@@ -14,7 +14,7 @@ export function Loading({ label, className }: LoadingProps) {
       aria-live="polite"
     >
       <Icon name="loading" size="md" className="codicon-modifier-spin" />
-      <span className="min-w-0 break-words">{label}</span>
+      <span className="min-w-0 wrap-break-word">{label}</span>
     </div>
   );
 }

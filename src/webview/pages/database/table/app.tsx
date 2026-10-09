@@ -36,7 +36,7 @@ function App() {
           <div className="min-w-0 max-w-64 flex-1">
             <Input
               type="search"
-              startSlot={<Icon name="search" size="sm" variant="muted" />}
+              prefix={<Icon name="search" size="sm" variant="muted" />}
               aria-label="Filter tables"
               placeholder="Filter tables..."
               value={search}

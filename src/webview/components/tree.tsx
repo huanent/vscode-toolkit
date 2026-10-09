@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { DisclosureIcon, Icon } from '@/webview/components/icons';
-import { List, type ListItemState } from '@/webview/components/list';
+import { List } from '@/webview/components/list';
 import { useEffect, useState } from 'react';
 import type { Key, KeyboardEvent, MouseEvent } from 'react';
 
@@ -37,11 +37,18 @@ type TreeNodeModel = {
 
 export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
+  const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   useEffect(() => {
     setExpandedKeys(new Set());
   }, [collapseAllTrigger]);
   const treeItems = createTreeNodes(items, null, expandedKeys);
   const visibleItems = flattenTreeNodes(treeItems);
+  const focusedNode = visibleItems.find((node) => node.key === focusedKey) ?? visibleItems[0];
+  const activeIndentKey = focusedNode
+    ? focusedNode.expandable && focusedNode.expanded
+      ? focusedNode.key
+      : focusedNode.parentKey
+    : null;
   const updateExpanded = (key: Key, expanded: boolean) => {
     setExpandedKeys((current) => {
       if (current.has(key) === expanded) return current;
@@ -95,9 +102,9 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
       items={visibleItems.map((node) => ({
         key: node.key,
         data: node,
-        icon: (state) => (
+        icon: (
           <>
-            <TreeRowIndentation node={node} state={state} />
+            <TreeRowIndentation node={node} activeIndentKey={activeIndentKey} />
             {node.item.type === 'file' && <Icon className="py-1" name="file" />}
           </>
         ),
@@ -111,6 +118,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
       }))}
       role="tree"
       itemRole="treeitem"
+      onFocusedKeyChange={setFocusedKey}
       onActivate={(node) => {
         if (node.expandable) toggleExpanded(node.key);
         else if (node.item.type === 'file') onActivate?.(node.item);
@@ -155,18 +163,13 @@ function getTreeDepth(path: string): number {
 
 type TreeRowIndentationProps = {
   node: TreeNodeModel;
-  state: ListItemState;
+  activeIndentKey: Key | null;
 };
 
-function TreeRowIndentation({ node, state }: TreeRowIndentationProps) {
-  const activeIndentKeys = new Set<Key>();
-  if (state.focused || state.selected) {
-    const guideKey = node.expandable && node.expanded ? node.key : node.parentKey;
-    if (guideKey !== null) activeIndentKeys.add(guideKey);
-  }
+function TreeRowIndentation({ node, activeIndentKey }: TreeRowIndentationProps) {
   return (
-    <div className="flex h-full shrink-0 items-center">
-      <TreeIndentGuides itemPath={node.item.path} activeIndentKeys={activeIndentKeys} />
+    <div className="relative flex shrink-0 items-center self-stretch">
+      <TreeIndentGuides itemPath={node.item.path} activeIndentKey={activeIndentKey} />
       {Array.from({ length: node.level - 1 }, (_, index) => (
         <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-5')} aria-hidden="true" />
       ))}
@@ -188,16 +191,16 @@ function TreeRowIndentation({ node, state }: TreeRowIndentationProps) {
 
 type TreeIndentGuidesProps = {
   itemPath: string;
-  activeIndentKeys: ReadonlySet<Key>;
+  activeIndentKey: Key | null;
 };
 
-function TreeIndentGuides({ itemPath, activeIndentKeys }: TreeIndentGuidesProps) {
+function TreeIndentGuides({ itemPath, activeIndentKey }: TreeIndentGuidesProps) {
   const pathSegments = itemPath.split('/').filter(Boolean);
   return (
-    <div className="pointer-events-none absolute inset-y-0 left-5 z-0 flex" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-y-0 left-3 z-0 flex" aria-hidden="true">
       {pathSegments.slice(0, -1).map((_, index) => {
         const guideKey = pathSegments.slice(0, index + 1).join('/');
-        const active = activeIndentKeys.has(guideKey);
+        const active = activeIndentKey === guideKey;
         return (
           <span
             key={index}

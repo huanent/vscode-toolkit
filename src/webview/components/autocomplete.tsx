@@ -1,5 +1,4 @@
 import { Autocomplete as BaseAutocomplete } from '@base-ui/react/autocomplete';
-import { cn } from 'cn';
 import { Icon } from '@/webview/components/icons';
 import { Input, type InputProps } from '@/webview/components/input';
 
@@ -9,7 +8,7 @@ export type AutocompleteProps = Omit<InputProps, 'value' | 'onChange' | 'list'> 
   onValueChange: (value: string) => void;
 };
 
-export function Autocomplete({ items, value, onValueChange, disabled, className, ...props }: AutocompleteProps) {
+export function Autocomplete({ items, value, onValueChange, disabled, suffix, ...props }: AutocompleteProps) {
   return (
     <BaseAutocomplete.Root
       items={items}
@@ -19,15 +18,27 @@ export function Autocomplete({ items, value, onValueChange, disabled, className,
       openOnInputClick
       filter={null}
     >
-      <BaseAutocomplete.InputGroup className="relative w-full min-w-0">
-        <BaseAutocomplete.Input render={<Input {...props} className={cn('pr-7', className)} />} />
-        <BaseAutocomplete.Trigger
-          aria-label="Show options"
-          title="Show options"
-          className="absolute inset-y-0 right-0 flex w-7 cursor-pointer items-center justify-center rounded-sm text-(--vscode-input-foreground) hover:bg-(--vscode-toolbar-hoverBackground) disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Icon name="chevron-down" size="sm" />
-        </BaseAutocomplete.Trigger>
+      <BaseAutocomplete.InputGroup className="w-full min-w-0">
+        <BaseAutocomplete.Input
+          render={
+            <Input
+              {...props}
+              disabled={disabled}
+              suffix={
+                <>
+                  {suffix}
+                  <BaseAutocomplete.Trigger
+                    aria-label="Show options"
+                    title="Show options"
+                    className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-(--vscode-input-foreground) enabled:hover:bg-(--vscode-toolbar-hoverBackground) disabled:cursor-not-allowed"
+                  >
+                    <Icon name="chevron-down" size="sm" />
+                  </BaseAutocomplete.Trigger>
+                </>
+              }
+            />
+          }
+        />
       </BaseAutocomplete.InputGroup>
       <BaseAutocomplete.Portal>
         <BaseAutocomplete.Positioner align="start" sideOffset={4} className="z-50 w-(--anchor-width)">

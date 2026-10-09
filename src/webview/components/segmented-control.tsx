@@ -26,14 +26,14 @@ export function SegmentedControl<T extends string>({
         const option = options.find((item) => item.value === values[0]);
         if (option) onValueChange(option.value);
       }}
-      className="flex shrink-0 items-center rounded border border-(--vscode-panel-border) p-px"
+      className="inline-flex max-w-full shrink-0 items-center overflow-x-auto rounded-sm border border-(--vscode-panel-border) p-px"
     >
       {options.map((option) => (
         <Toggle
           key={option.value}
           value={option.value}
           disabled={option.disabled}
-          className="cursor-pointer rounded px-2 py-1 text-xs text-(--vscode-foreground) hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-sm px-2 text-xs text-(--vscode-foreground) enabled:hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
         >
           {option.label}
         </Toggle>
