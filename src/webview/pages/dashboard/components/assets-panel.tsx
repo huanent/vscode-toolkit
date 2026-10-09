@@ -1,6 +1,4 @@
 import type { AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
 import { Tree, type TreeItem } from '@/webview/components/tree';
 import { postToHost } from '@/webview/utils/host-data';
@@ -17,34 +15,27 @@ export function AssetsPanel({
   error: string | undefined;
 }) {
   return (
-    <section className="flex min-h-64 min-w-0 flex-col" data-vscode-context={panelContext}>
-      <div className="mb-1 flex justify-end">
-        <Button
-          variant="ghost"
-          title="Add asset"
-          aria-label="Add asset"
-          prefix={<Icon name="add" />}
-          onClick={() => postToHost({ type: 'assetAction', action: 'add' } satisfies AssetRequest)}
-        />
-      </div>
+    <section className="flex h-full min-h-0 min-w-0 flex-col" data-vscode-context={panelContext}>
       {loading ? (
         <Loading label="Reading assets..." />
       ) : entries?.length ? (
-        <Tree
-          ariaLabel="Assets"
-          items={toTreeItems(entries)}
-          onActivate={(item) => {
-            const context = item.context;
-            if (!context) return;
-            postToHost({
-              type: 'assetAction',
-              action: context.assetTable ? 'preview' : 'connect',
-              id: String(context.assetId),
-              database: typeof context.assetDatabase === 'string' ? context.assetDatabase : undefined,
-              table: typeof context.assetTable === 'string' ? context.assetTable : undefined,
-            } satisfies AssetRequest);
-          }}
-        />
+        <div className="min-h-0 flex-1 overflow-auto">
+          <Tree
+            ariaLabel="Assets"
+            items={toTreeItems(entries)}
+            onActivate={(item) => {
+              const context = item.context;
+              if (!context) return;
+              postToHost({
+                type: 'assetAction',
+                action: context.assetTable ? 'preview' : 'connect',
+                id: String(context.assetId),
+                database: typeof context.assetDatabase === 'string' ? context.assetDatabase : undefined,
+                table: typeof context.assetTable === 'string' ? context.assetTable : undefined,
+              } satisfies AssetRequest);
+            }}
+          />
+        </div>
       ) : (
         <p className="p-2 text-sm text-(--vscode-descriptionForeground)">No assets</p>
       )}

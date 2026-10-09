@@ -37,7 +37,7 @@ function App() {
             />
           </TabPanel>
 
-          <TabPanel tabId="assets">
+          <TabPanel tabId="assets" className="h-full">
             <AssetsPanel entries={tempState.assets} error={tempState.error} loading={tempState.loading} />
           </TabPanel>
 

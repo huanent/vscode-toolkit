@@ -16,8 +16,35 @@ export function createAssetsView(
     if (!provider) throw new Error(`Unsupported asset type: ${type}`);
     return provider;
   };
-  const list = async (): Promise<AssetViewEntry[]> =>
-    (await service.list()).map((asset) => providerFor(asset.type).toViewEntry(asset));
+  const list = async (): Promise<AssetViewEntry[]> => {
+    const assets = await service.list();
+    const folders = new Map<string, AssetViewEntry>();
+    for (const asset of assets) {
+      if (asset.type === 'folder')
+        folders.set(asset.id, {
+          path: asset.id,
+          name: asset.name,
+          type: 'directory',
+          context: { assetFolderId: asset.id },
+          children: [],
+        });
+    }
+    const entries: AssetViewEntry[] = [];
+    for (const asset of assets) {
+      const entry = folders.get(asset.id) ?? providerFor(asset.type).toViewEntry(asset);
+      const parent = asset.parentId ? folders.get(asset.parentId) : undefined;
+      if (parent) parent.children!.push(entry);
+      else entries.push(entry);
+    }
+    const updatePaths = (nodes: AssetViewEntry[], parentPath = '') => {
+      for (const entry of nodes) {
+        entry.path = parentPath ? `${parentPath}/${entry.path}` : entry.path;
+        if (entry.children) updatePaths(entry.children, entry.path);
+      }
+    };
+    updatePaths(entries);
+    return entries;
+  };
   const refresh = async () => {
     const webview = activeWebview;
     const entries = await list();
@@ -26,6 +53,13 @@ export function createAssetsView(
   };
   const act = async (request: AssetRequest) => {
     try {
+      if (request.action === 'createFolder') {
+        const name = await vscode.window.showInputBox({ title: 'New asset folder', prompt: 'Folder name' });
+        if (name === undefined) return;
+        await service.createFolder(name, request.folderId);
+        await refresh();
+        return;
+      }
       if (request.action === 'add') {
         const selected = request.assetType
           ? providerFor(request.assetType)
@@ -61,17 +95,18 @@ export function createAssetsView(
       await vscode.window.showErrorMessage(message);
     }
   };
-  for (const action of ['add', 'edit', 'delete', 'connect', 'disconnect', 'query'] as const) {
+  for (const action of ['add', 'createFolder', 'edit', 'delete', 'connect', 'disconnect', 'query'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(
         `toolkit.assets.${action}`,
-        (argument?: { assetId?: string; assetDatabase?: string; assetType?: string }) =>
+        (argument?: { assetId?: string; assetDatabase?: string; assetType?: string; assetFolderId?: string }) =>
           act({
             type: 'assetAction',
             action,
             id: argument?.assetId,
             database: argument?.assetDatabase,
             assetType: argument?.assetType,
+            folderId: argument?.assetFolderId,
           }),
       ),
     );
@@ -104,8 +139,8 @@ function isAssetRequest(value: unknown): value is AssetRequest {
   return (
     message.type === 'assetAction' &&
     typeof message.action === 'string' &&
-    ['add', 'edit', 'delete', 'connect', 'disconnect', 'query', 'preview'].includes(message.action) &&
-    [message.id, message.database, message.table, message.assetType].every(
+    ['add', 'createFolder', 'edit', 'delete', 'connect', 'disconnect', 'query', 'preview'].includes(message.action) &&
+    [message.id, message.database, message.table, message.assetType, message.folderId].every(
       (field) => field === undefined || typeof field === 'string',
     )
   );

@@ -134,10 +134,14 @@ function createTreeNodes(
   parentKey: Key | null,
   expandedKeys: ReadonlySet<Key>,
 ): TreeNodeModel[] {
-  return items.map((item, index) => {
+  const sortedItems = [...items].sort((first, second) => {
+    if (first.type !== second.type) return first.type === 'directory' ? -1 : 1;
+    return first.name.localeCompare(second.name);
+  });
+  return sortedItems.map((item, index) => {
     const key = item.path;
     const children = item.type === 'directory' ? (item.children ?? []) : [];
-    const expandable = item.type === 'directory' && children.length > 0;
+    const expandable = item.type === 'directory';
     const expanded = expandable && expandedKeys.has(key);
     return {
       item,

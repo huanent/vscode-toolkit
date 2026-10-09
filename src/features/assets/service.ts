@@ -8,6 +8,7 @@ export interface AssetRecord {
   id: string;
   type: string;
   name: string;
+  parentId?: string;
 }
 
 export class AssetService {
@@ -31,6 +32,24 @@ export class AssetService {
     const asset = (await this.list()).find((entry) => entry.id === id);
     if (!asset) throw new Error('Asset no longer exists.');
     return asset;
+  }
+
+  async createFolder(name: string, parentId?: string): Promise<void> {
+    const trimmed = name.trim();
+    if (
+      !trimmed ||
+      trimmed === '.' ||
+      trimmed === '..' ||
+      /[\\/]/.test(trimmed) ||
+      Array.from(trimmed).some((character) => character.charCodeAt(0) < 32)
+    )
+      throw new Error('Enter a valid folder name.');
+    const entries = await this.list();
+    if (parentId && !entries.some((entry) => entry.id === parentId && entry.type === 'folder'))
+      throw new Error('Parent folder no longer exists.');
+    if (entries.some((entry) => entry.parentId === parentId && entry.name === trimmed))
+      throw new Error('An asset or folder with this name already exists.');
+    await this.save({ id: randomUUID(), type: 'folder', name: trimmed, parentId });
   }
 
   async save(asset: AssetRecord): Promise<void> {
@@ -78,6 +97,7 @@ function isAssetRecord(value: unknown): value is AssetRecord {
     typeof asset.type === 'string' &&
     /^[a-zA-Z0-9-]+$/.test(asset.type) &&
     typeof asset.name === 'string' &&
-    asset.name.trim().length > 0
+    asset.name.trim().length > 0 &&
+    (asset.parentId === undefined || (typeof asset.parentId === 'string' && /^[a-zA-Z0-9-]+$/.test(asset.parentId)))
   );
 }

@@ -293,6 +293,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.assets.createFolder",
+        "title": "New Folder",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.createFolder",
         "title": "New Folder",
         "category": "Toolkit"
@@ -367,6 +372,10 @@
       ],
       "commandPalette": [
         {
+          "command": "toolkit.assets.createFolder",
+          "when": "false"
+        },
+        {
           "command": "toolkit.assets.edit",
           "when": "false"
         },
@@ -420,6 +429,11 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.assets.createFolder",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && !assetId",
+          "group": "1_create@2"
+        },
         {
           "command": "toolkit.assets.add",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
