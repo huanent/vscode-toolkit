@@ -54,6 +54,8 @@ export class AssetService {
 
   async save(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
+    if (asset.parentId && !(await this.list()).some((entry) => entry.id === asset.parentId && entry.type === 'folder'))
+      throw new Error('Parent folder no longer exists.');
     await mkdir(this.directory, { recursive: true });
     const target = path.join(this.directory, `${asset.id}.${asset.type}.json`);
     const temporary = `${target}.${randomUUID()}.tmp`;
@@ -67,8 +69,22 @@ export class AssetService {
 
   async delete(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
-    await unlink(path.join(this.directory, `${asset.id}.${asset.type}.json`));
-    await this.context.secrets.delete(this.secretKey(asset));
+    const entries = await this.list();
+    const children = new Map<string, AssetRecord[]>();
+    for (const entry of entries) {
+      if (!entry.parentId) continue;
+      const siblings = children.get(entry.parentId) ?? [];
+      siblings.push(entry);
+      children.set(entry.parentId, siblings);
+    }
+
+    const pending = [asset];
+    while (pending.length) {
+      const entry = pending.pop()!;
+      await unlink(path.join(this.directory, `${entry.id}.${entry.type}.json`));
+      await this.context.secrets.delete(this.secretKey(entry));
+      if (entry.type === 'folder') pending.push(...(children.get(entry.id) ?? []));
+    }
   }
 
   getSecret(asset: AssetRecord): Thenable<string | undefined> {

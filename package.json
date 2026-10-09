@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "1.8.10",
+  "version": "2.0.0",
   "description": "Developer utilities for VS Code",
   "categories": [
     "Other"
@@ -182,17 +182,17 @@
     "commands": [
       {
         "command": "toolkit.assets.add",
-        "title": "Add Asset",
+        "title": "Add",
         "category": "Assets"
       },
       {
         "command": "toolkit.assets.edit",
-        "title": "Edit Connection",
+        "title": "Edit",
         "category": "Assets"
       },
       {
         "command": "toolkit.assets.delete",
-        "title": "Delete Connection",
+        "title": "Delete",
         "category": "Assets"
       },
       {
@@ -461,7 +461,7 @@
         },
         {
           "command": "toolkit.assets.delete",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && (assetId || assetFolderId) && !assetDatabase",
           "group": "4_edit@2"
         },
         {

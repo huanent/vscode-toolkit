@@ -68,25 +68,29 @@ export function createAssetsView(
               { title: 'Asset type' },
             );
         const provider = selected && ('provider' in selected ? selected.provider : selected);
-        if (provider) openAssetEditor(context, service, provider, refresh);
+        if (provider) openAssetEditor(context, service, provider, refresh, undefined, request.folderId);
         return;
       }
       if (!request.id) return;
       const asset = await service.get(request.id);
-      const provider = providerFor(asset.type);
       if (request.action === 'edit') {
-        openAssetEditor(context, service, provider, refresh, asset);
+        openAssetEditor(context, service, providerFor(asset.type), refresh, asset);
         return;
       } else if (request.action === 'delete') {
+        const isFolder = asset.type === 'folder';
         if (
-          (await vscode.window.showWarningMessage(`Delete asset "${asset.name}"?`, { modal: true }, 'Delete')) !==
-          'Delete'
+          (await vscode.window.showWarningMessage(
+            `Delete ${isFolder ? 'asset folder' : 'asset'} "${asset.name}"?`,
+            { modal: true, detail: isFolder ? 'The folder and all assets inside it will be deleted.' : undefined },
+            'Delete',
+          )) !== 'Delete'
         )
           return;
         await service.delete(asset);
-        provider.invalidate(asset.id);
+        if (isFolder) for (const provider of providers) provider.invalidate();
+        else providerFor(asset.type).invalidate(asset.id);
       } else {
-        await provider.execute(asset, request);
+        await providerFor(asset.type).execute(asset, request);
       }
       await refresh();
     } catch (error) {
@@ -103,7 +107,7 @@ export function createAssetsView(
           act({
             type: 'assetAction',
             action,
-            id: argument?.assetId,
+            id: argument?.assetId ?? argument?.assetFolderId,
             database: argument?.assetDatabase,
             assetType: argument?.assetType,
             folderId: argument?.assetFolderId,

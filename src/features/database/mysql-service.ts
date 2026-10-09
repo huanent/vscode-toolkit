@@ -34,11 +34,12 @@ export class MysqlService implements AssetProvider {
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, parentId?: string): Promise<void> {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
     const asset: MysqlConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
       type: 'mysql',
+      parentId: record?.parentId ?? parentId,
       name: values.name.trim(),
       host: values.host.trim(),
       port: values.port,

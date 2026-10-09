@@ -35,11 +35,12 @@ export class SshService implements AssetProvider {
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, parentId?: string): Promise<void> {
     const previous = record ? requireSshConfiguration(record) : undefined;
     const asset: SshConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
       type: this.type,
+      parentId: record?.parentId ?? parentId,
       name: values.name.trim(),
       host: values.host.trim(),
       port: values.port,
