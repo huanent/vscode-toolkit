@@ -280,7 +280,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
-            <Button variant="secondary" size="sm" icon={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
+            <Button variant="secondary" size="sm" prefix={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
               Add Column
             </Button>
           </div>

@@ -188,7 +188,7 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 text-sm',
+        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 text-sm rounded-sm',
         focused &&
           listHasFocus &&
           'outline -outline-offset-1 outline-(--vscode-list-focusOutline,var(--vscode-focusBorder))',

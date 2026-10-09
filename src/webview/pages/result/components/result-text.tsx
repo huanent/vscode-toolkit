@@ -30,7 +30,7 @@ export function ResultText({ title, content, language, action, description }: Re
             title={`Copy ${title.toLowerCase()}`}
             aria-label={`Copy ${title.toLowerCase()}`}
             disabled={!content}
-            icon={<Icon name="copy" />}
+            prefix={<Icon name="copy" />}
             onClick={() => postToHost({ type: 'copyToClipboard', text: content } satisfies ResultWebviewMessage)}
           />
           <Button
@@ -39,7 +39,7 @@ export function ResultText({ title, content, language, action, description }: Re
             title={`Open ${title.toLowerCase()} in editor`}
             aria-label={`Open ${title.toLowerCase()} in editor`}
             disabled={!content}
-            icon={<Icon name="go-to-file" />}
+            prefix={<Icon name="go-to-file" />}
             onClick={() =>
               postToHost({
                 type: 'openInEditor',

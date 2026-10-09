@@ -37,7 +37,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
             size="sm"
             title="Refresh tasks"
             aria-label="Refresh tasks"
-            icon={<Icon name="refresh" />}
+            prefix={<Icon name="refresh" />}
             onClick={() => postToHost({ type: 'ready' } satisfies WebviewReadyMessage)}
           />
         }
@@ -121,7 +121,7 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
               aria-label={`Terminate ${task.title}`}
               onClick={() => terminateTask(task.id)}
               size="sm"
-              icon={<Icon name="debug-stop" />}
+              prefix={<Icon name="debug-stop" />}
             />
           ) : (
             <Button
@@ -130,7 +130,7 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
               aria-label={`Delete ${task.title}`}
               onClick={() => deleteTask(task.id)}
               size="sm"
-              icon={<Icon name="trash" />}
+              prefix={<Icon name="trash" />}
             />
           ),
       };

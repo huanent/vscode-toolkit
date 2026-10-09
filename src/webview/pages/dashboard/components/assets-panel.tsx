@@ -23,7 +23,7 @@ export function AssetsPanel({
           variant="ghost"
           title="Add asset"
           aria-label="Add asset"
-          icon={<Icon name="add" />}
+          prefix={<Icon name="add" />}
           onClick={() => postToHost({ type: 'assetAction', action: 'add' } satisfies AssetRequest)}
         />
       </div>

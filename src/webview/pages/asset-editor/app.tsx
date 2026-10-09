@@ -135,7 +135,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
                       variant="secondary"
                       title="Select private key file"
                       aria-label="Select private key file"
-                      icon={<Icon name="folder-opened" />}
+                      prefix={<Icon name="folder-opened" />}
                       onClick={() => postToHost({ type: 'selectPrivateKey' })}
                     />
                   </div>
@@ -150,7 +150,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           </p>
         )}
         <footer className="mt-6 flex gap-2 border-t border-(--vscode-panel-border) pt-4">
-          <Button type="submit" disabled={saving} icon={<Icon name={saving ? 'loading' : 'save'} />}>
+          <Button type="submit" disabled={saving} prefix={<Icon name={saving ? 'loading' : 'save'} />}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" disabled={saving} onClick={() => postToHost({ type: 'cancel' })}>

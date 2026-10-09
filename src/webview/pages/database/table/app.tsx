@@ -51,7 +51,7 @@ function App() {
               className="size-7 p-0"
               title="Create table"
               aria-label="Create table"
-              icon={<Icon name="add" />}
+              prefix={<Icon name="add" />}
               onClick={() => setCreatingTable(true)}
             />
             <Button
@@ -60,7 +60,7 @@ function App() {
               className="size-7 p-0"
               title="Open SQL Editor"
               aria-label="Open SQL Editor"
-              icon={<Icon name="code" />}
+              prefix={<Icon name="code" />}
               onClick={() => postToHost({ type: 'openSqlEditor' })}
             />
           </div>

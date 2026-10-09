@@ -82,7 +82,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
               event.stopPropagation();
               onEditSchema(table);
             }}
-            icon={<Icon name="edit" size="sm" />}
+            prefix={<Icon name="edit" size="sm" />}
             variant="ghost"
             size="sm"
           />
@@ -94,7 +94,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
               event.stopPropagation();
               postToHost({ type: 'deleteTable', tableName: table.name });
             }}
-            icon={<Icon name="trash" size="sm" />}
+            prefix={<Icon name="trash" size="sm" />}
             variant="ghost"
             size="sm"
             className="text-(--vscode-errorForeground) hover:text-(--vscode-errorForeground)"
