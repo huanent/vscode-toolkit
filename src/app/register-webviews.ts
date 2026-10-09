@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { TempFilesView } from '@/features/temp/view-handler';
+import type { WorkflowFilesView } from '@/features/workflow/view-handler';
 import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
 import { MysqlService } from '@/features/database/mysql-service';
@@ -18,6 +19,7 @@ export function registerWebviews(
   context: vscode.ExtensionContext,
   tasks: ResultTaskService,
   tempFiles: TempFilesView,
+  workflowFiles: WorkflowFilesView,
 ): void {
   const assetsUri = vscode.Uri.file(__dirname);
   const assets = new AssetService(context);
@@ -27,6 +29,7 @@ export function registerWebviews(
   const assetsView = createAssetsView(context, assets, [mysql, ssh]);
   const dashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
+    workflow: workflowFiles.handler,
     assets: assetsView,
   });
   const views: WebviewRegistration[] = [

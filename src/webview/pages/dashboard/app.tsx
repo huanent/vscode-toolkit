@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { TabPanel, Tabs, type Tab } from '@/webview/components/tabs';
 import { Icon } from '@/webview/components/icons';
-import { Empty } from '@/webview/components/empty';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
+import { WorkflowPanel } from '@/webview/pages/dashboard/components/workflow-panel';
 import { AssetsPanel } from '@/webview/pages/dashboard/components/assets-panel';
 import { useDashboardState } from './use-dashboard-state';
 import '@/webview/styles.css';
@@ -28,12 +28,11 @@ function App() {
         contentClassName="min-h-0 flex-1"
       >
         <div className="h-full overflow-auto py-2">
-          <TabPanel tabId="workflow">
-            <Empty
-              label="Empty workflow"
-              title="No workflow yet"
-              description="Create a workflow to see it here."
-              icon="debug-line-by-line"
+          <TabPanel tabId="workflow" className="h-full">
+            <WorkflowPanel
+              entries={dashboardState.workflowEntries}
+              error={dashboardState.error}
+              loading={dashboardState.loading}
             />
           </TabPanel>
 

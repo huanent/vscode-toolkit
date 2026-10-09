@@ -293,6 +293,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.workflow.createFile",
+        "title": "New File",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.assets.createFolder",
         "title": "New Folder",
         "category": "Toolkit"
@@ -303,12 +308,27 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.workflow.createFolder",
+        "title": "New Folder",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.rename",
         "title": "Rename",
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.workflow.rename",
+        "title": "Rename",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.delete",
+        "title": "Delete",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.workflow.delete",
         "title": "Delete",
         "category": "Toolkit"
       },
@@ -400,7 +420,15 @@
           "when": "false"
         },
         {
+          "command": "toolkit.workflow.rename",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.workflow.delete",
           "when": "false"
         },
         {
@@ -482,6 +510,26 @@
         {
           "command": "toolkit.temp.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "toolkit.workflow.createFile",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
+          "group": "1_create@1"
+        },
+        {
+          "command": "toolkit.workflow.createFolder",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
+          "group": "1_create@2"
+        },
+        {
+          "command": "toolkit.workflow.rename",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowEntryPath",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "toolkit.workflow.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowEntryPath",
           "group": "2_edit@2"
         }
       ],
@@ -567,6 +615,7 @@
   "activationEvents": [
     "onDebugAdapterProtocolTracker",
     "onFileSystem:toolkit-temp",
+    "onFileSystem:toolkit-workflow",
     "onStartupFinished"
   ],
   "extensionKind": [

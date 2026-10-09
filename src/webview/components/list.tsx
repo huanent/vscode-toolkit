@@ -214,12 +214,12 @@ function ListItem<T>({ listItem, listId, itemRole, selected, focused, listHasFoc
       onClick={onClick}
     >
       {icon}
-      <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{listItem.label}</span>
-      {listItem.description !== undefined && (
-        <span className="w-20 shrink-0 overflow-hidden text-right text-sm text-ellipsis whitespace-nowrap text-(--vscode-descriptionForeground)">
-          {listItem.description}
-        </span>
-      )}
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        <span className="truncate">{listItem.label}</span>
+        {listItem.description !== undefined && (
+          <span className="truncate text-sm text-(--vscode-descriptionForeground)">{listItem.description}</span>
+        )}
+      </div>
       {listItem.actions && (
         <div
           className="flex shrink-0 items-center opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
