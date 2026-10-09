@@ -20,7 +20,9 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
     await tasks.initialize(resolveStorageDirectory(context, 'result2'));
   } catch (error) {
     tasks.dispose();
-    throw error;
+    void vscode.window.showErrorMessage(
+      `Failed to initialize ResultTaskService: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
   const httpResults = new HttpResultService(tasks);
   const tempFiles = createTempFilesView(context);

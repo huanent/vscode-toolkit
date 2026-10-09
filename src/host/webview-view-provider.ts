@@ -9,6 +9,27 @@ export interface WebviewViewHandler {
   onDispose?: () => void;
 }
 
+export function composeWebviewHandlers(handlers: Record<string, WebviewViewHandler>): WebviewViewHandler {
+  return {
+    load: async () => {
+      const result: Record<string, unknown> = {};
+      for (const [key, handler] of Object.entries(handlers)) {
+        if (handler.load) {
+          result[key] = await handler.load();
+        }
+      }
+      return result;
+    },
+    onResolve: (webview) => Object.values(handlers).forEach((h) => h.onResolve?.(webview)),
+    onMessage: async (message, webview) => {
+      for (const h of Object.values(handlers)) {
+        await h.onMessage?.(message, webview);
+      }
+    },
+    onDispose: () => Object.values(handlers).forEach((h) => h.onDispose?.()),
+  };
+}
+
 export class WebviewViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly assetsUri: vscode.Uri,

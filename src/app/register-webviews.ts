@@ -4,12 +4,9 @@ import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
 import { MysqlService } from '@/features/database/mysql-service';
 import { SshService } from '@/features/ssh/ssh-service';
-import type { AssetViewEntry } from '@/features/assets/protocol';
-import type { TempTreeEntry } from '@/features/temp/protocol';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
-import { WebviewViewProvider, type WebviewViewHandler } from '@/host/webview-view-provider';
-import type { DashboardData } from '@/shared/dashboard-protocol';
+import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
 
 interface WebviewRegistration {
   id: string;
@@ -28,25 +25,10 @@ export function registerWebviews(
   const ssh = new SshService(assets);
   context.subscriptions.push(mysql, ssh);
   const assetsView = createAssetsView(context, assets, [mysql, ssh]);
-  const dashboardHandler: WebviewViewHandler = {
-    load: async () =>
-      ({
-        temp: (await tempFiles.handler.load?.()) as TempTreeEntry[],
-        assets: (await assetsView.load?.()) as AssetViewEntry[],
-      }) satisfies DashboardData,
-    onResolve: (webview) => {
-      tempFiles.handler.onResolve?.(webview);
-      assetsView.onResolve?.(webview);
-    },
-    onDispose: () => {
-      tempFiles.handler.onDispose?.();
-      assetsView.onDispose?.();
-    },
-    onMessage: async (message, webview) => {
-      await tempFiles.handler.onMessage?.(message, webview);
-      await assetsView.onMessage?.(message, webview);
-    },
-  };
+  const dashboardHandler = composeWebviewHandlers({
+    temp: tempFiles.handler,
+    assets: assetsView,
+  });
   const views: WebviewRegistration[] = [
     { id: 'toolkit.dashboard', page: 'dashboard', handler: dashboardHandler },
     { id: 'toolkit.result', page: 'result', handler: createResultViewHandler(tasks) },
