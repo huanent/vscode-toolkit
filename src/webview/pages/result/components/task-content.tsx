@@ -81,12 +81,8 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
   }
 
   if (error) {
-    return (
-      <Empty label="Task history unavailable" title="Could not load task history" description={error} icon="warning" />
-    );
+    return <Empty title="Could not load task history" description={error} icon="warning" />;
   }
 
-  return (
-    <Empty label="No results" title="No results yet" description="Task output will appear here." icon="cloud-upload" />
-  );
+  return <Empty title="No results yet" description="Task output will appear here." icon="cloud-upload" />;
 }

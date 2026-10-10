@@ -36,12 +36,7 @@ function App() {
               items={toArchiveTreeItems(state.data)}
             />
           ) : (
-            <Empty
-              label="Empty archive"
-              title="Archive is empty"
-              description="This archive contains no files or directories."
-              icon="∅"
-            />
+            <Empty title="Archive is empty" description="This archive contains no files or directories." icon="∅" />
           )}
         </div>
       </main>

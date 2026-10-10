@@ -61,7 +61,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
       )}
 
       {tasks.length === 0 ? (
-        <Empty label="Task history" title="No tasks yet" description="Task history will appear here." icon="history" />
+        <Empty title="No tasks yet" description="Task history will appear here." icon="history" />
       ) : filteredTasks.length === 0 ? (
         <div className="p-3 text-xs text-(--vscode-descriptionForeground)" role="status">
           No matching tasks

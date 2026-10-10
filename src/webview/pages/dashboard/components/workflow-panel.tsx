@@ -1,4 +1,5 @@
 import { Empty } from '@/webview/components/empty';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
 import { Tree, type TreeItem } from '@/webview/components/tree';
 import type { OpenWorkflowFileRequest, WorkflowTreeEntry } from '@/features/workflow/protocol';
@@ -16,9 +17,7 @@ export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
-        <p className="wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
-          {error}
-        </p>
+        <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading workfloworary files..." />
       ) : entries?.length ? (
@@ -34,14 +33,10 @@ export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
           />
         </div>
       ) : (
-        <Empty label="Workfloworary files" title="No workfloworary files" description="The workflow directory is empty." icon="∅" />
+        <Empty title="No workflows" description="The workflow directory is empty." icon="debug-line-by-line" />
       )}
 
-      {error && entries ? (
-        <p className="mt-2 wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { Empty } from '@/webview/components/empty';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
 import { Tree, type TreeItem } from '@/webview/components/tree';
 import type { OpenTempFileRequest, TempTreeEntry } from '@/features/temp/protocol';
@@ -16,9 +17,7 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
-        <p className="wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
-          {error}
-        </p>
+        <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading temporary files..." />
       ) : entries?.length ? (
@@ -34,14 +33,10 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
           />
         </div>
       ) : (
-        <Empty label="Temporary files" title="No temporary files" description="The temp directory is empty." icon="∅" />
+        <Empty title="No temporary files" description="The temp directory is empty." icon="history" />
       )}
 
-      {error && entries ? (
-        <p className="mt-2 wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
     </section>
   );
 }

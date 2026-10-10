@@ -1,15 +1,14 @@
 import { Icon } from './icons';
 
 type EmptyStateProps = {
-  label: string;
   title: string;
   description: string;
   icon: string;
 };
 
-export function Empty({ label, title, description, icon }: EmptyStateProps) {
+export function Empty({ title, description, icon }: EmptyStateProps) {
   return (
-    <section className="grid min-w-0 justify-items-center gap-2 px-4 py-6 text-center" aria-label={label}>
+    <section className="grid min-w-0 justify-items-center gap-2 px-4 py-6 text-center" aria-label={title}>
       <div className="grid size-8 place-items-center" aria-hidden="true">
         <Icon name={icon} size="xl" variant="muted" />
       </div>

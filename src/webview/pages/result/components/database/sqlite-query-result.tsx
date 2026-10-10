@@ -27,7 +27,6 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
           : 'Query failed';
     return (
       <Empty
-        label={title}
         title={title}
         description={task.error ?? 'The query did not complete.'}
         icon={taskStatusPresentation[task.status].icon}
@@ -38,7 +37,6 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
   if (!input || !isDatabaseQueryResult(task.output)) {
     return (
       <Empty
-        label={`${engine} result unavailable`}
         title={`Could not display this ${engine} query`}
         description="The saved query input or result is missing or invalid."
         icon="warning"

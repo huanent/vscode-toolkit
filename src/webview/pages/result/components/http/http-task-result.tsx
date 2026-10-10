@@ -25,7 +25,6 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
     if (isHttpResponseData(task.output)) return <HttpResponseView response={task.output} />;
     return (
       <Empty
-        label="HTTP result unavailable"
         title="Could not display this HTTP task"
         description="The saved HTTP response is missing or invalid."
         icon="warning"
@@ -36,7 +35,6 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
   if (!request) {
     return (
       <Empty
-        label="HTTP result unavailable"
         title="Could not display this HTTP task"
         description={task.error ?? 'The saved request data is invalid.'}
         icon="warning"

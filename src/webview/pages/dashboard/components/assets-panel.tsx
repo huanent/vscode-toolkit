@@ -1,4 +1,6 @@
 import type { AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
+import { Empty } from '@/webview/components/empty';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
 import { Tree, type TreeItem } from '@/webview/components/tree';
 import { postToHost } from '@/webview/utils/host-data';
@@ -37,13 +39,9 @@ export function AssetsPanel({
           />
         </div>
       ) : (
-        <p className="p-2 text-sm text-(--vscode-descriptionForeground)">No assets</p>
+        <Empty title="No assets" description="The assets list is empty." icon="layers" />
       )}
-      {error && (
-        <p className="mt-2 wrap-break-word text-sm text-(--vscode-errorForeground)" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <ErrorMessage message={error} className="mt-2" />}
     </section>
   );
 }
