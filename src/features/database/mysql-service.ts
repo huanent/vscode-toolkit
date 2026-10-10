@@ -17,6 +17,7 @@ import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { createMysqlUri, mysqlEditorViewType } from './mysql/editor';
 import { buildMysqlCreateTableStatement, isSystemDatabase } from './mysql/schema';
+import type { CredentialService } from '@/features/credential/service';
 
 export class MysqlService implements AssetProvider {
   readonly type = 'mysql';
@@ -28,6 +29,7 @@ export class MysqlService implements AssetProvider {
   constructor(
     private readonly assets: AssetService,
     private readonly tasks: ResultTaskService,
+    private readonly credentials: CredentialService,
   ) {}
 
   getFormValues(record?: AssetRecord): AssetFormValues {
@@ -36,11 +38,9 @@ export class MysqlService implements AssetProvider {
       name: previous?.name ?? 'MySQL',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 3306,
-      user: previous?.user ?? 'root',
+      credentialId: previous?.credentialId ?? '',
       database: previous?.database ?? '',
       tls: previous?.tls ?? false,
-      privateKeyPath: '',
-      password: '',
     };
   }
 
@@ -53,13 +53,12 @@ export class MysqlService implements AssetProvider {
       name: values.name.trim(),
       host: values.host.trim(),
       port: values.port,
-      user: values.user.trim(),
+      credentialId: values.credentialId,
       database: values.database.trim() || undefined,
       tls: values.tls,
     };
     requireMysqlConfiguration(asset);
-    if (!asset.name || !asset.host || !asset.user) throw new Error('Name, host and user are required.');
-    if (!previous || values.password !== '') await this.assets.setSecret(asset, values.password);
+    if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
     await this.assets.save(asset);
   }
 
@@ -343,11 +342,14 @@ export class MysqlService implements AssetProvider {
     run: (connection: Connection) => Promise<T>,
   ): Promise<T> {
     if (this.disposed || signal?.aborted) throw new Error('MySQL operation was cancelled.');
+    const credentials = await this.credentials.list();
+    const credential = credentials.find((c) => c.id === asset.credentialId);
+    if (!credential) throw new Error('Credential not found.');
     const connection = await createConnection({
       host: asset.host,
       port: asset.port,
-      user: asset.user,
-      password: (await this.assets.getSecret(asset)) ?? '',
+      user: credential.username,
+      password: credential.password ?? '',
       database: database ?? asset.database,
       ssl: asset.tls ? { rejectUnauthorized: true } : undefined,
       connectTimeout: 10000,
@@ -382,7 +384,7 @@ function isMysqlAsset(value: unknown): value is MysqlConnectionConfiguration {
     /^[a-zA-Z0-9-]+$/.test(asset.id) &&
     typeof asset.name === 'string' &&
     typeof asset.host === 'string' &&
-    typeof asset.user === 'string' &&
+    typeof asset.credentialId === 'string' &&
     typeof asset.port === 'number' &&
     Number.isInteger(asset.port) &&
     asset.port > 0 &&

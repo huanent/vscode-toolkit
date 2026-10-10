@@ -2,11 +2,9 @@ export interface AssetFormValues {
   name: string;
   host: string;
   port: number;
-  user: string;
   database: string;
   tls: boolean;
-  privateKeyPath: string;
-  password: string;
+  credentialId: string;
 }
 
 export interface AssetEditorData {
@@ -14,6 +12,7 @@ export interface AssetEditorData {
   label: string;
   editing: boolean;
   values: AssetFormValues;
+  credentials: { id: string; name: string }[];
 }
 
 export type AssetEditorMessage = { type: 'saveError'; message: string } | { type: 'privateKeySelected'; path: string };

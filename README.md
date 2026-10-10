@@ -64,7 +64,7 @@ The task service publishes state-change notifications without importing VS Code 
 The Result view adapter subscribes while resolved and releases its subscription when disposed.
 Closing a view does not stop tasks. Disposing the application-owned service removes listeners, rejects new operations, and aborts running operations that honor `AbortSignal`.
 SQLite execution remains synchronous and cannot be interrupted mid-query.
-Existing `result2` storage and task JSON are unchanged. Unfinished persisted tasks are recovered as interrupted on the next activation.
+Existing `results` storage and task JSON are unchanged. Unfinished persisted tasks are recovered as interrupted on the next activation.
 Storage initialization failures reject activation before task consumers are registered.
 
 ### SQLite Responsibilities

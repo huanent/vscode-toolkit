@@ -1,5 +1,3 @@
-import * as os from 'node:os';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
@@ -7,12 +5,14 @@ import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { AssetProvider } from './asset-provider';
 import type { AssetEditorData, AssetEditorMessage, AssetFormValues } from './protocol';
 import type { AssetRecord, AssetService } from './service';
+import type { CredentialService } from '@/features/credential/service';
 
 export function openAssetEditor(
   context: vscode.ExtensionContext,
   service: AssetService,
   provider: AssetProvider,
   refresh: () => Promise<void>,
+  credentials: CredentialService,
   previous?: AssetRecord,
   parentId?: string,
 ): void {
@@ -30,13 +30,16 @@ export function openAssetEditor(
   const storageDirectory = resolveStorageDirectory(context, 'assets');
   const bridge = serveWebviewData(
     panel.webview,
-    async () =>
-      ({
+    async () => {
+      const creds = await credentials.list();
+      return {
         assetType: provider.type,
         label: provider.label,
         editing: Boolean(previous),
         values,
-      }) satisfies AssetEditorData,
+        credentials: creds.map((c) => ({ id: c.id, name: c.name })),
+      } satisfies AssetEditorData;
+    },
   );
   const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
     if (!message || typeof message !== 'object' || !('type' in message)) return;
@@ -44,20 +47,6 @@ export function openAssetEditor(
     try {
       if (message.type === 'cancel') {
         panel.dispose();
-      } else if (message.type === 'selectPrivateKey' && provider.type === 'ssh') {
-        const files = await vscode.window.showOpenDialog({
-          title: 'SSH private key',
-          canSelectMany: false,
-          canSelectFiles: true,
-          canSelectFolders: false,
-          defaultUri: vscode.Uri.file(values.privateKeyPath || path.join(os.homedir(), '.ssh')),
-        });
-        if (!files?.[0] || disposed) return;
-        if (files[0].scheme !== 'file') throw new Error('Select a key file accessible to the extension host.');
-        await panel.webview.postMessage({
-          type: 'privateKeySelected',
-          path: files[0].fsPath,
-        } satisfies AssetEditorMessage);
       } else if (message.type === 'save') {
         if (!('values' in message) || !isFormValues(message.values)) throw new Error('Invalid asset configuration.');
         saving = true;
@@ -91,7 +80,7 @@ function isFormValues(value: unknown): value is AssetFormValues {
   if (!value || typeof value !== 'object') return false;
   const values = value as Partial<AssetFormValues>;
   return (
-    [values.name, values.host, values.user, values.database, values.privateKeyPath, values.password].every(
+    [values.name, values.host, values.database, values.credentialId].every(
       (field) => typeof field === 'string',
     ) &&
     typeof values.tls === 'boolean' &&

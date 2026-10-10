@@ -4,11 +4,13 @@ import type { AssetRequest, AssetsMessage, AssetViewEntry } from './protocol';
 import type { AssetProvider } from './asset-provider';
 import type { AssetService } from './service';
 import { openAssetEditor } from './editor';
+import type { CredentialService } from '@/features/credential/service';
 
 export function createAssetsView(
   context: vscode.ExtensionContext,
   service: AssetService,
   providers: readonly AssetProvider[],
+  credentials: CredentialService,
 ): WebviewViewHandler {
   let activeWebview: vscode.Webview | undefined;
   const providerFor = (type: string) => {
@@ -68,13 +70,13 @@ export function createAssetsView(
               { title: 'Asset type' },
             );
         const provider = selected && ('provider' in selected ? selected.provider : selected);
-        if (provider) openAssetEditor(context, service, provider, refresh, undefined, request.folderId);
+        if (provider) openAssetEditor(context, service, provider, refresh, credentials, undefined, request.folderId);
         return;
       }
       if (!request.id) return;
       const asset = await service.get(request.id);
       if (request.action === 'edit') {
-        openAssetEditor(context, service, providerFor(asset.type), refresh, asset);
+        openAssetEditor(context, service, providerFor(asset.type), refresh, credentials, asset);
         return;
       } else if (request.action === 'delete') {
         const isFolder = asset.type === 'folder';

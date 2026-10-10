@@ -5,13 +5,11 @@ import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
-import { SegmentedControl } from '@/webview/components/segmented-control';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 function AssetForm({ data }: { data: AssetEditorData }) {
   const [values, setValues] = useState(data.values);
-  const [usePrivateKey, setUsePrivateKey] = useState(Boolean(data.values.privateKeyPath));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const mysql = data.assetType === 'mysql';
@@ -22,8 +20,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
     if (event.data?.type === 'saveError') {
       setError(event.data.message);
       setSaving(false);
-    } else if (event.data?.type === 'privateKeySelected') {
-      update('privateKeyPath', event.data.path);
     }
   });
   useEffect(() => {
@@ -47,7 +43,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           setSaving(true);
           postToHost({
             type: 'save',
-            values: { ...values, privateKeyPath: usePrivateKey ? values.privateKeyPath : '' },
+            values,
           });
         }}
       >
@@ -75,26 +71,25 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             </label>
           </div>
           <label className="grid gap-1 text-xs">
-            User
-            <Input
+            Credential
+            <select
               required
-              autoComplete="off"
-              value={values.user}
-              onChange={(event) => update('user', event.target.value)}
-            />
+              className="h-7 w-full rounded border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
+              value={values.credentialId}
+              onChange={(event) => update('credentialId', event.target.value)}
+            >
+              <option value="" disabled>
+                Select a credential
+              </option>
+              {data.credentials.map((cred) => (
+                <option key={cred.id} value={cred.id}>
+                  {cred.name}
+                </option>
+              ))}
+            </select>
           </label>
-          {mysql ? (
+          {mysql && (
             <>
-              <label className="grid gap-1 text-xs">
-                Password
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  value={values.password}
-                  placeholder={data.editing ? 'Unchanged' : undefined}
-                  onChange={(event) => update('password', event.target.value)}
-                />
-              </label>
               <label className="grid gap-1 text-xs">
                 Default database (optional)
                 <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
@@ -103,44 +98,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
                 <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
                 TLS certificate verification
               </label>
-            </>
-          ) : (
-            <>
-              <div className="grid min-w-0 gap-2">
-                <span className="text-xs">Authentication</span>
-                <SegmentedControl
-                  ariaLabel="Authentication"
-                  value={usePrivateKey ? 'key' : 'default'}
-                  options={[
-                    { value: 'default', label: 'Default SSH' },
-                    { value: 'key', label: 'Private key' },
-                  ]}
-                  disabled={saving}
-                  onValueChange={(value) => setUsePrivateKey(value === 'key')}
-                />
-              </div>
-              {usePrivateKey && (
-                <div className="grid min-w-0 gap-1">
-                  <label htmlFor="private-key" className="text-xs">
-                    Private key file
-                  </label>
-                  <div className="flex min-w-0 gap-2">
-                    <Input
-                      id="private-key"
-                      required
-                      value={values.privateKeyPath}
-                      onChange={(event) => update('privateKeyPath', event.target.value)}
-                    />
-                    <Button
-                      variant="secondary"
-                      title="Select private key file"
-                      aria-label="Select private key file"
-                      prefix={<Icon name="folder-opened" />}
-                      onClick={() => postToHost({ type: 'selectPrivateKey' })}
-                    />
-                  </div>
-                </div>
-              )}
             </>
           )}
         </fieldset>

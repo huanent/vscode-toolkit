@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import * as os from 'node:os';
 import * as vscode from 'vscode';
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
+import type { CredentialService } from '@/features/credential/service';
 
 export class SshService implements AssetProvider {
   readonly type = 'ssh';
@@ -12,7 +12,10 @@ export class SshService implements AssetProvider {
   private readonly terminals = new Map<string, Set<vscode.Terminal>>();
   private readonly closed: vscode.Disposable;
 
-  constructor(private readonly assets: AssetService) {
+  constructor(
+    private readonly assets: AssetService,
+    private readonly credentials: CredentialService,
+  ) {
     this.closed = vscode.window.onDidCloseTerminal((terminal) => {
       for (const [id, terminals] of this.terminals) {
         terminals.delete(terminal);
@@ -27,11 +30,9 @@ export class SshService implements AssetProvider {
       name: previous?.name ?? 'SSH',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
-      user: previous?.user ?? os.userInfo().username,
-      privateKeyPath: previous?.privateKeyPath ?? '',
+      credentialId: previous?.credentialId ?? '',
       database: '',
       tls: false,
-      password: '',
     };
   }
 
@@ -44,8 +45,7 @@ export class SshService implements AssetProvider {
       name: values.name.trim(),
       host: values.host.trim(),
       port: values.port,
-      user: values.user.trim(),
-      privateKeyPath: values.privateKeyPath.trim() || undefined,
+      credentialId: values.credentialId,
     };
     requireSshConfiguration(asset);
     await this.assets.save(asset);
@@ -58,7 +58,7 @@ export class SshService implements AssetProvider {
       path: asset.id,
       name: asset.name,
       type: 'file',
-      detail: `SSH - ${asset.user}@${asset.host}:${asset.port}`,
+      detail: `SSH - ${asset.host}:${asset.port}`,
       context: { assetId: asset.id, assetType: this.type, assetConnected: this.terminals.has(asset.id) },
     };
   }
@@ -70,8 +70,11 @@ export class SshService implements AssetProvider {
       return;
     }
     if (request.action !== 'connect') throw new Error('Unsupported SSH operation.');
-    const args = ['-p', String(asset.port), '-l', asset.user];
-    if (asset.privateKeyPath) args.push('-i', asset.privateKeyPath);
+    const credentials = await this.credentials.list();
+    const credential = credentials.find((c) => c.id === asset.credentialId);
+    if (!credential) throw new Error('Credential not found.');
+    const args = ['-p', String(asset.port), '-l', credential.username ?? ''];
+    if (credential.privateKey) args.push('-i', credential.privateKey);
     args.push('--', asset.host);
     const terminal = vscode.window.createTerminal({ name: `SSH: ${asset.name}`, shellPath: 'ssh', shellArgs: args });
     const terminals = this.terminals.get(asset.id) ?? new Set<vscode.Terminal>();
@@ -97,22 +100,17 @@ export class SshService implements AssetProvider {
 function validHost(value: string): boolean {
   return /^[a-zA-Z0-9][a-zA-Z0-9.:%_-]*$/.test(value);
 }
-function validUser(value: string): boolean {
-  return /^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$/.test(value);
-}
 function requireSshConfiguration(value: AssetRecord): SshConnectionConfiguration {
   const asset = value as Partial<SshConnectionConfiguration>;
   if (
     asset.type !== 'ssh' ||
     typeof asset.host !== 'string' ||
     !validHost(asset.host) ||
-    typeof asset.user !== 'string' ||
-    !validUser(asset.user) ||
     typeof asset.port !== 'number' ||
     !Number.isInteger(asset.port) ||
     asset.port < 1 ||
     asset.port > 65535 ||
-    (asset.privateKeyPath !== undefined && typeof asset.privateKeyPath !== 'string')
+    typeof asset.credentialId !== 'string'
   )
     throw new Error(`Invalid SSH configuration: ${value.name}`);
   return value as SshConnectionConfiguration;

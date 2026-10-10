@@ -9,6 +9,7 @@ import { SshService } from '@/features/ssh/ssh-service';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
+import { CredentialService } from '@/features/credential/service';
 
 interface WebviewRegistration {
   id: string;
@@ -24,10 +25,11 @@ export function registerWebviews(
 ): void {
   const assetsUri = vscode.Uri.file(__dirname);
   const assets = new AssetService(context);
-  const mysql = new MysqlService(assets, tasks);
-  const ssh = new SshService(assets);
+  const credentials = new CredentialService(context);
+  const mysql = new MysqlService(assets, tasks, credentials);
+  const ssh = new SshService(assets, credentials);
   context.subscriptions.push(mysql, ssh, registerMysqlEditor(context, mysql, tasks));
-  const assetsView = createAssetsView(context, assets, [mysql, ssh]);
+  const assetsView = createAssetsView(context, assets, [mysql, ssh], credentials);
   const dashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
     workflow: workflowFiles.handler,

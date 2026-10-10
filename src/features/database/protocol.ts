@@ -7,7 +7,7 @@ export interface MysqlConnectionConfiguration {
   name: string;
   host: string;
   port: number;
-  user: string;
+  credentialId: string;
   database?: string;
   tls: boolean;
 }

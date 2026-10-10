@@ -5,6 +5,5 @@ export interface SshConnectionConfiguration {
   name: string;
   host: string;
   port: number;
-  user: string;
-  privateKeyPath?: string;
+  credentialId: string;
 }

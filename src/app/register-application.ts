@@ -18,7 +18,7 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   const tasks = new ResultTaskService();
   context.subscriptions.push(tasks);
   try {
-    await tasks.initialize(resolveStorageDirectory(context, 'result2'));
+    await tasks.initialize(resolveStorageDirectory(context, 'results'));
   } catch (error) {
     tasks.dispose();
     void vscode.window.showErrorMessage(
