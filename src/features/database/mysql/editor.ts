@@ -22,7 +22,9 @@ export const mysqlScheme = 'toolkit-mysql';
 export const mysqlTableScheme = 'toolkit-mysql-table';
 
 export function createMysqlUri(assetId: string, name?: string): vscode.Uri {
-  const query = name ? `id=${encodeURIComponent(assetId)}&name=${encodeURIComponent(name)}` : `id=${encodeURIComponent(assetId)}`;
+  const query = name
+    ? `id=${encodeURIComponent(assetId)}&name=${encodeURIComponent(name)}`
+    : `id=${encodeURIComponent(assetId)}`;
   return vscode.Uri.parse(`${mysqlScheme}:/database?${query}`);
 }
 

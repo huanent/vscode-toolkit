@@ -36,9 +36,7 @@ export function DatabaseSelector({
   const [deletingDatabase, setDeletingDatabase] = useState<string | null>(null);
 
   const query = search.trim().toLowerCase();
-  const filteredDatabases = query
-    ? databases.filter((db) => db.toLowerCase().includes(query))
-    : databases;
+  const filteredDatabases = query ? databases.filter((db) => db.toLowerCase().includes(query)) : databases;
 
   const handleCreateSubmit = () => {
     const trimmed = newDatabaseName.trim();
@@ -71,7 +69,7 @@ export function DatabaseSelector({
           >
             <Icon name="database" size="sm" variant="muted" />
             <span className="truncate">{currentDatabase ?? 'Select database'}</span>
-            <Icon name="chevron-down" size="xs" variant="muted" className="shrink-0" />
+            <Icon name="chevron-down" size="sm" variant="muted" className="shrink-0" />
           </Button>
         }
       >
@@ -83,7 +81,7 @@ export function DatabaseSelector({
                 placeholder="Filter databases..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                prefix={<Icon name="search" size="xs" variant="muted" />}
+                prefix={<Icon name="search" size="sm" variant="muted" />}
                 className="h-6 text-xs"
                 autoFocus
               />
@@ -91,9 +89,7 @@ export function DatabaseSelector({
           )}
           <div className="min-h-0 flex-1 overflow-auto p-1">
             {filteredDatabases.length === 0 ? (
-              <div className="p-2 text-center text-xs text-(--vscode-descriptionForeground)">
-                No databases found
-              </div>
+              <div className="p-2 text-center text-xs text-(--vscode-descriptionForeground)">No databases found</div>
             ) : (
               filteredDatabases.map((db) => {
                 const isSelected = db === currentDatabase;
@@ -119,11 +115,11 @@ export function DatabaseSelector({
                       }
                     }}
                   >
-                    <Icon name="database" size="xs" variant={isSelected ? 'default' : 'muted'} />
+                    <Icon name="database" size="sm" variant={isSelected ? 'default' : 'muted'} />
                     <span className="flex-1 truncate" title={db}>
                       {db}
                     </span>
-                    {isSelected && <Icon name="check" size="xs" className="shrink-0" />}
+                    {isSelected && <Icon name="check" size="sm" className="shrink-0" />}
                     {!isSystem && (
                       <button
                         type="button"
@@ -136,7 +132,7 @@ export function DatabaseSelector({
                           setDeletingDatabase(db);
                         }}
                       >
-                        <Icon name="trash" size="xs" />
+                        <Icon name="trash" size="sm" />
                       </button>
                     )}
                   </div>
@@ -155,7 +151,7 @@ export function DatabaseSelector({
                 setCreatingDatabase(true);
               }}
             >
-              <Icon name="add" size="xs" />
+              <Icon name="add" size="sm" />
               <span>Create Database...</span>
             </button>
           </div>
@@ -207,11 +203,7 @@ export function DatabaseSelector({
               <Button variant="secondary" onClick={() => setCreatingDatabase(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                disabled={!newDatabaseName.trim()}
-                onClick={handleCreateSubmit}
-              >
+              <Button variant="primary" disabled={!newDatabaseName.trim()} onClick={handleCreateSubmit}>
                 Create
               </Button>
             </>

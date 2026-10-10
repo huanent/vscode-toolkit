@@ -274,11 +274,7 @@ export class MysqlService implements AssetProvider {
     });
   }
 
-  async updateTableSchema(
-    assetId: string,
-    databaseName: string,
-    options: UpdateTableSchemaMessage,
-  ): Promise<void> {
+  async updateTableSchema(assetId: string, databaseName: string, options: UpdateTableSchemaMessage): Promise<void> {
     const asset = await this.requireAsset(assetId);
     await this.withConnection(asset, databaseName, undefined, async (connection) => {
       if (options.tableName !== options.newTableName) {
