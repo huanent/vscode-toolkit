@@ -28,19 +28,16 @@ export function openAssetEditor(
   let saving = false;
   let disposed = false;
   const storageDirectory = resolveStorageDirectory(context, 'assets');
-  const bridge = serveWebviewData(
-    panel.webview,
-    async () => {
-      const creds = await credentials.list();
-      return {
-        assetType: provider.type,
-        label: provider.label,
-        editing: Boolean(previous),
-        values,
-        credentials: creds.map((c) => ({ id: c.id, name: c.name })),
-      } satisfies AssetEditorData;
-    },
-  );
+  const bridge = serveWebviewData(panel.webview, async () => {
+    const creds = await credentials.list();
+    return {
+      assetType: provider.type,
+      label: provider.label,
+      editing: Boolean(previous),
+      values,
+      credentials: creds.map((c) => ({ id: c.id, name: c.name })),
+    } satisfies AssetEditorData;
+  });
   const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
     if (!message || typeof message !== 'object' || !('type' in message)) return;
     if (saving) return;
@@ -80,9 +77,7 @@ function isFormValues(value: unknown): value is AssetFormValues {
   if (!value || typeof value !== 'object') return false;
   const values = value as Partial<AssetFormValues>;
   return (
-    [values.name, values.host, values.database, values.credentialId].every(
-      (field) => typeof field === 'string',
-    ) &&
+    [values.name, values.host, values.database, values.credentialId].every((field) => typeof field === 'string') &&
     typeof values.tls === 'boolean' &&
     typeof values.port === 'number' &&
     Number.isInteger(values.port) &&
