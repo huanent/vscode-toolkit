@@ -62,7 +62,7 @@
     {
       "label": "watch:webview-types",
       "type": "shell",
-      "command": "npx tsc -p webview/tsconfig.json --noEmit --watch --preserveWatchOutput",
+      "command": "npx tsc -p tsconfig.webview.json --noEmit --watch --preserveWatchOutput",
       "isBackground": true,
       "problemMatcher": "$tsc-watch"
     },

@@ -1,0 +1,25 @@
+import * as vscode from 'vscode';
+import { getWebviewHtml } from '@/host/webviewHtml';
+import type { ExplorerViewState, FolderEntry } from './protocol';
+
+export function getExplorerWebviewHtml(
+	webview: vscode.Webview,
+	extensionUri: vscode.Uri,
+	rootUri: vscode.Uri,
+	title: string,
+	initialViewState: ExplorerViewState,
+	initialEntries: FolderEntry[],
+): string {
+	return getWebviewHtml(webview, extensionUri, {
+		entry: 'explorer',
+		styleEntry: 'explorer',
+		title,
+		stylePolicy: 'external-only',
+		rootData: {
+			rootUri: rootUri.toString(),
+			currentUri: initialViewState.currentUri,
+			history: JSON.stringify(initialViewState.history),
+			entries: JSON.stringify(initialEntries),
+		},
+	});
+}

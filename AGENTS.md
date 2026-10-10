@@ -1,34 +1,64 @@
-# Repository Guidelines
+# Project Guidelines
 
-## File Naming
+These instructions apply to the entire repository. Webview-specific rules apply to the React frontend and its host integration.
 
-- Use lower camelCase for source file names, including React components, hooks, and utilities (for example, `connectionForm.tsx`, `useConnectionForm.ts`, and `formTransport.ts`). Preserve conventional names required by tooling, such as `AGENTS.md` and configuration files.
-- Keep React component names in PascalCase for JSX, even when their file names use lower camelCase.
-- When renaming files, update all import paths to match the exact filename casing.
+## Project-Wide Rules
 
-## React Component Organization
+- Do not add tests unless the user explicitly requests them, including during bug fixes, feature work, and refactors.
+- Refactors and renames do not need to preserve backward compatibility unless the user explicitly requests it.
+- Use `kebab-case` for code filenames, `PascalCase` for React components and TypeScript types, and `camelCase` for functions and variables.
+- When a file's responsibility changes, promptly rename it to reflect its current responsibility.
+- When a file accumulates too many responsibilities, split it into focused files with clear ownership.
+- Use `@/` for imports from `src/`. Prefer imports such as `@/webview/components/button` over relative paths that traverse up multiple directories.
 
-- Keep React components focused on a single responsibility. Page and container components should compose smaller components rather than contain all rendering, state, and business logic.
-- Keep files and components small: aim for React source files under 300 lines and individual components under 150 lines. Treat these as refactoring guidelines, not hard limits; split by cohesive responsibility rather than mechanically by line count.
-- Extract substantial UI sections and repeated rendering into named components. Move complex stateful behavior and effects into focused custom hooks, and move pure business logic into utilities.
-- Organize components, hooks, and utilities by feature. Keep feature-specific code close to its consumers; promote code to shared modules only when it is genuinely reusable across features.
-- Put feature-independent, reusable non-UI utilities in `webview/src/lib` (for example, date grouping and formatting helpers). Before adding a helper, check for an existing shared implementation; when the same logic is needed by multiple features, extract it into `lib` and update all consumers instead of duplicating it. Keep feature-specific logic in its feature directory.
-- Put basic, feature-independent UI primitives in `webview/src/components/ui` (for example, buttons, inputs, dialogs, and icons).
-- Reserve `webview/src/components` outside `ui` for shared components reusable across multiple features. Compose these from UI primitives where appropriate.
-- Keep components specific to one feature in that feature's directory directly under `webview/src`, not in the shared components directory.
-- Prefer one primary component per file. Small, tightly coupled helper components may remain in the same file; give substantial components their own files and explicit, typed props.
-- When extending an oversized file or component, refactor the touched responsibility before adding more complexity. Avoid unrelated rewrites and trivial abstractions that only scatter code across files.
+## Validation
 
-## Frontend Styling
+- Run `npm run check-types` and `npm run lint` to validate code changes without formatting files.
+- Run `npm run compile` when changes require checking the extension and webview builds.
+- `npm run check-types` checks the host and webview independently using `tsconfig.host.json` and `tsconfig.webview.json`.
+- `npm run validate` and `npm run compile` do not format files. Run `npm run format` only when formatting is intended; it formats the entire repository.
 
-- Treat shared UI components in `webview/src/components/ui` as the source of truth for control appearance. Prefer their default styles and supported sizes and variants over feature-specific styling, even when this changes the old page appearance.
-- Use component slots and composition APIs for embedded controls, such as `Input.left` and `Input.right` for icons and action buttons. Do not recreate an input shell or other control with a styled wrapper around a shared component.
-- Keep feature-level styling focused on page layout, positioning, and necessary domain-specific states. Avoid overriding shared controls' borders, radii, backgrounds, typography, spacing, or focus, hover, and disabled styles merely to preserve a local design.
-- When a shared component lacks a reusable styling or composition capability, extend it with a coherent prop, variant, or slot instead of duplicating styles in consumers. Keep genuinely feature-specific visuals local; do not add abstractions solely to move class names elsewhere.
-- Prefer Tailwind CSS utilities for layout, spacing, typography, colors, responsive behavior, and interaction states in webviews.
-- Use preset Tailwind border-radius utilities such as `rounded-xs`; do not use arbitrary-value radius utilities such as `rounded-[2px]`.
-- Reuse existing UI components and the project's `cn` helper when composing class names. Extract repeated UI into components instead of adding page-specific CSS selectors.
-- Use VS Code theme variables through Tailwind utilities so interfaces respect light, dark, and high-contrast themes.
-- Keep shared Tailwind entry styles, third-party styles, and necessary global rules in CSS. Add custom CSS only when utilities are unsuitable or would make the implementation substantially less clear.
-- When updating an existing page, migrate the styles in the touched scope where practical; avoid unrelated stylesheet rewrites.
-- Keep Tailwind class names statically discoverable by the build. Verify affected webviews with `npm run build` and `npm run lint`.
+## Runtime Boundaries
+
+- `src/shared/` and feature `protocol.ts` files contain runtime-independent contracts. The generic webview handshake types live in `src/shared/webview-protocol.ts`.
+- Webviews must not import host or application implementations, VS Code, or Node built-ins. Feature imports are limited to `protocol.ts` and the browser-safe `database/sqlite-schema.ts`.
+- Host code must not import webview implementations. Shared code must not depend on Node, VS Code, React, or host/webview adapters.
+- Import restrictions are checked by lint. Keep cross-directory imports explicit using `@/`.
+- `src/app/` owns application composition and concrete feature registration. Host infrastructure must not import features or application composition; features must not import the application layer.
+- Register extension resources with `ExtensionContext.subscriptions`. Service instance ownership and shutdown belong to application composition, not webview resolution.
+
+## Webview Architecture
+
+### File Ownership
+
+- `src/webview/bootstrap.tsx`: React webview entry point.
+- `src/webview/components/`: shared components and stable shared page structures.
+- `src/webview/pages/<page>/`: page entries and page-specific components.
+- `src/webview/styles.css`: global base styles and VS Code theme integration only.
+
+Page entry files should compose components and manage page state rather than duplicate shared JSX. Reuse existing shared components; extract new shared components when used by multiple pages or when they represent a stable shared page structure.
+
+### Host Integration
+
+Reuse the shared webview infrastructure; do not re-implement it per feature:
+
+- `src/host/webview-html.ts` builds HTML, rewrites Vite's root-absolute asset URLs, and applies the CSP for both webview views and custom editors. Pages must not declare asset paths.
+- `src/host/webview-bridge.ts` owns the host-side `ready` -> `loaded` / `error` protocol.
+- `src/host/webview-editor.ts` registers read-only custom editors from a definition containing `viewType`, `page`, `icon`, `validate`, `load`, and `data`.
+- `src/webview/utils/host-data.ts` provides `useHostData<TData>()` for payload state and `getRootData()` for host-provided `data-*` values.
+
+### Adding Pages and Editors
+
+- Create each page entry at `src/webview/pages/<page>/app.tsx`.
+- Page entries are discovered automatically and use the shared `src/webview/index.html` template; adding a page does not require changing `vite.config.mts`.
+- For a custom editor, also declare `contributes.customEditors` in `package.json` and call `registerWebviewEditor` with a `load` function.
+
+## Webview UI and Styling
+
+- Prefer `@base-ui/react` primitives when building shared components in `src/webview/components/` whenever an equivalent control exists.
+- Prefer shared components from `src/webview/components/` when implementing UI. If a reusable control is missing, add or extend a shared component before using Base UI primitives directly or hand-rolling controls in pages.
+- Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
+- Never use inline `style` attributes in webview JSX; the CSP uses `default-src 'none'`.
+- Use VS Code CSS variables for colors so the webview follows the active theme.
+- Use built-in integer Tailwind tokens for dimensions, such as `mt-2`, `px-4`, `size-10`, and `text-sm`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens.
+- Before adding styles, check for reusable integer Tailwind tokens and VS Code theme variables.

@@ -5,7 +5,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
-			'@webview': fileURLToPath(new URL('./webview/src', import.meta.url)),
 		},
 	},
 	test: {

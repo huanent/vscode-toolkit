@@ -25,7 +25,7 @@
     "onFileSystem:toolkit-temp",
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "customEditors": [
       {
@@ -144,7 +144,7 @@
         {
           "id": "vscode-toolkit-dashboard",
           "title": "Toolkit",
-          "icon": "$(tools)"
+          "icon": "resources/logo.svg"
         }
       ],
       "panel": [
@@ -1167,7 +1167,7 @@
     ]
   },
   "scripts": {
-    "lint": "oxlint --deny-warnings .",
+    "lint": "oxlint --deny-warnings src",
     "lint:fix": "npm run lint -- --fix",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
@@ -1175,11 +1175,14 @@
     "test:watch": "vitest",
     "test:typecheck": "tsc -p tsconfig.test.json",
     "vscode:prepublish": "npm run build",
-    "build": "npm run compile && npm run compile:webview",
-    "watch:extension": "vite build --config vite.extension.config.mts --watch",
-    "watch:webview": "vite build --watch",
-    "compile": "rimraf out && tsc -p ./ --noEmit && vite build --config vite.extension.config.mts",
-    "compile:webview": "tsc -p webview/tsconfig.json && vite build",
+    "build": "npm run compile",
+    "check-types": "npm run check-types:host && npm run check-types:webview",
+    "check-types:host": "tsc --noEmit -p tsconfig.host.json",
+    "check-types:webview": "tsc --noEmit -p tsconfig.webview.json",
+    "watch:extension": "VITE_BUILD_TARGET=extension vite build --watch",
+    "watch:webview": "VITE_BUILD_TARGET=webview vite build --watch",
+    "compile": "rimraf dist && npm run check-types && VITE_BUILD_TARGET=extension vite build && VITE_BUILD_TARGET=webview vite build",
+    "compile:webview": "npm run check-types:webview && VITE_BUILD_TARGET=webview vite build",
     "package": "vsce package --no-yarn",
     "publish": "vsce publish --no-yarn"
   },

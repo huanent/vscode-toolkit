@@ -1,0 +1,78 @@
+import { Button, IconButton } from '@/webview/components/ui/button';
+import { Plus, Search, X } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
+
+export function DashboardSearch({
+	label,
+	value,
+	onChange,
+}: {
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+}) {
+	return (
+		<label className="mb-3 flex h-8 min-w-0 items-center gap-2 rounded-xs border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus-within:outline focus-within:outline-(--vscode-focusBorder)">
+			<Search size="sm" className="shrink-0" aria-hidden="true" />
+			<input
+				type="text"
+				className="min-w-0 flex-1 bg-transparent text-xs outline-none"
+				aria-label={label}
+				placeholder={label}
+				value={value}
+				onChange={event => onChange(event.target.value)}
+				onKeyDown={event => {
+					if (event.key === 'Escape' && value) {
+						event.preventDefault();
+						onChange('');
+					}
+				}}
+			/>
+			<IconButton
+				size="sm"
+				className={value ? '' : 'invisible'}
+				label="Clear search"
+				icon={<X size="sm" />}
+				onClick={event => {
+					onChange('');
+					event.currentTarget.parentElement?.querySelector('input')?.focus();
+				}}
+			/>
+		</label>
+	);
+}
+
+export function DashboardEmpty({
+	loading = false,
+	filtered = false,
+	noun,
+	onCreate,
+	onClear,
+	disabled = false,
+}: {
+	loading?: boolean;
+	filtered?: boolean;
+	noun: string;
+	onCreate?: () => void;
+	onClear?: () => void;
+	disabled?: boolean;
+}) {
+	if (loading) return <Loading />;
+	return (
+		<div
+			role="status"
+			className="flex min-h-36 flex-col items-center justify-center gap-3 px-3 py-6 text-center text-xs text-(--vscode-descriptionForeground)"
+		>
+			<p>{filtered ? `No matching ${noun}.` : `No ${noun} yet.`}</p>
+			{filtered ? (
+				<IconButton label="Clear search" icon={<X size="md" />} onClick={onClear} />
+			) : (
+				onCreate && (
+					<Button size="sm" left={<Plus size="sm" />} disabled={disabled} onClick={onCreate}>
+						{noun === 'workflows' ? 'New workflow' : 'New connection'}
+					</Button>
+				)
+			)}
+		</div>
+	);
+}

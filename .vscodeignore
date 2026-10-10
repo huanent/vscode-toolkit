@@ -7,15 +7,15 @@ AGENTS.md
 .oxfmtrc.json
 src/**
 webview/**
+media/**
 vite.config.mts
-vite.extension.config.mts
 vitest.config.mts
 tsconfig.test.json
 tests/**
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
-**/tsconfig.json
+**/tsconfig*.json
 **/eslint.config.mjs
 **/*.map
 **/*.ts
