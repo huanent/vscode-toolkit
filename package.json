@@ -170,7 +170,7 @@
         {
           "id": "toolkit_dashboard",
           "title": "Toolkit",
-          "icon": "$(developer-tools)"
+          "icon": "resource/logo.svg"
         }
       ],
       "panel": [
@@ -187,7 +187,7 @@
           "type": "webview",
           "id": "toolkit.dashboard",
           "name": "Toolkit",
-          "icon": "$(developer-tools)"
+          "icon": "resource/logo.svg"
         }
       ],
       "toolkit_result": [
