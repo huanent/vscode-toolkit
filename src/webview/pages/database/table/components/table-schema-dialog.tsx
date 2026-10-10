@@ -22,12 +22,30 @@ interface TableSchemaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   table?: DatabaseTable;
+  engine?: 'sqlite' | 'mysql';
   onClose: () => void;
 }
 
 const sqliteDataTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'DATETIME'];
+const mysqlDataTypes = [
+  'INT',
+  'BIGINT',
+  'VARCHAR(255)',
+  'TEXT',
+  'DATETIME',
+  'TIMESTAMP',
+  'TINYINT(1)',
+  'DECIMAL(10,2)',
+  'DOUBLE',
+  'JSON',
+  'BLOB',
+];
 
-export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableSchemaDialogProps) {
+export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }: TableSchemaDialogProps) {
+  const dataTypes = engine === 'mysql' ? mysqlDataTypes : sqliteDataTypes;
+  const defaultIdType = engine === 'mysql' ? 'INT' : 'INTEGER';
+  const defaultColType = engine === 'mysql' ? 'VARCHAR(255)' : 'TEXT';
+
   const [tableName, setTableName] = useState(table?.name ?? '');
   const [columns, setColumns] = useState<EditableColumn[]>(() =>
     table
@@ -39,7 +57,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
           notNull: col.notNull,
           originalName: col.name,
         }))
-      : [{ id: crypto.randomUUID(), name: 'id', type: 'INTEGER', primaryKey: true, notNull: true }],
+      : [{ id: crypto.randomUUID(), name: 'id', type: defaultIdType, primaryKey: true, notNull: true }],
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,7 +95,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
         {
           id,
           name: `column_${suffix}`,
-          type: 'TEXT',
+          type: defaultColType,
           primaryKey: false,
           notNull: false,
         },
@@ -171,7 +189,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, onClose }: TableS
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
         <Autocomplete
-          items={sqliteDataTypes}
+          items={dataTypes}
           value={col.type}
           onValueChange={(type) => handleColumnChange(col.id, { type })}
           disabled={isSubmitting}

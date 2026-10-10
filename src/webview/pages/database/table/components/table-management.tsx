@@ -110,7 +110,7 @@ export function TableManagement({ tables, onEditSchema }: TableManagementProps) 
 
   return (
     <Table
-      ariaLabel="SQLite database tables"
+      ariaLabel="Database tables"
       columns={columns}
       rows={tables}
       rowKey={(table) => table.name}

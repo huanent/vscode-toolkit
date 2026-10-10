@@ -58,7 +58,7 @@ function createColumn(column: DatabaseTable['columns'][number], columnIndex: num
 
 function App() {
   const state = useHostData<DatabaseTable>();
-  const name = getRootData('name') ?? 'SQLite Table';
+  const name = getRootData('name') ?? 'Database Table';
   const [search, setSearch] = useState('');
   const query = useDeferredValue(search.trim().toLowerCase());
   useEffect(() => {
@@ -69,7 +69,7 @@ function App() {
     return (
       <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
         {state.status === 'loading' ? (
-          <Loading label="Reading SQLite table..." />
+          <Loading label="Reading table..." />
         ) : (
           <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
             {state.message}

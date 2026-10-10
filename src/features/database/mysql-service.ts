@@ -2,17 +2,27 @@ import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { escapeId } from 'mysql2';
 import { createConnection, type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
-import type { DatabaseQueryResult, DatabaseSchema, MysqlConnectionConfiguration } from './protocol';
+import type {
+  DatabaseColumn,
+  DatabaseDocument,
+  DatabaseQueryResult,
+  DatabaseTable,
+  MysqlConnectionConfiguration,
+  SqliteTableColumnDefinition,
+  UpdateTableSchemaMessage,
+} from './protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { ResultTaskService } from '@/features/result/task-service';
+import { createMysqlUri, mysqlEditorViewType } from './mysql/editor';
+import { buildMysqlCreateTableStatement, isSystemDatabase } from './mysql/schema';
 
 export class MysqlService implements AssetProvider {
   readonly type = 'mysql';
   readonly label = 'MySQL';
   private readonly connections = new Set<Connection>();
-  private readonly schemas = new Map<string, DatabaseSchema[]>();
+  private readonly connectedAssets = new Set<string>();
   private disposed = false;
 
   constructor(
@@ -51,86 +61,229 @@ export class MysqlService implements AssetProvider {
     if (!asset.name || !asset.host || !asset.user) throw new Error('Name, host and user are required.');
     if (!previous || values.password !== '') await this.assets.setSecret(asset, values.password);
     await this.assets.save(asset);
-    this.schemas.delete(asset.id);
   }
 
   invalidate(id?: string): void {
-    if (id) this.schemas.delete(id);
-    else this.schemas.clear();
+    if (id) this.connectedAssets.delete(id);
+    else this.connectedAssets.clear();
   }
 
   toViewEntry(record: AssetRecord): AssetViewEntry {
     const asset = requireMysqlConfiguration(record);
-    const databases = this.schemas.get(asset.id);
-    const context = { assetId: asset.id, assetType: this.type, assetConnected: databases !== undefined };
+    const connected = this.connectedAssets.has(asset.id);
     return {
       path: asset.id,
       name: asset.name,
-      type: databases === undefined ? 'file' : 'directory',
+      type: 'file',
       detail: `MySQL - ${asset.host}:${asset.port}`,
-      context,
-      children: databases?.map((database) => ({
-        path: `${asset.id}/${encodeURIComponent(database.name)}`,
-        name: database.name,
-        type: 'directory',
-        context: { ...context, assetDatabase: database.name },
-        children: database.tables.map((table) => ({
-          path: `${asset.id}/${encodeURIComponent(database.name)}/${encodeURIComponent(table)}`,
-          name: table,
-          type: 'file',
-          context: { ...context, assetDatabase: database.name, assetTable: table },
-        })),
-      })),
+      context: { assetId: asset.id, assetType: this.type, assetConnected: connected },
     };
   }
 
   async execute(record: AssetRecord, request: AssetRequest): Promise<void> {
     const asset = requireMysqlConfiguration(record);
     if (request.action === 'connect') {
-      await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Window, title: `Connecting to ${asset.name}` },
-        () => this.connect(asset),
+      await vscode.commands.executeCommand(
+        'vscode.openWith',
+        createMysqlUri(asset.id, asset.name),
+        mysqlEditorViewType,
       );
     } else if (request.action === 'disconnect') {
       this.invalidate(asset.id);
-    } else if (request.action === 'query' || request.action === 'preview') {
-      const sql =
-        request.action === 'preview' && request.table
-          ? `SELECT * FROM ${escapeId(request.table, true)} LIMIT 1000`
-          : await vscode.window.showInputBox({
-              title: `MySQL query: ${asset.name}`,
-              prompt: request.database ?? asset.database,
-              ignoreFocusOut: true,
-              validateInput: (value) => (value.trim() ? undefined : 'Enter SQL.'),
-            });
-      if (!sql) return;
-      await vscode.commands.executeCommand('toolkit.result.focus');
-      await this.tasks.startTask({
-        kind: this.type,
-        title: `${asset.name}: ${sql.replace(/\s+/g, ' ').slice(0, 64)}`,
-        input: { databaseName: request.database ?? asset.database ?? asset.name, sql },
-        run: (signal) => this.query(asset, request.database, sql, signal),
-      });
+    } else if (request.action === 'query') {
+      await vscode.commands.executeCommand(
+        'vscode.openWith',
+        createMysqlUri(asset.id, asset.name),
+        mysqlEditorViewType,
+      );
     }
   }
 
-  async connect(asset: MysqlConnectionConfiguration): Promise<void> {
-    await this.withConnection(asset, undefined, undefined, async (connection) => {
-      const [rows] = await connection.query<RowDataPacket[]>({ sql: 'SHOW DATABASES', timeout: 60000 });
-      const databases = [];
-      for (const row of rows) {
-        const name = String(row.Database);
-        if (asset.database && name !== asset.database) continue;
-        const [tables] = await connection.query<RowDataPacket[]>(
-          {
-            sql: 'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME',
-            timeout: 60000,
-          },
-          [name],
-        );
-        databases.push({ name, tables: tables.map((table) => String(table.TABLE_NAME)) });
+  async requireAsset(id: string): Promise<MysqlConnectionConfiguration> {
+    const record = await this.assets.get(id);
+    return requireMysqlConfiguration(record);
+  }
+
+  async readDatabaseDocument(assetId: string, databaseName?: string): Promise<DatabaseDocument> {
+    const asset = await this.requireAsset(assetId);
+    return this.withConnection(asset, undefined, undefined, async (connection) => {
+      this.connectedAssets.add(assetId);
+      const [dbRows] = await connection.query<RowDataPacket[]>({ sql: 'SHOW DATABASES', timeout: 60000 });
+      const databases = dbRows.map((row) => String(row.Database));
+
+      let currentDatabase = databaseName && databases.includes(databaseName) ? databaseName : undefined;
+      if (!currentDatabase && asset.database && databases.includes(asset.database)) {
+        currentDatabase = asset.database;
       }
-      this.schemas.set(asset.id, databases);
+      if (!currentDatabase) {
+        currentDatabase = databases.find((name) => !isSystemDatabase(name)) ?? databases[0];
+      }
+
+      if (!currentDatabase) {
+        return {
+          engine: 'mysql',
+          databases,
+          currentDatabase: undefined,
+          tables: [],
+        };
+      }
+
+      const [tableRows] = await connection.query<RowDataPacket[]>(
+        {
+          sql: 'SELECT TABLE_NAME, TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME',
+          timeout: 60000,
+        },
+        [currentDatabase],
+      );
+
+      const [columnRows] = await connection.query<RowDataPacket[]>(
+        {
+          sql: 'SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION',
+          timeout: 60000,
+        },
+        [currentDatabase],
+      );
+
+      const columnsByTable = new Map<string, DatabaseColumn[]>();
+      for (const row of columnRows) {
+        const tableName = String(row.TABLE_NAME);
+        const list = columnsByTable.get(tableName) ?? [];
+        list.push({
+          name: String(row.COLUMN_NAME),
+          type: String(row.COLUMN_TYPE),
+          notNull: row.IS_NULLABLE === 'NO',
+          primaryKey: row.COLUMN_KEY === 'PRI',
+        });
+        columnsByTable.set(tableName, list);
+      }
+
+      const tables: DatabaseTable[] = tableRows.map((row) => {
+        const name = String(row.TABLE_NAME);
+        const cols = columnsByTable.get(name) ?? [];
+        return {
+          name,
+          rowCount: Number(row.TABLE_ROWS ?? 0),
+          columnCount: cols.length,
+          columns: cols,
+          rows: [],
+        };
+      });
+
+      return {
+        engine: 'mysql',
+        databases,
+        currentDatabase,
+        tables,
+      };
+    });
+  }
+
+  async readTable(assetId: string, databaseName: string, tableName: string): Promise<DatabaseTable> {
+    const asset = await this.requireAsset(assetId);
+    return this.withConnection(asset, databaseName, undefined, async (connection) => {
+      this.connectedAssets.add(assetId);
+      const [colRows] = await connection.query<RowDataPacket[]>(
+        {
+          sql: 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
+          timeout: 60000,
+        },
+        [databaseName, tableName],
+      );
+      const columns: DatabaseColumn[] = colRows.map((col) => ({
+        name: String(col.COLUMN_NAME),
+        type: String(col.COLUMN_TYPE),
+        notNull: col.IS_NULLABLE === 'NO',
+        primaryKey: col.COLUMN_KEY === 'PRI',
+      }));
+
+      let rowCount = 0;
+      try {
+        const [countRows] = await connection.query<RowDataPacket[]>({
+          sql: `SELECT COUNT(*) AS count FROM ${escapeId(tableName)}`,
+          timeout: 60000,
+        });
+        rowCount = Number(countRows[0]?.count ?? 0);
+      } catch {
+        // Fallback to 0 if count query fails
+      }
+
+      const [rows] = await connection.query({
+        sql: `SELECT * FROM ${escapeId(tableName)} LIMIT 1000`,
+        rowsAsArray: true,
+        timeout: 60000,
+      });
+
+      const values = (Array.isArray(rows) ? rows : []) as unknown as unknown[][];
+      return {
+        name: tableName,
+        rowCount,
+        columnCount: columns.length,
+        columns,
+        rows: values.map((row) =>
+          row.map((value) =>
+            value === null
+              ? null
+              : typeof value === 'number' || typeof value === 'string'
+                ? value
+                : Buffer.isBuffer(value)
+                  ? value.toString('hex')
+                  : value instanceof Date
+                    ? value.toISOString()
+                    : JSON.stringify(value),
+          ),
+        ),
+      };
+    });
+  }
+
+  async createDatabase(assetId: string, databaseName: string): Promise<void> {
+    const trimmed = databaseName.trim();
+    if (!trimmed) throw new Error('Database name cannot be empty.');
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, undefined, undefined, async (connection) => {
+      await connection.query(`CREATE DATABASE ${escapeId(trimmed)}`);
+    });
+  }
+
+  async deleteDatabase(assetId: string, databaseName: string): Promise<void> {
+    const trimmed = databaseName.trim();
+    if (!trimmed) throw new Error('Database name cannot be empty.');
+    if (isSystemDatabase(trimmed)) throw new Error(`Cannot delete system database "${trimmed}".`);
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, undefined, undefined, async (connection) => {
+      await connection.query(`DROP DATABASE ${escapeId(trimmed)}`);
+    });
+  }
+
+  async createTable(
+    assetId: string,
+    databaseName: string,
+    options: { tableName: string; columns: readonly SqliteTableColumnDefinition[] },
+  ): Promise<void> {
+    const asset = await this.requireAsset(assetId);
+    const sql = buildMysqlCreateTableStatement(options.tableName, options.columns);
+    await this.withConnection(asset, databaseName, undefined, async (connection) => {
+      await connection.query(sql);
+    });
+  }
+
+  async deleteTable(assetId: string, databaseName: string, tableName: string): Promise<void> {
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, databaseName, undefined, async (connection) => {
+      await connection.query(`DROP TABLE ${escapeId(tableName)}`);
+    });
+  }
+
+  async updateTableSchema(
+    assetId: string,
+    databaseName: string,
+    options: UpdateTableSchemaMessage,
+  ): Promise<void> {
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, databaseName, undefined, async (connection) => {
+      if (options.tableName !== options.newTableName) {
+        await connection.query(`RENAME TABLE ${escapeId(options.tableName)} TO ${escapeId(options.newTableName)}`);
+      }
     });
   }
 
@@ -184,7 +337,7 @@ export class MysqlService implements AssetProvider {
     this.disposed = true;
     for (const connection of this.connections) connection.destroy();
     this.connections.clear();
-    this.schemas.clear();
+    this.connectedAssets.clear();
   }
 
   private async withConnection<T>(

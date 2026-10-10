@@ -4,6 +4,7 @@ import type { WorkflowFilesView } from '@/features/workflow/view-handler';
 import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
 import { MysqlService } from '@/features/database/mysql-service';
+import { registerMysqlEditor } from '@/features/database/mysql/editor';
 import { SshService } from '@/features/ssh/ssh-service';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
@@ -25,7 +26,7 @@ export function registerWebviews(
   const assets = new AssetService(context);
   const mysql = new MysqlService(assets, tasks);
   const ssh = new SshService(assets);
-  context.subscriptions.push(mysql, ssh);
+  context.subscriptions.push(mysql, ssh, registerMysqlEditor(context, mysql, tasks));
   const assetsView = createAssetsView(context, assets, [mysql, ssh]);
   const dashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,

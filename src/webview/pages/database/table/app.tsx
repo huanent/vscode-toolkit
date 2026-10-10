@@ -6,6 +6,7 @@ import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
+import { DatabaseSelector } from './components/database-selector';
 import { TableSchemaDialog } from './components/table-schema-dialog';
 import { TableManagement } from './components/table-management';
 import '@/webview/styles.css';
@@ -15,7 +16,9 @@ function App() {
   const [editingTable, setEditingTable] = useState<DatabaseTable | null>(null);
   const [creatingTable, setCreatingTable] = useState(false);
   const [search, setSearch] = useState('');
-  const name = getRootData('name') ?? 'SQLite Database';
+  const defaultTitle =
+    state.status === 'loaded' && state.data.engine === 'mysql' ? 'MySQL Database' : 'SQLite Database';
+  const name = getRootData('name') ?? defaultTitle;
   useEffect(() => {
     document.title = name;
   }, [name]);
@@ -33,6 +36,15 @@ function App() {
           aria-label="Database tools"
           className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-3 py-2"
         >
+          {state.data.databases && (
+            <DatabaseSelector
+              databases={state.data.databases}
+              currentDatabase={state.data.currentDatabase}
+              onSelectDatabase={(database) => postToHost({ type: 'selectDatabase', database })}
+              onCreateDatabase={(databaseName) => postToHost({ type: 'createDatabase', name: databaseName })}
+              onDeleteDatabase={(database) => postToHost({ type: 'deleteDatabase', database })}
+            />
+          )}
           <div className="min-w-0 max-w-64 flex-1">
             <Input
               type="search"
@@ -76,7 +88,9 @@ function App() {
                 <Icon name="database" size="2xl" variant="muted" className="mb-3" />
                 <h2 className="text-sm font-semibold">No tables found</h2>
                 <p className="mt-1 text-xs text-(--vscode-descriptionForeground)">
-                  This SQLite database contains no user tables.
+                  {state.data.engine === 'mysql'
+                    ? `Database "${state.data.currentDatabase ?? ''}" contains no tables.`
+                    : 'This SQLite database contains no user tables.'}
                 </p>
               </div>
             </div>
@@ -101,6 +115,7 @@ function App() {
               }
             }}
             table={editingTable ?? undefined}
+            engine={state.data.engine}
             onClose={() => {
               setEditingTable(null);
               setCreatingTable(false);
@@ -114,7 +129,7 @@ function App() {
   return (
     <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
       {state.status === 'loading' ? (
-        <Loading label="Reading SQLite database..." />
+        <Loading label="Reading database..." />
       ) : (
         <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
           {state.message}

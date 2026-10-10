@@ -143,6 +143,26 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "toolkit.mysqlEditor",
+        "displayName": "MySQL Database",
+        "selector": [
+          {
+            "filenamePattern": "*.mysql"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "toolkit.mysqlTableEditor",
+        "displayName": "MySQL Table",
+        "selector": [
+          {
+            "filenamePattern": "*.mysql-table"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "viewsContainers": {
@@ -349,6 +369,23 @@
         "title": "Open SQL Editor",
         "icon": "$(code)",
         "category": "SQLite"
+      },
+      {
+        "command": "toolkit.mysql.executeQuery",
+        "title": "Run MySQL Query",
+        "icon": "$(play)",
+        "category": "MySQL"
+      },
+      {
+        "command": "toolkit.mysql.openSqlEditor",
+        "title": "Open SQL Editor",
+        "icon": "$(code)",
+        "category": "MySQL"
+      },
+      {
+        "command": "toolkit.mysql.openTable",
+        "title": "Open MySQL Table",
+        "category": "MySQL"
       }
     ],
     "keybindings": [
@@ -357,6 +394,12 @@
         "key": "ctrl+enter",
         "mac": "cmd+enter",
         "when": "toolkit.sqliteQueryEditor"
+      },
+      {
+        "command": "toolkit.mysql.executeQuery",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "toolkit.mysqlQueryEditor"
       }
     ],
     "submenus": [
@@ -381,6 +424,11 @@
           "command": "toolkit.sqlite.executeQuery",
           "when": "editorLangId == sql && toolkit.sqliteQueryEditor",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.mysql.executeQuery",
+          "when": "editorLangId == sql && toolkit.mysqlQueryEditor",
+          "group": "navigation@3"
         }
       ],
       "editor/context": [
@@ -388,6 +436,16 @@
           "command": "toolkit.http.sendRequest",
           "when": "editorLangId == http",
           "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.sqlite.executeQuery",
+          "when": "editorLangId == sql && toolkit.sqliteQueryEditor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.mysql.executeQuery",
+          "when": "editorLangId == sql && toolkit.mysqlQueryEditor",
+          "group": "navigation@2"
         }
       ],
       "commandPalette": [
@@ -434,6 +492,14 @@
         {
           "command": "toolkit.sqlite.executeQuery",
           "when": "toolkit.sqliteQueryEditor"
+        },
+        {
+          "command": "toolkit.mysql.executeQuery",
+          "when": "toolkit.mysqlQueryEditor"
+        },
+        {
+          "command": "toolkit.mysql.openTable",
+          "when": "false"
         },
         {
           "command": "toolkit.sqlite.openSqlEditor",

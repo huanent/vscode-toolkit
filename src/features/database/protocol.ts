@@ -33,7 +33,9 @@ export interface DatabaseTable {
 }
 
 export interface DatabaseDocument {
-  engine: 'sqlite';
+  engine: 'sqlite' | 'mysql';
+  databases?: string[];
+  currentDatabase?: string;
   tables: DatabaseTable[];
 }
 
@@ -87,6 +89,23 @@ export interface DeleteTableMessage {
   tableName: string;
 }
 
+export interface SelectDatabaseMessage {
+  type: 'selectDatabase';
+  database: string;
+}
+
+export interface CreateDatabaseMessage {
+  type: 'createDatabase';
+  name: string;
+}
+
+export interface DeleteDatabaseMessage {
+  type: 'deleteDatabase';
+  database: string;
+}
+
 export type DatabaseWebviewMessage =
   | { type: 'schemaUpdateResult'; success: true }
-  | { type: 'schemaUpdateResult'; success: false; error: string };
+  | { type: 'schemaUpdateResult'; success: false; error: string }
+  | { type: 'databaseOperationResult'; success: true }
+  | { type: 'databaseOperationResult'; success: false; error: string };
