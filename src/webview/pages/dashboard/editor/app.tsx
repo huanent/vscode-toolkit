@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { vscode } from '@/webview/vscodeApi';
-import { send, subscribe, type Tab } from './channel';
-import { App as ContainerForm } from '../container/serverForm/app';
+import { send, subscribe, type Tab } from '../channel';
+import { ContainerForm } from '@/webview/pages/container/serverForm/containerForm';
 import { Loading } from '@/webview/components/loading';
 
 const tab = document.getElementById('root')!.dataset.tab as Tab;

@@ -1,3 +1,5 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Loading } from '@/webview/components/loading';
 import { IconButton } from '@/webview/components/button';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from '@/webview/components/icons';
@@ -88,3 +90,9 @@ export function App() {
 		</div>
 	);
 }
+
+createRoot(document.getElementById('root')!).render(
+	<StrictMode>
+		<App />
+	</StrictMode>,
+);

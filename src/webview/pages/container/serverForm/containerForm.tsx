@@ -10,7 +10,13 @@ import { ContainerFields } from './components/containerFields';
 import { ProxyFields } from './components/proxyFields';
 import { useServerForm } from './hooks/useServerForm';
 
-export function App({ sessionId, onClose }: { sessionId?: number; onClose?: () => void }) {
+export function ContainerForm({
+	sessionId,
+	onClose,
+}: {
+	sessionId?: number;
+	onClose?: () => void;
+}) {
 	const form = useServerForm(sessionId, onClose);
 	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'other'>(
 		'connection',

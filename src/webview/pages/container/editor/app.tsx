@@ -1,3 +1,5 @@
+import { StrictMode, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import { cn } from 'cn';
 import {
 	Boxes,
@@ -15,7 +17,6 @@ import {
 	X,
 } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
-import { useEffect } from 'react';
 import { IconButton } from '@/webview/components/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
 import { ContainerEditDialog } from './containerEditDialog';
@@ -332,3 +333,9 @@ function ResourceTable({ editor }: { editor: EditorState }) {
 		</div>
 	);
 }
+
+createRoot(document.getElementById('root')!).render(
+	<StrictMode>
+		<App />
+	</StrictMode>,
+);

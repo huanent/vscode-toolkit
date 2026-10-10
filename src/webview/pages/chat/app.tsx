@@ -1,3 +1,5 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { Menu } from '@/webview/components/icons';
 import { ChatInput } from './components/chatInput';
 import { HistoryPanel } from './components/historyPanel';
@@ -5,6 +7,7 @@ import { MessageList } from './components/message/messageList';
 import { IconButton } from '@/webview/components/button';
 import { useChat } from './hooks/useChat';
 import { Popover } from '@/webview/components/popover';
+import './styles.css';
 
 export function App() {
 	const chat = useChat();
@@ -61,3 +64,12 @@ export function App() {
 		</div>
 	);
 }
+
+const root = document.getElementById('root');
+if (!root) throw new Error('The Chat root element is missing.');
+
+createRoot(root).render(
+	<StrictMode>
+		<App />
+	</StrictMode>,
+);

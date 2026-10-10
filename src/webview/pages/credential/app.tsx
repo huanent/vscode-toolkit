@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import type { CredentialSummary } from '@/shared/credentialProtocol';
 import { Button, IconButton } from '@/webview/components/button';
 import { Input } from '@/webview/components/input';
@@ -181,3 +182,9 @@ export function Credentials() {
 		</section>
 	);
 }
+
+createRoot(document.getElementById('root')!).render(
+	<main className="h-full min-w-0 px-4 text-(--vscode-foreground)">
+		<Credentials />
+	</main>,
+);
