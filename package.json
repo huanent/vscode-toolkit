@@ -231,6 +231,12 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.credential.manage",
+        "title": "Manage Credentials",
+        "icon": "$(key)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.generateGitignore",
         "title": "Generate .gitignore",
         "category": "Toolkit"
@@ -409,6 +415,13 @@
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "toolkit.credential.manage",
+          "when": "view == toolkit.dashboard",
+          "group": "1_more"
+        }
+      ],
       "editor/title": [
         {
           "command": "toolkit.http.sendRequest",

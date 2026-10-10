@@ -3,6 +3,7 @@ import { generateGitignore } from '@/features/git/gitignore-service';
 import { registerScripts } from '@/features/scripts/register-scripts';
 import { registerTempCommands } from '@/features/temp/commands';
 import { registerWorkflowCommands } from '@/features/workflow/commands';
+import { registerCredentialCommands } from '@/features/credential/commands';
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -14,5 +15,6 @@ export function registerCommands(
   );
   registerTempCommands(context, refreshTempFiles);
   registerWorkflowCommands(context, refreshWorkflowFiles);
+  registerCredentialCommands(context);
   registerScripts(context);
 }

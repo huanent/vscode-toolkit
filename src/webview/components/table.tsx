@@ -46,7 +46,7 @@ export function Table<T>({
               <th
                 key={column.key}
                 className={cn(
-                  'h-7 min-w-36 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) px-2 text-left font-medium text-(--vscode-descriptionForeground)',
+                  'h-7 min-w-36 border-b border-(--vscode-panel-border) px-2 text-left font-medium text-(--vscode-descriptionForeground)',
                   border && 'border-r',
                   alignmentClasses[column.align ?? 'left'],
                   column.headerClassName,
