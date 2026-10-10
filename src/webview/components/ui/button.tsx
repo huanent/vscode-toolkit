@@ -1,19 +1,11 @@
 import { cn } from 'cn';
+import { Button as SourceButton } from '@/webview/components/button';
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 
-const buttonSizes = {
-	sm: 'min-h-6 gap-1 px-2 py-0.5 text-xs',
-	md: 'min-h-8 gap-2 px-3 py-1 text-sm',
-	lg: 'min-h-10 gap-2 px-4 py-2 text-sm',
-} as const;
-
 const buttonVariants = {
-	primary:
-		'border-(--vscode-button-border,transparent) bg-(--vscode-button-background) text-(--vscode-button-foreground) enabled:hover:bg-(--vscode-button-hoverBackground) enabled:active:brightness-95',
-	plain:
-		'border-(--vscode-button-border,var(--vscode-contrastBorder,var(--vscode-panel-border))) bg-transparent text-(--vscode-foreground) enabled:hover:bg-(--vscode-toolbar-hoverBackground)',
-	text:
-		'border-transparent bg-transparent text-(--vscode-foreground) enabled:hover:bg-(--vscode-toolbar-hoverBackground)',
+	primary: 'primary',
+	plain: 'outline',
+	text: 'ghost',
 } as const;
 
 const activeVariants = {
@@ -22,7 +14,7 @@ const activeVariants = {
 	text: 'bg-(--vscode-toolbar-hoverBackground,var(--vscode-list-hoverBackground))',
 } as const;
 
-export type ButtonSize = keyof typeof buttonSizes;
+export type ButtonSize = 'sm' | 'md' | 'lg';
 export type ButtonVariant = keyof typeof buttonVariants;
 
 export type ButtonProps = Omit<ComponentPropsWithRef<'button'>, 'type'> & {
@@ -46,21 +38,17 @@ export function Button({
 	...props
 }: ButtonProps) {
 	return (
-		<button
-			type={htmlType}
-			className={cn(
-				'inline-flex max-w-full items-center justify-center rounded-sm border font-medium transition-colors duration-100 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-(--vscode-focusBorder) enabled:cursor-pointer disabled:cursor-default disabled:opacity-45',
-				buttonSizes[size],
-				buttonVariants[variant],
-				active && activeVariants[variant],
-				className,
-			)}
+		<SourceButton
 			{...props}
+			type={htmlType}
+			size={size}
+			variant={buttonVariants[variant]}
+			prefix={left}
+			suffix={right}
+			className={cn(active && activeVariants[variant], className)}
 		>
-			{left != null && <span className="inline-flex shrink-0 items-center leading-none">{left}</span>}
-			{children != null && <span className="min-w-0 wrap-anywhere">{children}</span>}
-			{right != null && <span className="inline-flex shrink-0 items-center leading-none">{right}</span>}
-		</button>
+			{children}
+		</SourceButton>
 	);
 }
 

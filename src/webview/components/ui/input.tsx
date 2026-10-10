@@ -1,5 +1,6 @@
 import { cn } from 'cn';
 import { useState, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { Input as SourceInput } from '@/webview/components/input';
 import { IconButton } from '@/webview/components/ui/button';
 import { Eye, EyeOff } from '@/webview/components/ui/icons';
 
@@ -31,36 +32,37 @@ export function Input({
 	style,
 	...props
 }: InputProps) {
+	const hasSlots = left != null || right != null;
+	const containerClassName = cn(
+		'flex w-full min-w-0 items-center text-(--vscode-input-foreground) transition-colors duration-100',
+		variant === 'plain'
+			? 'border-0 bg-transparent'
+			: 'border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder)',
+		inputSizes[size],
+		right != null && '[&:has(>span:last-child>button)]:pr-0',
+		disabled && 'cursor-default opacity-45',
+		className,
+	);
+	const inputClasses = cn(
+		'h-full w-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-inherit leading-normal outline-none placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden',
+		'aria-invalid:outline-1 aria-invalid:outline-(--vscode-inputValidation-errorBorder)',
+		inputSizes[size],
+		!hasSlots && variant === 'default' && 'rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder)',
+		hasSlots && 'flex-1 border-0 bg-transparent px-0 disabled:opacity-100',
+		!hasSlots && className,
+		inputClassName,
+	);
 	return (
-		<div
-			className={cn(
-				'flex w-full min-w-0 items-center text-(--vscode-input-foreground) transition-colors duration-100',
-				variant === 'plain'
-					? 'border-0 bg-transparent'
-					: 'border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder)',
-				inputSizes[size],
-				right != null && '[&:has(>span:last-child>button)]:pr-0',
-				disabled && 'cursor-default opacity-45',
-				className,
-			)}
-			style={{ borderRadius: 4, ...style }}
-		>
-			{left != null && (
-				<span className="inline-flex h-full shrink-0 items-center justify-center leading-none text-(--vscode-descriptionForeground) [&_.codicon]:block [&_.codicon]:leading-none">{left}</span>
-			)}
-			<input
-				className={cn(
-					'h-full w-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-inherit leading-normal outline-none placeholder:text-(--vscode-input-placeholderForeground) disabled:cursor-default [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden',
-					'aria-invalid:outline-1 aria-invalid:outline-(--vscode-inputValidation-errorBorder)',
-					inputClassName,
-				)}
-				disabled={disabled}
-				{...props}
-			/>
-			{right != null && (
-				<span className="inline-flex h-full shrink-0 items-center justify-center leading-none text-(--vscode-descriptionForeground) [&:has(>button)]:aspect-square [&_.codicon]:block [&_.codicon]:leading-none">{right}</span>
-			)}
-		</div>
+		<SourceInput
+			{...props}
+			prefix={left}
+			suffix={right}
+			disabled={disabled}
+			className={inputClasses}
+			containerClassName={hasSlots ? containerClassName : undefined}
+			style={hasSlots ? undefined : { borderRadius: 4, ...style }}
+			containerStyle={hasSlots ? { borderRadius: 4, ...style } : undefined}
+		/>
 	);
 }
 

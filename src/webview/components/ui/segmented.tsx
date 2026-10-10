@@ -1,5 +1,5 @@
-import { cn } from 'cn';
-import { useId, type ReactNode } from 'react';
+import { SegmentedControl as SourceSegmentedControl } from '@/webview/components/segmented-control';
+import type { ReactNode } from 'react';
 
 export type SegmentedOption<Value extends string> = {
 	value: Value;
@@ -18,25 +18,15 @@ export type SegmentedProps<Value extends string> = {
 };
 
 export function Segmented<Value extends string>({ label, value, options, onChange, disabled = false, className, noWrap = false }: SegmentedProps<Value>) {
-	const name = useId();
 	return (
-		<div role="radiogroup" aria-label={label} aria-disabled={disabled} className={cn('flex min-w-0 gap-1 rounded-sm border border-(--vscode-input-border,transparent) p-0.5', noWrap ? 'w-max flex-nowrap' : 'flex-wrap', className)}>
-			{options.map(option => (
-				<label key={option.value} className={cn('relative flex-1', noWrap ? 'min-w-max whitespace-nowrap' : 'min-w-0')}>
-					<input
-						className="peer sr-only"
-						type="radio"
-						name={name}
-						value={option.value}
-						checked={value === option.value}
-						disabled={disabled || option.disabled}
-						onChange={() => onChange(option.value)}
-					/>
-					<span className="flex min-h-8 items-center justify-center rounded-xs px-3 py-1 text-center text-sm wrap-anywhere text-(--vscode-foreground) peer-enabled:cursor-pointer peer-enabled:hover:bg-(--vscode-toolbar-hoverBackground) peer-checked:bg-(--vscode-inputOption-activeBackground)! peer-checked:text-(--vscode-inputOption-activeForeground) peer-focus-visible:outline-1 peer-focus-visible:outline-(--vscode-focusBorder) peer-disabled:opacity-45">
-						{option.label}
-					</span>
-				</label>
-			))}
-		</div>
+		<SourceSegmentedControl
+			ariaLabel={label}
+			value={value}
+			options={options}
+			onValueChange={onChange}
+			disabled={disabled}
+			className={className}
+			noWrap={noWrap}
+		/>
 	);
 }

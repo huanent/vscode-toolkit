@@ -1,16 +1,16 @@
 import type { HTMLAttributes } from 'react';
-import { Codicon } from '@/webview/components/ui/codicon';
+import { Icon as SourceIcon, type IconSize as SourceIconSize } from '@/webview/components/icons';
 
-const iconSizes = {
-	xs: 12,
-	sm: 14,
-	md: 16,
-	lg: 20,
-	xl: 24,
-	'2xl': 32,
-} as const;
+export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
-export type IconSize = keyof typeof iconSizes;
+const sourceIconSizes: Record<IconSize, SourceIconSize> = {
+	xs: 'sm',
+	sm: 'sm',
+	md: 'md',
+	lg: 'lg',
+	xl: 'xl',
+	'2xl': '2xl',
+};
 
 export type IconProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
 	size?: IconSize;
@@ -19,7 +19,7 @@ export type IconProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
 
 function icon(name: string) {
 	return function Icon({ size = 'sm', fill: _fill, ...props }: IconProps) {
-		return <Codicon name={name} size={iconSizes[size]} {...props} />;
+		return <SourceIcon name={name} size={sourceIconSizes[size]} {...props} />;
 	};
 }
 
@@ -77,9 +77,9 @@ export const X = icon('close');
 
 export function Star({ size = 'md', fill, ...props }: IconProps) {
 	return (
-		<Codicon
+		<SourceIcon
 			name={fill === 'currentColor' ? 'star-full' : 'star-empty'}
-			size={iconSizes[size]}
+			size={sourceIconSizes[size]}
 			{...props}
 		/>
 	);
