@@ -1,8 +1,22 @@
 import { cn } from 'cn';
-import { Boxes, CircleAlert, CircleCheck, CircleSlash, Database, Info, Network, Package, Pencil, Play, RefreshCw, Square, X } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
+import {
+	Boxes,
+	CircleAlert,
+	CircleCheck,
+	CircleSlash,
+	Database,
+	Info,
+	Network,
+	Package,
+	Pencil,
+	Play,
+	RefreshCw,
+	Square,
+	X,
+} from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
 import { useEffect } from 'react';
-import { IconButton } from '@/webview/components/ui/button';
+import { IconButton } from '@/webview/components/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
 import { ContainerEditDialog } from './containerEditDialog';
 import { Message } from './message';
@@ -77,23 +91,31 @@ export function App() {
 					)}
 					title={statusLabel}
 				>
-					{editor.serviceState === 'checking' || editor.systemPending
-						? <Loading variant="icon" label={statusLabel} />
-						: <StatusIcon className="shrink-0" size="sm" />}
+					{editor.serviceState === 'checking' || editor.systemPending ? (
+						<Loading variant="icon" label={statusLabel} />
+					) : (
+						<StatusIcon className="shrink-0" size="sm" />
+					)}
 					<span>{statusLabel}</span>
 				</span>
 				{editor.server.runtime === 'apple' && (
-					<IconButton label={
-						editor.serviceState === 'running'
-							? 'Stop Apple Container system'
-							: 'Start Apple Container system'
-					} icon={<>{editor.systemPending ? (
-						<Loading variant="icon" size="md" />
-					) : editor.serviceState === 'running' ? (
-						<Square size="md" />
-					) : (
-						<Play size="md" />
-					)}</>}
+					<IconButton
+						label={
+							editor.serviceState === 'running'
+								? 'Stop Apple Container system'
+								: 'Start Apple Container system'
+						}
+						icon={
+							<>
+								{editor.systemPending ? (
+									<Loading variant="icon" size="md" />
+								) : editor.serviceState === 'running' ? (
+									<Square size="md" />
+								) : (
+									<Play size="md" />
+								)}
+							</>
+						}
 						className="border-0"
 						htmlType="button"
 						disabled={editor.systemPending || editor.serviceState === 'checking'}
@@ -105,7 +127,13 @@ export function App() {
 						onClick={editor.systemAction}
 					></IconButton>
 				)}
-				<IconButton label="Refresh" icon={<><RefreshCw size="md" /></>}
+				<IconButton
+					label="Refresh"
+					icon={
+						<>
+							<RefreshCw size="md" />
+						</>
+					}
 					className="border-0"
 					htmlType="button"
 					title="Refresh"
@@ -167,7 +195,13 @@ export function App() {
 							>
 								{editor.details.title}
 							</h2>
-							<IconButton label="Close" icon={<><X size="md" /></>}
+							<IconButton
+								label="Close"
+								icon={
+									<>
+										<X size="md" />
+									</>
+								}
 								className="ml-auto border-0"
 								autoFocus
 								htmlType="button"
@@ -176,9 +210,13 @@ export function App() {
 								onClick={editor.closeDetails}
 							></IconButton>
 						</header>
-						{editor.details.loading ? <Loading label="Loading details..." /> : <pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-4 font-(family-name:--vscode-editor-font-family) text-sm whitespace-pre-wrap wrap-anywhere">
-							{editor.details.content}
-						</pre>}
+						{editor.details.loading ? (
+							<Loading label="Loading details..." />
+						) : (
+							<pre className="m-0 overflow-auto bg-(--vscode-textCodeBlock-background) p-4 font-(family-name:--vscode-editor-font-family) text-sm whitespace-pre-wrap wrap-anywhere">
+								{editor.details.content}
+							</pre>
+						)}
 					</section>
 				</div>
 			)}
@@ -238,20 +276,32 @@ function ResourceTable({ editor }: { editor: EditorState }) {
 									<span className="flex justify-end gap-0.5">
 										{editor.resource === 'containers' && (
 											<>
-												<IconButton label={`Edit and recreate ${row.name}`} icon={<><Pencil size="md" /></>}
+												<IconButton
+													label={`Edit and recreate ${row.name}`}
+													icon={
+														<>
+															<Pencil size="md" />
+														</>
+													}
 													className="border-0"
 													disabled={Boolean(editor.containerPendingId)}
 													htmlType="button"
 													title={`Edit and recreate ${row.name}`}
 													onClick={() => editor.editContainer(row.id)}
 												></IconButton>
-												<IconButton label={`${running ? 'Stop' : 'Start'} ${row.name}`} icon={<>{editor.containerPendingId === row.id ? (
-													<Loading variant="icon" size="md" />
-												) : running ? (
-													<Square size="sm" />
-												) : (
-													<Play size="md" />
-												)}</>}
+												<IconButton
+													label={`${running ? 'Stop' : 'Start'} ${row.name}`}
+													icon={
+														<>
+															{editor.containerPendingId === row.id ? (
+																<Loading variant="icon" size="md" />
+															) : running ? (
+																<Square size="sm" />
+															) : (
+																<Play size="md" />
+															)}
+														</>
+													}
 													className="border-0"
 													disabled={Boolean(editor.containerPendingId)}
 													htmlType="button"
@@ -260,7 +310,13 @@ function ResourceTable({ editor }: { editor: EditorState }) {
 												></IconButton>
 											</>
 										)}
-										<IconButton label="Show details" icon={<><Info size="md" /></>}
+										<IconButton
+											label="Show details"
+											icon={
+												<>
+													<Info size="md" />
+												</>
+											}
 											className="border-0"
 											htmlType="button"
 											title="Show details"

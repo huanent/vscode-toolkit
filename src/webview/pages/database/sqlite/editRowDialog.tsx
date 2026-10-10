@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
-import { Dialog } from '@/webview/components/ui/dialog';
-import { Switch } from '@/webview/components/ui/switch';
-import { Button } from '@/webview/components/ui/button';
-import { Input as TextInput } from '@/webview/components/ui/input';
+import { Dialog } from '@/webview/components/dialog';
+import { Switch } from '@/webview/components/switch';
+import { Button } from '@/webview/components/button';
+import { Input as TextInput } from '@/webview/components/input';
 import type { SqliteColumn } from './types';
 
 export type { SqliteColumn } from './types';

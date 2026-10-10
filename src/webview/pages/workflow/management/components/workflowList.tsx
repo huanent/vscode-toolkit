@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CircuitBoard, Play } from '@/webview/components/ui/icons';
-import { IconButton } from '@/webview/components/ui/button';
-import { List, ListItem } from '@/webview/components/ui/list';
+import { CircuitBoard, Play } from '@/webview/components/icons';
+import { IconButton } from '@/webview/components/button';
+import { List, ListItem } from '@/webview/components/list';
 import { DashboardEmpty, DashboardSearch } from '@/webview/pages/dashboard/components';
 import type { Workflow } from '@/features/workflow/protocol';
 
@@ -13,13 +13,7 @@ type Props = {
 	onCreate: () => void;
 };
 
-export function WorkflowList({
-	workflows,
-	loaded,
-	error,
-	onRun,
-	onCreate,
-}: Props) {
+export function WorkflowList({ workflows, loaded, error, onRun, onCreate }: Props) {
 	const [search, setSearch] = useState('');
 	const [selectedId, setSelectedId] = useState<string>();
 	const filtered = workflows.filter(workflow =>
@@ -45,10 +39,14 @@ export function WorkflowList({
 							onContextMenu={() => setSelectedId(workflow.id)}
 							icon={<CircuitBoard />}
 							description={workflow.description || `${workflow.steps.length} steps`}
-							actions={<>
-								<IconButton icon={<Play />} label="Run" onClick={() => onRun(workflow)} />
-							</>}
-						>{workflow.name}</ListItem>
+							actions={
+								<>
+									<IconButton icon={<Play />} label="Run" onClick={() => onRun(workflow)} />
+								</>
+							}
+						>
+							{workflow.name}
+						</ListItem>
 					))}
 				</List>
 				{(!loaded || filtered.length === 0) && (

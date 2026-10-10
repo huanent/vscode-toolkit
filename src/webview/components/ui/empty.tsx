@@ -1,1 +1,0 @@
-export { Empty, type EmptyProps } from '@/webview/components/empty';

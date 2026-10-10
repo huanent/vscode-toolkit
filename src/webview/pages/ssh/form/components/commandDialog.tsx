@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from '@/webview/components/ui/button';
-import { Dialog } from '@/webview/components/ui/dialog';
-import { Field } from '@/webview/components/ui/field';
-import { Textarea, Input } from '@/webview/components/ui/input';
+import { Button } from '@/webview/components/button';
+import { Dialog } from '@/webview/components/dialog';
+import { Field } from '@/webview/components/field';
+import { Textarea, Input } from '@/webview/components/input';
 import type { ServerCommand } from '@/features/ssh/formProtocol';
 
 export function CommandDialog({

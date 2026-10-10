@@ -1,6 +1,6 @@
-import { Pencil, RefreshCw, CircleCheck, Copy } from '@/webview/components/ui/icons';
+import { Pencil, RefreshCw, CircleCheck, Copy } from '@/webview/components/icons';
 import type { StoredMessage } from '../../types';
-import { IconButton } from '@/webview/components/ui/button';
+import { IconButton } from '@/webview/components/button';
 
 type MessageActionsProps = {
 	message: StoredMessage;
@@ -24,9 +24,7 @@ export function MessageActions({
 			{message.role === 'user' && (
 				<IconButton
 					label="Edit message"
-					icon={
-						<Pencil size="sm" />
-					}
+					icon={<Pencil size="sm" />}
 					size="sm"
 					disabled={busy}
 					onClick={onEdit}
@@ -35,9 +33,7 @@ export function MessageActions({
 			{message.role === 'assistant' && (
 				<IconButton
 					label="Regenerate response"
-					icon={
-						<RefreshCw size="sm" />
-					}
+					icon={<RefreshCw size="sm" />}
 					size="sm"
 					disabled={busy}
 					onClick={onRegenerate}
@@ -45,13 +41,7 @@ export function MessageActions({
 			)}
 			<IconButton
 				label={copied ? 'Copied' : 'Copy message'}
-				icon={
-					copied ? (
-						<CircleCheck size="sm" />
-					) : (
-						<Copy size="sm" />
-					)
-				}
+				icon={copied ? <CircleCheck size="sm" /> : <Copy size="sm" />}
 				size="sm"
 				onClick={onCopy}
 			/>

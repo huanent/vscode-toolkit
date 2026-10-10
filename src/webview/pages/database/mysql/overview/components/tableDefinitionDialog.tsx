@@ -1,9 +1,7 @@
-import { Button } from '@/webview/components/ui/button';
-import { Dialog } from '@/webview/components/ui/dialog';
-import {
-	Plus
-} from '@/webview/components/ui/icons';
-import { Input } from '@/webview/components/ui/input';
+import { Button } from '@/webview/components/button';
+import { Dialog } from '@/webview/components/dialog';
+import { Plus } from '@/webview/components/icons';
+import { Input } from '@/webview/components/input';
 import { SqlPreview } from '../../../components/sqlPreview';
 import type { MysqlTableColumnDefinition } from '../../types';
 import { ColumnDefinitionRow } from './columnDefinitionRow';
@@ -21,13 +19,17 @@ export function TableDefinitionDialog({ mysql }: { mysql: MysqlState }) {
 			),
 		});
 	return (
-		<Dialog open size="lg"
+		<Dialog
+			open
+			size="lg"
 			title={`${dialog.mode === 'create' ? 'Create' : 'Edit'} table`}
 			onClose={mysql.closeDialog}
 			actions={
 				dialog.sql ? (
 					<>
-						<Button variant="plain" onClick={mysql.backToFields}>Back</Button>
+						<Button variant="plain" onClick={mysql.backToFields}>
+							Back
+						</Button>
 						<Button onClick={mysql.confirm}>Execute</Button>
 					</>
 				) : (
@@ -80,15 +82,18 @@ export function TableDefinitionDialog({ mysql }: { mysql: MysqlState }) {
 							</thead>
 							<tbody>
 								{definition.columns.map((column, index) => (
-									<ColumnDefinitionRow key={`${column.originalName ?? 'new'}-${index}`} column={column} index={index} mysql={mysql} setColumn={setColumn} />
+									<ColumnDefinitionRow
+										key={`${column.originalName ?? 'new'}-${index}`}
+										column={column}
+										index={index}
+										mysql={mysql}
+										setColumn={setColumn}
+									/>
 								))}
 							</tbody>
 						</table>
 					</div>
-					<Button
-						variant="plain"
-						onClick={mysql.addColumn}
-					>
+					<Button variant="plain" onClick={mysql.addColumn}>
 						<Plus size="md" />
 						Add column
 					</Button>

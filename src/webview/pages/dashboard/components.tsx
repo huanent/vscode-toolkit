@@ -1,6 +1,6 @@
-import { Button, IconButton } from '@/webview/components/ui/button';
-import { Plus, Search, X } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
+import { Button, IconButton } from '@/webview/components/button';
+import { Plus, Search, X } from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
 
 export function DashboardSearch({
 	label,

@@ -1,10 +1,10 @@
-import { Menu } from '@/webview/components/ui/icons';
+import { Menu } from '@/webview/components/icons';
 import { ChatInput } from './components/chatInput';
 import { HistoryPanel } from './components/historyPanel';
 import { MessageList } from './components/message/messageList';
-import { IconButton } from '@/webview/components/ui/button';
+import { IconButton } from '@/webview/components/button';
 import { useChat } from './hooks/useChat';
-import { Popover } from '@/webview/components/ui/popover';
+import { Popover } from '@/webview/components/popover';
 
 export function App() {
 	const chat = useChat();

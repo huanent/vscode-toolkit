@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { Workflow } from '@/features/workflow/protocol';
-import { Plus, RefreshCw } from '@/webview/components/ui/icons';
-import { IconButton } from '@/webview/components/ui/button';
-import { Toolbar } from '@/webview/components/ui/toolbar';
+import { Plus, RefreshCw } from '@/webview/components/icons';
+import { IconButton } from '@/webview/components/button';
+import { Toolbar } from '@/webview/components/toolbar';
 import { workflowApi, subscribe } from '../vscode';
 import { WorkflowList } from './components/workflowList';
 

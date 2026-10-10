@@ -1,8 +1,8 @@
-import { IconButton } from '@/webview/components/ui/button';
-import { Field } from '@/webview/components/ui/field';
-import { FolderOpen } from '@/webview/components/ui/icons';
-import { Input as TextInput } from '@/webview/components/ui/input';
-import { Segmented as SegmentedControl } from '@/webview/components/ui/segmented';
+import { IconButton } from '@/webview/components/button';
+import { Field } from '@/webview/components/field';
+import { FolderOpen } from '@/webview/components/icons';
+import { Input as TextInput } from '@/webview/components/input';
+import { SegmentedControl } from '@/webview/components/segmented-control';
 import type { ServerFormState } from '../hooks/useServerForm';
 
 const runtimeDefaults = {
@@ -28,15 +28,23 @@ export function ContainerFields({ form }: { form: ServerFormState }) {
 					form.update('executablePath', runtimeDefaults[value]);
 				}}
 			/>
-			<Field label="Executable" required>{control => (
-				<TextInput
-					{...control}
-					right={<IconButton label="Select executable" icon={<FolderOpen />} onClick={form.selectExecutable} />}
-					placeholder="docker"
-					value={values.executablePath}
-					onChange={event => form.update('executablePath', event.target.value)}
-				/>
-			)}</Field>
+			<Field label="Executable" required>
+				{control => (
+					<TextInput
+						{...control}
+						right={
+							<IconButton
+								label="Select executable"
+								icon={<FolderOpen />}
+								onClick={form.selectExecutable}
+							/>
+						}
+						placeholder="docker"
+						value={values.executablePath}
+						onChange={event => form.update('executablePath', event.target.value)}
+					/>
+				)}
+			</Field>
 		</>
 	);
 }

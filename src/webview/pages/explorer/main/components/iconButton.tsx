@@ -1,4 +1,4 @@
-import { IconButton as SharedIconButton } from '@/webview/components/ui/button';
+import { IconButton as SharedIconButton } from '@/webview/components/button';
 import type { ButtonHTMLAttributes } from 'react';
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -6,7 +6,14 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	active?: boolean;
 }
 
-export function IconButton({ icon, active = false, className, type = 'button', title, ...props }: IconButtonProps) {
+export function IconButton({
+	icon,
+	active = false,
+	className,
+	type = 'button',
+	title,
+	...props
+}: IconButtonProps) {
 	return (
 		<SharedIconButton
 			{...props}

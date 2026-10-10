@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CircuitBoard, Terminal, History } from '@/webview/components/ui/icons';
+import { CircuitBoard, Terminal, History } from '@/webview/components/icons';
 import { cn } from 'cn';
 import { vscode } from '@/webview/vscodeApi';
 import { Connections } from '../connection/app';
 import { Workflows as Workflow } from '../workflow/management/app';
 import { type Tab } from './channel';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 import { Temp } from '../temp/app';
 
 document.body.classList.add('min-w-0', 'overflow-hidden');

@@ -1,6 +1,6 @@
-import { IconButton } from '@/webview/components/ui/button';
-import { List, ListItem } from '@/webview/components/ui/list';
-import { Eye, Plus, Table } from '@/webview/components/ui/icons';
+import { IconButton } from '@/webview/components/button';
+import { List, ListItem } from '@/webview/components/list';
+import { Eye, Plus, Table } from '@/webview/components/icons';
 import type { MouseEvent } from 'react';
 import type { DatabaseObject } from '../types';
 

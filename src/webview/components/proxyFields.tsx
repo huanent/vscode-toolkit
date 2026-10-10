@@ -1,7 +1,7 @@
 import { CredentialFields } from '@/webview/components/credentialFields';
-import { Field } from '@/webview/components/ui/field';
-import { Input } from '@/webview/components/ui/input';
-import { Segmented } from '@/webview/components/ui/segmented';
+import { Field } from '@/webview/components/field';
+import { Input } from '@/webview/components/input';
+import { Segmented } from '@/webview/components/segmented-control';
 
 export interface ProxyFieldValues {
 	proxyCredentialId: string;
@@ -66,9 +66,13 @@ export function ProxyFields({ values, onChange }: ProxyFieldsProps) {
 								)}
 							</Field>
 						</div>
-						<CredentialFields types={['password', 'privateKey']} value={values.proxyCredentialId} onChange={credential => {
-							onChange('proxyCredentialId', credential?.id ?? '');
-						}} />
+						<CredentialFields
+							types={['password', 'privateKey']}
+							value={values.proxyCredentialId}
+							onChange={credential => {
+								onChange('proxyCredentialId', credential?.id ?? '');
+							}}
+						/>
 					</>
 				)}
 				{values.proxyMode === 'command' && (

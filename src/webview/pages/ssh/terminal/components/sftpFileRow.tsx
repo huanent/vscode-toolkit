@@ -1,9 +1,8 @@
 import { cn } from 'cn';
-import { File, Folder } from '@/webview/components/ui/icons';
+import { File, Folder } from '@/webview/components/icons';
 import type { SftpEntry } from '../types';
 
-export const fileGridClassName =
-	'grid grid-cols-[minmax(0,1fr)_4.5rem_9rem] items-center gap-2';
+export const fileGridClassName = 'grid grid-cols-[minmax(0,1fr)_4.5rem_9rem] items-center gap-2';
 
 interface SftpFileRowProps {
 	entry: SftpEntry;

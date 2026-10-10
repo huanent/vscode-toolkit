@@ -1,10 +1,10 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import { Button } from '@/webview/components/ui/button';
-import { Empty } from '@/webview/components/ui/empty';
-import { Popover } from '@/webview/components/ui/popover';
-import { FolderOpen } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
+import { Button } from '@/webview/components/button';
+import { Empty } from '@/webview/components/empty';
+import { Popover } from '@/webview/components/popover';
+import { FolderOpen } from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
 import { fileGridClassName, SftpFileRow } from './sftpFileRow';
 import { SftpToolbar } from './sftpToolbar';
 import type { SftpEntry } from '../types';
@@ -88,7 +88,11 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 				{sftp.loading ? (
 					<Loading
 						className="absolute inset-0 overflow-auto bg-(--vscode-editor-background)"
-						label={<>Loading directory<span className="block">{sftp.sftpPath}</span></>}
+						label={
+							<>
+								Loading directory<span className="block">{sftp.sftpPath}</span>
+							</>
+						}
 					/>
 				) : (
 					sftp.entries.length === 0 && (
@@ -108,9 +112,9 @@ export function SftpPanel({ sftp }: { sftp: SftpActions }) {
 					items={[
 						...(menu.entry.isDirectory
 							? [
-								{ label: 'New Folder', action: () => sftp.createDirectory(menu.entry.path) },
-								{ label: 'Upload Files', action: () => sftp.upload(menu.entry.path) },
-							]
+									{ label: 'New Folder', action: () => sftp.createDirectory(menu.entry.path) },
+									{ label: 'Upload Files', action: () => sftp.upload(menu.entry.path) },
+								]
 							: [{ label: 'Edit Text', action: () => sftp.edit(menu.entry.path) }]),
 						{ label: 'Download', action: () => sftp.download(menu.entry) },
 						{ label: 'Copy Path', action: () => sftp.copyPath(menu.entry.path) },

@@ -1,17 +1,10 @@
-import { IconButton, Button } from '@/webview/components/ui/button';
-import { Empty } from '@/webview/components/ui/empty';
-import { Loading } from '@/webview/components/ui/loading';
-import {
-	Download,
-	Upload,
-	Plus,
-	RefreshCw,
-	Search,
-	X,
-} from '@/webview/components/ui/icons';
-import { Input } from '@/webview/components/ui/input';
-import { List } from '@/webview/components/ui/list';
-import { Toolbar } from '@/webview/components/ui/toolbar';
+import { IconButton, Button } from '@/webview/components/button';
+import { Empty } from '@/webview/components/empty';
+import { Loading } from '@/webview/components/loading';
+import { Download, Upload, Plus, RefreshCw, Search, X } from '@/webview/components/icons';
+import { Input } from '@/webview/components/input';
+import { List } from '@/webview/components/list';
+import { Toolbar } from '@/webview/components/toolbar';
 import { ConnectionItem, type Connection } from './connectionItem';
 import { ConnectionGroupNode } from './connectionGroupNode';
 
@@ -43,21 +36,32 @@ export function ConnectionList({
 	return (
 		<div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2">
 			<Toolbar title={state?.name ?? 'Connection'}>
-				<IconButton icon={<Upload />} label="Import connections" onClick={() => onAction('import')} />
-				<IconButton icon={<Download />} label="Export connections" disabled={!state?.servers.length} onClick={() => onAction('exportAll')} />
+				<IconButton
+					icon={<Upload />}
+					label="Import connections"
+					onClick={() => onAction('import')}
+				/>
+				<IconButton
+					icon={<Download />}
+					label="Export connections"
+					disabled={!state?.servers.length}
+					onClick={() => onAction('exportAll')}
+				/>
 				<IconButton icon={<RefreshCw />} label="Refresh" onClick={() => onAction('refresh')} />
 				<IconButton icon={<Plus />} label="New connection" onClick={() => onAction('add')} />
 			</Toolbar>
 			<Input
 				left={<Search />}
-				right={query ? (
-					<IconButton
-						size="sm"
-						icon={<X />}
-						label="Clear search"
-						onClick={() => onQueryChange('')}
-					/>
-				) : undefined}
+				right={
+					query ? (
+						<IconButton
+							size="sm"
+							icon={<X />}
+							label="Clear search"
+							onClick={() => onQueryChange('')}
+						/>
+					) : undefined
+				}
 				type="search"
 				aria-label="Search connections"
 				placeholder="Search connections"
@@ -69,43 +73,45 @@ export function ConnectionList({
 					<Loading label="Loading connections" />
 				) : servers.length === 0 ? (
 					<div>
-						<Empty
-							title={search ? 'No matching connections' : 'No connections'}
-						/>
+						<Empty title={search ? 'No matching connections' : 'No connections'} />
 						{!search && (
 							<div className="flex justify-center">
-								<Button onClick={() => onAction('add')}>
-									New connection
-								</Button>
+								<Button onClick={() => onAction('add')}>New connection</Button>
 							</div>
 						)}
 					</div>
 				) : (
 					<div className="grid min-w-0">
-						{Array.from(groups).sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup)).map(([group, connections]) => {
-							const items = (
-								<List>
-									{connections.map(server => (
-										<ConnectionItem
-											key={`${server.connectionType}:${server.id}`}
-											server={server}
-											onAction={(type, id) => onAction(type, id, server.connectionType)}
-											filtered={!!search}
-										/>
-									))}
-								</List>
-							);
-							return group ? (
-								<ConnectionGroupNode key={`${group}-${!!search}`} name={group} count={connections.length}
-									filtered={!!search}
-									first={group === Array.from(groups.keys()).filter(Boolean)[0]}
-									last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}>
-									{items}
-								</ConnectionGroupNode>
-							) : (
-								<div key="ungrouped">{items}</div>
-							);
-						})}
+						{Array.from(groups)
+							.sort(([firstGroup], [secondGroup]) => Number(!firstGroup) - Number(!secondGroup))
+							.map(([group, connections]) => {
+								const items = (
+									<List>
+										{connections.map(server => (
+											<ConnectionItem
+												key={`${server.connectionType}:${server.id}`}
+												server={server}
+												onAction={(type, id) => onAction(type, id, server.connectionType)}
+												filtered={!!search}
+											/>
+										))}
+									</List>
+								);
+								return group ? (
+									<ConnectionGroupNode
+										key={`${group}-${!!search}`}
+										name={group}
+										count={connections.length}
+										filtered={!!search}
+										first={group === Array.from(groups.keys()).filter(Boolean)[0]}
+										last={group === Array.from(groups.keys()).filter(Boolean).at(-1)}
+									>
+										{items}
+									</ConnectionGroupNode>
+								) : (
+									<div key="ungrouped">{items}</div>
+								);
+							})}
 					</div>
 				)}
 			</div>

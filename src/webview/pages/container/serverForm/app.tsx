@@ -1,11 +1,11 @@
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 import { StorageLocation } from '@/webview/components/storageLocation';
 import { useState } from 'react';
-import { Save } from '@/webview/components/ui/icons';
-import { Button as PrimaryButton } from '@/webview/components/ui/button';
-import { Field } from '@/webview/components/ui/field';
-import { Input as TextInput } from '@/webview/components/ui/input';
+import { Save } from '@/webview/components/icons';
+import { Button as PrimaryButton } from '@/webview/components/button';
+import { Field } from '@/webview/components/field';
+import { Input as TextInput } from '@/webview/components/input';
 import { ContainerFields } from './components/containerFields';
 import { ProxyFields } from './components/proxyFields';
 import { useServerForm } from './hooks/useServerForm';
@@ -41,30 +41,45 @@ export function App({ sessionId, onClose }: { sessionId?: number; onClose?: () =
 			}}
 		>
 			<header className="sticky top-0 z-10 border-b border-(--vscode-panel-border,var(--vscode-widget-border)) bg-(--vscode-editor-background) py-3.5">
-				<StorageLocation value={values.location} folders={model.workspaceFolders ?? []} disabled={form.saving || model.locationLocked} onChange={value => form.update('location', value)} />
+				<StorageLocation
+					value={values.location}
+					folders={model.workspaceFolders ?? []}
+					disabled={form.saving || model.locationLocked}
+					onChange={value => form.update('location', value)}
+				/>
 				<div className="mx-auto grid w-[min(880px,calc(100%-44px))] grid-cols-[minmax(160px,1.25fr)_minmax(140px,1fr)_auto] items-end gap-3 max-[680px]:w-[calc(100%-28px)] max-[520px]:grid-cols-[minmax(0,1fr)_auto]">
-					<Field label="Name" required>{control => <>
-						<TextInput {...control}
-							autoFocus
-							required
-							placeholder="Production"
-							value={values.name}
-							onChange={event => form.update('name', event.target.value)}
-						/>
-					</>}</Field>
-					<Field label="Group" className="max-[520px]:col-start-1 max-[520px]:row-start-2">{control => <>
-						<TextInput {...control}
-							list="server-groups"
-							placeholder="No group"
-							value={values.group}
-							onChange={event => form.update('group', event.target.value)}
-						/>
-						<datalist id="server-groups">
-							{model.groups.map(group => (
-								<option key={group} value={group} />
-							))}
-						</datalist>
-					</>}</Field>
+					<Field label="Name" required>
+						{control => (
+							<>
+								<TextInput
+									{...control}
+									autoFocus
+									required
+									placeholder="Production"
+									value={values.name}
+									onChange={event => form.update('name', event.target.value)}
+								/>
+							</>
+						)}
+					</Field>
+					<Field label="Group" className="max-[520px]:col-start-1 max-[520px]:row-start-2">
+						{control => (
+							<>
+								<TextInput
+									{...control}
+									list="server-groups"
+									placeholder="No group"
+									value={values.group}
+									onChange={event => form.update('group', event.target.value)}
+								/>
+								<datalist id="server-groups">
+									{model.groups.map(group => (
+										<option key={group} value={group} />
+									))}
+								</datalist>
+							</>
+						)}
+					</Field>
 					<PrimaryButton
 						className="max-[520px]:col-start-2 max-[520px]:row-span-2 max-[520px]:row-start-1 max-[520px]:self-start"
 						htmlType="submit"

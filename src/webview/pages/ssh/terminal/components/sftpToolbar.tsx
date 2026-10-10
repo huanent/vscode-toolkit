@@ -1,8 +1,8 @@
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 import { useEffect, useState } from 'react';
-import { IconButton } from '@/webview/components/ui/button';
-import { ArrowUp, FolderPlus, RefreshCw, Star, Upload } from '@/webview/components/ui/icons';
-import { Input } from '@/webview/components/ui/input';
+import { IconButton } from '@/webview/components/button';
+import { ArrowUp, FolderPlus, RefreshCw, Star, Upload } from '@/webview/components/icons';
+import { Input } from '@/webview/components/input';
 import { Favorites } from './favorites';
 
 interface SftpToolbarProps {

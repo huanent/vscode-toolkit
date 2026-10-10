@@ -1,10 +1,10 @@
-import { MessageSquare } from '@/webview/components/ui/icons';
+import { MessageSquare } from '@/webview/components/icons';
 import { cn } from 'cn';
 import { useState } from 'react';
 import { useMessageNavigation } from '../../hooks/useMessageNavigation';
 import { getRandomQuote } from '../../lib/quotes';
 import type { StoredMessage } from '../../types';
-import { Empty } from '@/webview/components/ui/empty';
+import { Empty } from '@/webview/components/empty';
 import { MessageAnchors } from './messageAnchors';
 import { MessageItem } from './messageItem';
 
@@ -43,9 +43,7 @@ export function MessageList({
 			>
 				{messages.length === 0 && (
 					<Empty
-						icon={
-							<MessageSquare size="2xl" className="text-(--vscode-icon-foreground)" />
-						}
+						icon={<MessageSquare size="2xl" className="text-(--vscode-icon-foreground)" />}
 						title={greeting}
 						titleAs="h1"
 						description={

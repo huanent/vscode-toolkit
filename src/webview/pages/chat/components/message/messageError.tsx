@@ -1,5 +1,5 @@
-import { CircleAlert } from '@/webview/components/ui/icons';
-import { Button } from '@/webview/components/ui/button';
+import { CircleAlert } from '@/webview/components/icons';
+import { Button } from '@/webview/components/button';
 
 type MessageErrorProps = { message: string; details?: string; busy: boolean; onRetry(): void };
 

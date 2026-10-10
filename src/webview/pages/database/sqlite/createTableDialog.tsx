@@ -1,10 +1,10 @@
 import { useId, useState } from 'react';
 import { cn } from 'cn';
-import { Button, IconButton } from '@/webview/components/ui/button';
-import { Input, Select } from '@/webview/components/ui/input';
-import { Switch } from '@/webview/components/ui/switch';
-import { Dialog } from '@/webview/components/ui/dialog';
-import { Plus, Trash2 } from '@/webview/components/ui/icons';
+import { Button, IconButton } from '@/webview/components/button';
+import { Input, Select } from '@/webview/components/input';
+import { Switch } from '@/webview/components/switch';
+import { Dialog } from '@/webview/components/dialog';
+import { Plus, Trash2 } from '@/webview/components/icons';
 
 export type TableColumn = {
 	name: string;

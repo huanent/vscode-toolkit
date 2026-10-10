@@ -1,6 +1,6 @@
 import type { QueryResult } from '../types';
-import { IconButton } from '@/webview/components/ui/button';
-import { Pencil, Trash2 } from '@/webview/components/ui/icons';
+import { IconButton } from '@/webview/components/button';
+import { Pencil, Trash2 } from '@/webview/components/icons';
 
 interface DataTableProps {
 	result: QueryResult;

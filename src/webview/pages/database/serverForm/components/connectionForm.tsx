@@ -1,21 +1,19 @@
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 import { useState } from 'react';
 import { ProxyFields } from '@/webview/components/proxyFields';
 import { StorageLocation } from '@/webview/components/storageLocation';
-import { Button } from '@/webview/components/ui/button';
-import { Field } from '@/webview/components/ui/field';
-import { Save } from '@/webview/components/ui/icons';
-import { Input } from '@/webview/components/ui/input';
-import { Switch } from '@/webview/components/ui/switch';
+import { Button } from '@/webview/components/button';
+import { Field } from '@/webview/components/field';
+import { Save } from '@/webview/components/icons';
+import { Input } from '@/webview/components/input';
+import { Switch } from '@/webview/components/switch';
 import type { ServerFormState } from '../hooks/useServerForm';
 import { AuthenticationFields } from './authenticationFields';
 import { NetworkFields } from './networkFields';
 
 export function ConnectionForm({ form }: { form: ServerFormState }) {
-	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'other'>(
-		'connection',
-	);
+	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'other'>('connection');
 	if (!form.model) {
 		return (
 			<main className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">

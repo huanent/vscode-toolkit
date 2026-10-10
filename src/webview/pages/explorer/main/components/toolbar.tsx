@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { Input } from '@/webview/components/ui/input';
+import { Input } from '@/webview/components/input';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ExplorerModel } from '../hooks/useExplorer';
 import { FavoritesPanel } from './favoritesPanel';
@@ -61,10 +61,16 @@ export function Toolbar({ state, actions }: ToolbarProps) {
 				{state.searchOpen ? (
 					<Input
 						left={<i className="codicon codicon-search" aria-hidden="true" />}
-						right={<IconButton icon="codicon-close" title="Close search" onClick={() => {
-							actions.setSearchQuery('');
-							actions.setSearchOpen(false);
-						}} />}
+						right={
+							<IconButton
+								icon="codicon-close"
+								title="Close search"
+								onClick={() => {
+									actions.setSearchQuery('');
+									actions.setSearchOpen(false);
+								}}
+							/>
+						}
 						ref={searchInputRef}
 						value={state.searchQuery}
 						onChange={event => actions.setSearchQuery(event.target.value)}

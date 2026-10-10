@@ -7,7 +7,7 @@ import {
 	type ReactNode,
 } from 'react';
 import type { ExplorerModel } from '../hooks/useExplorer';
-import { Button } from '@/webview/components/ui/button';
+import { Button } from '@/webview/components/button';
 import { useContextMenuPosition } from '../hooks/useContextMenuPosition';
 import { getFileManagerName, isMac } from '@/webview/lib/fileFormatters';
 
@@ -155,10 +155,10 @@ function OpenInMenu({
 	const items: OpenMenuItem[] = [
 		...(canOpenFolder
 			? [
-				{ label: 'Current Window', action: 'openInCurrentWindow' as const },
-				{ label: 'New Window', action: 'openInNewWindow' as const },
-				{ label: 'New Tab', action: 'openInNewTab' as const },
-			]
+					{ label: 'Current Window', action: 'openInCurrentWindow' as const },
+					{ label: 'New Window', action: 'openInNewWindow' as const },
+					{ label: 'New Tab', action: 'openInNewTab' as const },
+				]
 			: []),
 		...(canOpenTerminal ? [{ label: 'Terminal', action: 'openInTerminal' as const }] : []),
 		{ label: getFileManagerName(), action: 'openInFileManager' },

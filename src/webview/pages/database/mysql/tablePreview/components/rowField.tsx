@@ -1,33 +1,33 @@
-import { Input, Select, Textarea } from '@/webview/components/ui/input';
+import { Input, Select, Textarea } from '@/webview/components/input';
 import type { MysqlColumnInfo } from '../../types';
 import type { PreviewState } from './dataTable';
 
 export function RowField({ column, preview }: { column: MysqlColumnInfo; preview: PreviewState }) {
-	const dialog=preview.dialog!;
-	const isNull=dialog.nulls.has(column.name);
-	const useDefault=dialog.defaults.has(column.name);
-	const disabled=isNull||useDefault;
-	const value=dialog.values[column.name]??'';
-	const control=column.boolean? (
+	const dialog = preview.dialog!;
+	const isNull = dialog.nulls.has(column.name);
+	const useDefault = dialog.defaults.has(column.name);
+	const disabled = isNull || useDefault;
+	const value = dialog.values[column.name] ?? '';
+	const control = column.boolean ? (
 		<Select
 			disabled={disabled}
-			value={value||'false'}
+			value={value || 'false'}
 			onChange={event => preview.setValue(column.name, event.target.value)}
 		>
 			<option value="false">false</option>
 			<option value="true">true</option>
 		</Select>
-	):['text', 'mediumtext', 'longtext', 'json'].includes(column.dataType.toLowerCase())? (
+	) : ['text', 'mediumtext', 'longtext', 'json'].includes(column.dataType.toLowerCase()) ? (
 		<Textarea
 			disabled={disabled}
 			value={value}
 			onChange={event => preview.setValue(column.name, event.target.value)}
 		/>
-	):(
+	) : (
 		<Input
 			disabled={disabled}
 			type={inputType(column.dataType)}
-			required={dialog.mode==='insert'&&!column.nullable&&!column.hasDefault}
+			required={dialog.mode === 'insert' && !column.nullable && !column.hasDefault}
 			value={value}
 			onChange={event => preview.setValue(column.name, event.target.value)}
 		/>
@@ -41,7 +41,7 @@ export function RowField({ column, preview }: { column: MysqlColumnInfo; preview
 						{column.dataType}
 					</small>
 				</span>
-				{column.nullable&&(
+				{column.nullable && (
 					<span className="ml-auto font-normal">
 						<input
 							type="checkbox"
@@ -51,7 +51,7 @@ export function RowField({ column, preview }: { column: MysqlColumnInfo; preview
 						NULL
 					</span>
 				)}
-				{dialog.mode==='insert'&&column.hasDefault&&(
+				{dialog.mode === 'insert' && column.hasDefault && (
 					<span className="font-normal">
 						<input
 							type="checkbox"
@@ -68,10 +68,10 @@ export function RowField({ column, preview }: { column: MysqlColumnInfo; preview
 }
 
 export function inputType(dataType: string) {
-	const type=dataType.toLowerCase();
-	if(type==='date') return 'date';
-	if(type==='time') return 'time';
-	if(
+	const type = dataType.toLowerCase();
+	if (type === 'date') return 'date';
+	if (type === 'time') return 'time';
+	if (
 		['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'float', 'double'].includes(
 			type,
 		)

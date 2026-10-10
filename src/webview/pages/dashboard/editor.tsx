@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { vscode } from '@/webview/vscodeApi';
 import { send, subscribe, type Tab } from './channel';
 import { App as ContainerForm } from '../container/serverForm/app';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 
 const tab = document.getElementById('root')!.dataset.tab as Tab;
 document.body.dataset.toolkitEditor = 'true';
@@ -24,8 +24,7 @@ function Editor() {
 		});
 		const receive = (event: MessageEvent) => {
 			if (event.data.type !== 'editorRequest') return;
-			if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?')))
-				return;
+			if (saving.current || (dirty.current && !window.confirm('Discard unsaved changes?'))) return;
 			send(tab, event.data.request);
 		};
 		window.addEventListener('message', receive);

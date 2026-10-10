@@ -1,5 +1,5 @@
-import { IconButton } from '@/webview/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus } from '@/webview/components/ui/icons';
+import { IconButton } from '@/webview/components/button';
+import { ChevronLeft, ChevronRight, Plus } from '@/webview/components/icons';
 
 interface DataToolbarProps {
 	totalRows: number;

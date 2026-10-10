@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button, IconButton } from '@/webview/components/ui/button';
-import { List, ListItem } from '@/webview/components/ui/list';
-import { Pencil, Plus, Trash2 } from '@/webview/components/ui/icons';
+import { Button, IconButton } from '@/webview/components/button';
+import { List, ListItem } from '@/webview/components/list';
+import { Pencil, Plus, Trash2 } from '@/webview/components/icons';
 import type { ConnectionFormState } from '../hooks/useForm';
 import { CommandDialog } from './commandDialog';
 

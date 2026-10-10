@@ -1,8 +1,16 @@
-import { IconButton } from '@/webview/components/ui/button';
-import { Container, Database, Play, Terminal } from '@/webview/components/ui/icons';
-import { ListItem } from '@/webview/components/ui/list';
+import { IconButton } from '@/webview/components/button';
+import { Container, Database, Play, Terminal } from '@/webview/components/icons';
+import { ListItem } from '@/webview/components/list';
 
-export type Connection = { id: string; name: string; group: string; address: string; kind: string; commandCount: number; connectionType: 'ssh' | 'database' | 'container' };
+export type Connection = {
+	id: string;
+	name: string;
+	group: string;
+	address: string;
+	kind: string;
+	commandCount: number;
+	connectionType: 'ssh' | 'database' | 'container';
+};
 
 export function ConnectionItem({
 	server,
@@ -15,7 +23,15 @@ export function ConnectionItem({
 }) {
 	return (
 		<ListItem
-			icon={server.connectionType === 'database' ? <Database /> : server.connectionType === 'container' ? <Container /> : <Terminal />}
+			icon={
+				server.connectionType === 'database' ? (
+					<Database />
+				) : server.connectionType === 'container' ? (
+					<Container />
+				) : (
+					<Terminal />
+				)
+			}
 			data-vscode-context={JSON.stringify({
 				webviewSection: 'connectionItem',
 				dashboardTab: server.connectionType,

@@ -1,6 +1,6 @@
-import { Button } from '@/webview/components/ui/button';
-import { Save } from '@/webview/components/ui/icons';
-import { Input as TextInput, Textarea as TextArea } from '@/webview/components/ui/input';
+import { Button } from '@/webview/components/button';
+import { Save } from '@/webview/components/icons';
+import { Input as TextInput, Textarea as TextArea } from '@/webview/components/input';
 import { StorageLocation } from '@/webview/components/storageLocation';
 import type { WorkflowController } from '../hooks/useWorkflow';
 import { Field } from './controls';

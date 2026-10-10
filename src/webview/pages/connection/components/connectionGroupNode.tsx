@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Tree } from '@/webview/components/ui/tree';
+import { Tree } from '@/webview/components/tree';
 
 export function ConnectionGroupNode({
 	name,

@@ -1,10 +1,10 @@
-import { Sparkles, CircleCheck } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
+import { Sparkles, CircleCheck } from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
 import { useState } from 'react';
-import { Popover } from '@/webview/components/ui/popover';
+import { Popover } from '@/webview/components/popover';
 import type { ModelItem } from '../types';
-import { Button } from '@/webview/components/ui/button';
-import { List, ListGroup, ListItem } from '@/webview/components/ui/list';
+import { Button } from '@/webview/components/button';
+import { List, ListGroup, ListItem } from '@/webview/components/list';
 
 type ModelPickerProps = {
 	models: ModelItem[];
@@ -45,7 +45,13 @@ export function ModelPicker({
 						{...props}
 						variant="text"
 						size="sm"
-						left={!error && models.length === 0 ? <Loading variant="icon" label="Loading models..." /> : <Sparkles size="sm" />}
+						left={
+							!error && models.length === 0 ? (
+								<Loading variant="icon" label="Loading models..." />
+							) : (
+								<Sparkles size="sm" />
+							)
+						}
 						active={open}
 						title={selectedModel ? `${selectedModel.providerName} · ${selectedModel.name}` : label}
 					>

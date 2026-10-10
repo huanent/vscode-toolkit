@@ -1,12 +1,7 @@
-import { Loading } from '@/webview/components/ui/loading';
-import { IconButton } from '@/webview/components/ui/button';
-import {
-	ChevronLeft,
-	ChevronRight,
-	Plus,
-	RefreshCw
-} from '@/webview/components/ui/icons';
-import { Select } from '@/webview/components/ui/input';
+import { Loading } from '@/webview/components/loading';
+import { IconButton } from '@/webview/components/button';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw } from '@/webview/components/icons';
+import { Select } from '@/webview/components/input';
 import { Table } from './components/dataTable';
 import { RowDialog } from './components/rowDialog';
 import { Status } from './components/status';
@@ -35,7 +30,8 @@ export function App() {
 						<Select
 							aria-label="Rows per page"
 							disabled={!data || preview.loading}
-							size="sm" className="w-18"
+							size="sm"
+							className="w-18"
 							value={data?.pageSize ?? 100}
 							onChange={event =>
 								data && preview.loadPage(1, Number(event.target.value), data.sort, data.filters)
@@ -53,29 +49,30 @@ export function App() {
 						{data?.page ?? 1} / {data?.totalPages ?? 1}
 					</span>
 					<IconButton
-
 						disabled={!data || preview.loading || data.page <= 1}
 						label="Previous page"
 						onClick={() => data && preview.loadPage(data.page - 1)}
-						icon={<ChevronLeft size="md" />} />
+						icon={<ChevronLeft size="md" />}
+					/>
 					<IconButton
-
 						disabled={!data || preview.loading || data.page >= data.totalPages}
 						label="Next page"
 						onClick={() => data && preview.loadPage(data.page + 1)}
-						icon={<ChevronRight size="md" />} />
+						icon={<ChevronRight size="md" />}
+					/>
 					<IconButton
 						className="ml-auto"
 						label="Insert row"
 						disabled={!data || preview.loading}
 						onClick={preview.openInsert}
-						icon={<Plus size="md" />} />
+						icon={<Plus size="md" />}
+					/>
 					<IconButton
-
 						label="Refresh"
 						disabled={preview.loading}
 						onClick={preview.refresh}
-						icon={preview.loading ? <Loading variant="icon" size="md" /> : <RefreshCw size="md" />} />
+						icon={preview.loading ? <Loading variant="icon" size="md" /> : <RefreshCw size="md" />}
+					/>
 				</span>
 			</header>
 			<main aria-busy={preview.loading} className="min-h-0 overflow-auto">

@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { cn } from 'cn';
-import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2 } from '@/webview/components/ui/icons';
-import { Input as TextInput, Textarea as TextArea, Select as SelectInput } from '@/webview/components/ui/input';
+import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2 } from '@/webview/components/icons';
+import {
+	Input as TextInput,
+	Textarea as TextArea,
+	Select as SelectInput,
+} from '@/webview/components/input';
 import type { Workflow, WorkflowStep } from '@/features/workflow/protocol';
 import { buttonClass, Field, IconButton } from './controls';
 
@@ -80,7 +84,9 @@ export function WorkflowSteps({
 											? 'Local Command'
 											: step.type === 'ssh'
 												? 'SSH Command'
-												: step.action === 'download' ? 'SFTP Download' : 'SFTP Upload'}
+												: step.action === 'download'
+													? 'SFTP Download'
+													: 'SFTP Upload'}
 									</span>
 								</span>
 							</button>
@@ -211,14 +217,26 @@ export function WorkflowSteps({
 											value={step.action ?? 'upload'}
 											onChange={event => {
 												const action = event.target.value as 'upload' | 'download';
-												updateStep(index, { ...step, action, name: ['SFTP Upload', 'SFTP Download'].includes(step.name) ? (action === 'download' ? 'SFTP Download' : 'SFTP Upload') : step.name });
+												updateStep(index, {
+													...step,
+													action,
+													name: ['SFTP Upload', 'SFTP Download'].includes(step.name)
+														? action === 'download'
+															? 'SFTP Download'
+															: 'SFTP Upload'
+														: step.name,
+												});
 											}}
 										>
 											<option value="upload">Upload</option>
 											<option value="download">Download</option>
 										</SelectInput>
 									</Field>
-									<Field label={step.action === 'download' ? 'Local destination file' : 'Local source file'}>
+									<Field
+										label={
+											step.action === 'download' ? 'Local destination file' : 'Local source file'
+										}
+									>
 										<span className="flex gap-1">
 											<TextInput
 												required
@@ -227,12 +245,21 @@ export function WorkflowSteps({
 													updateStep(index, { ...step, localPath: event.target.value })
 												}
 											/>
-											<IconButton title={step.action === 'download' ? 'Choose download location' : 'Choose file'} onClick={() => browse('localPath', index)}>
+											<IconButton
+												title={
+													step.action === 'download' ? 'Choose download location' : 'Choose file'
+												}
+												onClick={() => browse('localPath', index)}
+											>
 												<FolderOpen size="md" />
 											</IconButton>
 										</span>
 									</Field>
-									<Field label={step.action === 'download' ? 'Remote source file' : 'Remote destination file'}>
+									<Field
+										label={
+											step.action === 'download' ? 'Remote source file' : 'Remote destination file'
+										}
+									>
 										<TextInput
 											required
 											value={step.remotePath}

@@ -1,5 +1,5 @@
-import { Field } from '@/webview/components/ui/field';
-import { Input } from '@/webview/components/ui/input';
+import { Field } from '@/webview/components/field';
+import { Input } from '@/webview/components/input';
 import type { ConnectionFormState } from '../hooks/useForm';
 
 export function NetworkFields({ form }: { form: ConnectionFormState }) {

@@ -1,10 +1,10 @@
-import { Search, X, MessageSquare, MessageCircle, Trash2 } from '@/webview/components/ui/icons';
-import { List, ListGroup, ListItem } from '@/webview/components/ui/list';
+import { Search, X, MessageSquare, MessageCircle, Trash2 } from '@/webview/components/icons';
+import { List, ListGroup, ListItem } from '@/webview/components/list';
 import { Fragment, useEffect, useState, type UIEvent } from 'react';
 import type { SessionItem } from '../types';
-import { Empty } from '@/webview/components/ui/empty';
-import { IconButton } from '@/webview/components/ui/button';
-import { Input } from '@/webview/components/ui/input';
+import { Empty } from '@/webview/components/empty';
+import { IconButton } from '@/webview/components/button';
+import { Input } from '@/webview/components/input';
 import { getHistoryGroup } from '@/webview/lib/history';
 
 const pageSize = 30;
@@ -100,9 +100,13 @@ export function HistoryPanel({
 							{session.summary}
 						</ListItem>
 					));
-					return group.label === 'Today'
-						? <Fragment key={group.label}>{entries}</Fragment>
-						: <ListGroup key={group.label} label={group.label}>{entries}</ListGroup>;
+					return group.label === 'Today' ? (
+						<Fragment key={group.label}>{entries}</Fragment>
+					) : (
+						<ListGroup key={group.label} label={group.label}>
+							{entries}
+						</ListGroup>
+					);
 				})}
 			</List>
 		</aside>
@@ -117,4 +121,3 @@ function groupSessions(sessions: SessionItem[]) {
 	}
 	return [...groups].map(([label, items]) => ({ label, items }));
 }
-

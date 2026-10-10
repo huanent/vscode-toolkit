@@ -1,6 +1,6 @@
 import type { HttpResult } from '@/features/result/protocol';
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 
 export function HttpResultView({ result }: { result: HttpResult }) {
 	return (
@@ -36,7 +36,11 @@ export function HttpResultView({ result }: { result: HttpResult }) {
 				)}
 			</header>
 			{result.state === 'loading' && (
-				<Loading variant="inline" label="Sending request..." className="self-start p-3.5 text-(--vscode-descriptionForeground)" />
+				<Loading
+					variant="inline"
+					label="Sending request..."
+					className="self-start p-3.5 text-(--vscode-descriptionForeground)"
+				/>
 			)}
 			{(result.state === 'error' || result.state === 'cancelled') && (
 				<div

@@ -1,14 +1,7 @@
-import { IconButton } from '@/webview/components/ui/button';
-import { Loading } from '@/webview/components/ui/loading';
-import {
-	Download,
-	Gist,
-	Plus,
-	RefreshCw,
-	Trash2,
-	Upload
-} from '@/webview/components/ui/icons';
-import { Select } from '@/webview/components/ui/input';
+import { IconButton } from '@/webview/components/button';
+import { Loading } from '@/webview/components/loading';
+import { Download, Gist, Plus, RefreshCw, Trash2, Upload } from '@/webview/components/icons';
+import { Select } from '@/webview/components/input';
 import { TableDefinitionDialog } from './components/tableDefinitionDialog';
 import { TableList } from './components/tableList';
 import { useMysqlOverview } from './hooks/useMysqlOverview';
@@ -36,28 +29,36 @@ export function App() {
 					))}
 				</Select>
 				<div className="flex shrink-0 gap-1">
-					<IconButton label="Create database" onClick={mysql.createDatabase} icon={<Plus size="md" />} />
 					<IconButton
-
+						label="Create database"
+						onClick={mysql.createDatabase}
+						icon={<Plus size="md" />}
+					/>
+					<IconButton
 						label="Delete database"
 						disabled={!mysql.database}
 						onClick={mysql.deleteDatabase}
-						icon={<Trash2 size="md" />} />
+						icon={<Trash2 size="md" />}
+					/>
 				</div>
 				<div className="ml-auto flex shrink-0 gap-1">
 					<IconButton
-
 						label="Open SQL editor"
 						disabled={!mysql.database}
 						onClick={mysql.openSql}
-						icon={<Gist size="md" />} />
-					<IconButton label="Import database" onClick={mysql.importDatabase} icon={<Download size="md" />} />
+						icon={<Gist size="md" />}
+					/>
 					<IconButton
-
+						label="Import database"
+						onClick={mysql.importDatabase}
+						icon={<Download size="md" />}
+					/>
+					<IconButton
 						label="Export database"
 						disabled={!mysql.database}
 						onClick={mysql.exportDatabase}
-						icon={<Upload size="md" />} />
+						icon={<Upload size="md" />}
+					/>
 					<IconButton label="Refresh" onClick={mysql.refresh} icon={<RefreshCw size="md" />} />
 				</div>
 			</header>

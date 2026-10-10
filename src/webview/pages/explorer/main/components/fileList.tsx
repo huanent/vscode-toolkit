@@ -1,6 +1,6 @@
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
-import { RefreshCw } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/loading';
+import { RefreshCw } from '@/webview/components/icons';
 import type { MouseEvent } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
@@ -120,14 +120,18 @@ export function FileList({ state, actions }: FileListProps) {
 					{normalizedQuery ? 'No matching files.' : 'This folder is empty.'}
 				</div>
 			)}
-			{state.status === 'Loading...' ? <Loading /> : state.status && (
-				<div
-					className="py-11 text-center text-(--vscode-descriptionForeground)"
-					role="status"
-					aria-live="polite"
-				>
-					{state.status}
-				</div>
+			{state.status === 'Loading...' ? (
+				<Loading />
+			) : (
+				state.status && (
+					<div
+						className="py-11 text-center text-(--vscode-descriptionForeground)"
+						role="status"
+						aria-live="polite"
+					>
+						{state.status}
+					</div>
+				)
 			)}
 		</main>
 	);
@@ -348,7 +352,11 @@ function EntrySize({
 				}}
 				onDoubleClick={event => event.stopPropagation()}
 			>
-				{entry.calculating ? <Loading variant="icon" label={label} size="md" /> : <RefreshCw size="md" />}
+				{entry.calculating ? (
+					<Loading variant="icon" label={label} size="md" />
+				) : (
+					<RefreshCw size="md" />
+				)}
 			</button>
 		</span>
 	);
@@ -373,17 +381,17 @@ function FolderSizeError({
 		setTooltipStyle(
 			rect.top > 72
 				? {
-					...horizontal,
-					bottom: window.innerHeight - rect.top + 4,
-					maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
-					overflowWrap: 'anywhere',
-				}
+						...horizontal,
+						bottom: window.innerHeight - rect.top + 4,
+						maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
+						overflowWrap: 'anywhere',
+					}
 				: {
-					...horizontal,
-					top: rect.bottom + 4,
-					maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
-					overflowWrap: 'anywhere',
-				},
+						...horizontal,
+						top: rect.bottom + 4,
+						maxWidth: Math.max(0, Math.min(320, window.innerWidth - 16)),
+						overflowWrap: 'anywhere',
+					},
 		);
 	}
 

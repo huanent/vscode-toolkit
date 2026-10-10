@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 
 export function Status({
 	children,

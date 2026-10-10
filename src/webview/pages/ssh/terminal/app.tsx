@@ -1,8 +1,8 @@
 import { cn } from 'cn';
 import { useRef } from 'react';
-import { Empty } from '@/webview/components/ui/empty';
-import { CircleAlert } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
+import { Empty } from '@/webview/components/empty';
+import { CircleAlert } from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
 import { RemoteMetrics } from './components/remoteMetrics';
 import { SftpPanel } from './components/sftpPanel';
 import { TerminalView, type TerminalViewHandle } from './components/terminalView';
@@ -50,7 +50,11 @@ export function App() {
 							}
 							icon={
 								ssh.status === 'connecting' ? (
-									<Loading variant="icon" label="Connecting" className="text-(--vscode-progressBar-background)" />
+									<Loading
+										variant="icon"
+										label="Connecting"
+										className="text-(--vscode-progressBar-background)"
+									/>
 								) : (
 									<CircleAlert />
 								)

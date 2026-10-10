@@ -1,11 +1,15 @@
 import { cn } from 'cn';
 import { useId } from 'react';
-import { Dialog } from '@/webview/components/ui/dialog';
-import { RotateCw } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
-import { Button as PrimaryButton, Button as SecondaryButton } from '@/webview/components/ui/button';
-import { FieldLabel } from '@/webview/components/ui/field';
-import { Select as SelectInput, Textarea as TextArea, Input as TextInput } from '@/webview/components/ui/input';
+import { Dialog } from '@/webview/components/dialog';
+import { RotateCw } from '@/webview/components/icons';
+import { Loading } from '@/webview/components/loading';
+import { Button as PrimaryButton, Button as SecondaryButton } from '@/webview/components/button';
+import { FieldLabel } from '@/webview/components/field';
+import {
+	Select as SelectInput,
+	Textarea as TextArea,
+	Input as TextInput,
+} from '@/webview/components/input';
 import type { useContainerEditor } from './hooks/useContainerEditor';
 
 type EditorState = Pick<
@@ -28,12 +32,25 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 			title="Edit and recreate container"
 			onClose={editor.closeContainerEditor}
 			closeDisabled={state.saving}
-			actions={<>
-				<SecondaryButton variant="plain" disabled={state.saving} onClick={editor.closeContainerEditor}>Cancel</SecondaryButton>
-				<PrimaryButton htmlType="submit" form={formId} disabled={!config || state.loading || state.saving} left={state.saving ? <Loading variant="icon" label="Recreating..." /> : <RotateCw />}>
-					{state.saving ? 'Recreating...' : 'Recreate'}
-				</PrimaryButton>
-			</>}
+			actions={
+				<>
+					<SecondaryButton
+						variant="plain"
+						disabled={state.saving}
+						onClick={editor.closeContainerEditor}
+					>
+						Cancel
+					</SecondaryButton>
+					<PrimaryButton
+						htmlType="submit"
+						form={formId}
+						disabled={!config || state.loading || state.saving}
+						left={state.saving ? <Loading variant="icon" label="Recreating..." /> : <RotateCw />}
+					>
+						{state.saving ? 'Recreating...' : 'Recreate'}
+					</PrimaryButton>
+				</>
+			}
 		>
 			<form
 				id={formId}
@@ -70,9 +87,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 								<TextInput
 									disabled={state.saving}
 									value={config.entrypoint}
-									onChange={event =>
-										editor.updateContainerConfig('entrypoint', event.target.value)
-									}
+									onChange={event => editor.updateContainerConfig('entrypoint', event.target.value)}
 								/>
 							</EditField>
 							<EditField label="User">
@@ -159,9 +174,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 									<TextArea
 										disabled={state.saving}
 										value={config.volumes}
-										onChange={event =>
-											editor.updateContainerConfig('volumes', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('volumes', event.target.value)}
 									/>
 								</EditField>
 								<EditField label="Mounts" hint="type=...,source=...,target=...">
@@ -201,9 +214,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 									<TextInput
 										disabled={state.saving}
 										value={config.shmSize}
-										onChange={event =>
-											editor.updateContainerConfig('shmSize', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('shmSize', event.target.value)}
 									/>
 								</EditField>
 							</div>
@@ -212,18 +223,14 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 									<TextInput
 										disabled={state.saving}
 										value={config.platform}
-										onChange={event =>
-											editor.updateContainerConfig('platform', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('platform', event.target.value)}
 									/>
 								</EditField>
 								<EditField label="Runtime handler">
 									<TextInput
 										disabled={state.saving}
 										value={config.runtime}
-										onChange={event =>
-											editor.updateContainerConfig('runtime', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('runtime', event.target.value)}
 									/>
 								</EditField>
 							</div>
@@ -275,9 +282,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 										className="min-h-20"
 										disabled={state.saving}
 										value={config.capDrop}
-										onChange={event =>
-											editor.updateContainerConfig('capDrop', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('capDrop', event.target.value)}
 									/>
 								</EditField>
 							</div>
@@ -293,9 +298,7 @@ export function ContainerEditDialog({ editor }: { editor: EditorState }) {
 									<TextArea
 										disabled={state.saving}
 										value={config.ulimits}
-										onChange={event =>
-											editor.updateContainerConfig('ulimits', event.target.value)
-										}
+										onChange={event => editor.updateContainerConfig('ulimits', event.target.value)}
 									/>
 								</EditField>
 							</div>

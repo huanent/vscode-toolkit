@@ -1,10 +1,10 @@
-import { Square, Send, Plus } from '@/webview/components/ui/icons';
+import { Square, Send, Plus } from '@/webview/components/icons';
 import { cn } from 'cn';
 import { useRef, type RefObject } from 'react';
 import type { ChatAttachment, ModelItem } from '../types';
 import { AttachmentList } from './attachmentList';
 import { ModelPicker } from './modelPicker';
-import { IconButton } from '@/webview/components/ui/button';
+import { IconButton } from '@/webview/components/button';
 
 type ChatInputProps = {
 	inputRef: RefObject<HTMLDivElement | null>;
@@ -60,11 +60,23 @@ export function ChatInput({
 						: 'border-(--vscode-panel-border)',
 				)}
 			>
-				<AttachmentList attachments={attachments} disabled={busy || readingAttachments} onRemove={onRemoveAttachment} />
-				<input ref={fileInputRef} type="file" multiple hidden aria-label="Attach files" disabled={busy || readingAttachments} onChange={event => {
-					onAddAttachments(Array.from(event.currentTarget.files ?? []));
-					event.currentTarget.value = '';
-				}} />
+				<AttachmentList
+					attachments={attachments}
+					disabled={busy || readingAttachments}
+					onRemove={onRemoveAttachment}
+				/>
+				<input
+					ref={fileInputRef}
+					type="file"
+					multiple
+					hidden
+					aria-label="Attach files"
+					disabled={busy || readingAttachments}
+					onChange={event => {
+						onAddAttachments(Array.from(event.currentTarget.files ?? []));
+						event.currentTarget.value = '';
+					}}
+				/>
 				<div
 					ref={inputRef}
 					className="message-input min-h-9 max-h-45 w-full overflow-y-auto px-4 pt-3 pb-1 text-md text-(--vscode-input-foreground) outline-none whitespace-pre-wrap wrap-anywhere data-[disabled=true]:opacity-60"
@@ -90,7 +102,13 @@ export function ChatInput({
 					}}
 				/>
 				<div className="flex min-h-10 flex-wrap items-end gap-1 px-2 pb-2">
-					<IconButton label="Attach images or files" icon={<Plus size='sm' />} size="sm" disabled={busy || readingAttachments} onClick={() => fileInputRef.current?.click()} />
+					<IconButton
+						label="Attach images or files"
+						icon={<Plus size="sm" />}
+						size="sm"
+						disabled={busy || readingAttachments}
+						onClick={() => fileInputRef.current?.click()}
+					/>
 					<ModelPicker
 						models={models}
 						selectedModelId={selectedModelId}
@@ -101,21 +119,26 @@ export function ChatInput({
 					<span className="flex-1" />
 					<IconButton
 						label={busy ? 'Stop generating' : 'Send'}
-						icon={
-							busy ? (
-								<Square size="sm" />
-							) : (
-								<Send size="sm" />
-							)
-						}
+						icon={busy ? <Square size="sm" /> : <Send size="sm" />}
 						size="md"
-						disabled={!busy && ((!input.trim() && !attachments.length) || !selectedModelId || readingAttachments)}
+						disabled={
+							!busy &&
+							((!input.trim() && !attachments.length) || !selectedModelId || readingAttachments)
+						}
 						onClick={onSend}
 					/>
 				</div>
 			</div>
-			{readingAttachments && <div role="status" className="px-2 pt-1 text-sm text-(--vscode-descriptionForeground)">Reading attachments...</div>}
-			{attachmentError && <div role="alert" className="px-2 pt-1 text-sm text-(--vscode-errorForeground)">{attachmentError}</div>}
+			{readingAttachments && (
+				<div role="status" className="px-2 pt-1 text-sm text-(--vscode-descriptionForeground)">
+					Reading attachments...
+				</div>
+			)}
+			{attachmentError && (
+				<div role="alert" className="px-2 pt-1 text-sm text-(--vscode-errorForeground)">
+					{attachmentError}
+				</div>
+			)}
 		</section>
 	);
 }

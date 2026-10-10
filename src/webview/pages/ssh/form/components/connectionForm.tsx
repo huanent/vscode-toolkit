@@ -1,12 +1,12 @@
 import { cn } from 'cn';
-import { Loading } from '@/webview/components/ui/loading';
+import { Loading } from '@/webview/components/loading';
 import { StorageLocation } from '@/webview/components/storageLocation';
 import { useState } from 'react';
-import { Save } from '@/webview/components/ui/icons';
-import { Button } from '@/webview/components/ui/button';
-import { Field } from '@/webview/components/ui/field';
-import { Input } from '@/webview/components/ui/input';
-import { Switch } from '@/webview/components/ui/switch';
+import { Save } from '@/webview/components/icons';
+import { Button } from '@/webview/components/button';
+import { Field } from '@/webview/components/field';
+import { Input } from '@/webview/components/input';
+import { Switch } from '@/webview/components/switch';
 import { AuthenticationFields } from './authenticationFields';
 import { CommandFields } from './commandFields';
 import { FavoriteFields } from './favoriteFields';
@@ -15,9 +15,9 @@ import { ProxyFields } from '@/webview/components/proxyFields';
 import type { ConnectionFormState } from '../hooks/useForm';
 
 export function ConnectionForm({ form }: { form: ConnectionFormState }) {
-	const [activeTab, setActiveTab] = useState<'connection' | 'proxy' | 'commands' | 'favorites' | 'other'>(
-		'connection',
-	);
+	const [activeTab, setActiveTab] = useState<
+		'connection' | 'proxy' | 'commands' | 'favorites' | 'other'
+	>('connection');
 	if (!form.model) {
 		return (
 			<main className="grid min-h-screen place-items-center text-sm text-(--vscode-descriptionForeground)">

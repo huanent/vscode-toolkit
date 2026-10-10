@@ -1,5 +1,5 @@
-import { Button } from '@/webview/components/ui/button';
-import { Popover } from '@/webview/components/ui/popover';
+import { Button } from '@/webview/components/button';
+import { Popover } from '@/webview/components/popover';
 import type { DatabaseObject } from '../types';
 
 interface TableContextMenuProps {

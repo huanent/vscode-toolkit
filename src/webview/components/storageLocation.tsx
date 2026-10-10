@@ -1,6 +1,6 @@
-import { Field } from '@/webview/components/ui/field';
-import { Select } from '@/webview/components/ui/input';
-import { Segmented } from '@/webview/components/ui/segmented';
+import { Field } from '@/webview/components/field';
+import { Select } from '@/webview/components/input';
+import { Segmented } from '@/webview/components/segmented-control';
 
 export function StorageLocation({
 	value,
@@ -16,9 +16,13 @@ export function StorageLocation({
 	inline?: boolean;
 }) {
 	return (
-		<div className={inline
-			? 'grid w-full grid-flow-col grid-cols-[100%] auto-cols-max items-end gap-3'
-			: 'mx-auto mb-3 grid w-[min(880px,calc(100%-44px))] gap-2 max-[680px]:w-[calc(100%-28px)]'}>
+		<div
+			className={
+				inline
+					? 'grid w-full grid-flow-col grid-cols-[100%] auto-cols-max items-end gap-3'
+					: 'mx-auto mb-3 grid w-[min(880px,calc(100%-44px))] gap-2 max-[680px]:w-[calc(100%-28px)]'
+			}
+		>
 			<Segmented
 				noWrap={inline}
 				className={inline ? 'w-full' : undefined}
