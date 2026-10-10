@@ -3,7 +3,7 @@ import { CircuitBoard, Play } from '@/webview/components/icons';
 import { IconButton } from '@/webview/components/button';
 import { List, ListItem } from '@/webview/components/list';
 import { DashboardEmpty, DashboardSearch } from '@/webview/pages/dashboard/components';
-import type { Workflow } from '@/features/workflow/protocol';
+import type { Workflow } from '@/shared/workflowProtocol';
 
 type Props = {
 	workflows: Workflow[];

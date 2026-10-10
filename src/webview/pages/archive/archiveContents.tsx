@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useMemo, useState } from 'react';
-import type { ArchiveTreeEntry } from '@/features/archive/protocol';
+import type { ArchiveTreeEntry } from '@/shared/archiveProtocol';
 import { formatSize, getFileIcon } from '@/webview/lib/fileFormatters';
 
 export function ArchiveContents({ name, entries }: { name: string; entries: ArchiveTreeEntry[] }) {

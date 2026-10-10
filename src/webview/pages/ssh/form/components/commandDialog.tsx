@@ -3,7 +3,7 @@ import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Field } from '@/webview/components/field';
 import { Textarea, Input } from '@/webview/components/input';
-import type { ServerCommand } from '@/features/ssh/formProtocol';
+import type { ServerCommand } from '@/shared/sshFormProtocol';
 
 export function CommandDialog({
 	command,

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { ArchiveTreeEntry } from '@/features/archive/protocol';
+import type { ArchiveTreeEntry } from '@/shared/archiveProtocol';
 import { PreviewLoader } from '@/webview/components/previewLoader';
 import { ArchiveContents } from './archiveContents';
 

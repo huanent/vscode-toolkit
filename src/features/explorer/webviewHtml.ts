@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from '@/host/webviewHtml';
-import type { ExplorerViewState, FolderEntry } from './protocol';
+import type { ExplorerViewState, FolderEntry } from '@/shared/explorerProtocol';
 
 export function getExplorerWebviewHtml(
 	webview: vscode.Webview,

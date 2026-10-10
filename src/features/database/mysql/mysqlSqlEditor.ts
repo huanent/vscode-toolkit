@@ -1,5 +1,5 @@
 import { getStorageUri } from '@/host/storagePath';
-import type { Result, ResultMessage } from '../../result/protocol';
+import type { Result, ResultMessage } from '@/shared/resultProtocol';
 import * as vscode from 'vscode';
 import { homedir } from 'node:os';
 import { FieldPacket, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
@@ -171,35 +171,52 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 		}
 
 		const taskResult: Result = {
-			type: 'table', data: {
-				label: context.database, source: `${server.name} / ${context.database}`,
-				kind: 'command', summary: 'Executing SQL...', message: sql,
-			}
+			type: 'table',
+			data: {
+				label: context.database,
+				source: `${server.name} / ${context.database}`,
+				kind: 'command',
+				summary: 'Executing SQL...',
+				message: sql,
+			},
 		};
 		await this.resultView.run(taskResult, async signal => {
 			const startedAt = performance.now();
-			const queryResult = await executeSql(() => createMysqlConnection(server, credentials, context.database), sql, signal);
+			const queryResult = await executeSql(
+				() => createMysqlConnection(server, credentials, context.database),
+				sql,
+				signal,
+			);
 			if (!queryResult) {
-				taskResult.data = { ...taskResult.data, kind: 'command', summary: 'No statements to execute.', message: 'No statements to execute.' };
+				taskResult.data = {
+					...taskResult.data,
+					kind: 'command',
+					summary: 'No statements to execute.',
+					message: 'No statements to execute.',
+				};
 				return;
 			}
 			const [result, fields] = queryResult;
 			const durationMs = Math.round(performance.now() - startedAt);
 			if (Array.isArray(result)) {
-				taskResult.data = toResultMessage(this.showRows(
-					server.name,
-					context.database,
-					result as RowDataPacket[],
-					fields as FieldPacket[],
-					durationMs,
-				)).result.data;
+				taskResult.data = toResultMessage(
+					this.showRows(
+						server.name,
+						context.database,
+						result as RowDataPacket[],
+						fields as FieldPacket[],
+						durationMs,
+					),
+				).result.data;
 			} else {
-				taskResult.data = toResultMessage(this.showCommandResult(
-					server.name,
-					context.database,
-					result as ResultSetHeader,
-					durationMs,
-				)).result.data;
+				taskResult.data = toResultMessage(
+					this.showCommandResult(
+						server.name,
+						context.database,
+						result as ResultSetHeader,
+						durationMs,
+					),
+				).result.data;
 			}
 		});
 	}
@@ -365,7 +382,11 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 		if (selected?.type !== 'table' || selected.data.kind !== 'rows') {
 			return;
 		}
-		const result = { ...selected.data, serverName: selected.data.source ?? '', database: selected.data.label ?? 'query' };
+		const result = {
+			...selected.data,
+			serverName: selected.data.source ?? '',
+			database: selected.data.label ?? 'query',
+		};
 		const format = await vscode.window.showQuickPick(
 			[
 				{ label: 'JSON', description: 'JSON object array', extension: 'json' as const },
@@ -445,16 +466,18 @@ export class MysqlSqlEditorController implements vscode.Disposable {
 
 type SqlResultModel =
 	| {
-		serverName: string;
-		database: string;
-		summary: string;
-		kind: 'rows';
-		columns: string[];
-		rows: Array<Array<string | null>>;
-	}
+			serverName: string;
+			database: string;
+			summary: string;
+			kind: 'rows';
+			columns: string[];
+			rows: Array<Array<string | null>>;
+	  }
 	| { serverName: string; database: string; summary: string; kind: 'command'; message: string };
 
-function toResultMessage(result: SqlResultModel): ResultMessage & { result: Extract<Result, { type: 'table' }> } {
+function toResultMessage(
+	result: SqlResultModel,
+): ResultMessage & { result: Extract<Result, { type: 'table' }> } {
 	return {
 		type: 'result',
 		result: {

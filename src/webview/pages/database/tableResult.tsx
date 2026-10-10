@@ -1,4 +1,4 @@
-import type { TableResult } from '@/features/result/protocol';
+import type { TableResult } from '@/shared/resultProtocol';
 import { cn } from 'cn';
 
 export function TableResultView({ result }: { result: TableResult }) {

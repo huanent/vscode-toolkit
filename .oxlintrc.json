@@ -1,10 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "unicorn",
-    "oxc"
-  ],
+  "plugins": ["typescript", "unicorn", "oxc"],
   "categories": {
     "correctness": "error"
   },
@@ -18,10 +14,7 @@
   ],
   "overrides": [
     {
-      "files": [
-        "src/webview/**/*.ts",
-        "src/webview/**/*.tsx"
-      ],
+      "files": ["src/webview/**/*.ts", "src/webview/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -86,20 +79,8 @@
                 "message": "Webview code must not depend on extension-host implementations."
               },
               {
-                "regex": "(^|/)(host|app)/",
-                "message": "Webview code must not import host or application modules."
-              },
-              {
-                "group": [
-                  "**/features/**",
-                  "!**/features/*/protocol",
-                  "!**/features/*/protocol.ts",
-                  "!**/features/*/*Protocol",
-                  "!**/features/*/*Protocol.ts",
-                  "!**/features/database/sqlite/protocol",
-                  "!**/features/database/sqlite/protocol.ts"
-                ],
-                "message": "Webview code may only import feature protocols."
+                "regex": "(^|/)(host|app|features)/",
+                "message": "Webview code must not import host, application, or feature modules."
               }
             ]
           }
@@ -107,25 +88,14 @@
       }
     },
     {
-      "files": [
-        "src/shared/**/*.ts",
-        "src/features/*/protocol.ts",
-        "src/features/*/*Protocol.ts",
-        "src/features/database/sqlite/protocol.ts"
-      ],
+      "files": ["src/shared/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": [
-                  "node:*",
-                  "react",
-                  "react/**",
-                  "react-dom",
-                  "react-dom/**"
-                ],
+                "group": ["node:*", "react", "react/**", "react-dom", "react-dom/**"],
                 "message": "Shared contracts and pure logic must remain runtime-independent."
               },
               {
@@ -133,24 +103,12 @@
                 "message": "Shared contracts and pure logic must not depend on VS Code."
               },
               {
-                "regex": "(^|/)(host|app|webview)/",
-                "message": "Shared code must not depend on host, application, or webview modules."
+                "regex": "(^|/)(host|app|features|webview)/",
+                "message": "Shared code must not depend on host, application, feature, or webview modules."
               },
               {
                 "regex": "^(assert|buffer|child_process|cluster|console|crypto|dgram|diagnostics_channel|dns|events|fs|http|http2|https|inspector|module|net|os|path|perf_hooks|process|punycode|querystring|readline|repl|sqlite|stream|string_decoder|timers|tls|trace_events|tty|url|util|v8|vm|wasi|worker_threads|zlib)(/|$)",
                 "message": "Shared code must not import unprefixed Node built-ins."
-              },
-              {
-                "group": [
-                  "**/features/**",
-                  "!**/features/*/protocol",
-                  "!**/features/*/protocol.ts",
-                  "!**/features/*/*Protocol",
-                  "!**/features/*/*Protocol.ts",
-                  "!**/features/database/sqlite/protocol",
-                  "!**/features/database/sqlite/protocol.ts"
-                ],
-                "message": "Shared code must not import feature implementations."
               }
             ]
           }
@@ -158,17 +116,7 @@
       }
     },
     {
-      "files": [
-        "src/host/**/*.ts",
-        "src/features/**/*.ts",
-        "src/app/**/*.ts",
-        "src/extension.ts"
-      ],
-      "excludeFiles": [
-        "src/features/*/protocol.ts",
-        "src/features/*/*Protocol.ts",
-        "src/features/database/sqlite/protocol.ts"
-      ],
+      "files": ["src/host/**/*.ts", "src/features/**/*.ts", "src/app/**/*.ts", "src/extension.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -184,9 +132,7 @@
       }
     },
     {
-      "files": [
-        "src/host/**/*.ts"
-      ],
+      "files": ["src/host/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -202,14 +148,7 @@
       }
     },
     {
-      "files": [
-        "src/features/**/*.ts"
-      ],
-      "excludeFiles": [
-        "src/features/*/protocol.ts",
-        "src/features/*/*Protocol.ts",
-        "src/features/database/sqlite/protocol.ts"
-      ],
+      "files": ["src/features/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",

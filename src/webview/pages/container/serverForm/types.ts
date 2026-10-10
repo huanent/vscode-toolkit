@@ -1,8 +1,4 @@
-import type {
-	ContainerRuntime,
-	ConnectionType,
-	ProxyMode,
-} from '@/features/container/formProtocol';
+import type { ContainerRuntime, ConnectionType, ProxyMode } from '@/shared/containerFormProtocol';
 
 export interface ServerFormValues {
 	proxyCredentialId: string;

@@ -2,27 +2,35 @@ import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { getWebviewHtml } from '@/host/webviewHtml';
 import { SqliteSession } from './service';
-import type { SqliteRequest } from './protocol';
+import type { SqliteRequest } from '@/shared/sqliteProtocol';
 
 export const sqliteEditorViewType = 'vscode-toolkit.database.sqliteEditor';
 
 export function registerSqliteEditor(context: vscode.ExtensionContext): vscode.Disposable {
-	return vscode.window.registerCustomEditorProvider(sqliteEditorViewType, {
-		openCustomDocument: (uri: vscode.Uri) => ({ uri, dispose() { } }),
-		resolveCustomEditor: (document: vscode.CustomDocument, panel: vscode.WebviewPanel) => {
-			configureSqlitePanel(context, document.uri, panel);
+	return vscode.window.registerCustomEditorProvider(
+		sqliteEditorViewType,
+		{
+			openCustomDocument: (uri: vscode.Uri) => ({ uri, dispose() {} }),
+			resolveCustomEditor: (document: vscode.CustomDocument, panel: vscode.WebviewPanel) => {
+				configureSqlitePanel(context, document.uri, panel);
+			},
 		},
-	}, {
-		supportsMultipleEditorsPerDocument: false,
-		webviewOptions: { retainContextWhenHidden: true },
-	});
+		{
+			supportsMultipleEditorsPerDocument: false,
+			webviewOptions: { retainContextWhenHidden: true },
+		},
+	);
 }
 
 export function openSqliteEditor(uri: vscode.Uri): Thenable<unknown> {
 	return vscode.commands.executeCommand('vscode.openWith', uri, sqliteEditorViewType);
 }
 
-function configureSqlitePanel(context: vscode.ExtensionContext, uri: vscode.Uri, panel: vscode.WebviewPanel): void {
+function configureSqlitePanel(
+	context: vscode.ExtensionContext,
+	uri: vscode.Uri,
+	panel: vscode.WebviewPanel,
+): void {
 	const name = path.posix.basename(uri.path);
 	panel.webview.options = {
 		enableScripts: true,

@@ -1,5 +1,5 @@
 import { resolveConfigurationIdentity } from '../credential/configurationIdentity';
-import type { CredentialSummary } from '../credential/protocol';
+import type { CredentialSummary } from '@/shared/credentialProtocol';
 
 export type ServerType = 'ssh';
 
@@ -63,14 +63,23 @@ export interface ServerFormMessage {
 	aiEnabled?: unknown;
 }
 
-function parseSshProxy(message: ServerFormMessage, requireCredential: boolean): SshProxy | undefined {
+function parseSshProxy(
+	message: ServerFormMessage,
+	requireCredential: boolean,
+): SshProxy | undefined {
 	if (message.proxyEnabled !== true) {
 		return undefined;
 	}
 	const credentialId = normalizeString(message.proxyCredentialId);
 	const host = normalizeString(message.proxyHost);
 	const port = Number(message.proxyPort);
-	if ((requireCredential && !credentialId) || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if (
+		(requireCredential && !credentialId) ||
+		!host ||
+		!Number.isInteger(port) ||
+		port < 1 ||
+		port > 65_535
+	) {
 		return undefined;
 	}
 	return {
@@ -94,7 +103,14 @@ export function parseServerForm(
 	const credentialId = normalizeString(message.credentialId);
 	const host = normalizeString(message.host);
 	const port = Number(message.port);
-	if ((requireCredential && !credentialId) || !name || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if (
+		(requireCredential && !credentialId) ||
+		!name ||
+		!host ||
+		!Number.isInteger(port) ||
+		port < 1 ||
+		port > 65_535
+	) {
 		return undefined;
 	}
 
@@ -114,7 +130,9 @@ export function parseServerForm(
 	}
 	return {
 		...baseServer,
-		...(normalizeString(message.credentialId) ? { credentialId: normalizeString(message.credentialId) } : {}),
+		...(normalizeString(message.credentialId)
+			? { credentialId: normalizeString(message.credentialId) }
+			: {}),
 		type: 'ssh',
 		...(!proxy && normalizeString(message.proxyCommand)
 			? { proxyCommand: normalizeString(message.proxyCommand) }
@@ -122,7 +140,13 @@ export function parseServerForm(
 		...(proxy ? { proxy } : {}),
 		commands: normalizeCommands(message.commands),
 		favorites: Array.isArray(message.favorites)
-			? [...new Set(message.favorites.filter((path): path is string => typeof path === 'string' && path.trim().length > 0))]
+			? [
+					...new Set(
+						message.favorites.filter(
+							(path): path is string => typeof path === 'string' && path.trim().length > 0,
+						),
+					),
+				]
 			: undefined,
 	};
 }
@@ -180,7 +204,11 @@ export function parseServer(value: unknown, credentials?: readonly CredentialSum
 			credentialId: value.credentialId,
 			proxyCommand: value.proxyCommand,
 			proxyEnabled: containerSsh || isRecord(value.proxy),
-			proxyCredentialId: manualContainerSsh ? value.credentialId : isRecord(value.proxy) ? value.proxy.credentialId : undefined,
+			proxyCredentialId: manualContainerSsh
+				? value.credentialId
+				: isRecord(value.proxy)
+					? value.proxy.credentialId
+					: undefined,
 			proxyHost: manualContainerSsh
 				? value.host
 				: isRecord(value.proxy)

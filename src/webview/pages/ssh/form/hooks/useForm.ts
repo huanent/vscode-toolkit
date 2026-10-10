@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ConnectionFormValues } from '../types';
 import { sshApi as vscode, subscribe } from '../../vscode';
-import type {
-	ServerFormExtensionMessage,
-	ServerFormModel,
-} from '@/features/ssh/formProtocol';
+import type { ServerFormExtensionMessage, ServerFormModel } from '@/shared/sshFormProtocol';
 
 const emptyValues: ConnectionFormValues = {
 	proxyCredentialId: '',
@@ -20,11 +17,6 @@ const emptyValues: ConnectionFormValues = {
 	proxyEnabled: false,
 	proxyHost: '',
 	proxyPort: '22',
-
-
-
-
-
 
 	commands: [],
 	favorites: [],
@@ -74,13 +66,8 @@ export function useForm(sessionId: number, onClose: () => void) {
 						proxyHost: server && 'proxy' in server ? (server.proxy?.host ?? '') : '',
 						proxyPort: String(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22),
 
-
-
 						commands: server?.type === 'ssh' ? server.commands : [],
 						favorites: server?.favorites ?? [],
-
-
-
 					});
 					break;
 				}
@@ -95,7 +82,10 @@ export function useForm(sessionId: number, onClose: () => void) {
 		return unsubscribe;
 	}, [sessionId, onClose]);
 
-	const update = <Key extends keyof ConnectionFormValues>(key: Key, value: ConnectionFormValues[Key]) => {
+	const update = <Key extends keyof ConnectionFormValues>(
+		key: Key,
+		value: ConnectionFormValues[Key],
+	) => {
 		setError('');
 		setValues(current => ({ ...current, [key]: value }));
 	};

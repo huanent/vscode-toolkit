@@ -5,4 +5,4 @@ export type {
 	SqliteRequest,
 	SqliteResponse,
 	SqliteState,
-} from '@/features/database/sqlite/protocol';
+} from '@/shared/sqliteProtocol';

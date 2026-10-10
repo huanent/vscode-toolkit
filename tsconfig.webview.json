@@ -1,27 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "types": [
-      "react",
-      "react-dom"
-    ],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["react", "react-dom"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "composite": true,
     "isolatedModules": true,
-    "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": [
-    "src/webview/**/*.ts",
-    "src/webview/**/*.tsx",
-    "src/shared/**/*.ts",
-    "src/features/*/protocol.ts",
-    "src/features/*/*Protocol.ts",
-    "src/features/database/sqlite/protocol.ts"
-  ]
+  "include": ["src/webview/**/*.ts", "src/webview/**/*.tsx", "src/shared/**/*.ts"]
 }

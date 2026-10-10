@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { workflowApi as vscode, subscribe } from '../../vscode';
-import type { Workflow, WorkflowStep } from '@/features/workflow/protocol';
+import type { Workflow, WorkflowStep } from '@/shared/workflowProtocol';
 
 type State = {
 	locations: Record<string, string>;
@@ -49,11 +49,11 @@ export function useWorkflow() {
 				setDraft(current =>
 					current && current.id === message.draftId
 						? {
-							...current,
-							steps: current.steps.map((step, index) =>
-								index === message.index ? { ...step, [message.field]: message.value } : step,
-							),
-						}
+								...current,
+								steps: current.steps.map((step, index) =>
+									index === message.index ? { ...step, [message.field]: message.value } : step,
+								),
+							}
 						: current,
 				);
 				setDirty(true);
@@ -86,13 +86,13 @@ export function useWorkflow() {
 			: type === 'ssh'
 				? { type, name: 'SSH Command', serverId: state.servers[0]?.id ?? '', command: '' }
 				: {
-					type,
-					name: 'SFTP Upload',
-					action: 'upload',
-					serverId: state.servers[0]?.id ?? '',
-					localPath: '',
-					remotePath: '',
-				};
+						type,
+						name: 'SFTP Upload',
+						action: 'upload',
+						serverId: state.servers[0]?.id ?? '',
+						localPath: '',
+						remotePath: '',
+					};
 	const updateStep = (index: number, step: WorkflowStep) =>
 		draft &&
 		change({
@@ -143,7 +143,13 @@ export function useWorkflow() {
 	const browse = (field: 'cwd' | 'localPath', index: number) => {
 		if (draft) {
 			const step = draft.steps[index];
-			vscode.postMessage({ type: 'browse', field, index, draftId: draft.id, download: step?.type === 'sftp' && step.action === 'download' });
+			vscode.postMessage({
+				type: 'browse',
+				field,
+				index,
+				draftId: draft.id,
+				download: step?.type === 'sftp' && step.action === 'download',
+			});
 		}
 	};
 	return {

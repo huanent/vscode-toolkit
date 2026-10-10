@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import type { SpreadsheetSheet } from '@/features/excel/protocol';
+import type { SpreadsheetSheet } from '@/shared/excelProtocol';
 
 interface SpreadsheetPreviewProps {
 	name: string;

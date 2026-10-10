@@ -1,6 +1,4 @@
-import type {
-	ServerCommand,
-} from '@/features/ssh/formProtocol';
+import type { ServerCommand } from '@/shared/sshFormProtocol';
 import type { ProxyFieldValues } from '@/webview/components/proxyFields';
 
 export interface ConnectionFormValues extends ProxyFieldValues {

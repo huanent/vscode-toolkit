@@ -20,7 +20,7 @@ import { IconButton } from '@/webview/components/button';
 import { useContainerEditor } from './hooks/useContainerEditor';
 import { ContainerEditDialog } from './containerEditDialog';
 import { Message } from './message';
-import type { ResourceType } from '@/features/container/editorProtocol';
+import type { ResourceType } from '@/shared/containerEditorProtocol';
 
 const resources: { type: ResourceType; label: string; icon: typeof Boxes }[] = [
 	{ type: 'containers', label: 'Containers', icon: Boxes },

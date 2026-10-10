@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Result, ResultMessage } from './protocol';
+import type { Result, ResultMessage } from '@/shared/resultProtocol';
 import { getWebviewHtml } from '@/host/webviewHtml';
 import { TaskRunner, type TaskEntry } from './taskRunner';
 import { ResultStorage } from './storage';
@@ -9,7 +9,10 @@ export class ResultView implements vscode.WebviewViewProvider {
 	private view: vscode.WebviewView | undefined;
 	private result: Result | undefined;
 	private ready = false;
-	readonly runner = new TaskRunner(entry => { this.persist(entry); this.postResult(); });
+	readonly runner = new TaskRunner(entry => {
+		this.persist(entry);
+		this.postResult();
+	});
 	private selectedId: string | undefined;
 	private syncTimer: ReturnType<typeof setInterval> | undefined;
 	private heartbeatTimer: ReturnType<typeof setInterval> | undefined;
@@ -17,7 +20,9 @@ export class ResultView implements vscode.WebviewViewProvider {
 	private heartbeatPending: Promise<void> = Promise.resolve();
 	private disposed = false;
 
-	get selectedResult(): Result | undefined { return this.result; }
+	get selectedResult(): Result | undefined {
+		return this.result;
+	}
 
 	run(result: Result, execute: (signal: AbortSignal) => Promise<void>): Promise<void> {
 		return this.runner.run(result, () => this.show(result), execute);
@@ -28,10 +33,15 @@ export class ResultView implements vscode.WebviewViewProvider {
 		clearInterval(this.syncTimer);
 		clearInterval(this.heartbeatTimer);
 		this.runner.dispose();
-		void this.heartbeatPending.then(() => this.storage?.endSession(this.runner.sessionId)).catch(() => { });
+		void this.heartbeatPending
+			.then(() => this.storage?.endSession(this.runner.sessionId))
+			.catch(() => {});
 	}
 
-	constructor(private readonly extensionUri: vscode.Uri, private readonly storage?: ResultStorage) { }
+	constructor(
+		private readonly extensionUri: vscode.Uri,
+		private readonly storage?: ResultStorage,
+	) {}
 
 	static async create(context: vscode.ExtensionContext): Promise<ResultView> {
 		try {
@@ -44,7 +54,7 @@ export class ResultView implements vscode.WebviewViewProvider {
 			provider.result = latest?.result;
 			await storage.heartbeat(provider.runner.sessionId);
 			provider.heartbeatTimer = setInterval(() => {
-				provider.heartbeatPending = storage.heartbeat(provider.runner.sessionId).catch(() => { });
+				provider.heartbeatPending = storage.heartbeat(provider.runner.sessionId).catch(() => {});
 			}, 10_000);
 			provider.syncTimer = setInterval(() => {
 				if (provider.view?.visible) void provider.refresh();
@@ -69,23 +79,34 @@ export class ResultView implements vscode.WebviewViewProvider {
 			return Promise.resolve();
 		}
 		if (this.refreshing) return this.refreshing;
-		const localSnapshots = new Map(this.runner.history
-			.filter(entry => entry.task.ownerSessionId === this.runner.sessionId)
-			.map(entry => [entry.task.id, JSON.stringify(entry)]));
-		this.refreshing = Promise.all([this.storage.load(), this.storage.liveSessions()]).then(([entries, sessions]) => {
-			if (this.disposed) return;
-			for (const entry of this.runner.history) {
-				if (entry.task.ownerSessionId === this.runner.sessionId && localSnapshots.get(entry.task.id) !== JSON.stringify(entry)) entries.push(entry);
-			}
-			this.runner.restore(entries, sessions);
-			const selected = this.selectedId ? this.runner.entries.get(this.selectedId) : undefined;
-			const entry = selected ?? this.runner.history[0];
-			this.selectedId = entry?.task.id;
-			this.result = entry?.result;
-			this.postResult();
-		}).catch(error => {
-			console.warn('Unable to refresh result history:', error);
-		}).finally(() => { this.refreshing = undefined; });
+		const localSnapshots = new Map(
+			this.runner.history
+				.filter(entry => entry.task.ownerSessionId === this.runner.sessionId)
+				.map(entry => [entry.task.id, JSON.stringify(entry)]),
+		);
+		this.refreshing = Promise.all([this.storage.load(), this.storage.liveSessions()])
+			.then(([entries, sessions]) => {
+				if (this.disposed) return;
+				for (const entry of this.runner.history) {
+					if (
+						entry.task.ownerSessionId === this.runner.sessionId &&
+						localSnapshots.get(entry.task.id) !== JSON.stringify(entry)
+					)
+						entries.push(entry);
+				}
+				this.runner.restore(entries, sessions);
+				const selected = this.selectedId ? this.runner.entries.get(this.selectedId) : undefined;
+				const entry = selected ?? this.runner.history[0];
+				this.selectedId = entry?.task.id;
+				this.result = entry?.result;
+				this.postResult();
+			})
+			.catch(error => {
+				console.warn('Unable to refresh result history:', error);
+			})
+			.finally(() => {
+				this.refreshing = undefined;
+			});
 		return this.refreshing;
 	}
 
@@ -107,11 +128,14 @@ export class ResultView implements vscode.WebviewViewProvider {
 					this.postResult();
 				}
 			}
-			if (message?.type === 'cancelTask' && typeof message.id === 'string') this.runner.cancel(message.id);
+			if (message?.type === 'cancelTask' && typeof message.id === 'string')
+				this.runner.cancel(message.id);
 			if (message?.type === 'deleteTask' && typeof message.id === 'string') {
 				if (this.runner.remove(message.id)) {
 					void this.storage?.remove(message.id).catch(error => {
-						void vscode.window.showErrorMessage(`Unable to delete result history: ${String(error)}`);
+						void vscode.window.showErrorMessage(
+							`Unable to delete result history: ${String(error)}`,
+						);
 					});
 				}
 				if (!this.selectedId || !this.runner.entries.has(this.selectedId)) {
@@ -148,7 +172,11 @@ export class ResultView implements vscode.WebviewViewProvider {
 		const entry = this.runner.add(result, cancel);
 		this.selectedId = entry.task.id;
 		this.persist(entry);
-		await vscode.commands.executeCommand('setContext', 'vscode-toolkit.servers.mysqlSqlResultsExportable', exportable);
+		await vscode.commands.executeCommand(
+			'setContext',
+			'vscode-toolkit.servers.mysqlSqlResultsExportable',
+			exportable,
+		);
 		if (this.view) {
 			this.view.show(true);
 			this.postResult();
@@ -163,17 +191,26 @@ export class ResultView implements vscode.WebviewViewProvider {
 
 	private updateBadge(): void {
 		if (!this.view) return;
-		const active = [...this.runner.entries.values()].filter(entry => entry.task.state === 'running' || entry.task.state === 'stopping').length;
-		this.view.badge = active ? { value: active, tooltip: `${active} running task${active === 1 ? '' : 's'}` } : undefined;
+		const active = [...this.runner.entries.values()].filter(
+			entry => entry.task.state === 'running' || entry.task.state === 'stopping',
+		).length;
+		this.view.badge = active
+			? { value: active, tooltip: `${active} running task${active === 1 ? '' : 's'}` }
+			: undefined;
 	}
 
 	private postResult(): void {
 		this.updateBadge();
 		const exportable = this.result?.type === 'table' && this.result.data.kind === 'rows';
-		void vscode.commands.executeCommand('setContext', 'vscode-toolkit.servers.mysqlSqlResultsExportable', exportable);
+		void vscode.commands.executeCommand(
+			'setContext',
+			'vscode-toolkit.servers.mysqlSqlResultsExportable',
+			exportable,
+		);
 		if (this.ready && this.view?.visible) {
 			void this.view.webview.postMessage({
-				type: 'history', selectedId: this.selectedId,
+				type: 'history',
+				selectedId: this.selectedId,
 				tasks: this.runner.history.map(entry => entry.task),
 			});
 		}

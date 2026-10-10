@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import type {
-	ServerFormExtensionMessage,
-	ServerFormModel,
-} from '@/features/database/formProtocol';
+import type { ServerFormExtensionMessage, ServerFormModel } from '@/shared/databaseFormProtocol';
 import { vscode } from '@/webview/vscodeApi';
 import type { ServerFormValues } from '../types';
 
@@ -20,9 +17,6 @@ const emptyValues: ServerFormValues = {
 	proxyEnabled: false,
 	proxyHost: '',
 	proxyPort: '22',
-
-
-
 
 	database: '',
 };
@@ -57,9 +51,6 @@ export function useServerForm() {
 						proxyEnabled: Boolean(server && 'proxy' in server && server.proxy),
 						proxyHost: server && 'proxy' in server ? (server.proxy?.host ?? '') : '',
 						proxyPort: String(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22),
-
-
-
 
 						database: server?.type === 'mysql' ? server.database : '',
 					});

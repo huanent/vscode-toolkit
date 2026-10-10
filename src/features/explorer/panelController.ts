@@ -7,7 +7,7 @@ import {
 	extractArchive,
 	OperationCancelledError,
 } from './filesystem/archiveOperations';
-import type { ExplorerRequest } from './protocol';
+import type { ExplorerRequest } from '@/shared/explorerProtocol';
 import { calculateDirectorySize, readDirectory } from './filesystem/directoryService';
 import { getDisplayName } from './shared/fileEntry';
 import {

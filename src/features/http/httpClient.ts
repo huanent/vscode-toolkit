@@ -6,7 +6,7 @@ import {
 	registerHttpHoverProvider,
 	registerHttpLanguageDiagnostics,
 } from './httpLanguageService';
-import type { Result } from '../result/protocol';
+import type { Result } from '@/shared/resultProtocol';
 import type { ResultView } from '../result/resultView';
 
 const headers = [
@@ -203,11 +203,12 @@ async function sendRequest(
 	const controller = new AbortController();
 	const startedAt = Date.now();
 	const result: Result = {
-		type: 'http', data: {
+		type: 'http',
+		data: {
 			method: request.method,
 			url: request.url,
 			state: 'loading',
-		}
+		},
 	};
 	await resultView.run(result, async signal => {
 		const abort = () => controller.abort();

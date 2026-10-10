@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Workflow } from '@/features/workflow/protocol';
+import type { Workflow } from '@/shared/workflowProtocol';
 import { Plus, RefreshCw } from '@/webview/components/icons';
 import { IconButton } from '@/webview/components/button';
 import { Toolbar } from '@/webview/components/toolbar';

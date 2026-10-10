@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CredentialSummary } from '@/features/credential/protocol';
+import type { CredentialSummary } from '@/shared/credentialProtocol';
 import { Button, IconButton } from '@/webview/components/button';
 import { Input } from '@/webview/components/input';
 import { Dialog } from '@/webview/components/dialog';

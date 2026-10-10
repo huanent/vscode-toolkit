@@ -1,5 +1,5 @@
 import { Fragment, useState, type UIEvent } from 'react';
-import type { ResultHistoryMessage, ResultTask } from '@/features/result/protocol';
+import type { ResultHistoryMessage, ResultTask } from '@/shared/resultProtocol';
 import { IconButton } from '@/webview/components/button';
 import { List, ListGroup, ListItem } from '@/webview/components/list';
 import {

@@ -6,7 +6,7 @@ import {
 	Textarea as TextArea,
 	Select as SelectInput,
 } from '@/webview/components/input';
-import type { Workflow, WorkflowStep } from '@/features/workflow/protocol';
+import type { Workflow, WorkflowStep } from '@/shared/workflowProtocol';
 import { buttonClass, Field, IconButton } from './controls';
 
 type Props = {

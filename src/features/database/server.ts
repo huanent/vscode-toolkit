@@ -1,5 +1,5 @@
 import { resolveConfigurationIdentity } from '../credential/configurationIdentity';
-import type { CredentialSummary } from '../credential/protocol';
+import type { CredentialSummary } from '@/shared/credentialProtocol';
 
 export type ServerType = 'mysql';
 
@@ -55,14 +55,23 @@ export interface ServerFormMessage {
 	aiEnabled?: unknown;
 }
 
-function parseSshProxy(message: ServerFormMessage, requireCredential: boolean): SshProxy | undefined {
+function parseSshProxy(
+	message: ServerFormMessage,
+	requireCredential: boolean,
+): SshProxy | undefined {
 	if (message.proxyEnabled !== true) {
 		return undefined;
 	}
 	const credentialId = normalizeString(message.proxyCredentialId);
 	const host = normalizeString(message.proxyHost);
 	const port = Number(message.proxyPort);
-	if ((requireCredential && !credentialId) || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if (
+		(requireCredential && !credentialId) ||
+		!host ||
+		!Number.isInteger(port) ||
+		port < 1 ||
+		port > 65_535
+	) {
 		return undefined;
 	}
 	return {
@@ -86,7 +95,14 @@ export function parseServerForm(
 	const credentialId = normalizeString(message.credentialId);
 	const host = normalizeString(message.host);
 	const port = Number(message.port);
-	if ((requireCredential && !credentialId) || !name || !host || !Number.isInteger(port) || port < 1 || port > 65_535) {
+	if (
+		(requireCredential && !credentialId) ||
+		!name ||
+		!host ||
+		!Number.isInteger(port) ||
+		port < 1 ||
+		port > 65_535
+	) {
 		return undefined;
 	}
 
@@ -162,7 +178,11 @@ export function parseServer(value: unknown, credentials?: readonly CredentialSum
 			credentialId: value.credentialId,
 			proxyCommand: value.proxyCommand,
 			proxyEnabled: containerSsh || isRecord(value.proxy),
-			proxyCredentialId: manualContainerSsh ? value.credentialId : isRecord(value.proxy) ? value.proxy.credentialId : undefined,
+			proxyCredentialId: manualContainerSsh
+				? value.credentialId
+				: isRecord(value.proxy)
+					? value.proxy.credentialId
+					: undefined,
 			proxyHost: manualContainerSsh
 				? value.host
 				: isRecord(value.proxy)

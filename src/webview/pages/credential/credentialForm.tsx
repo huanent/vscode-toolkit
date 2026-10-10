@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CredentialSummary, CredentialType } from '@/features/credential/protocol';
+import type { CredentialSummary, CredentialType } from '@/shared/credentialProtocol';
 import { Button } from '@/webview/components/button';
 import { Field } from '@/webview/components/field';
 import { Input, PasswordInput, Select, Textarea } from '@/webview/components/input';

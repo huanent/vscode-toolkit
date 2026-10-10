@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import type { CredentialSummary, CredentialType } from '@/features/credential/protocol';
+import type { CredentialSummary, CredentialType } from '@/shared/credentialProtocol';
 import { CredentialForm, credentialLabels } from '@/webview/pages/credential/credentialForm';
 import { send, subscribe } from '@/webview/pages/dashboard/channel';
 import { Field } from '@/webview/components/field';

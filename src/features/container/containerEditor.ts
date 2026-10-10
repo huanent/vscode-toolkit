@@ -11,7 +11,7 @@ import type {
 	ResourceRow,
 	ServiceState,
 	ContainerRecreateConfig,
-} from './editorProtocol';
+} from '@/shared/containerEditorProtocol';
 
 export function configureContainerEditor(
 	extensionUri: vscode.Uri,

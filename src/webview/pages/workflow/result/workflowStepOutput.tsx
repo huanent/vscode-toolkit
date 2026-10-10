@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { WorkflowStepResult } from '@/features/result/protocol';
+import type { WorkflowStepResult } from '@/shared/resultProtocol';
 import { ChevronDown, ChevronRight } from '@/webview/components/icons';
 
 export function formatDuration(milliseconds: number) {

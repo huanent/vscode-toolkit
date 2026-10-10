@@ -1,4 +1,4 @@
-import type { ProxyMode } from '@/features/database/formProtocol';
+import type { ProxyMode } from '@/shared/databaseFormProtocol';
 
 export interface ServerFormValues {
 	credentialId: string;

@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ServerFormValues } from '../types';
 import { formTransport } from '@/webview/pages/dashboard/formTransport';
-import type {
-	ServerFormExtensionMessage,
-	ServerFormModel,
-} from '@/features/container/formProtocol';
+import type { ServerFormExtensionMessage, ServerFormModel } from '@/shared/containerFormProtocol';
 
 const emptyValues: ServerFormValues = {
 	proxyCredentialId: '',
@@ -19,11 +16,6 @@ const emptyValues: ServerFormValues = {
 	proxyEnabled: false,
 	proxyHost: '',
 	proxyPort: '22',
-
-
-
-
-
 
 	runtime: 'docker',
 	executablePath: 'docker',
@@ -55,7 +47,11 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 					setModel(nextModel);
 					setValues({
 						...emptyValues,
-						proxyCredentialId: manualContainerSsh ? container.credentialId ?? '' : server && 'proxy' in server ? server.proxy?.credentialId ?? '' : '',
+						proxyCredentialId: manualContainerSsh
+							? (container.credentialId ?? '')
+							: server && 'proxy' in server
+								? (server.proxy?.credentialId ?? '')
+								: '',
 						location: nextModel.location ?? '',
 						name: server?.name ?? '',
 						group: server?.group ?? '',
@@ -65,7 +61,7 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 						proxyCommand: server && 'proxyCommand' in server ? (server.proxyCommand ?? '') : '',
 						proxyMode:
 							container?.connectionType === 'ssh' ||
-								Boolean(server && 'proxy' in server && server.proxy)
+							Boolean(server && 'proxy' in server && server.proxy)
 								? 'ssh'
 								: server && 'proxyCommand' in server && server.proxyCommand
 									? 'command'
@@ -81,13 +77,8 @@ export function useServerForm(sessionId?: number, onClose?: () => void) {
 							manualContainerSsh
 								? (container.port ?? 22)
 								: (referencedContainerSsh?.port ??
-									(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22)),
+										(server && 'proxy' in server ? (server.proxy?.port ?? 22) : 22)),
 						),
-
-
-
-
-
 
 						runtime: container?.runtime ?? 'docker',
 						executablePath: container?.executablePath ?? 'docker',

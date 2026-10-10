@@ -3,18 +3,12 @@
     "module": "Node16",
     "target": "ES2022",
     "outDir": "dist",
-    "lib": [
-      "ES2022"
-    ],
-    "types": [
-      "node"
-    ],
+    "lib": ["ES2022"],
+    "types": ["node"],
     "sourceMap": true,
     "rootDir": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "strict": true /* enable all strict type-checking options */,
     "skipLibCheck": true
@@ -30,7 +24,10 @@
     "src/features/**/*.ts",
     "src/shared/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "./tsconfig.webview.json"
+    }
   ]
 }

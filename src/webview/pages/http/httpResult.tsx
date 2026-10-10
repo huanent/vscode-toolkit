@@ -1,4 +1,4 @@
-import type { HttpResult } from '@/features/result/protocol';
+import type { HttpResult } from '@/shared/resultProtocol';
 import { cn } from 'cn';
 import { Loading } from '@/webview/components/loading';
 

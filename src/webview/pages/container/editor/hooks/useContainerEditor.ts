@@ -7,7 +7,7 @@ import type {
 	ResourceRow,
 	ResourceType,
 	ServiceState,
-} from '@/features/container/editorProtocol';
+} from '@/shared/containerEditorProtocol';
 
 const postMessage = (message: ContainerRequest) => vscode.postMessage(message);
 
@@ -115,11 +115,15 @@ export function useContainerEditor() {
 					break;
 				case 'details':
 					setDetails(current =>
-						current ? { ...current, content: JSON.stringify(message.details, null, 2), loading: false } : current,
+						current
+							? { ...current, content: JSON.stringify(message.details, null, 2), loading: false }
+							: current,
 					);
 					break;
 				case 'detailsError':
-					setDetails(current => (current ? { ...current, content: message.message, loading: false } : current));
+					setDetails(current =>
+						current ? { ...current, content: message.message, loading: false } : current,
+					);
 					break;
 			}
 		};

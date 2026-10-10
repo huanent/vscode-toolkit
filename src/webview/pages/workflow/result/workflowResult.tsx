@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { WorkflowResult } from '@/features/result/protocol';
+import type { WorkflowResult } from '@/shared/resultProtocol';
 import { cn } from 'cn';
 import { Loading } from '@/webview/components/loading';
 import { formatDuration, WorkflowStepOutput } from './workflowStepOutput';

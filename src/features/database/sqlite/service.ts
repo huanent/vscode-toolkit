@@ -9,7 +9,7 @@ import type {
 	SqliteResponse,
 	SqliteState,
 	TableColumn,
-} from './protocol';
+} from '@/shared/sqliteProtocol';
 
 const pageSize = 100;
 

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { SpreadsheetSheet } from '@/features/excel/protocol';
+import type { SpreadsheetSheet } from '@/shared/excelProtocol';
 import { PreviewLoader } from '@/webview/components/previewLoader';
 import { SpreadsheetPreview } from './spreadsheetPreview';
 

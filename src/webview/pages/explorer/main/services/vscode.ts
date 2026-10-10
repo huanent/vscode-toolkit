@@ -1,7 +1,4 @@
-import type {
-	ExplorerRequest,
-	PersistedExplorerState,
-} from '@/features/explorer/protocol';
+import type { ExplorerRequest, PersistedExplorerState } from '@/shared/explorerProtocol';
 
 const api = acquireVsCodeApi<PersistedExplorerState>();
 

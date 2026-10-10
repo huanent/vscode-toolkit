@@ -1,8 +1,8 @@
-import { sftpActions } from './protocol';
-import type { SftpAction, Workflow, WorkflowStep } from './protocol';
+import { sftpActions } from '@/shared/workflowProtocol';
+import type { SftpAction, Workflow, WorkflowStep } from '@/shared/workflowProtocol';
 
-export { sftpActions } from './protocol';
-export type { SftpAction, Workflow, WorkflowStep } from './protocol';
+export { sftpActions } from '@/shared/workflowProtocol';
+export type { SftpAction, Workflow, WorkflowStep } from '@/shared/workflowProtocol';
 
 export function parseWorkflow(value: unknown): Workflow {
 	if (!value || typeof value !== 'object') throw new Error('Invalid workflow.');

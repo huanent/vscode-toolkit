@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Result, ResultMessage, ResultHistoryMessage } from '@/features/result/protocol';
+import type { Result, ResultMessage, ResultHistoryMessage } from '@/shared/resultProtocol';
 import { vscode } from '@/webview/vscodeApi';
 
 export function useResult() {

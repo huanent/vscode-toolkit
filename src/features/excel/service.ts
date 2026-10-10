@@ -1,7 +1,7 @@
 import type { Cell } from 'exceljs';
 import { Readable } from 'stream';
 import * as vscode from 'vscode';
-import type { SpreadsheetSheet } from './protocol';
+import type { SpreadsheetSheet } from '@/shared/excelProtocol';
 
 const maxPreviewColumns = 100;
 
