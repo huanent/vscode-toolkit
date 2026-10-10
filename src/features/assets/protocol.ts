@@ -32,7 +32,7 @@ export type AssetsMessage =
 
 export interface AssetRequest {
   type: 'assetAction';
-  action: 'add' | 'createFolder' | 'edit' | 'delete' | 'connect' | 'disconnect' | 'query' | 'preview';
+  action: 'add' | 'createFolder' | 'edit' | 'delete' | 'connect' | 'query' | 'preview';
   folderId?: string;
   id?: string;
   database?: string;

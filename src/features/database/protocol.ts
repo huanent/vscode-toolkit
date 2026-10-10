@@ -30,6 +30,40 @@ export interface DatabaseTable {
   columnCount: number;
   columns: DatabaseColumn[];
   rows: DatabaseCellValue[][];
+  filteredRowCount?: number;
+}
+
+export interface DatabaseTableFilters {
+  search?: string;
+  columns?: Record<string, string>;
+}
+
+export interface DatabaseTableFilterRequest {
+  type: 'filterTable';
+  requestId: number;
+  filters: DatabaseTableFilters;
+}
+
+export interface DatabaseTableFilterResult {
+  type: 'tableFilterResult';
+  requestId: number;
+  data?: DatabaseTable;
+  error?: string;
+}
+
+export function isDatabaseTableFilterRequest(value: unknown): value is DatabaseTableFilterRequest {
+  if (typeof value !== 'object' || value === null) return false;
+  const message = value as Partial<DatabaseTableFilterRequest>;
+  if (message.type !== 'filterTable' || !Number.isSafeInteger(message.requestId)) return false;
+  if (!message.filters || typeof message.filters !== 'object') return false;
+  const { search, columns } = message.filters;
+  return (
+    (search === undefined || typeof search === 'string') &&
+    (columns === undefined ||
+      (typeof columns === 'object' &&
+        columns !== null &&
+        Object.values(columns).every((filter) => typeof filter === 'string')))
+  );
 }
 
 export interface DatabaseDocument {

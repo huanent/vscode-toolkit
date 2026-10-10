@@ -1,12 +1,19 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { withSqliteFile } from './file-access';
-import { applySqliteTableDeletion, applySqliteTableSchema, readDatabase, runSqliteQuery } from './engine';
+import {
+  applySqliteTableDeletion,
+  applySqliteTableSchema,
+  readDatabase,
+  readFilteredTable,
+  runSqliteQuery,
+} from './engine';
 import type {
   CreateSqliteTableOptions,
   DatabaseDocument,
   DatabaseQueryResult,
   DatabaseTable,
+  DatabaseTableFilters,
   UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import { buildSqliteCreateTableStatement } from '@/features/database/sqlite-schema';
@@ -29,12 +36,9 @@ export function createSqliteTableUri(databaseUri: vscode.Uri, tableName: string)
   );
 }
 
-export async function readSqliteTable(uri: vscode.Uri): Promise<DatabaseTable> {
+export async function readSqliteTable(uri: vscode.Uri, filters?: DatabaseTableFilters): Promise<DatabaseTable> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
-  const database = await readSqliteDatabase(databaseUri);
-  const table = database.tables.find((candidate) => candidate.name === tableName);
-  if (!table) throw new Error(`SQLite table not found: ${tableName}`);
-  return table;
+  return withSqliteFile(databaseUri, 'read', (databasePath) => readFilteredTable(databasePath, tableName, filters));
 }
 
 export function validateSqliteTableUri(uri: vscode.Uri): void {

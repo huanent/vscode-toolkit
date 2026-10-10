@@ -62,16 +62,12 @@ export class SshService implements AssetProvider {
       name: asset.name,
       type: 'file',
       detail: `SSH - ${asset.host}:${asset.port}`,
-      context: { assetId: asset.id, assetType: this.type, assetConnected: this.terminals.has(asset.id) },
+      context: { assetId: asset.id, assetType: this.type },
     };
   }
 
   async execute(record: AssetRecord, request: AssetRequest): Promise<void> {
     const asset = requireSshConfiguration(record);
-    if (request.action === 'disconnect') {
-      this.invalidate(asset.id);
-      return;
-    }
     if (request.action !== 'connect') throw new Error('Unsupported SSH operation.');
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);

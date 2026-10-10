@@ -7,9 +7,11 @@ import type {
   DatabaseDocument,
   DeleteDatabaseMessage,
   DeleteTableMessage,
+  DatabaseTableFilterResult,
   SelectDatabaseMessage,
   UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
+import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
 import type { MysqlService } from '@/features/database/mysql-service';
 import { registerMysqlQueryEditor } from './query-editor';
 
@@ -238,6 +240,18 @@ export function registerMysqlEditor(
       return mysqlService.readTable(assetId, databaseName, tableName);
     },
     data: (uri) => ({ name: new URLSearchParams(uri.query).get('name') ?? 'MySQL Table' }),
+    onPanelResolved: (uri, panel) =>
+      panel.webview.onDidReceiveMessage(async (message: unknown) => {
+        if (!isDatabaseTableFilterRequest(message)) return;
+        const result: DatabaseTableFilterResult = { type: 'tableFilterResult', requestId: message.requestId };
+        try {
+          const { assetId, databaseName, tableName } = parseMysqlTableUri(uri);
+          result.data = await mysqlService.readTable(assetId, databaseName, tableName, message.filters);
+        } catch (error) {
+          result.error = error instanceof Error ? error.message : String(error);
+        }
+        await panel.webview.postMessage(result);
+      }),
   });
 
   return {

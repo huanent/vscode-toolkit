@@ -9,9 +9,24 @@ import { useDashboardState } from './use-dashboard-state';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
-  { id: 'workflow', label: 'Workflow', icon: <Icon name="debug-line-by-line" size="md" /> },
-  { id: 'assets', label: 'Assets', icon: <Icon name="layers" size="md" /> },
-  { id: 'temp', label: 'Temp', icon: <Icon name="history" size="md" /> },
+  {
+    id: 'workflow',
+    label: 'Workflow',
+    icon: <Icon name="debug-line-by-line" size="md" />,
+    context: { webviewSection: 'workflow', preventDefaultContextMenuItems: true },
+  },
+  {
+    id: 'assets',
+    label: 'Assets',
+    icon: <Icon name="layers" size="md" />,
+    context: { webviewSection: 'assets', preventDefaultContextMenuItems: true },
+  },
+  {
+    id: 'temp',
+    label: 'Temp',
+    icon: <Icon name="history" size="md" />,
+    context: { webviewSection: 'temp', preventDefaultContextMenuItems: true },
+  },
 ];
 
 function App() {

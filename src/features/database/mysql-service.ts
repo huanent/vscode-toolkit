@@ -9,6 +9,7 @@ import type {
   DatabaseTable,
   MysqlConnectionConfiguration,
   SqliteTableColumnDefinition,
+  DatabaseTableFilters,
   UpdateTableSchemaMessage,
 } from './protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
@@ -23,7 +24,6 @@ export class MysqlService implements AssetProvider {
   readonly type = 'mysql';
   readonly label = 'MySQL';
   private readonly connections = new Set<Connection>();
-  private readonly connectedAssets = new Set<string>();
   private disposed = false;
 
   constructor(
@@ -63,19 +63,17 @@ export class MysqlService implements AssetProvider {
   }
 
   invalidate(id?: string): void {
-    if (id) this.connectedAssets.delete(id);
-    else this.connectedAssets.clear();
+    void id;
   }
 
   toViewEntry(record: AssetRecord): AssetViewEntry {
     const asset = requireMysqlConfiguration(record);
-    const connected = this.connectedAssets.has(asset.id);
     return {
       path: asset.id,
       name: asset.name,
       type: 'file',
       detail: `MySQL - ${asset.host}:${asset.port}`,
-      context: { assetId: asset.id, assetType: this.type, assetConnected: connected },
+      context: { assetId: asset.id, assetType: this.type },
     };
   }
 
@@ -87,8 +85,6 @@ export class MysqlService implements AssetProvider {
         createMysqlUri(asset.id, asset.name),
         mysqlEditorViewType,
       );
-    } else if (request.action === 'disconnect') {
-      this.invalidate(asset.id);
     } else if (request.action === 'query') {
       await vscode.commands.executeCommand(
         'vscode.openWith',
@@ -106,7 +102,6 @@ export class MysqlService implements AssetProvider {
   async readDatabaseDocument(assetId: string, databaseName?: string): Promise<DatabaseDocument> {
     const asset = await this.requireAsset(assetId);
     return this.withConnection(asset, undefined, undefined, async (connection) => {
-      this.connectedAssets.add(assetId);
       const [dbRows] = await connection.query<RowDataPacket[]>({ sql: 'SHOW DATABASES', timeout: 60000 });
       const databases = dbRows.map((row) => String(row.Database));
 
@@ -177,10 +172,14 @@ export class MysqlService implements AssetProvider {
     });
   }
 
-  async readTable(assetId: string, databaseName: string, tableName: string): Promise<DatabaseTable> {
+  async readTable(
+    assetId: string,
+    databaseName: string,
+    tableName: string,
+    filters?: DatabaseTableFilters,
+  ): Promise<DatabaseTable> {
     const asset = await this.requireAsset(assetId);
     return this.withConnection(asset, databaseName, undefined, async (connection) => {
-      this.connectedAssets.add(assetId);
       const [colRows] = await connection.query<RowDataPacket[]>(
         {
           sql: 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
@@ -194,6 +193,8 @@ export class MysqlService implements AssetProvider {
         notNull: col.IS_NULLABLE === 'NO',
         primaryKey: col.COLUMN_KEY === 'PRI',
       }));
+      const { where, parameters, active } = buildTableFilter(columns, filters);
+      const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
 
       let rowCount = 0;
       try {
@@ -206,11 +207,23 @@ export class MysqlService implements AssetProvider {
         // Fallback to 0 if count query fails
       }
 
-      const [rows] = await connection.query({
-        sql: `SELECT * FROM ${escapeId(tableName)} LIMIT 1000`,
-        rowsAsArray: true,
-        timeout: 60000,
-      });
+      const filteredRowCount = active
+        ? await connection
+            .query<RowDataPacket[]>(
+              { sql: `SELECT COUNT(*) AS count FROM ${escapeId(tableName)}${whereClause}`, timeout: 60000 },
+              parameters,
+            )
+            .then(([countRows]) => Number(countRows[0]?.count ?? 0))
+        : undefined;
+
+      const [rows] = await connection.query(
+        {
+          sql: `SELECT * FROM ${escapeId(tableName)}${whereClause} LIMIT 1000`,
+          rowsAsArray: true,
+          timeout: 60000,
+        },
+        parameters,
+      );
 
       const values = (Array.isArray(rows) ? rows : []) as unknown as unknown[][];
       return {
@@ -231,6 +244,7 @@ export class MysqlService implements AssetProvider {
                     : JSON.stringify(value),
           ),
         ),
+        ...(filteredRowCount === undefined ? {} : { filteredRowCount }),
       };
     });
   }
@@ -332,7 +346,6 @@ export class MysqlService implements AssetProvider {
     this.disposed = true;
     for (const connection of this.connections) connection.destroy();
     this.connections.clear();
-    this.connectedAssets.clear();
   }
 
   private async withConnection<T>(
@@ -373,6 +386,47 @@ export class MysqlService implements AssetProvider {
       connection.destroy();
     }
   }
+}
+
+function buildTableFilter(
+  columns: DatabaseColumn[],
+  filters?: DatabaseTableFilters,
+): { where: string[]; parameters: string[]; active: boolean } {
+  const where: string[] = [];
+  const parameters: string[] = [];
+  const searchableColumns = columns.map((column) => escapeId(column.name));
+  const search = filters?.search?.trim();
+
+  if (search) {
+    const pattern = toLikePattern(search);
+    const matches = searchableColumns.map((column) => {
+      parameters.push(pattern);
+      return search.toLowerCase() === 'null'
+        ? `(LOWER(CAST(${column} AS CHAR)) LIKE ? ESCAPE CHAR(92) OR ${column} IS NULL)`
+        : `LOWER(CAST(${column} AS CHAR)) LIKE ? ESCAPE CHAR(92)`;
+    });
+    if (matches.length) where.push(`(${matches.join(' OR ')})`);
+  }
+
+  for (const [name, value] of Object.entries(filters?.columns ?? {})) {
+    const filter = value.trim();
+    const column = columns.find((candidate) => candidate.name === name);
+    if (!filter || !column) continue;
+    const escapedColumn = escapeId(column.name);
+    parameters.push(toLikePattern(filter));
+    where.push(
+      filter.toLowerCase() === 'null'
+        ? `(LOWER(CAST(${escapedColumn} AS CHAR)) LIKE ? ESCAPE CHAR(92) OR ${escapedColumn} IS NULL)`
+        : `LOWER(CAST(${escapedColumn} AS CHAR)) LIKE ? ESCAPE CHAR(92)`,
+    );
+  }
+
+  return { where, parameters, active: where.length > 0 };
+}
+
+function toLikePattern(value: string): string {
+  const escaped = value.toLowerCase().replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
+  return `%${escaped}%`;
 }
 
 function isMysqlAsset(value: unknown): value is MysqlConnectionConfiguration {

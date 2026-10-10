@@ -1,11 +1,16 @@
-import { useDeferredValue, useEffect, useState } from 'react';
-import type { DatabaseCellValue, DatabaseTable } from '@/features/database/protocol';
+import { useEffect, useRef, useState } from 'react';
+import type {
+  DatabaseCellValue,
+  DatabaseTable,
+  DatabaseTableFilterResult,
+  DatabaseTableFilters,
+} from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { Table, type TableColumn } from '@/webview/components/table';
-import { getRootData, useHostData } from '@/webview/utils/host-data';
+import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 type DatabaseRow = { values: DatabaseCellValue[]; rowNumber: number };
@@ -21,13 +26,18 @@ const rowNumberColumn: TableColumn<DatabaseRow> = {
   cell: (row) => row.rowNumber,
 };
 
-function createColumn(column: DatabaseTable['columns'][number], columnIndex: number): TableColumn<DatabaseRow> {
+function createColumn(
+  column: DatabaseTable['columns'][number],
+  columnIndex: number,
+  filter: string,
+  onFilterChange: (value: string) => void,
+): TableColumn<DatabaseRow> {
   const typeDescription = column.type || 'Any';
   return {
     key: column.name,
     align: 'left',
     header: (
-      <>
+      <div className="grid gap-1 py-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-medium">{column.name}</span>
           {column.primaryKey && (
@@ -40,9 +50,16 @@ function createColumn(column: DatabaseTable['columns'][number], columnIndex: num
           {typeDescription}
           {column.notNull ? ' · NOT NULL' : ''}
         </span>
-      </>
+        <Input
+          type="search"
+          aria-label={`Filter ${column.name}`}
+          placeholder="Filter..."
+          value={filter}
+          onChange={(event) => onFilterChange(event.target.value)}
+        />
+      </div>
     ),
-    headerClassName: 'h-10 min-w-36 max-w-80 bg-(--vscode-editor-background) text-left',
+    headerClassName: 'min-w-36 max-w-80 bg-(--vscode-editor-background) text-left',
     className: 'h-7 max-w-80 font-mono',
     cell: (row) => {
       const value = row.values[columnIndex] ?? null;
@@ -57,10 +74,32 @@ function createColumn(column: DatabaseTable['columns'][number], columnIndex: num
 }
 
 function App() {
-  const state = useHostData<DatabaseTable>();
+  const latestRequestId = useRef(0);
+  const hasRequestedFilters = useRef(false);
+  const state = useHostData<DatabaseTable, DatabaseTableFilterResult>((message, previous) => {
+    if (message.type !== 'tableFilterResult' || message.requestId !== latestRequestId.current) return previous;
+    if (message.error) {
+      return previous.status === 'loaded' ? { ...previous, error: message.error } : previous;
+    }
+    return message.data ? { status: 'loaded', data: message.data } : previous;
+  });
   const name = getRootData('name') ?? 'Database Table';
   const [search, setSearch] = useState('');
-  const query = useDeferredValue(search.trim().toLowerCase());
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const hasActiveFilters = Boolean(search.trim() || Object.values(columnFilters).some((filter) => filter.trim()));
+
+  useEffect(() => {
+    if (state.status !== 'loaded') return;
+    const requestId = ++latestRequestId.current;
+    if (!hasRequestedFilters.current && !hasActiveFilters) return;
+    const filters: DatabaseTableFilters = { search, columns: columnFilters };
+    const timeout = window.setTimeout(() => {
+      hasRequestedFilters.current = true;
+      postToHost({ type: 'filterTable', requestId, filters });
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [search, columnFilters, state.status, hasActiveFilters]);
+
   useEffect(() => {
     document.title = name;
   }, [name]);
@@ -80,15 +119,14 @@ function App() {
   }
 
   const table = state.data;
-  const rows = table.rows
-    .map((values, index) => ({ values, rowNumber: index + 1 }))
-    .filter(
-      (row) =>
-        !query || row.values.some((value) => (value === null ? 'NULL' : String(value)).toLowerCase().includes(query)),
-    );
+  const rows = table.rows.map((values, index) => ({ values, rowNumber: index + 1 }));
   const columns: readonly TableColumn<DatabaseRow>[] = [
     rowNumberColumn,
-    ...table.columns.map((column, columnIndex) => createColumn(column, columnIndex)),
+    ...table.columns.map((column, columnIndex) =>
+      createColumn(column, columnIndex, columnFilters[column.name] ?? '', (value) =>
+        setColumnFilters((filters) => ({ ...filters, [column.name]: value })),
+      ),
+    ),
   ];
 
   return (
@@ -107,8 +145,8 @@ function App() {
         <Input
           type="search"
           className="w-full sm:w-64"
-          aria-label="Search loaded rows"
-          placeholder="Search loaded rows..."
+          aria-label="Search rows"
+          placeholder="Search rows..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -117,6 +155,11 @@ function App() {
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
+        {state.error && (
+          <p className="px-3 py-1 text-xs text-(--vscode-errorForeground)" role="alert">
+            {state.error}
+          </p>
+        )}
         {table.columns.length ? (
           <Table
             ariaLabel={`${name} data`}
@@ -124,7 +167,7 @@ function App() {
             rows={rows}
             rowKey={(row) => row.rowNumber}
             border
-            emptyMessage={query ? 'No matching rows in this preview.' : 'This table is empty.'}
+            emptyMessage={hasActiveFilters ? 'No matching rows.' : 'This table is empty.'}
             className="min-w-full"
           />
         ) : (
@@ -135,11 +178,14 @@ function App() {
       </div>
       <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--vscode-panel-border) px-3 py-1 text-xs text-(--vscode-descriptionForeground)">
         <span className="shrink-0 tabular-nums">
-          {query
-            ? `${rows.length.toLocaleString()} matches in ${table.rows.length.toLocaleString()} loaded rows`
+          {hasActiveFilters
+            ? `${(table.filteredRowCount ?? rows.length).toLocaleString()} matching rows${
+                (table.filteredRowCount ?? rows.length) > rows.length ? ` (${rows.length.toLocaleString()} shown)` : ''
+              }`
             : `${table.rows.length.toLocaleString()} of ${table.rowCount.toLocaleString()} rows`}
         </span>
-        {(table.rowCount > table.rows.length || table.columnCount > table.columns.length) && (
+        {((hasActiveFilters ? (table.filteredRowCount ?? 0) > table.rows.length : table.rowCount > table.rows.length) ||
+          table.columnCount > table.columns.length) && (
           <span className="text-right">
             Preview limited to {table.rows.length} rows and {table.columns.length} columns
           </span>

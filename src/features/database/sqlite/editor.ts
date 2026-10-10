@@ -5,8 +5,10 @@ import type {
   CreateTableMessage,
   DatabaseDocument,
   DeleteTableMessage,
+  DatabaseTableFilterResult,
   UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
+import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
 import { registerSqliteQueryEditor } from './query-editor';
 import {
   createSqliteTableUri,
@@ -63,7 +65,20 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
       const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
-        if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'openSqlEditor') {
+        if (isDatabaseTableFilterRequest(message)) {
+          const result: DatabaseTableFilterResult = { type: 'tableFilterResult', requestId: message.requestId };
+          try {
+            result.data = await readSqliteTable(uri, message.filters);
+          } catch (error) {
+            result.error = error instanceof Error ? error.message : String(error);
+          }
+          await panel.webview.postMessage(result);
+        } else if (
+          typeof message === 'object' &&
+          message !== null &&
+          'type' in message &&
+          message.type === 'openSqlEditor'
+        ) {
           await openSqlQueryEditor(uri, activeTableNames.get(uriKey));
         } else if (isActiveTableChangedMessage(message)) {
           if (message.tableName) activeTableNames.set(uriKey, message.tableName);

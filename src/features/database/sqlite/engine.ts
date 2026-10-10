@@ -3,6 +3,7 @@ import type {
   DatabaseDocument,
   DatabaseQueryResult,
   DatabaseTable,
+  DatabaseTableFilters,
   UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import {
@@ -142,7 +143,22 @@ export function readDatabase(databasePath: string): DatabaseDocument {
   }
 }
 
-function readTable(database: DatabaseSync, name: string): DatabaseTable {
+export function readFilteredTable(
+  databasePath: string,
+  tableName: string,
+  filters?: DatabaseTableFilters,
+): DatabaseTable {
+  const database = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    const exists = database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?").get(tableName);
+    if (!exists) throw new Error(`SQLite table not found: ${tableName}`);
+    return readTable(database, tableName, filters);
+  } finally {
+    database.close();
+  }
+}
+
+function readTable(database: DatabaseSync, name: string, filters?: DatabaseTableFilters): DatabaseTable {
   const quotedName = quoteIdentifier(name);
   const columnRows = database.prepare(`PRAGMA table_info(${quotedName})`).all();
   const allColumns = columnRows.map((row) => ({
@@ -152,13 +168,69 @@ function readTable(database: DatabaseSync, name: string): DatabaseTable {
     primaryKey: Number(row.pk) !== 0,
   }));
   const columns = allColumns.slice(0, maxPreviewColumns);
+  const { where, parameters, active } = buildTableFilter(columns, filters);
+  const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
   const rowCount = Number(database.prepare(`SELECT COUNT(*) AS row_count FROM ${quotedName}`).get()?.row_count ?? 0);
+  const filteredRowCount = active
+    ? Number(
+        database.prepare(`SELECT COUNT(*) AS row_count FROM ${quotedName}${whereClause}`).get(...parameters)
+          ?.row_count ?? 0,
+      )
+    : undefined;
   const selectedColumns = columns.length ? columns.map((column) => quoteIdentifier(column.name)).join(', ') : '*';
   const rows = database
-    .prepare(`SELECT ${selectedColumns} FROM ${quotedName} LIMIT ?`)
-    .all(maxPreviewRows)
+    .prepare(`SELECT ${selectedColumns} FROM ${quotedName}${whereClause} LIMIT ?`)
+    .all(...parameters, maxPreviewRows)
     .map((row) => columns.map((column) => toDisplayValue(row[column.name])));
-  return { name, rowCount, columnCount: allColumns.length, columns, rows };
+  return {
+    name,
+    rowCount,
+    columnCount: allColumns.length,
+    columns,
+    rows,
+    ...(filteredRowCount === undefined ? {} : { filteredRowCount }),
+  };
+}
+
+function buildTableFilter(
+  columns: DatabaseTable['columns'],
+  filters?: DatabaseTableFilters,
+): { where: string[]; parameters: string[]; active: boolean } {
+  const where: string[] = [];
+  const parameters: string[] = [];
+  const searchableColumns = columns.map((column) => quoteIdentifier(column.name));
+  const search = filters?.search?.trim();
+
+  if (search) {
+    const searchValue = toLikePattern(search);
+    const matches = searchableColumns.map((column) => {
+      parameters.push(searchValue);
+      return search.toLowerCase() === 'null'
+        ? `(LOWER(CAST(${column} AS TEXT)) LIKE ? ESCAPE char(92) OR ${column} IS NULL)`
+        : `LOWER(CAST(${column} AS TEXT)) LIKE ? ESCAPE char(92)`;
+    });
+    if (matches.length) where.push(`(${matches.join(' OR ')})`);
+  }
+
+  for (const [name, value] of Object.entries(filters?.columns ?? {})) {
+    const filter = value.trim();
+    const column = columns.find((candidate) => candidate.name === name);
+    if (!filter || !column) continue;
+    const quotedColumn = quoteIdentifier(column.name);
+    parameters.push(toLikePattern(filter));
+    where.push(
+      filter.toLowerCase() === 'null'
+        ? `(LOWER(CAST(${quotedColumn} AS TEXT)) LIKE ? ESCAPE char(92) OR ${quotedColumn} IS NULL)`
+        : `LOWER(CAST(${quotedColumn} AS TEXT)) LIKE ? ESCAPE char(92)`,
+    );
+  }
+
+  return { where, parameters, active: where.length > 0 };
+}
+
+function toLikePattern(value: string): string {
+  const escaped = value.toLowerCase().replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
+  return `%${escaped}%`;
 }
 
 function toDisplayValue(value: unknown): string | number | null {

@@ -218,16 +218,6 @@
         "category": "Assets"
       },
       {
-        "command": "toolkit.assets.connect",
-        "title": "Connect / Refresh",
-        "category": "Assets"
-      },
-      {
-        "command": "toolkit.assets.disconnect",
-        "title": "Disconnect",
-        "category": "Assets"
-      },
-      {
         "command": "toolkit.assets.query",
         "title": "Run SQL Query",
         "category": "Assets"
@@ -477,14 +467,6 @@
           "when": "false"
         },
         {
-          "command": "toolkit.assets.connect",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.assets.disconnect",
-          "when": "false"
-        },
-        {
           "command": "toolkit.assets.query",
           "when": "false"
         },
@@ -547,16 +529,6 @@
           "command": "toolkit.assets.add",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
           "group": "1_create@1"
-        },
-        {
-          "command": "toolkit.assets.connect",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
-          "group": "2_connection@1"
-        },
-        {
-          "command": "toolkit.assets.disconnect",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetConnected && !assetDatabase",
-          "group": "2_connection@2"
         },
         {
           "command": "toolkit.assets.query",

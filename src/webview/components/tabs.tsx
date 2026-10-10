@@ -6,6 +6,7 @@ export type Tab = {
   id: string;
   label: string;
   icon?: ReactNode;
+  context?: Record<string, string | boolean>;
 };
 
 type TabsProps = {
@@ -65,6 +66,7 @@ export function Tabs({
                     : 'border-transparent text-(--vscode-panelTitle-inactiveForeground,var(--vscode-descriptionForeground)) hover:text-(--vscode-foreground)',
                 )}
                 key={tab.id}
+                data-vscode-context={tab.context ? JSON.stringify(tab.context) : undefined}
                 value={tab.id}
               >
                 {tab.icon}

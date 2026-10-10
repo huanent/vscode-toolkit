@@ -101,7 +101,7 @@ export function createAssetsView(
       await vscode.window.showErrorMessage(message);
     }
   };
-  for (const action of ['add', 'createFolder', 'edit', 'delete', 'connect', 'disconnect', 'query'] as const) {
+  for (const action of ['add', 'createFolder', 'edit', 'delete', 'query'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(
         `toolkit.assets.${action}`,
@@ -145,7 +145,7 @@ function isAssetRequest(value: unknown): value is AssetRequest {
   return (
     message.type === 'assetAction' &&
     typeof message.action === 'string' &&
-    ['add', 'createFolder', 'edit', 'delete', 'connect', 'disconnect', 'query', 'preview'].includes(message.action) &&
+    ['add', 'createFolder', 'edit', 'delete', 'connect', 'query', 'preview'].includes(message.action) &&
     [message.id, message.database, message.table, message.assetType, message.folderId].every(
       (field) => field === undefined || typeof field === 'string',
     )
