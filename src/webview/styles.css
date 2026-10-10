@@ -35,5 +35,5 @@ body {
   padding: 0;
   min-width: 240px;
   min-height: 100vh;
-  background-color: var(--vscode-sideBar-background);
+  background-color: transparent;
 }
