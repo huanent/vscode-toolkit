@@ -88,6 +88,7 @@ export default defineConfig(({ mode }) => {
               ...builtinModules,
               ...builtinModules.map((name) => `node:${name}`),
               'node:sqlite',
+              'ssh2',
               'yauzl',
             ],
             output: {

@@ -27,7 +27,7 @@ export function registerWebviews(
   const assets = new AssetService(context);
   const credentials = new CredentialService(context);
   const mysql = new MysqlService(assets, tasks, credentials);
-  const ssh = new SshService(assets, credentials);
+  const ssh = new SshService(assets, credentials, context.globalState);
   context.subscriptions.push(mysql, ssh, registerMysqlEditor(context, mysql, tasks));
   const assetsView = createAssetsView(context, assets, [mysql, ssh], credentials);
   const dashboardHandler = composeWebviewHandlers({
