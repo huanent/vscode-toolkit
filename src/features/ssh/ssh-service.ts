@@ -39,6 +39,98 @@ export class SshService implements AssetProvider {
     };
   }
 
+  async listConnections(): Promise<{ id: string; name: string; host: string; port: number }[]> {
+    return (await this.assets.list())
+      .filter((asset) => asset.type === this.type)
+      .map((asset) => {
+        const connection = requireSshConfiguration(asset);
+        return { id: connection.id, name: connection.name, host: connection.host, port: connection.port };
+      });
+  }
+
+  async runCommand(assetId: string, command: string): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
+    if (!command.trim()) throw new Error('Enter an SSH command.');
+    const client = await this.connectClient(assetId);
+    return new Promise((resolve, reject) => {
+      client.exec(command, (error, channel) => {
+        if (error) {
+          client.end();
+          reject(error);
+          return;
+        }
+        let stdout = '';
+        let stderr = '';
+        channel.on('data', (data: Buffer) => (stdout += data.toString('utf8')));
+        channel.stderr.on('data', (data: Buffer) => (stderr += data.toString('utf8')));
+        channel.on('close', (exitCode: number | undefined) => {
+          client.end();
+          resolve({ stdout, stderr, exitCode });
+        });
+      });
+    });
+  }
+
+  async transferFile(
+    assetId: string,
+    direction: 'upload' | 'download',
+    localPath: string,
+    remotePath: string,
+  ): Promise<void> {
+    if (!localPath.trim() || !remotePath.trim()) throw new Error('Enter both local and remote file paths.');
+    const client = await this.connectClient(assetId);
+    await new Promise<void>((resolve, reject) => {
+      client.sftp((error, sftp) => {
+        if (error) {
+          client.end();
+          reject(error);
+          return;
+        }
+        const complete = (transferError?: Error | null) => {
+          client.end();
+          if (transferError) reject(transferError);
+          else resolve();
+        };
+        if (direction === 'upload') sftp.fastPut(localPath, remotePath, complete);
+        else sftp.fastGet(remotePath, localPath, complete);
+      });
+    });
+  }
+
+  private async connectClient(assetId: string): Promise<Client> {
+    const asset = requireSshConfiguration(await this.assets.get(assetId));
+    const credential = (await this.credentials.list()).find((candidate) => candidate.id === asset.credentialId);
+    if (!credential) throw new Error('Credential not found.');
+    if (!credential.username) throw new Error('SSH username is required.');
+    if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
+    if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
+
+    const config: ConnectConfig = {
+      host: asset.host,
+      port: asset.port,
+      username: credential.username,
+      readyTimeout: 20000,
+      keepaliveInterval: 10000,
+      hostVerifier: (key: Buffer, verify: VerifyCallback) => {
+        void verifySshHost(asset, this.globalState, key).then(verify, () => verify(false));
+      },
+    };
+    if (credential.type === 'password') config.password = credential.password;
+    else {
+      config.privateKey = credential.privateKey;
+      config.passphrase = credential.passphrase;
+    }
+
+    const client = new Client();
+    return new Promise((resolve, reject) => {
+      client.once('ready', () => resolve(client));
+      client.once('error', (error) => {
+        client.end();
+        reject(error);
+      });
+      client.connect(config);
+    });
+  }
+
   async saveConfiguration(values: AssetFormValues, record?: AssetRecord, parentId?: string): Promise<void> {
     const previous = record ? requireSshConfiguration(record) : undefined;
     const asset: SshConnectionConfiguration = {
@@ -181,22 +273,7 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
   }
 
   private async verifyHost(key: Buffer): Promise<boolean> {
-    const hostId = `${this.asset.host}:${this.asset.port}`;
-    const trustedHosts = this.globalState.get<Record<string, string>>('toolkit.ssh.hostKeys', {});
-    const fingerprint = createHash('sha256').update(key).digest();
-    const currentKey = fingerprint.toString('hex');
-    if (trustedHosts[hostId] === currentKey) return true;
-
-    const displayedFingerprint = `SHA256:${fingerprint.toString('base64').replace(/=+$/, '')}`;
-    const changed = Boolean(trustedHosts[hostId]);
-    const choice = await vscode.window.showWarningMessage(
-      `${changed ? 'SSH host key changed' : 'Trust SSH host'} for ${hostId}? Fingerprint: ${displayedFingerprint}`,
-      { modal: true },
-      'Trust Host',
-    );
-    if (choice !== 'Trust Host') return false;
-    await this.globalState.update('toolkit.ssh.hostKeys', { ...trustedHosts, [hostId]: currentKey });
-    return true;
+    return verifySshHost(this.asset, this.globalState, key);
   }
 
   private showError(error: Error): void {
@@ -212,6 +289,29 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
     this.client?.end();
     this.writeEmitter.fire('\r\nSSH connection closed.\r\n');
   }
+}
+
+async function verifySshHost(
+  asset: SshConnectionConfiguration,
+  globalState: vscode.Memento,
+  key: Buffer,
+): Promise<boolean> {
+  const hostId = `${asset.host}:${asset.port}`;
+  const trustedHosts = globalState.get<Record<string, string>>('toolkit.ssh.hostKeys', {});
+  const fingerprint = createHash('sha256').update(key).digest();
+  const currentKey = fingerprint.toString('hex');
+  if (trustedHosts[hostId] === currentKey) return true;
+
+  const displayedFingerprint = `SHA256:${fingerprint.toString('base64').replace(/=+$/, '')}`;
+  const changed = Boolean(trustedHosts[hostId]);
+  const choice = await vscode.window.showWarningMessage(
+    `${changed ? 'SSH host key changed' : 'Trust SSH host'} for ${hostId}? Fingerprint: ${displayedFingerprint}`,
+    { modal: true },
+    'Trust Host',
+  );
+  if (choice !== 'Trust Host') return false;
+  await globalState.update('toolkit.ssh.hostKeys', { ...trustedHosts, [hostId]: currentKey });
+  return true;
 }
 
 function validHost(value: string): boolean {

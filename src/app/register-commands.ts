@@ -9,12 +9,13 @@ export function registerCommands(
   context: vscode.ExtensionContext,
   refreshTempFiles: () => Promise<void>,
   refreshWorkflowFiles: () => Promise<void>,
+  openWorkflowEditor: (id?: string) => Promise<void>,
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.generateGitignore', () => generateGitignore(context.extensionUri)),
   );
   registerTempCommands(context, refreshTempFiles);
-  registerWorkflowCommands(context, refreshWorkflowFiles);
+  registerWorkflowCommands(context, refreshWorkflowFiles, openWorkflowEditor);
   registerCredentialCommands(context);
   registerScripts(context);
 }

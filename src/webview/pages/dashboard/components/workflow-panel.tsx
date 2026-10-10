@@ -1,12 +1,12 @@
+import type { WorkflowEditorOpenRequest, WorkflowRecordEntry } from '@/features/workflow/protocol';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
 import { Tree, type TreeItem } from '@/webview/components/tree';
-import type { OpenWorkflowFileRequest, WorkflowTreeEntry } from '@/features/workflow/protocol';
 import { postToHost } from '@/webview/utils/host-data';
 
 type WorkflowPanelProps = {
-  entries: WorkflowTreeEntry[] | undefined;
+  entries: WorkflowRecordEntry[] | undefined;
   error: string | undefined;
   loading: boolean;
 };
@@ -19,16 +19,16 @@ export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
       {error && !entries ? (
         <ErrorMessage message={error} />
       ) : loading ? (
-        <Loading label="Reading workfloworary files..." />
+        <Loading label="Reading workflow files..." />
       ) : entries?.length ? (
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
-            ariaLabel="Workfloworary files"
+            ariaLabel="Workflow files"
             items={toWorkflowTreeItems(entries)}
             onActivate={(item) => {
-              if (item.type === 'file') {
-                postToHost({ type: 'openWorkflowFile', path: item.path } satisfies OpenWorkflowFileRequest);
-              }
+              const id = item.context?.workflowId;
+              if (typeof id !== 'string') return;
+              postToHost({ type: 'openWorkflowEditor', id } satisfies WorkflowEditorOpenRequest);
             }}
           />
         </div>
@@ -41,18 +41,42 @@ export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
   );
 }
 
-function toWorkflowTreeItems(entries: readonly WorkflowTreeEntry[], parentPath = ''): TreeItem[] {
-  return entries.map((entry) => {
-    const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
-    const context = { workflowEntryPath: path, workflowEntryType: entry.type };
-    return entry.type === 'directory'
-      ? {
-          path,
+function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[] {
+  const entriesByParent = new Map<string | undefined, WorkflowRecordEntry[]>();
+  const folderIds = new Set(entries.filter((entry) => entry.type === 'folder').map((entry) => entry.id));
+  for (const entry of entries) {
+    const parentId = entry.parentId && folderIds.has(entry.parentId) ? entry.parentId : undefined;
+    const siblings = entriesByParent.get(parentId) ?? [];
+    siblings.push(entry);
+    entriesByParent.set(parentId, siblings);
+  }
+
+  const visited = new Set<string>();
+  const buildItems = (parentId: string | undefined, parentPath: string, ancestors: ReadonlySet<string>): TreeItem[] => {
+    const items: TreeItem[] = [];
+    for (const entry of entriesByParent.get(parentId) ?? []) {
+      if (visited.has(entry.id) || ancestors.has(entry.id)) continue;
+      visited.add(entry.id);
+      const itemPath = parentPath ? `${parentPath}/${entry.id}` : entry.id;
+      if (entry.type === 'workflow') {
+        items.push({ path: itemPath, name: entry.name, type: 'file', context: { workflowId: entry.id } });
+      } else {
+        const nextAncestors = new Set(ancestors).add(entry.id);
+        items.push({
+          path: itemPath,
           name: entry.name,
-          type: 'directory' as const,
-          context,
-          children: entry.children ? toWorkflowTreeItems(entry.children, path) : undefined,
-        }
-      : { path, name: entry.name, type: 'file' as const, context };
-  });
+          type: 'directory',
+          context: { workflowFolderId: entry.id },
+          children: buildItems(entry.id, itemPath, nextAncestors),
+        });
+      }
+    }
+    return items;
+  };
+
+  const roots = buildItems(undefined, '', new Set());
+  for (const entry of entries) {
+    if (!visited.has(entry.id)) roots.push(...buildItems(entry.id, '', new Set()));
+  }
+  return roots;
 }
