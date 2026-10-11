@@ -52,31 +52,36 @@ function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[
   }
 
   const visited = new Set<string>();
-  const buildItems = (parentId: string | undefined, parentPath: string, ancestors: ReadonlySet<string>): TreeItem[] => {
+  const buildItems = (parentId: string | undefined, ancestors: ReadonlySet<string>): TreeItem[] => {
     const items: TreeItem[] = [];
     for (const entry of entriesByParent.get(parentId) ?? []) {
       if (visited.has(entry.id) || ancestors.has(entry.id)) continue;
       visited.add(entry.id);
-      const itemPath = parentPath ? `${parentPath}/${entry.id}` : entry.id;
+      const itemPath = entry.type === 'folder' ? entry.id : `${parentId ? `${parentId}/` : ''}${entry.id}.json`;
       if (entry.type === 'workflow') {
-        items.push({ path: itemPath, name: entry.name, type: 'file', context: { workflowId: entry.id } });
+        items.push({
+          path: itemPath,
+          name: entry.name,
+          type: 'file',
+          context: { workflowId: entry.id, workflowName: entry.name },
+        });
       } else {
         const nextAncestors = new Set(ancestors).add(entry.id);
         items.push({
           path: itemPath,
           name: entry.name,
           type: 'directory',
-          context: { workflowFolderId: entry.id },
-          children: buildItems(entry.id, itemPath, nextAncestors),
+          context: { workflowFolderId: entry.id, workflowName: entry.name },
+          children: buildItems(entry.id, nextAncestors),
         });
       }
     }
     return items;
   };
 
-  const roots = buildItems(undefined, '', new Set());
+  const roots = buildItems(undefined, new Set());
   for (const entry of entries) {
-    if (!visited.has(entry.id)) roots.push(...buildItems(entry.id, '', new Set()));
+    if (!visited.has(entry.id)) roots.push(...buildItems(entry.id, new Set()));
   }
   return roots;
 }

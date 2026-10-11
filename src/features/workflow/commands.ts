@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import { workflowEditorViewType } from './editor';
-import { deleteWorkflowEntry, saveWorkflowFolder } from './service';
+import { deleteWorkflowEntry, renameWorkflowEntry, saveWorkflowFolder } from './service';
 
 /**
  * Registers the workflow commands. They are invoked from the native
@@ -22,6 +22,9 @@ export function registerWorkflowCommands(
     ),
     vscode.commands.registerCommand('toolkit.workflow.edit', (target: unknown) =>
       openEditor(parseWorkflowId(target)).catch(showWorkflowCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.workflow.rename', (target: unknown) =>
+      renameWorkflow(context, refresh, target).catch(showWorkflowCommandError),
     ),
     vscode.commands.registerCommand('toolkit.workflow.delete', (target: unknown) =>
       deleteWorkflow(context, refresh, target).catch(showWorkflowCommandError),
@@ -46,6 +49,27 @@ async function deleteWorkflow(
 
   const deletedIds = await deleteWorkflowEntry(resolveStorageDirectory(context, 'workflows'), id);
   for (const deletedId of deletedIds) await closeWorkflowTabs(deletedId);
+  await refresh();
+}
+
+async function renameWorkflow(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  target: unknown,
+): Promise<void> {
+  const id = parseWorkflowEntryId(target);
+  if (!id) return;
+  const isFolder = hasFolderId(target);
+  const currentName = getWorkflowName(target);
+  const name = await vscode.window.showInputBox({
+    prompt: isFolder ? 'Rename workflow folder' : 'Rename workflow',
+    value: currentName,
+    valueSelection: [0, currentName.length],
+    validateInput: validateWorkflowName,
+  });
+  if (name === undefined) return;
+
+  await renameWorkflowEntry(resolveStorageDirectory(context, 'workflows'), id, name);
   await refresh();
 }
 
@@ -95,6 +119,17 @@ function parseFolderId(value: unknown): string | undefined {
 
 function hasFolderId(value: unknown): boolean {
   return parseFolderId(value) !== undefined;
+}
+
+function getWorkflowName(value: unknown): string {
+  if (typeof value !== 'object' || value === null) return '';
+  const name = (value as Record<string, unknown>).workflowName;
+  return typeof name === 'string' ? name : '';
+}
+
+function validateWorkflowName(value: string): string | undefined {
+  if (!value.trim() || /[\\/\0]/.test(value)) return 'Enter a valid workflow name.';
+  return undefined;
 }
 
 function validateFolderName(value: string): string | undefined {

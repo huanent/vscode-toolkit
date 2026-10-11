@@ -351,6 +351,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.workflow.rename",
+        "title": "Rename",
+        "category": "Workflow"
+      },
+      {
         "command": "toolkit.temp.delete",
         "title": "Delete",
         "category": "Toolkit"
@@ -497,6 +502,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.workflow.rename",
+          "when": "false"
+        },
+        {
           "command": "toolkit.workflow.createFolder",
           "when": "false"
         },
@@ -595,9 +604,14 @@
           "group": "2_edit@0"
         },
         {
-          "command": "toolkit.workflow.delete",
+          "command": "toolkit.workflow.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
           "group": "2_edit@1"
+        },
+        {
+          "command": "toolkit.workflow.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
+          "group": "2_edit@2"
         }
       ],
       "explorer/context": [

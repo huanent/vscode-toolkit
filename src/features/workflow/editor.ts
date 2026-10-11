@@ -2,7 +2,13 @@ import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type { WorkflowEditorData, WorkflowEditorMessage, WorkflowEditorRequest, WorkflowRecord } from './protocol';
-import { isWorkflowDefinition, readWorkflowRecord, saveWorkflowRecord, validateWorkflowId } from './service';
+import {
+  isWorkflowDefinition,
+  readWorkflowRecord,
+  saveWorkflowRecord,
+  validateWorkflowFolderId,
+  validateWorkflowId,
+} from './service';
 import type { SshService } from '@/features/ssh/ssh-service';
 
 export const workflowEditorViewType = 'toolkit.workflowEditor';
@@ -10,12 +16,12 @@ export const workflowEditorScheme = 'toolkit-workflow-editor';
 
 export function createWorkflowEditorUri(id: string, name: string, parentId?: string): vscode.Uri {
   validateWorkflowId(id);
-  if (parentId) validateWorkflowId(parentId);
+  if (parentId) validateWorkflowFolderId(parentId);
   const slug = name.trim().replace(/[^a-zA-Z0-9._-]+/g, '-') || 'workflow';
   return vscode.Uri.from({
     scheme: workflowEditorScheme,
     path: `/${id}/${slug}.workflow`,
-    query: parentId ? `parentId=${parentId}` : '',
+    query: parentId ? new URLSearchParams({ parentId }).toString() : '',
   });
 }
 
@@ -38,7 +44,7 @@ export function registerWorkflowEditor(
 
   return registerWebviewEditor<WorkflowEditorData>(context, {
     viewType: workflowEditorViewType,
-    page: 'workflow-editor',
+    page: 'workflow',
     icon: 'debug-line-by-line',
     validate: parseWorkflowEditorUri,
     load: async (uri) => {
@@ -92,7 +98,7 @@ export function registerWorkflowEditor(
 
 function getWorkflowEditorParentId(uri: vscode.Uri): string | undefined {
   const parentId = new URLSearchParams(uri.query).get('parentId') ?? undefined;
-  if (parentId) validateWorkflowId(parentId);
+  if (parentId) validateWorkflowFolderId(parentId);
   return parentId;
 }
 

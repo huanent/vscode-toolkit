@@ -24,7 +24,7 @@ export function openAssetEditor(
     vscode.ViewColumn.Active,
     { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [assetsUri] },
   );
-  panel.webview.html = getWebviewHtml(panel.webview, assetsUri, { page: 'asset-editor' });
+  panel.webview.html = getWebviewHtml(panel.webview, assetsUri, { page: 'asset' });
   let saving = false;
   let disposed = false;
   const storageDirectory = resolveStorageDirectory(context, 'assets');
