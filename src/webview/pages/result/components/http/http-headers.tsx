@@ -1,4 +1,6 @@
 import { Collapsible } from '@/webview/components/collapsible';
+import { Fragment } from 'react';
+import './http-headers.css';
 
 interface HttpHeadersProps {
   headers: Record<string, string>;
@@ -13,12 +15,12 @@ export function HttpHeaders({ headers }: HttpHeadersProps) {
         {entries.length === 0 ? (
           <div className="py-2 text-sm text-(--vscode-descriptionForeground)">No headers</div>
         ) : (
-          <dl>
+          <dl className="http-headers-grid text-xs">
             {entries.map(([name, value]) => (
-              <div key={name} className="grid grid-cols-1 gap-1 py-2 text-xs sm:grid-cols-3 sm:gap-2">
-                <dt className="col-span-1 min-w-0 break-all font-mono font-semibold">{name}</dt>
-                <dd className="min-w-0 break-all font-mono select-text sm:col-span-2">{value}</dd>
-              </div>
+              <Fragment key={name}>
+                <dt className="break-all font-semibold">{name}</dt>
+                <dd className="min-w-0 break-all font-normal select-text">{value}</dd>
+              </Fragment>
             ))}
           </dl>
         )}

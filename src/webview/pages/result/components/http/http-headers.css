@@ -1,0 +1,10 @@
+.http-headers-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 2rem;
+  row-gap: 0.5rem;
+}
+
+.http-headers-grid dd {
+  margin: 0;
+}
