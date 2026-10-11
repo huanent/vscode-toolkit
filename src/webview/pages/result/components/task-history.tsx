@@ -105,12 +105,8 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
           />
         ),
         label: (
-          <span className="flex min-w-0 flex-col gap-1 py-2" title={task.title}>
-            <span className="truncate">{task.title}</span>
-            <span className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
-              <span>{formatTaskKind(task.kind)}</span>
-              <span>{presentation.label}</span>
-            </span>
+          <span className="block min-w-0 truncate py-2" title={task.title}>
+            {task.title}
           </span>
         ),
         actions:

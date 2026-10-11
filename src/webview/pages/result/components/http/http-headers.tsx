@@ -15,10 +15,7 @@ export function HttpHeaders({ headers }: HttpHeadersProps) {
         ) : (
           <dl>
             {entries.map(([name, value]) => (
-              <div
-                key={name}
-                className="grid grid-cols-1 gap-1 border-b border-(--vscode-panel-border) py-2 text-xs sm:grid-cols-3 sm:gap-2"
-              >
+              <div key={name} className="grid grid-cols-1 gap-1 py-2 text-xs sm:grid-cols-3 sm:gap-2">
                 <dt className="col-span-1 min-w-0 break-all font-mono font-semibold">{name}</dt>
                 <dd className="min-w-0 break-all font-mono select-text sm:col-span-2">{value}</dd>
               </div>
