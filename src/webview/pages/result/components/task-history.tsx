@@ -1,16 +1,14 @@
-import { useState } from 'react';
 import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
 import type { WebviewReadyMessage } from '@/shared/webview-protocol';
 import { Button } from '@/webview/components/button';
 import { Empty } from '@/webview/components/empty';
 import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
 import { List, type ListGroup } from '@/webview/components/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
 import { cn } from 'cn';
-import { formatTaskKind, taskStatusPresentation } from '../task-presentation';
+import { taskStatusPresentation } from '../task-presentation';
 
 interface TaskHistoryPanelProps {
   tasks: ResultTaskSummary[];
@@ -18,13 +16,6 @@ interface TaskHistoryPanelProps {
 }
 
 export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
-  const [search, setSearch] = useState('');
-  const query = search.trim().toLowerCase();
-  const filteredTasks = tasks.filter((task) =>
-    `${task.title} ${formatTaskKind(task.kind)} ${taskStatusPresentation[task.status].label}`
-      .toLowerCase()
-      .includes(query),
-  );
   return (
     <aside
       aria-label="Task history"
@@ -48,29 +39,13 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
         </span>
       </Header>
 
-      {tasks.length > 0 && (
-        <div className="px-3 pb-2">
-          <Input
-            aria-label="Filter tasks"
-            placeholder="Filter tasks"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            prefix={<Icon name="search" size="sm" />}
-          />
-        </div>
-      )}
-
       {tasks.length === 0 ? (
         <Empty title="No tasks yet" description="Task history will appear here." icon="history" />
-      ) : filteredTasks.length === 0 ? (
-        <div className="p-3 text-xs text-(--vscode-descriptionForeground)" role="status">
-          No matching tasks
-        </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-2">
           <List
             ariaLabel="Task history"
-            groups={toTaskListGroups(filteredTasks)}
+            groups={toTaskListGroups(tasks)}
             selectedKey={selectedTaskId}
             onActivate={(task) => selectTask(task.id)}
             onItemClick={(task) => selectTask(task.id)}
