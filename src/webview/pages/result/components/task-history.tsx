@@ -76,14 +76,10 @@ function toTaskListGroups(tasks: readonly ResultTaskSummary[]): ListGroup<Result
         icon: (
           <Icon
             name={presentation.icon}
-            className={cn(presentation.className, 'shrink-0 p-1', task.status === 'running' && 'animate-spin')}
+            className={cn(presentation.className, 'p-1', task.status === 'running' && 'animate-spin')}
           />
         ),
-        label: (
-          <span className="block min-w-0 truncate py-2" title={task.title}>
-            {task.title}
-          </span>
-        ),
+        label: <span title={task.title}>{task.title}</span>,
         actions:
           task.status === 'running' ? (
             <Button
