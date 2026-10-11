@@ -14,7 +14,6 @@ export function openAssetEditor(
   refresh: () => Promise<void>,
   credentials: CredentialService,
   previous?: AssetRecord,
-  parentId?: string,
 ): void {
   const values = provider.getFormValues(previous);
   const assetsUri = vscode.Uri.file(__dirname);
@@ -50,7 +49,7 @@ export function openAssetEditor(
         if (storageDirectory !== resolveStorageDirectory(context, 'assets'))
           throw new Error('Storage location changed. Reopen the asset editor.');
         const current = previous ? await service.get(previous.id) : undefined;
-        await provider.saveConfiguration(message.values, current, parentId);
+        await provider.saveConfiguration(message.values, current);
         await refresh();
         panel.dispose();
       }

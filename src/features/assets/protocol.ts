@@ -20,20 +20,27 @@ export type AssetEditorMessage = { type: 'saveError'; message: string } | { type
 export interface AssetViewEntry {
   path: string;
   name: string;
-  type: 'file' | 'directory';
+  type: 'file';
   detail?: string;
   context: Record<string, string | number | boolean>;
-  children?: AssetViewEntry[];
 }
 
+export interface AssetDirectoryEntry {
+  path: string;
+  name: string;
+  type: 'directory';
+  children: AssetTreeEntry[];
+}
+
+export type AssetTreeEntry = AssetViewEntry | AssetDirectoryEntry;
+
 export type AssetsMessage =
-  | { type: 'assetsUpdated'; entries: AssetViewEntry[] }
+  | { type: 'assetsUpdated'; entries: AssetTreeEntry[] }
   | { type: 'assetError'; message: string };
 
 export interface AssetRequest {
   type: 'assetAction';
-  action: 'add' | 'createFolder' | 'edit' | 'delete' | 'connect' | 'query' | 'preview';
-  folderId?: string;
+  action: 'add' | 'edit' | 'delete' | 'connect' | 'query' | 'preview';
   id?: string;
   database?: string;
   table?: string;

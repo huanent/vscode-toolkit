@@ -1,8 +1,8 @@
-import type { AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
+import type { AssetRequest, AssetTreeEntry } from '@/features/assets/protocol';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeItem } from '@/webview/components/tree';
+import { Tree } from '@/webview/components/tree';
 import { postToHost } from '@/webview/utils/host-data';
 
 const panelContext = JSON.stringify({ webviewSection: 'assets', preventDefaultContextMenuItems: true });
@@ -12,7 +12,7 @@ export function AssetsPanel({
   loading,
   error,
 }: {
-  entries: AssetViewEntry[] | undefined;
+  entries: AssetTreeEntry[] | undefined;
   loading: boolean;
   error: string | undefined;
 }) {
@@ -24,7 +24,7 @@ export function AssetsPanel({
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Assets"
-            items={toTreeItems(entries)}
+            items={entries}
             onActivate={(item) => {
               const context = item.context;
               if (!context) return;
@@ -43,13 +43,5 @@ export function AssetsPanel({
       )}
       {error && <ErrorMessage message={error} className="mt-2" />}
     </section>
-  );
-}
-
-function toTreeItems(entries: AssetViewEntry[]): TreeItem[] {
-  return entries.map((entry) =>
-    entry.type === 'directory'
-      ? { ...entry, type: 'directory', children: entry.children ? toTreeItems(entry.children) : undefined }
-      : { ...entry, type: 'file' },
   );
 }

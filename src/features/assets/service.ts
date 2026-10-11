@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, readFile, rename, rm, unlink, writeFile, lstat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, unlink, writeFile, lstat } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
@@ -8,7 +8,7 @@ export interface AssetRecord {
   id: string;
   type: string;
   name: string;
-  parentId?: string;
+  folder?: string;
 }
 
 export class AssetService {
@@ -18,20 +18,18 @@ export class AssetService {
     await mkdir(this.directory, { recursive: true });
     const entries: AssetRecord[] = [];
 
-    const traverse = async (dir: string, parentId?: string) => {
+    const traverse = async (dir: string) => {
       const files = await readdir(dir, { withFileTypes: true });
       for (const file of files) {
         if (file.isDirectory()) {
-          const folderId = parentId ? `${parentId}/${file.name}` : file.name;
-          entries.push({ id: folderId, type: 'folder', name: file.name, parentId });
-          await traverse(path.join(dir, file.name), folderId);
+          await traverse(path.join(dir, file.name));
         } else if (file.isFile() && file.name.endsWith('.json')) {
           try {
             const value: any = JSON.parse(await readFile(path.join(dir, file.name), 'utf8'));
             if (value && typeof value === 'object' && typeof value.id === 'string' && typeof value.type === 'string') {
-              value.name = file.name.slice(0, -5);
-              value.parentId = parentId;
-              entries.push(value);
+              if (typeof value.name !== 'string') value.name = file.name.slice(0, -5);
+              const folder = path.relative(this.directory, dir).split(path.sep).join('/');
+              entries.push({ ...value, ...(folder ? { folder } : {}) });
             }
           } catch {
             // Ignore invalid files
@@ -50,43 +48,20 @@ export class AssetService {
     return asset;
   }
 
-  async createFolder(name: string, parentId?: string): Promise<void> {
-    const trimmed = name.trim();
-    if (
-      !trimmed ||
-      trimmed === '.' ||
-      trimmed === '..' ||
-      /[\\/]/.test(trimmed) ||
-      Array.from(trimmed).some((character) => character.charCodeAt(0) < 32)
-    )
-      throw new Error('Enter a valid folder name.');
-
-    const dir = parentId ? path.join(this.directory, parentId) : this.directory;
-    const target = path.join(dir, trimmed);
-
-    try {
-      await lstat(target);
-      throw new Error('An asset or folder with this name already exists.');
-    } catch (e: any) {
-      if (e.code !== 'ENOENT') throw e;
-    }
-
-    await mkdir(target, { recursive: true });
-  }
-
   async save(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
 
     const existing = await this.get(asset.id).catch(() => undefined);
 
-    const dir = asset.parentId ? path.join(this.directory, asset.parentId) : this.directory;
-    await mkdir(dir, { recursive: true });
+    await mkdir(this.directory, { recursive: true });
 
-    const target = path.join(dir, `${asset.name}.json`);
+    const duplicate = (await this.list()).find((entry) => entry.id !== asset.id && entry.name === asset.name);
+    if (duplicate) throw new Error('An asset with this name already exists.');
+
+    const target = path.join(this.directory, `${asset.id}.json`);
 
     if (existing) {
-      const oldDir = existing.parentId ? path.join(this.directory, existing.parentId) : this.directory;
-      const oldTarget = path.join(oldDir, `${existing.name}.json`);
+      const oldTarget = (await this.findRecordPath(existing.id)) ?? path.join(this.directory, `${existing.name}.json`);
       if (oldTarget !== target) {
         try {
           await lstat(target);
@@ -107,8 +82,7 @@ export class AssetService {
 
     const temporary = `${target}.${randomUUID()}.tmp`;
     try {
-      const { name: _name, parentId: _parentId, ...rest } = asset as any;
-      await writeFile(temporary, JSON.stringify(rest, null, 2), { mode: 0o600 });
+      await writeFile(temporary, JSON.stringify(asset, null, 2), { mode: 0o600 });
       await rename(temporary, target);
     } finally {
       await unlink(temporary).catch(() => undefined);
@@ -116,26 +90,10 @@ export class AssetService {
   }
 
   async delete(asset: AssetRecord): Promise<void> {
-    if (asset.type !== 'folder' && !isAssetRecord(asset)) throw new Error('Invalid asset.');
-
-    if (asset.type === 'folder') {
-      const target = asset.id ? path.join(this.directory, asset.id) : this.directory;
-      const entries = await this.list();
-      const toDelete = entries.filter(
-        (e) => e.id === asset.id || e.parentId?.startsWith(asset.id + '/') || e.parentId === asset.id,
-      );
-      for (const entry of toDelete) {
-        if (entry.type !== 'folder') {
-          await this.context.secrets.delete(this.secretKey(entry));
-        }
-      }
-      await rm(target, { recursive: true, force: true });
-    } else {
-      const dir = asset.parentId ? path.join(this.directory, asset.parentId) : this.directory;
-      const target = path.join(dir, `${asset.name}.json`);
-      await unlink(target);
-      await this.context.secrets.delete(this.secretKey(asset));
-    }
+    if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
+    const target = (await this.findRecordPath(asset.id)) ?? path.join(this.directory, `${asset.id}.json`);
+    await unlink(target);
+    await this.context.secrets.delete(this.secretKey(asset));
   }
 
   getSecret(asset: AssetRecord): Thenable<string | undefined> {
@@ -148,6 +106,28 @@ export class AssetService {
 
   private get directory(): string {
     return resolveStorageDirectory(this.context, 'assets');
+  }
+
+  private async findRecordPath(id: string): Promise<string | undefined> {
+    const find = async (dir: string): Promise<string | undefined> => {
+      for (const file of await readdir(dir, { withFileTypes: true })) {
+        const filePath = path.join(dir, file.name);
+        if (file.isDirectory()) {
+          const result = await find(filePath);
+          if (result) return result;
+        } else if (file.isFile() && file.name.endsWith('.json')) {
+          try {
+            const value = JSON.parse(await readFile(filePath, 'utf8'));
+            if (value && typeof value === 'object' && value.id === id) return filePath;
+          } catch {
+            // Ignore invalid files
+          }
+        }
+      }
+      return undefined;
+    };
+
+    return find(this.directory);
   }
 
   private secretKey(asset: AssetRecord): string {
