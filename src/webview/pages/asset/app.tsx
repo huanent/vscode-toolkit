@@ -5,11 +5,10 @@ import type {
   AssetEditorRequest,
   AssetFormValues,
 } from '@/features/assets/protocol';
-import { Field } from '@base-ui/react/field';
-import { Form } from '@base-ui/react/form';
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
+import { Form, FormItem } from '@/webview/components/form';
 import { CredentialSelector } from '@/webview/pages/credential/components/credential-selector';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
@@ -62,23 +61,26 @@ function AssetForm({ data }: { data: AssetEditorData }) {
         }}
       >
         <fieldset disabled={saving} className="grid min-w-0 gap-4 border-0 p-0">
-          <Field.Root name="name" className="grid gap-1 text-xs">
-            <Field.Label>Connection name</Field.Label>
+          <FormItem
+            name="name"
+            label="Connection name"
+            className="text-xs"
+            error="Connection name is required."
+            match="valueMissing"
+          >
             <Input required autoFocus value={values.name} onChange={(event) => update('name', event.target.value)} />
-            <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
-              Connection name is required.
-            </Field.Error>
-          </Field.Root>
+          </FormItem>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field.Root name="host" className="grid gap-1 text-xs sm:col-span-2">
-              <Field.Label>Host</Field.Label>
+            <FormItem
+              name="host"
+              label="Host"
+              className="text-xs sm:col-span-2"
+              error="Host is required."
+              match="valueMissing"
+            >
               <Input required value={values.host} onChange={(event) => update('host', event.target.value)} />
-              <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
-                Host is required.
-              </Field.Error>
-            </Field.Root>
-            <Field.Root name="port" className="grid gap-1 text-xs">
-              <Field.Label>Port</Field.Label>
+            </FormItem>
+            <FormItem name="port" label="Port" className="text-xs" error="Enter a port between 1 and 65535.">
               <Input
                 required
                 type="number"
@@ -88,28 +90,38 @@ function AssetForm({ data }: { data: AssetEditorData }) {
                 value={values.port}
                 onChange={(event) => update('port', Number(event.target.value))}
               />
-              <Field.Error className="text-xs text-(--vscode-errorForeground)">
-                Enter a port between 1 and 65535.
-              </Field.Error>
-            </Field.Root>
+            </FormItem>
           </div>
-          <CredentialSelector
-            credentials={credentials}
-            value={values.credentialId}
-            onChange={(credentialId) => update('credentialId', credentialId)}
-            onCreate={(credential) => {
-              setError(undefined);
-              postToHost({ type: 'createCredential', credential } satisfies AssetEditorRequest);
+          <FormItem
+            name="credentialId"
+            className="min-w-0 flex-1"
+            error="Select a credential."
+            match="valueMissing"
+            control={{
+              value: values.credentialId,
+              onValueChange: (credentialId) => update('credentialId', credentialId),
+              required: true,
             }}
-          />
+          >
+            <CredentialSelector
+              credentials={credentials}
+              onCreate={(credential) => {
+                setError(undefined);
+                postToHost({ type: 'createCredential', credential } satisfies AssetEditorRequest);
+              }}
+            />
+          </FormItem>
           {ssh && (
-            <label className="grid gap-1 text-xs">
-              Proxy tunnel (optional)
-              <select
-                className="h-7 w-full rounded border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                value={values.proxyAssetId ?? ''}
-                onChange={(event) => update('proxyAssetId', event.target.value || undefined)}
-              >
+            <FormItem
+              name="proxyAssetId"
+              label="Proxy tunnel (optional)"
+              className="text-xs"
+              control={{
+                value: values.proxyAssetId ?? '',
+                onValueChange: (value) => update('proxyAssetId', value || undefined),
+              }}
+            >
+              <select className="h-7 w-full rounded border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
                 <option value="">Direct connection</option>
                 {data.sshConnections.map((connection) => (
                   <option key={connection.id} value={connection.id}>
@@ -117,18 +129,20 @@ function AssetForm({ data }: { data: AssetEditorData }) {
                   </option>
                 ))}
               </select>
-            </label>
+            </FormItem>
           )}
           {mysql && (
             <>
-              <label className="grid gap-1 text-xs">
-                Default database (optional)
+              <FormItem name="database" label="Default database (optional)" className="text-xs">
                 <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
-              </label>
-              <label className="flex items-center gap-2 text-xs">
+              </FormItem>
+              <FormItem
+                name="tls"
+                label="TLS certificate verification"
+                className="flex flex-row items-center gap-2 text-xs"
+              >
                 <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
-                TLS certificate verification
-              </label>
+              </FormItem>
             </>
           )}
         </fieldset>

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Field } from '@base-ui/react/field';
-import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
+import { Form, FormItem } from '@/webview/components/form';
 import { Input } from '@/webview/components/input';
 import type { Credential } from '@/features/credential/protocol';
 
@@ -62,70 +61,64 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
       }
     >
       <Form id="credential-form" onFormSubmit={handleSave} className="flex flex-col gap-3 py-2">
-        <div className="flex flex-col gap-1">
-          <Field.Root name="name" className="grid gap-1">
-            <Field.Label className="text-xs font-medium">Name</Field.Label>
-            <Input
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Credential Name"
-            />
-            <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
-              Name is required.
-            </Field.Error>
-          </Field.Root>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium">Type</label>
-          <select
-            className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-            value={type}
-            onChange={(event) => setType(event.target.value as 'password' | 'privateKey')}
-          >
+        <FormItem name="name" label="Name" error="Name is required." match="valueMissing">
+          <Input
+            required
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Credential Name"
+          />
+        </FormItem>
+        <FormItem
+          name="type"
+          label="Type"
+          control={{
+            value: type,
+            onValueChange: (value) => setType(value as 'password' | 'privateKey'),
+          }}
+        >
+          <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
             <option value="password">Password</option>
             <option value="privateKey">Private Key</option>
           </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium">Username</label>
+        </FormItem>
+        <FormItem name="username" label="Username">
           <Input
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             placeholder="Username (optional)"
           />
-        </div>
+        </FormItem>
         {type === 'password' && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Password</label>
+          <FormItem name="password" label="Password">
             <Input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
             />
-          </div>
+          </FormItem>
         )}
         {type === 'privateKey' && (
           <>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium">Private Key</label>
+            <FormItem
+              name="privateKey"
+              label="Private Key"
+              control={{ value: privateKey, onValueChange: setPrivateKey }}
+            >
               <textarea
                 className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                value={privateKey}
-                onChange={(event) => setPrivateKey(event.target.value)}
                 placeholder="-----BEGIN PRIVATE KEY-----..."
               />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium">Passphrase</label>
+            </FormItem>
+            <FormItem name="passphrase" label="Passphrase">
               <Input
                 type="password"
                 value={passphrase}
                 onChange={(event) => setPassphrase(event.target.value)}
                 placeholder="Passphrase (optional)"
               />
-            </div>
+            </FormItem>
           </>
         )}
       </Form>

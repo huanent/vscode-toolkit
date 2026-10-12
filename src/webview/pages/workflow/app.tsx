@@ -6,9 +6,9 @@ import type {
   WorkflowEditorRequest,
   WorkflowStep,
 } from '@/features/workflow/protocol';
-import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { ErrorMessage } from '@/webview/components/error-message';
+import { Form, FormItem } from '@/webview/components/form';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
@@ -118,10 +118,9 @@ function App() {
       </header>
 
       <Form className="grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
-        <label className="grid gap-1 text-xs">
-          Name
+        <FormItem name="name" label="Name" className="text-xs">
           <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-        </label>
+        </FormItem>
         <div className="grid gap-3">
           {workflow.steps.map((step, index) => (
             <section key={index} className="grid gap-3 border border-(--vscode-panel-border) p-3">
@@ -157,40 +156,47 @@ function App() {
                   />
                 </div>
               </header>
-              <label className="grid gap-1 text-xs">
-                Operation
-                <select
-                  className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                  value={step.type}
-                  onChange={(event) => updateStep(index, createStep(event.target.value as WorkflowStep['type']))}
-                >
+              <FormItem
+                name={`steps.${index}.type`}
+                label="Operation"
+                className="text-xs"
+                control={{
+                  value: step.type,
+                  onValueChange: (value) => updateStep(index, createStep(value as WorkflowStep['type'])),
+                }}
+              >
+                <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
                   {workflowTypes.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormItem>
 
               {step.type === 'local-command' && (
                 <>
-                  <label className="grid gap-1 text-xs">
-                    Command
+                  <FormItem
+                    name={`steps.${index}.command`}
+                    label="Command"
+                    className="text-xs"
+                    control={{
+                      value: step.command,
+                      onValueChange: (value) => updateStep(index, { ...step, command: value }),
+                    }}
+                  >
                     <textarea
                       className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 font-mono text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                      value={step.command}
-                      onChange={(event) => updateStep(index, { ...step, command: event.target.value })}
                       placeholder="npm run build"
                     />
-                  </label>
-                  <label className="grid gap-1 text-xs">
-                    Working directory
+                  </FormItem>
+                  <FormItem name={`steps.${index}.cwd`} label="Working directory" className="text-xs">
                     <Input
                       value={step.cwd ?? ''}
                       onChange={(event) => updateStep(index, { ...step, cwd: event.target.value || undefined })}
                       placeholder="Defaults to the current workspace"
                     />
-                  </label>
+                  </FormItem>
                 </>
               )}
 
@@ -201,15 +207,20 @@ function App() {
                     hosts={state.data.sshConnections}
                     onChange={(hostId) => updateStep(index, { ...step, hostId })}
                   />
-                  <label className="grid gap-1 text-xs">
-                    Remote command
+                  <FormItem
+                    name={`steps.${index}.command`}
+                    label="Remote command"
+                    className="text-xs"
+                    control={{
+                      value: step.command,
+                      onValueChange: (value) => updateStep(index, { ...step, command: value }),
+                    }}
+                  >
                     <textarea
                       className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 font-mono text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                      value={step.command}
-                      onChange={(event) => updateStep(index, { ...step, command: event.target.value })}
                       placeholder="uname -a"
                     />
-                  </label>
+                  </FormItem>
                 </>
               )}
 
@@ -220,35 +231,35 @@ function App() {
                     hosts={state.data.sshConnections}
                     onChange={(hostId) => updateStep(index, { ...step, hostId })}
                   />
-                  <label className="grid gap-1 text-xs">
-                    Direction
-                    <select
-                      className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                      value={step.direction}
-                      onChange={(event) =>
-                        updateStep(index, { ...step, direction: event.target.value as 'upload' | 'download' })
-                      }
-                    >
+                  <FormItem
+                    name={`steps.${index}.direction`}
+                    label="Direction"
+                    className="text-xs"
+                    control={{
+                      value: step.direction,
+                      onValueChange: (value) =>
+                        updateStep(index, { ...step, direction: value as 'upload' | 'download' }),
+                    }}
+                  >
+                    <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
                       <option value="upload">Upload local file to host</option>
                       <option value="download">Download host file to local</option>
                     </select>
-                  </label>
-                  <label className="grid gap-1 text-xs">
-                    Local file path
+                  </FormItem>
+                  <FormItem name={`steps.${index}.localPath`} label="Local file path" className="text-xs">
                     <Input
                       value={step.localPath}
                       onChange={(event) => updateStep(index, { ...step, localPath: event.target.value })}
                       placeholder="/path/to/file"
                     />
-                  </label>
-                  <label className="grid gap-1 text-xs">
-                    Remote file path
+                  </FormItem>
+                  <FormItem name={`steps.${index}.remotePath`} label="Remote file path" className="text-xs">
                     <Input
                       value={step.remotePath}
                       onChange={(event) => updateStep(index, { ...step, remotePath: event.target.value })}
                       placeholder="/srv/files/file"
                     />
-                  </label>
+                  </FormItem>
                 </>
               )}
             </section>
@@ -295,14 +306,13 @@ function HostPicker({
   onChange: (hostId: string) => void;
 }) {
   return (
-    <label className="grid gap-1 text-xs">
-      SSH host
-      <select
-        required
-        className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
+    <FormItem
+      name="hostId"
+      label="SSH host"
+      className="text-xs"
+      control={{ value, onValueChange: onChange, required: true }}
+    >
+      <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
         <option value="" disabled>
           {hosts.length ? 'Select an SSH host' : 'Add an SSH host in Assets'}
         </option>
@@ -312,7 +322,7 @@ function HostPicker({
           </option>
         ))}
       </select>
-    </label>
+    </FormItem>
   );
 }
 

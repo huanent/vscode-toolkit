@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Form } from '@base-ui/react/form';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
 import { Autocomplete } from '@/webview/components/autocomplete';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
 import { Dialog } from '@/webview/components/dialog';
+import { Form, FormItem } from '@/webview/components/form';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Table, type TableColumn } from '@/webview/components/table';
@@ -169,19 +169,21 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       header: 'Name',
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
-        <Input
-          ref={(input) => {
-            if (!input || pendingColumnFocus.current !== col.id) return;
-            pendingColumnFocus.current = null;
-            input.closest('tr')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-            input.focus({ preventScroll: true });
-            input.select();
-          }}
-          value={col.name}
-          onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
-          placeholder="Column name"
-          aria-label={`Column ${index + 1} name`}
-        />
+        <FormItem name={`columns.${col.id}.name`} className="contents">
+          <Input
+            ref={(input) => {
+              if (!input || pendingColumnFocus.current !== col.id) return;
+              pendingColumnFocus.current = null;
+              input.closest('tr')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+              input.focus({ preventScroll: true });
+              input.select();
+            }}
+            value={col.name}
+            onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
+            placeholder="Column name"
+            aria-label={`Column ${index + 1} name`}
+          />
+        </FormItem>
       ),
     },
     {
@@ -189,14 +191,16 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       header: 'Type',
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
-        <Autocomplete
-          items={dataTypes}
-          value={col.type}
-          onValueChange={(type) => handleColumnChange(col.id, { type })}
-          disabled={isSubmitting}
-          placeholder="Data type"
-          aria-label={`Column ${index + 1} type`}
-        />
+        <FormItem name={`columns.${col.id}.type`} className="contents">
+          <Autocomplete
+            items={dataTypes}
+            value={col.type}
+            onValueChange={(type) => handleColumnChange(col.id, { type })}
+            disabled={isSubmitting}
+            placeholder="Data type"
+            aria-label={`Column ${index + 1} type`}
+          />
+        </FormItem>
       ),
     },
     {
@@ -206,14 +210,14 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       headerClassName: 'min-w-0',
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
-        <div className="flex justify-center">
+        <FormItem name={`columns.${col.id}.primaryKey`} className="contents">
           <Checkbox
             disabled={isSubmitting}
             checked={col.primaryKey}
             onCheckedChange={(checked) => handleColumnChange(col.id, { primaryKey: Boolean(checked) })}
             ariaLabel={`Column ${col.name || index + 1} primary key`}
           />
-        </div>
+        </FormItem>
       ),
     },
     {
@@ -223,14 +227,14 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       headerClassName: 'min-w-0 whitespace-nowrap',
       className: 'border-b border-(--vscode-panel-border) p-1',
       cell: (col, index) => (
-        <div className="flex justify-center">
+        <FormItem name={`columns.${col.id}.notNull`} className="contents">
           <Checkbox
             disabled={isSubmitting}
             checked={col.notNull}
             onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
             ariaLabel={`Column ${col.name || index + 1} not null`}
           />
-        </div>
+        </FormItem>
       ),
     },
     {
@@ -283,10 +287,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     >
       <Form id="table-schema-form" onFormSubmit={handleSubmit}>
         <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="schema-table-name" className="text-xs font-medium text-(--vscode-descriptionForeground)">
-              Table Name
-            </label>
+          <FormItem name="tableName" label="Table Name">
             <Input
               id="schema-table-name"
               value={tableName}
@@ -296,7 +297,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
               }}
               placeholder="Table name"
             />
-          </div>
+          </FormItem>
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">

@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Field } from '@base-ui/react/field';
-import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
+import { Form, FormItem } from '@/webview/components/form';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Popover } from '@/webview/components/popover';
@@ -212,8 +211,7 @@ export function DatabaseSelector({
           }
         >
           <Form id="create-database-form" onFormSubmit={handleCreateSubmit} className="flex flex-col gap-2 py-2">
-            <Field.Root name="databaseName" className="grid gap-1">
-              <Field.Label className="text-xs font-medium">Database Name</Field.Label>
+            <FormItem name="databaseName" label="Database Name" error="Database name is required." match="valueMissing">
               <Input
                 required
                 value={newDatabaseName}
@@ -224,10 +222,7 @@ export function DatabaseSelector({
                 placeholder="e.g. my_database"
                 autoFocus
               />
-              <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
-                Database name is required.
-              </Field.Error>
-            </Field.Root>
+            </FormItem>
             {createError && (
               <p className="text-xs text-(--vscode-errorForeground)" role="alert">
                 {createError}
