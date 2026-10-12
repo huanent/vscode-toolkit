@@ -9,11 +9,12 @@ type WorkflowPanelProps = {
   entries: WorkflowRecordEntry[] | undefined;
   error: string | undefined;
   loading: boolean;
+  collapseAllTrigger: number;
 };
 
 const panelContext = JSON.stringify({ webviewSection: 'workflow', preventDefaultContextMenuItems: true });
 
-export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
+export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: WorkflowPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
@@ -24,6 +25,7 @@ export function WorkflowPanel({ entries, error, loading }: WorkflowPanelProps) {
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Workflow files"
+            collapseAllTrigger={collapseAllTrigger}
             items={toWorkflowTreeItems(entries)}
             onActivate={(item) => {
               const id = item.context?.workflowId;

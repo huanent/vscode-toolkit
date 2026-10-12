@@ -85,11 +85,12 @@ type TabPanelProps = {
   tabId: string;
   children: ReactNode;
   className?: string;
+  keepMounted?: boolean;
 };
 
-export function TabPanel({ tabId, children, className }: TabPanelProps) {
+export function TabPanel({ tabId, children, className, keepMounted = false }: TabPanelProps) {
   return (
-    <BaseTabs.Panel value={tabId} className={cn('min-w-0', className)}>
+    <BaseTabs.Panel value={tabId} keepMounted={keepMounted} className={cn('min-w-0', className)}>
       {children}
     </BaseTabs.Panel>
   );

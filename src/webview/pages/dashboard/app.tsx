@@ -31,7 +31,7 @@ const tabs: Tab[] = [
 
 function App() {
   const [activeTabId, setActiveTabId] = useState('workflow');
-  const dashboardState = useDashboardState();
+  const dashboardState = useDashboardState(activeTabId);
 
   return (
     <main className="flex h-screen flex-col overflow-hidden px-1">
@@ -43,27 +43,30 @@ function App() {
         contentClassName="min-h-0 flex-1"
       >
         <div className="h-full overflow-auto py-2">
-          <TabPanel tabId="workflow" className="h-full">
+          <TabPanel tabId="workflow" className="h-full" keepMounted>
             <WorkflowPanel
               entries={dashboardState.workflowEntries}
               error={dashboardState.error}
               loading={dashboardState.loading}
+              collapseAllTrigger={dashboardState.collapseAllTriggers.workflow ?? 0}
             />
           </TabPanel>
 
-          <TabPanel tabId="assets" className="h-full">
+          <TabPanel tabId="assets" className="h-full" keepMounted>
             <AssetsPanel
               entries={dashboardState.assets}
               error={dashboardState.error}
               loading={dashboardState.loading}
+              collapseAllTrigger={dashboardState.collapseAllTriggers.assets ?? 0}
             />
           </TabPanel>
 
-          <TabPanel tabId="temp" className="h-full">
+          <TabPanel tabId="temp" className="h-full" keepMounted>
             <TempPanel
               entries={dashboardState.tempEntries}
               error={dashboardState.error}
               loading={dashboardState.loading}
+              collapseAllTrigger={dashboardState.collapseAllTriggers.temp ?? 0}
             />
           </TabPanel>
         </div>

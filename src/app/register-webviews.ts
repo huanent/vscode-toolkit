@@ -15,6 +15,7 @@ import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
 import { CredentialService } from '@/features/credential/service';
 import { resolveStorageDirectory } from '@/host/utils/storage';
+import type { CollapseDashboardTreeMessage } from '@/shared/dashboard-protocol';
 
 interface WebviewRegistration {
   id: string;
@@ -48,11 +49,35 @@ export function registerWebviews(
     registerWorkflowEditor(context, () => resolveStorageDirectory(context, 'workflows'), ssh, workflowFiles.refresh),
   );
   const assetsView = createAssetsView(context, assets, [mysql, ssh], credentials);
-  const dashboardHandler = composeWebviewHandlers({
+  const composedDashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
     workflow: workflowFiles.handler,
     assets: assetsView,
   });
+  let dashboardWebview: vscode.Webview | undefined;
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.dashboard.refresh', async () => {
+      try {
+        await Promise.all([assetsView.refresh(), workflowFiles.refresh(), tempFiles.refresh()]);
+      } catch (error) {
+        await vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+      }
+    }),
+    vscode.commands.registerCommand('toolkit.dashboard.collapseAll', () => {
+      void dashboardWebview?.postMessage({ type: 'collapseActiveTree' } satisfies CollapseDashboardTreeMessage);
+    }),
+  );
+  const dashboardHandler: WebviewViewHandler = {
+    ...composedDashboardHandler,
+    onResolve: (webview) => {
+      dashboardWebview = webview;
+      composedDashboardHandler.onResolve?.(webview);
+    },
+    onDispose: () => {
+      dashboardWebview = undefined;
+      composedDashboardHandler.onDispose?.();
+    },
+  };
   const views: WebviewRegistration[] = [
     { id: 'toolkit.dashboard', page: 'dashboard', handler: dashboardHandler },
     { id: 'toolkit.result', page: 'result', handler: createResultViewHandler(tasks) },

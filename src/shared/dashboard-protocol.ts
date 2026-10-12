@@ -7,3 +7,7 @@ export interface DashboardData {
   workflow: WorkflowRecordEntry[];
   assets: AssetTreeEntry[];
 }
+
+export interface CollapseDashboardTreeMessage {
+  type: 'collapseActiveTree';
+}

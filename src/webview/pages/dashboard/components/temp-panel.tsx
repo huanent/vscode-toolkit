@@ -9,11 +9,12 @@ type TempPanelProps = {
   entries: TempTreeEntry[] | undefined;
   error: string | undefined;
   loading: boolean;
+  collapseAllTrigger: number;
 };
 
 const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultContextMenuItems: true });
 
-export function TempPanel({ entries, error, loading }: TempPanelProps) {
+export function TempPanel({ entries, error, loading, collapseAllTrigger }: TempPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
@@ -24,6 +25,7 @@ export function TempPanel({ entries, error, loading }: TempPanelProps) {
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Temporary files"
+            collapseAllTrigger={collapseAllTrigger}
             items={toTempTreeItems(entries)}
             onActivate={(item) => {
               if (item.type === 'file') {

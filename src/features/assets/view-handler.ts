@@ -7,12 +7,16 @@ import { openAssetEditor } from './editor';
 import type { CredentialService } from '@/features/credential/service';
 import { showFolderPicker } from '@/host/utils/folder-picker';
 
+export interface AssetsViewHandler extends WebviewViewHandler {
+  refresh(): Promise<void>;
+}
+
 export function createAssetsView(
   context: vscode.ExtensionContext,
   service: AssetService,
   providers: readonly AssetProvider[],
   credentials: CredentialService,
-): WebviewViewHandler {
+): AssetsViewHandler {
   let activeWebview: vscode.Webview | undefined;
   const providerFor = (type: string) => {
     const provider = providers.find((candidate) => candidate.type === type);
@@ -215,6 +219,7 @@ export function createAssetsView(
     onMessage: async (message) => {
       if (isAssetRequest(message)) await act(message);
     },
+    refresh,
   };
 }
 

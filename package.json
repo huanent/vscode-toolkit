@@ -447,6 +447,18 @@
         "category": "Archive"
       },
       {
+        "command": "toolkit.dashboard.collapseAll",
+        "title": "Collapse All",
+        "icon": "$(collapse-all)",
+        "category": "Dashboard"
+      },
+      {
+        "command": "toolkit.dashboard.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Dashboard"
+      },
+      {
         "command": "toolkit.temp.createFile",
         "title": "New File",
         "category": "Toolkit"
@@ -560,6 +572,16 @@
     "menus": {
       "view/title": [
         {
+          "command": "toolkit.dashboard.refresh",
+          "when": "view == toolkit.dashboard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.dashboard.collapseAll",
+          "when": "view == toolkit.dashboard",
+          "group": "navigation@2"
+        },
+        {
           "command": "toolkit.credential.manage",
           "when": "view == toolkit.dashboard",
           "group": "1_more"
@@ -605,6 +627,14 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.dashboard.refresh",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.dashboard.collapseAll",
+          "when": "false"
+        },
         {
           "command": "toolkit.assets.edit",
           "when": "false"
