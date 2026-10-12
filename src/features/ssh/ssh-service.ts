@@ -301,14 +301,6 @@ async function verifySshHost(
   const currentKey = fingerprint.toString('hex');
   if (trustedHosts[hostId] === currentKey) return true;
 
-  const displayedFingerprint = `SHA256:${fingerprint.toString('base64').replace(/=+$/, '')}`;
-  const changed = Boolean(trustedHosts[hostId]);
-  const choice = await vscode.window.showWarningMessage(
-    `${changed ? 'SSH host key changed' : 'Trust SSH host'} for ${hostId}? Fingerprint: ${displayedFingerprint}`,
-    { modal: true },
-    'Trust Host',
-  );
-  if (choice !== 'Trust Host') return false;
   await globalState.update('toolkit.ssh.hostKeys', { ...trustedHosts, [hostId]: currentKey });
   return true;
 }

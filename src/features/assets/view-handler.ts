@@ -22,7 +22,13 @@ export function createAssetsView(
     const [assets, folders] = await Promise.all([service.list(), service.listFolders()]);
     const entries = assets.map((asset) => {
       const entry = providerFor(asset.type).toViewEntry(asset);
-      return { ...entry, path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path };
+      const hostContext: Record<string, string | number | boolean> =
+        'host' in asset && typeof asset.host === 'string' ? { assetHost: asset.host } : {};
+      return {
+        ...entry,
+        path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
+        context: { ...entry.context, ...hostContext },
+      };
     });
     return buildAssetTree(entries, folders);
   };
@@ -101,6 +107,11 @@ export function createAssetsView(
     );
   }
   context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.assets.copyHost', async (argument?: { assetHost?: unknown }) => {
+      if (typeof argument?.assetHost !== 'string') return;
+      await vscode.env.clipboard.writeText(argument.assetHost);
+      void vscode.window.setStatusBarMessage('Host copied to clipboard', 2000);
+    }),
     vscode.commands.registerCommand('toolkit.assets.createFolder', (target: unknown) =>
       createFolder(target).catch((error: unknown) =>
         vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),

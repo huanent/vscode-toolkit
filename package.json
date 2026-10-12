@@ -211,6 +211,117 @@
         }
       ]
     },
+    "languageModelTools": [
+      {
+        "name": "assetsSearch",
+        "displayName": "Search Assets",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "assetsSearch",
+        "modelDescription": "Search configured Toolkit assets by keyword. Returns matching asset IDs and non-secret connection metadata.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "keyword": {
+              "type": "string",
+              "description": "Keyword to match against asset names, IDs, types, folders, hosts, ports, and database names."
+            }
+          },
+          "required": [
+            "keyword"
+          ]
+        }
+      },
+      {
+        "name": "sshExecute",
+        "displayName": "Run SSH Command",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "sshExecute",
+        "modelDescription": "Run a command on an SSH asset by its ID. Requires user confirmation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "SSH asset ID."
+            },
+            "command": {
+              "type": "string",
+              "description": "Remote shell command to execute."
+            }
+          },
+          "required": [
+            "id",
+            "command"
+          ]
+        }
+      },
+      {
+        "name": "sftpTransfer",
+        "displayName": "Transfer SFTP File",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "sftpTransfer",
+        "modelDescription": "Upload or download a file through an SSH asset by its ID. Requires user confirmation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "SSH asset ID."
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "upload",
+                "download"
+              ],
+              "description": "Transfer direction."
+            },
+            "localPath": {
+              "type": "string",
+              "description": "Absolute local file path."
+            },
+            "remotePath": {
+              "type": "string",
+              "description": "Remote file path."
+            }
+          },
+          "required": [
+            "id",
+            "direction",
+            "localPath",
+            "remotePath"
+          ]
+        }
+      },
+      {
+        "name": "sqlExecute",
+        "displayName": "Execute SQL",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "sqlExecute",
+        "modelDescription": "Execute one SQL statement against a database asset by its ID. Requires user confirmation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Database asset ID."
+            },
+            "database": {
+              "type": "string",
+              "description": "Optional database name; defaults to the asset's configured database."
+            },
+            "sql": {
+              "type": "string",
+              "description": "Single SQL statement to execute."
+            }
+          },
+          "required": [
+            "id",
+            "sql"
+          ]
+        }
+      }
+    ],
     "commands": [
       {
         "command": "toolkit.assets.add",
@@ -230,6 +341,11 @@
       {
         "command": "toolkit.assets.delete",
         "title": "Delete",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.copyHost",
+        "title": "Copy Host",
         "category": "Assets"
       },
       {
@@ -555,6 +671,11 @@
           "group": "3_query@1"
         },
         {
+          "command": "toolkit.assets.copyHost",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetHost",
+          "group": "2_copy@1"
+        },
+        {
           "command": "toolkit.assets.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
           "group": "4_edit@1"
@@ -693,6 +814,10 @@
     "onCustomEditor:toolkit.workflowEditor",
     "onDebugAdapterProtocolTracker",
     "onFileSystem:toolkit-temp",
+    "onLanguageModelTool:assetsSearch",
+    "onLanguageModelTool:sftpTransfer",
+    "onLanguageModelTool:sqlExecute",
+    "onLanguageModelTool:sshExecute",
     "onStartupFinished"
   ],
   "extensionKind": [
