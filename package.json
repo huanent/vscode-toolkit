@@ -694,102 +694,102 @@
         {
           "command": "toolkit.assets.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
-          "group": "1_actions"
+          "group": "1_create@2"
         },
         {
           "command": "toolkit.assets.add",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
-          "group": "1_actions"
+          "group": "1_create@1"
         },
         {
           "command": "toolkit.assets.query",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetType == mysql",
-          "group": "3_query@1"
+          "group": "2_actions@5"
         },
         {
           "command": "toolkit.assets.copyHost",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetHost",
-          "group": "1_actions"
+          "group": "2_actions@4"
         },
         {
           "command": "toolkit.assets.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
-          "group": "1_actions"
+          "group": "2_actions@1"
         },
         {
           "command": "toolkit.assets.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
-          "group": "1_actions"
+          "group": "9_delete@1"
         },
         {
           "command": "toolkit.assets.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && (assetId || assetFolderPath)",
-          "group": "1_actions"
+          "group": "2_actions@3"
         },
         {
           "command": "toolkit.assets.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetFolderPath && !assetId",
-          "group": "1_actions"
+          "group": "2_actions@2"
         },
         {
           "command": "toolkit.assets.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetFolderPath && !assetId",
-          "group": "1_actions"
+          "group": "9_delete@1"
         },
         {
           "command": "toolkit.temp.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
-          "group": "1_actions"
+          "group": "1_create@1"
         },
         {
           "command": "toolkit.temp.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
-          "group": "1_actions"
+          "group": "1_create@2"
         },
         {
           "command": "toolkit.temp.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
-          "group": "1_actions"
+          "group": "2_actions@1"
         },
         {
           "command": "toolkit.temp.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
-          "group": "1_actions"
+          "group": "9_delete@1"
         },
         {
           "command": "toolkit.temp.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
-          "group": "1_actions"
+          "group": "2_actions@2"
         },
         {
           "command": "toolkit.workflow.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
-          "group": "1_actions"
+          "group": "1_create@1"
         },
         {
           "command": "toolkit.workflow.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
-          "group": "1_actions"
+          "group": "1_create@2"
         },
         {
           "command": "toolkit.workflow.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
-          "group": "1_actions"
+          "group": "2_actions@1"
         },
         {
           "command": "toolkit.workflow.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
-          "group": "1_actions"
+          "group": "2_actions@2"
         },
         {
           "command": "toolkit.workflow.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
-          "group": "1_actions"
+          "group": "9_delete@1"
         },
         {
           "command": "toolkit.workflow.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
-          "group": "1_actions"
+          "group": "2_actions@3"
         }
       ],
       "explorer/context": [
