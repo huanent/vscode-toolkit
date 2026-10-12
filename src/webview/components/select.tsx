@@ -54,7 +54,7 @@ export function Select({
           placeholder={placeholder}
           className="min-w-0 flex-1 truncate data-placeholder:text-(--vscode-input-placeholderForeground)"
         />
-        <BaseSelect.Icon className="shrink-0 text-(--vscode-descriptionForeground) transition-transform data-popup-open:rotate-180">
+        <BaseSelect.Icon className="flex shrink-0 text-(--vscode-descriptionForeground) transition-transform data-popup-open:rotate-180">
           <Icon name="chevron-down" size="sm" />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
@@ -89,7 +89,7 @@ export function Select({
                     className="flex min-w-0 cursor-pointer items-center gap-2 px-2 py-1 outline-none select-none data-disabled:cursor-not-allowed data-disabled:opacity-50 data-highlighted:bg-(--vscode-list-activeSelectionBackground) data-highlighted:text-(--vscode-list-activeSelectionForeground)"
                   >
                     <span className="flex w-4 shrink-0 items-center justify-center">
-                      <BaseSelect.ItemIndicator>
+                      <BaseSelect.ItemIndicator className="flex items-center justify-center">
                         <Icon name="check" size="sm" />
                       </BaseSelect.ItemIndicator>
                     </span>

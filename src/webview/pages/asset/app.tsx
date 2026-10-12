@@ -92,18 +92,11 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               />
             </FormItem>
           </div>
-          <FormItem
-            name="credentialId"
-            className="min-w-0 flex-1"
-            error="Select a credential."
-            match="valueMissing"
-            control={{
-              value: values.credentialId,
-              onValueChange: (credentialId) => update('credentialId', credentialId),
-              required: true,
-            }}
-          >
+          <FormItem name="credentialId" className="min-w-0 flex-1" error="Select a credential." match="valueMissing">
             <CredentialSelector
+              required
+              value={values.credentialId}
+              onValueChange={(credentialId) => update('credentialId', credentialId)}
               credentials={credentials}
               onCreate={(credential) => {
                 setError(undefined);
