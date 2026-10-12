@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from 'cn';
 import type { Credential, CredentialSummary } from '@/features/credential/protocol';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
@@ -22,6 +23,7 @@ export function CredentialSelector({
       <div className="flex min-w-0 items-start gap-2">
         <Select
           {...selectProps}
+          className={cn('min-w-0 flex-1', selectProps.className)}
           aria-label="Credential"
           placeholder="Select a credential"
           options={credentials.map((credential) => ({
