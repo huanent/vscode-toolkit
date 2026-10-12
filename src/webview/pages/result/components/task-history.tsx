@@ -2,7 +2,6 @@ import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/
 import type { WebviewReadyMessage } from '@/shared/webview-protocol';
 import { Button } from '@/webview/components/button';
 import { Empty } from '@/webview/components/empty';
-import { Header } from '@/webview/components/header';
 import { Icon } from '@/webview/components/icons';
 import { List, type ListGroup } from '@/webview/components/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
@@ -21,8 +20,14 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
       aria-label="Task history"
       className="flex h-48 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) bg-(--vscode-sideBar-background) md:h-full md:w-72 md:border-l md:border-t-0"
     >
-      <Header
-        action={
+      <header className="flex min-h-8 shrink-0 items-center justify-between gap-2 px-2 py-1">
+        <h2 className="flex min-w-0 items-center gap-2 wrap-break-word text-xs font-semibold">
+          Tasks
+          <span className="rounded-sm bg-(--vscode-badge-background) px-1 text-(--vscode-badge-foreground)">
+            {tasks.length}
+          </span>
+        </h2>
+        <div className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-(--vscode-descriptionForeground)">
           <Button
             variant="ghost"
             size="sm"
@@ -31,13 +36,8 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
             prefix={<Icon name="refresh" />}
             onClick={() => postToHost({ type: 'ready' } satisfies WebviewReadyMessage)}
           />
-        }
-      >
-        Tasks
-        <span className="rounded-sm bg-(--vscode-badge-background) px-1 text-(--vscode-badge-foreground)">
-          {tasks.length}
-        </span>
-      </Header>
+        </div>
+      </header>
 
       {tasks.length === 0 ? (
         <Empty title="No tasks yet" description="Task history will appear here." icon="history" />

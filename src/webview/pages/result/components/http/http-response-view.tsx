@@ -23,7 +23,7 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
   const body = side === 'request' ? response.request.body : displayBody;
 
   return (
-    <div className="flex min-w-0 flex-col gap-2 px-3 py-2">
+    <div className="flex min-w-0 flex-col px-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
           <span className="shrink-0 font-mono font-semibold">{response.request.method}</span>
