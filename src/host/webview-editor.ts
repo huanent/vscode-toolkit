@@ -44,7 +44,7 @@ export function registerWebviewEditor<TData>(
         panel.webview.options = { enableScripts: true, localResourceRoots: [assetsUri] };
         if (definition.icon) panel.iconPath = new vscode.ThemeIcon(definition.icon);
 
-        const bridge = serveWebviewData(panel.webview, () => definition.load(uri));
+        const bridge = serveWebviewData(panel.webview, () => definition.load(uri), { once: false });
         const panelCleanup = definition.onPanelResolved?.(uri, panel);
         panel.onDidDispose(() => bridge.dispose());
         panel.onDidDispose(() => panelCleanup?.dispose());
