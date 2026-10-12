@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
@@ -23,12 +23,17 @@ function App() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCredential, setEditingCredential] = useState<Credential | undefined>();
 
-  const credentials = host.status === 'loaded' ? host.data : [];
+  useEffect(() => {
+    const onMessage = (event: MessageEvent<CredentialHostMessage>) => {
+      if (event.data?.type !== 'openAddCredential') return;
+      setEditingCredential(undefined);
+      setDialogOpen(true);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
-  const handleAdd = () => {
-    setEditingCredential(undefined);
-    setDialogOpen(true);
-  };
+  const credentials = host.status === 'loaded' ? host.data : [];
 
   const handleEdit = (credential: Credential) => {
     setEditingCredential(credential);
@@ -65,26 +70,21 @@ function App() {
       header: 'Actions',
       align: 'right',
       cell: (row) => (
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
-            <Icon name="edit" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-            <Icon name="trash" />
-          </Button>
+        <div className="flex justify-end gap-1">
+          <Button prefix={<Icon name="edit" />} variant="ghost" size="sm" onClick={() => handleEdit(row)}></Button>
+          <Button
+            prefix={<Icon name="trash" />}
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row.id)}
+          ></Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="flex h-screen flex-col p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Credentials</h1>
-        <Button onClick={handleAdd} prefix={<Icon name="add" />}>
-          Add Credential
-        </Button>
-      </div>
+    <div className="flex h-screen">
       <div className="flex-1 min-h-0">
         <Table
           ariaLabel="Credentials"

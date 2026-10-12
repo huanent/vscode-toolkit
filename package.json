@@ -370,6 +370,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.credential.add",
+        "title": "Add Credential",
+        "icon": "$(add)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.generateGitignore",
         "title": "Generate .gitignore",
         "category": "Toolkit"
@@ -607,6 +613,11 @@
           "command": "toolkit.mysql.executeQuery",
           "when": "editorLangId == sql && toolkit.mysqlQueryEditor",
           "group": "navigation@3"
+        },
+        {
+          "command": "toolkit.credential.add",
+          "when": "activeWebviewPanelId == toolkit.credential",
+          "group": "navigation@1"
         }
       ],
       "editor/context": [
@@ -697,6 +708,10 @@
         },
         {
           "command": "toolkit.mysql.openTable",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.credential.add",
           "when": "false"
         },
         {

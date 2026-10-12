@@ -68,5 +68,8 @@ export function registerCredentialCommands(context: vscode.ExtensionContext): vo
         data: {},
       });
     }),
+    vscode.commands.registerCommand('toolkit.credential.add', async () => {
+      await panel?.webview.postMessage({ type: 'openAddCredential' } satisfies CredentialHostMessage);
+    }),
   );
 }
