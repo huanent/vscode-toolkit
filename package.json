@@ -325,12 +325,22 @@
     "commands": [
       {
         "command": "toolkit.assets.add",
-        "title": "Add",
+        "title": "New Asset",
         "category": "Assets"
       },
       {
         "command": "toolkit.assets.createFolder",
         "title": "New Folder",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.move",
+        "title": "Move to Folder",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.rename",
+        "title": "Rename",
         "category": "Assets"
       },
       {
@@ -443,7 +453,7 @@
       },
       {
         "command": "toolkit.workflow.createFile",
-        "title": "New",
+        "title": "New Workflow",
         "category": "Workflow"
       },
       {
@@ -477,9 +487,19 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.temp.move",
+        "title": "Move to Folder",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.workflow.delete",
         "title": "Delete",
         "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.workflow.move",
+        "title": "Move to Folder",
+        "category": "Workflow"
       },
       {
         "command": "toolkit.http.sendRequest",
@@ -594,6 +614,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.assets.rename",
+          "when": "false"
+        },
+        {
           "command": "toolkit.assets.query",
           "when": "false"
         },
@@ -619,6 +643,18 @@
         },
         {
           "command": "toolkit.workflow.createFolder",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.move",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.move",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.workflow.move",
           "when": "false"
         },
         {
@@ -658,12 +694,12 @@
         {
           "command": "toolkit.assets.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
-          "group": "1_create@0"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.assets.add",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
-          "group": "1_create@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.assets.query",
@@ -673,62 +709,87 @@
         {
           "command": "toolkit.assets.copyHost",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetHost",
-          "group": "2_copy@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.assets.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
-          "group": "4_edit@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.assets.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && !assetDatabase",
-          "group": "4_edit@2"
+          "group": "1_actions"
+        },
+        {
+          "command": "toolkit.assets.move",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && (assetId || assetFolderPath)",
+          "group": "1_actions"
+        },
+        {
+          "command": "toolkit.assets.rename",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetFolderPath && !assetId",
+          "group": "1_actions"
+        },
+        {
+          "command": "toolkit.assets.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetFolderPath && !assetId",
+          "group": "1_actions"
         },
         {
           "command": "toolkit.temp.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
-          "group": "1_create@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.temp.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
-          "group": "1_create@2"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.temp.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
-          "group": "2_edit@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.temp.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
-          "group": "2_edit@2"
+          "group": "1_actions"
+        },
+        {
+          "command": "toolkit.temp.move",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "1_actions"
         },
         {
           "command": "toolkit.workflow.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
-          "group": "1_create@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.workflow.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
-          "group": "1_create@2"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.workflow.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
-          "group": "2_edit@0"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.workflow.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
-          "group": "2_edit@1"
+          "group": "1_actions"
         },
         {
           "command": "toolkit.workflow.delete",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
-          "group": "2_edit@2"
+          "group": "1_actions"
+        },
+        {
+          "command": "toolkit.workflow.move",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
+          "group": "1_actions"
         }
       ],
       "explorer/context": [
@@ -811,7 +872,6 @@
     }
   },
   "activationEvents": [
-    "onCustomEditor:toolkit.workflowEditor",
     "onDebugAdapterProtocolTracker",
     "onFileSystem:toolkit-temp",
     "onLanguageModelTool:assetsSearch",

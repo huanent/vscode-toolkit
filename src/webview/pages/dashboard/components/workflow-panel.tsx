@@ -63,7 +63,11 @@ function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[
           path: itemPath,
           name: entry.name,
           type: 'file',
-          context: { workflowId: entry.id, workflowName: entry.name },
+          context: {
+            workflowId: entry.id,
+            workflowName: entry.name,
+            ...(entry.parentId ? { workflowParentId: entry.parentId } : {}),
+          },
         });
       } else {
         const nextAncestors = new Set(ancestors).add(entry.id);

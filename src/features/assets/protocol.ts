@@ -46,4 +46,5 @@ export interface AssetRequest {
   database?: string;
   table?: string;
   assetType?: string;
+  folder?: string;
 }

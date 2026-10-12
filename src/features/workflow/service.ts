@@ -132,6 +132,26 @@ export async function renameWorkflowEntry(directory: string, id: string, rawName
   await rename(folderPath, newPath);
 }
 
+export async function moveWorkflowEntry(directory: string, id: string, parentId?: string): Promise<void> {
+  const index = await readWorkflowStorage(directory);
+  const entry = index.entries.find((candidate) => candidate.id === id);
+  if (!entry) throw new Error('Workflow entry no longer exists.');
+  if (parentId) validateWorkflowFolderId(parentId);
+  const targetDirectory = parentId ? index.folderPaths.get(parentId) : directory;
+  if (!targetDirectory) throw new Error('The destination folder no longer exists.');
+
+  if (entry.type === 'folder' && parentId && (parentId === id || parentId.startsWith(`${id}/`))) {
+    throw new Error('A folder cannot be moved into itself.');
+  }
+  if (entry.parentId === parentId) return;
+
+  const source = entry.type === 'folder' ? index.folderPaths.get(id) : index.workflowPaths.get(id);
+  if (!source) throw new Error('Workflow entry no longer exists.');
+  const target = path.join(targetDirectory, entry.type === 'folder' ? entry.name : `${id}.json`);
+  if (await pathExists(target)) throw new Error(`"${entry.name}" already exists in that folder.`);
+  await rename(source, target);
+}
+
 export async function deleteWorkflowEntry(directory: string, id: string): Promise<string[]> {
   const index = await readWorkflowStorage(directory);
   const entry = index.entries.find((record) => record.id === id);

@@ -5,6 +5,7 @@ import type { AssetProvider } from './asset-provider';
 import type { AssetService } from './service';
 import { openAssetEditor } from './editor';
 import type { CredentialService } from '@/features/credential/service';
+import { showFolderPicker } from '@/host/utils/folder-picker';
 
 export function createAssetsView(
   context: vscode.ExtensionContext,
@@ -27,7 +28,11 @@ export function createAssetsView(
       return {
         ...entry,
         path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
-        context: { ...entry.context, ...hostContext },
+        context: {
+          ...entry.context,
+          ...(asset.folder ? { assetFolderPath: asset.folder } : {}),
+          ...hostContext,
+        },
       };
     });
     return buildAssetTree(entries, folders);
@@ -44,7 +49,7 @@ export function createAssetsView(
         ? target.assetFolderPath
         : undefined;
     const name = await vscode.window.showInputBox({
-      prompt: 'Name the asset folder',
+      prompt: 'Folder name',
       placeHolder: 'databases',
       validateInput: (value) =>
         !value.trim() || value === '.' || value === '..' || /[\\/\0]/.test(value)
@@ -53,6 +58,51 @@ export function createAssetsView(
     });
     if (name === undefined) return;
     await service.createFolder(name, parentFolder);
+    await refresh();
+  };
+  const moveEntry = async (target: unknown) => {
+    const value = target && typeof target === 'object' ? (target as Record<string, unknown>) : {};
+    const assetId = typeof value.assetId === 'string' ? value.assetId : undefined;
+    const folderPath = typeof value.assetFolderPath === 'string' ? value.assetFolderPath : undefined;
+    if (!assetId && !folderPath) return;
+
+    const folders = await service.listFolders();
+    const isFolder = !assetId && Boolean(folderPath);
+    const destinations = folders.filter(
+      (folder) => !isFolder || (folder !== folderPath && !folder.startsWith(`${folderPath}/`)),
+    );
+    const selected = await showFolderPicker(destinations);
+    if (!selected) return;
+
+    if (assetId) await service.moveAsset(assetId, selected.folderPath);
+    else if (folderPath) await service.moveFolder(folderPath, selected.folderPath);
+    await refresh();
+  };
+  const renameFolder = async (folderPath: string) => {
+    const currentName = folderPath.slice(folderPath.lastIndexOf('/') + 1);
+    const name = await vscode.window.showInputBox({
+      prompt: 'Rename folder',
+      value: currentName,
+      valueSelection: [0, currentName.length],
+      validateInput: (value) =>
+        !value.trim() || value === '.' || value === '..' || /[\\/\0]/.test(value)
+          ? 'Enter a valid folder name.'
+          : undefined,
+    });
+    if (name === undefined) return;
+    await service.renameFolder(folderPath, name);
+    await refresh();
+  };
+  const deleteFolder = async (folderPath: string) => {
+    const name = folderPath.slice(folderPath.lastIndexOf('/') + 1);
+    const confirmation = await vscode.window.showWarningMessage(
+      `Delete folder "${name}" and all its contents?`,
+      { modal: true },
+      'Delete',
+    );
+    if (confirmation !== 'Delete') return;
+    const assets = await service.deleteFolder(folderPath);
+    for (const asset of assets) providerFor(asset.type).invalidate(asset.id);
     await refresh();
   };
   const act = async (request: AssetRequest) => {
@@ -65,7 +115,7 @@ export function createAssetsView(
               { title: 'Asset type' },
             );
         const provider = selected && ('provider' in selected ? selected.provider : selected);
-        if (provider) openAssetEditor(context, service, provider, refresh, credentials);
+        if (provider) openAssetEditor(context, service, provider, refresh, credentials, undefined, request.folder);
         return;
       }
       if (!request.id) return;
@@ -91,17 +141,18 @@ export function createAssetsView(
       await vscode.window.showErrorMessage(message);
     }
   };
-  for (const action of ['add', 'edit', 'delete', 'query'] as const) {
+  for (const action of ['add', 'edit', 'query'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(
         `toolkit.assets.${action}`,
-        (argument?: { assetId?: string; assetDatabase?: string; assetType?: string }) =>
+        (argument?: { assetId?: string; assetDatabase?: string; assetType?: string; assetFolderPath?: string }) =>
           act({
             type: 'assetAction',
             action,
             id: argument?.assetId,
             database: argument?.assetDatabase,
             assetType: argument?.assetType,
+            folder: argument?.assetFolderPath,
           }),
       ),
     );
@@ -116,6 +167,35 @@ export function createAssetsView(
       createFolder(target).catch((error: unknown) =>
         vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
       ),
+    ),
+    vscode.commands.registerCommand('toolkit.assets.move', (target: unknown) =>
+      moveEntry(target).catch((error: unknown) =>
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+      ),
+    ),
+    vscode.commands.registerCommand('toolkit.assets.rename', (target?: { assetFolderPath?: unknown }) => {
+      if (typeof target?.assetFolderPath !== 'string') return;
+      return renameFolder(target.assetFolderPath).catch((error: unknown) =>
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+      );
+    }),
+    vscode.commands.registerCommand(
+      'toolkit.assets.delete',
+      (target?: { assetId?: unknown; assetFolderPath?: unknown; assetType?: unknown; assetDatabase?: unknown }) => {
+        if (typeof target?.assetId === 'string') {
+          return act({
+            type: 'assetAction',
+            action: 'delete',
+            id: target.assetId,
+            assetType: typeof target.assetType === 'string' ? target.assetType : undefined,
+            database: typeof target.assetDatabase === 'string' ? target.assetDatabase : undefined,
+          });
+        }
+        if (typeof target?.assetFolderPath !== 'string') return;
+        return deleteFolder(target.assetFolderPath).catch((error: unknown) =>
+          vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+        );
+      },
     ),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('toolkit.storagePath')) {
@@ -182,7 +262,7 @@ function isAssetRequest(value: unknown): value is AssetRequest {
     message.type === 'assetAction' &&
     typeof message.action === 'string' &&
     ['add', 'edit', 'delete', 'connect', 'query', 'preview'].includes(message.action) &&
-    [message.id, message.database, message.table, message.assetType].every(
+    [message.id, message.database, message.table, message.assetType, message.folder].every(
       (field) => field === undefined || typeof field === 'string',
     )
   );

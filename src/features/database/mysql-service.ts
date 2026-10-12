@@ -44,7 +44,7 @@ export class MysqlService implements AssetProvider {
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
     const asset: MysqlConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
@@ -58,7 +58,7 @@ export class MysqlService implements AssetProvider {
     };
     requireMysqlConfiguration(asset);
     if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
-    await this.assets.save(asset);
+    await this.assets.save({ ...asset, folder: record?.folder ?? folder });
   }
 
   invalidate(id?: string): void {

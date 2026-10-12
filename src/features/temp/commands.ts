@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { resolveStorageDirectory } from '@/host/utils/storage';
-import type { TempContextTarget, TempEntryType } from './protocol';
+import type { TempContextTarget, TempEntryType, TempTreeEntry } from './protocol';
 import { createTempAutoSaveScheduler } from './auto-save';
 import { createTempFileUri, registerTempFileSystem } from './file-system';
+import { showFolderPicker } from '@/host/utils/folder-picker';
 import {
   createTempDirectory,
   createTempFile,
+  getTempFilePath,
+  readTempTree,
   resolveTempDirectory,
   validateTempFileName,
   validateTempFolderName,
@@ -37,7 +40,53 @@ export function registerTempCommands(context: vscode.ExtensionContext, refresh: 
     vscode.commands.registerCommand('toolkit.temp.delete', (target: unknown) =>
       deleteTempEntryFromInput(refresh, target).catch(showTempCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.temp.move', (target: unknown) =>
+      moveTempEntryFromInput(context, refresh, target).catch(showTempCommandError),
+    ),
   );
+}
+
+async function moveTempEntryFromInput(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  target: unknown,
+): Promise<void> {
+  const entry = parseTempTarget(target);
+  if (!entry.tempEntryPath || !entry.tempEntryType) return;
+
+  const directory = resolveStorageDirectory(context, 'temp');
+  const tree = await readTempTree(directory);
+  const destinations: string[] = [];
+  const collectFolders = (entries: readonly TempTreeEntry[], parent = '') => {
+    for (const child of entries) {
+      if (child.type !== 'directory') continue;
+      const relativePath = parent ? `${parent}/${child.name}` : child.name;
+      destinations.push(relativePath);
+      collectFolders(child.children ?? [], relativePath);
+    }
+  };
+  collectFolders(tree);
+
+  const sourcePath = entry.tempEntryPath;
+  if (entry.tempEntryType === 'directory') {
+    await resolveTempDirectory(directory, sourcePath);
+    for (let index = destinations.length - 1; index > 0; index--) {
+      const folder = destinations[index];
+      if (folder === sourcePath || folder.startsWith(`${sourcePath}/`)) destinations.splice(index, 1);
+    }
+  } else {
+    await getTempFilePath(directory, sourcePath);
+  }
+
+  const selected = await showFolderPicker(destinations);
+  if (!selected) return;
+  const currentParent = path.posix.dirname(sourcePath);
+  if ((currentParent === '.' ? undefined : currentParent) === selected.folderPath) return;
+
+  const name = path.posix.basename(sourcePath);
+  const destinationPath = selected.folderPath ? `${selected.folderPath}/${name}` : name;
+  await vscode.workspace.fs.rename(createTempFileUri(sourcePath), createTempFileUri(destinationPath));
+  await refresh();
 }
 
 async function createTempEntry(
@@ -49,7 +98,7 @@ async function createTempEntry(
   const isFile = type === 'file';
   const directory = await resolveTargetDirectory(context, parseTempTarget(target));
   const name = await vscode.window.showInputBox({
-    prompt: isFile ? 'Name the temporary file' : 'Name the temporary folder',
+    prompt: isFile ? 'Name the temporary file' : 'Folder name',
     placeHolder: isFile ? 'scratch.md' : 'drafts',
     validateInput: isFile ? validateTempFileName : validateTempFolderName,
   });
@@ -83,7 +132,7 @@ async function renameTempEntryFromInput(refresh: () => Promise<void>, target: un
   const isFolder = entry.tempEntryType === 'directory';
   const currentName = getEntryName(entry.tempEntryPath);
   const name = await vscode.window.showInputBox({
-    prompt: isFolder ? 'Rename the temporary folder' : 'Rename the temporary file',
+    prompt: isFolder ? 'Rename folder' : 'Rename the temporary file',
     value: currentName,
     valueSelection: getRenameSelection(currentName, isFolder),
     validateInput: isFolder ? validateTempFolderName : validateTempFileName,
@@ -103,7 +152,9 @@ async function deleteTempEntryFromInput(refresh: () => Promise<void>, target: un
   const isFolder = entry.tempEntryType === 'directory';
   const label = isFolder ? 'folder' : 'file';
   const confirmation = await vscode.window.showWarningMessage(
-    `Delete temporary ${label} "${getEntryName(entry.tempEntryPath)}"?`,
+    isFolder
+      ? `Delete folder "${getEntryName(entry.tempEntryPath)}" and all its contents?`
+      : `Delete temporary ${label} "${getEntryName(entry.tempEntryPath)}"?`,
     { modal: true, detail: isFolder ? 'The folder and everything inside it is removed from disk.' : undefined },
     'Delete',
   );

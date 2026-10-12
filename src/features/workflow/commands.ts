@@ -1,7 +1,14 @@
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import { workflowEditorViewType } from './editor';
-import { deleteWorkflowEntry, renameWorkflowEntry, saveWorkflowFolder } from './service';
+import { showFolderPicker } from '@/host/utils/folder-picker';
+import {
+  deleteWorkflowEntry,
+  moveWorkflowEntry,
+  readWorkflowRecords,
+  renameWorkflowEntry,
+  saveWorkflowFolder,
+} from './service';
 
 /**
  * Registers the workflow commands. They are invoked from the native
@@ -15,7 +22,7 @@ export function registerWorkflowCommands(
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.workflow.createFile', (target: unknown) =>
-      openEditor(undefined, parseFolderId(target)).catch(showWorkflowCommandError),
+      openEditor(undefined, parseWorkflowParentId(target)).catch(showWorkflowCommandError),
     ),
     vscode.commands.registerCommand('toolkit.workflow.createFolder', (target: unknown) =>
       createWorkflowFolder(context, refresh, target).catch(showWorkflowCommandError),
@@ -29,7 +36,35 @@ export function registerWorkflowCommands(
     vscode.commands.registerCommand('toolkit.workflow.delete', (target: unknown) =>
       deleteWorkflow(context, refresh, target).catch(showWorkflowCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.workflow.move', (target: unknown) =>
+      moveWorkflow(context, refresh, target).catch(showWorkflowCommandError),
+    ),
   );
+}
+
+async function moveWorkflow(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  target: unknown,
+): Promise<void> {
+  const id = parseWorkflowEntryId(target);
+  if (!id) return;
+  const directory = resolveStorageDirectory(context, 'workflows');
+  const entries = await readWorkflowRecords(directory);
+  const entry = entries.find((candidate) => candidate.id === id);
+  if (!entry) throw new Error('Workflow entry no longer exists.');
+  const folders = entries
+    .filter(
+      (candidate) =>
+        candidate.type === 'folder' &&
+        (entry.type !== 'folder' || (candidate.id !== id && !candidate.id.startsWith(`${id}/`))),
+    )
+    .map((folder) => folder.id);
+  const selected = await showFolderPicker(folders);
+  if (!selected) return;
+
+  await moveWorkflowEntry(directory, id, selected.folderPath);
+  await refresh();
 }
 
 async function deleteWorkflow(
@@ -41,7 +76,9 @@ async function deleteWorkflow(
   if (!id) return;
   const isFolder = hasFolderId(target);
   const confirmation = await vscode.window.showWarningMessage(
-    isFolder ? 'Delete this folder and all its contents?' : 'Delete this workflow?',
+    isFolder
+      ? `Delete folder "${getWorkflowName(target)}" and all its contents?`
+      : `Delete workflow "${getWorkflowName(target)}"?`,
     { modal: true },
     'Delete',
   );
@@ -62,7 +99,7 @@ async function renameWorkflow(
   const isFolder = hasFolderId(target);
   const currentName = getWorkflowName(target);
   const name = await vscode.window.showInputBox({
-    prompt: isFolder ? 'Rename workflow folder' : 'Rename workflow',
+    prompt: isFolder ? 'Rename folder' : 'Rename workflow',
     value: currentName,
     valueSelection: [0, currentName.length],
     validateInput: validateWorkflowName,
@@ -80,7 +117,7 @@ async function createWorkflowFolder(
 ): Promise<void> {
   const name = await vscode.window.showInputBox({ prompt: 'Folder name', validateInput: validateFolderName });
   if (name === undefined) return;
-  await saveWorkflowFolder(resolveStorageDirectory(context, 'workflows'), name, parseFolderId(target));
+  await saveWorkflowFolder(resolveStorageDirectory(context, 'workflows'), name, parseWorkflowParentId(target));
   await refresh();
 }
 
@@ -115,6 +152,14 @@ function parseFolderId(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
   const id = (value as Record<string, unknown>).workflowFolderId;
   return typeof id === 'string' ? id : undefined;
+}
+
+function parseWorkflowParentId(value: unknown): string | undefined {
+  const folderId = parseFolderId(value);
+  if (folderId) return folderId;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const parentId = (value as Record<string, unknown>).workflowParentId;
+  return typeof parentId === 'string' ? parentId : undefined;
 }
 
 function hasFolderId(value: unknown): boolean {

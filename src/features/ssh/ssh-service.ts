@@ -131,7 +131,7 @@ export class SshService implements AssetProvider {
     });
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord): Promise<void> {
+  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
     const previous = record ? requireSshConfiguration(record) : undefined;
     const asset: SshConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
@@ -142,7 +142,7 @@ export class SshService implements AssetProvider {
       credentialId: values.credentialId,
     };
     requireSshConfiguration(asset);
-    await this.assets.save(asset);
+    await this.assets.save({ ...asset, folder: record?.folder ?? folder });
     this.invalidate(asset.id);
   }
 

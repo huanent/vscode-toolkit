@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, readFile, rename, unlink, writeFile, lstat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, unlink, writeFile, lstat } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
@@ -29,7 +29,7 @@ export class AssetService {
             if (value && typeof value === 'object' && typeof value.id === 'string' && typeof value.type === 'string') {
               if (typeof value.name !== 'string') value.name = file.name.slice(0, -5);
               const folder = path.relative(this.directory, dir).split(path.sep).join('/');
-              entries.push({ ...value, ...(folder ? { folder } : {}) });
+              entries.push({ ...value, folder: folder || undefined });
             }
           } catch {
             // Ignore invalid files
@@ -67,13 +67,15 @@ export class AssetService {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
 
     const existing = await this.get(asset.id).catch(() => undefined);
-
-    await mkdir(this.directory, { recursive: true });
+    const folder = asset.folder ?? existing?.folder;
+    const savedAsset = folder ? { ...asset, folder } : { ...asset, folder: undefined };
+    const targetDirectory = folder ? await this.resolveFolder(folder) : this.directory;
+    await mkdir(targetDirectory, { recursive: true });
 
     const duplicate = (await this.list()).find((entry) => entry.id !== asset.id && entry.name === asset.name);
     if (duplicate) throw new Error('An asset with this name already exists.');
 
-    const target = path.join(this.directory, `${asset.id}.json`);
+    const target = path.join(targetDirectory, `${asset.id}.json`);
 
     if (existing) {
       const oldTarget = (await this.findRecordPath(existing.id)) ?? path.join(this.directory, `${existing.name}.json`);
@@ -97,7 +99,7 @@ export class AssetService {
 
     const temporary = `${target}.${randomUUID()}.tmp`;
     try {
-      await writeFile(temporary, JSON.stringify(asset, null, 2), { mode: 0o600 });
+      await writeFile(temporary, JSON.stringify(savedAsset, null, 2), { mode: 0o600 });
       await rename(temporary, target);
     } finally {
       await unlink(temporary).catch(() => undefined);
@@ -119,6 +121,52 @@ export class AssetService {
     await mkdir(this.directory, { recursive: true });
     const parent = parentFolder ? await this.resolveFolder(parentFolder) : this.directory;
     await mkdir(path.join(parent, folderName));
+  }
+
+  async moveAsset(id: string, destinationFolder?: string): Promise<void> {
+    await this.get(id);
+    const source = await this.findRecordPath(id);
+    if (!source) throw new Error('Asset no longer exists.');
+    const targetDirectory = destinationFolder ? await this.resolveFolder(destinationFolder) : this.directory;
+    const target = path.join(targetDirectory, `${id}.json`);
+    if (source === target) return;
+    if (await pathExists(target)) throw new Error('An asset with this name already exists in that folder.');
+    await rename(source, target);
+  }
+
+  async moveFolder(folder: string, destinationFolder?: string): Promise<void> {
+    const source = await this.resolveFolder(folder);
+    if (destinationFolder && (destinationFolder === folder || destinationFolder.startsWith(`${folder}/`))) {
+      throw new Error('A folder cannot be moved into itself.');
+    }
+    const targetDirectory = destinationFolder ? await this.resolveFolder(destinationFolder) : this.directory;
+    const currentParent = path.posix.dirname(folder);
+    if ((currentParent === '.' ? undefined : currentParent) === destinationFolder) return;
+    const target = path.join(targetDirectory, path.basename(source));
+    if (await pathExists(target)) throw new Error('A folder with this name already exists there.');
+    await rename(source, target);
+  }
+
+  async renameFolder(folder: string, rawName: string): Promise<void> {
+    const name = rawName.trim();
+    if (!isValidFolderName(name)) throw new Error('Enter a valid folder name.');
+    const source = await this.resolveFolder(folder);
+    if (path.posix.basename(folder) === name) return;
+    const parentFolder = path.posix.dirname(folder);
+    const parent = parentFolder === '.' ? this.directory : await this.resolveFolder(parentFolder);
+    const target = path.join(parent, name);
+    if (await pathExists(target)) throw new Error(`"${name}" already exists in this folder.`);
+    await rename(source, target);
+  }
+
+  async deleteFolder(folder: string): Promise<AssetRecord[]> {
+    const target = await this.resolveFolder(folder);
+    const assets = (await this.list()).filter(
+      (asset) => asset.folder === folder || asset.folder?.startsWith(`${folder}/`),
+    );
+    for (const asset of assets) await this.delete(asset);
+    await rm(target, { recursive: true });
+    return assets;
   }
 
   getSecret(asset: AssetRecord): Thenable<string | undefined> {
@@ -196,4 +244,18 @@ function isAssetRecord(value: unknown): value is AssetRecord {
     typeof asset.name === 'string' &&
     asset.name.trim().length > 0
   );
+}
+
+function isValidFolderName(name: string): boolean {
+  return Boolean(name.trim()) && name !== '.' && name !== '..' && !/[\\/\0]/.test(name);
+}
+
+async function pathExists(target: string): Promise<boolean> {
+  try {
+    await lstat(target);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
 }
