@@ -6,7 +6,11 @@ import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/a
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
-import type { Credential } from '@/features/credential/protocol';
+
+interface SshClientSession {
+  client: Client;
+  close(): void;
+}
 
 export class SshService implements AssetProvider {
   readonly type = 'ssh';
@@ -34,6 +38,7 @@ export class SshService implements AssetProvider {
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
       credentialId: previous?.credentialId ?? '',
+      proxyAssetId: previous?.proxyAssetId ?? '',
       database: '',
       tls: false,
     };
@@ -50,11 +55,11 @@ export class SshService implements AssetProvider {
 
   async runCommand(assetId: string, command: string): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
-    const client = await this.connectClient(assetId);
+    const session = await this.connectClient(assetId);
     return new Promise((resolve, reject) => {
-      client.exec(command, (error, channel) => {
+      session.client.exec(command, (error, channel) => {
         if (error) {
-          client.end();
+          session.close();
           reject(error);
           return;
         }
@@ -63,7 +68,7 @@ export class SshService implements AssetProvider {
         channel.on('data', (data: Buffer) => (stdout += data.toString('utf8')));
         channel.stderr.on('data', (data: Buffer) => (stderr += data.toString('utf8')));
         channel.on('close', (exitCode: number | undefined) => {
-          client.end();
+          session.close();
           resolve({ stdout, stderr, exitCode });
         });
       });
@@ -77,16 +82,16 @@ export class SshService implements AssetProvider {
     remotePath: string,
   ): Promise<void> {
     if (!localPath.trim() || !remotePath.trim()) throw new Error('Enter both local and remote file paths.');
-    const client = await this.connectClient(assetId);
+    const session = await this.connectClient(assetId);
     await new Promise<void>((resolve, reject) => {
-      client.sftp((error, sftp) => {
+      session.client.sftp((error, sftp) => {
         if (error) {
-          client.end();
+          session.close();
           reject(error);
           return;
         }
         const complete = (transferError?: Error | null) => {
-          client.end();
+          session.close();
           if (transferError) reject(transferError);
           else resolve();
         };
@@ -96,7 +101,9 @@ export class SshService implements AssetProvider {
     });
   }
 
-  private async connectClient(assetId: string): Promise<Client> {
+  private async connectClient(assetId: string, proxyChain = new Set<string>()): Promise<SshClientSession> {
+    if (proxyChain.has(assetId)) throw new Error('SSH proxy chain contains a cycle.');
+    const nextProxyChain = new Set(proxyChain).add(assetId);
     const asset = requireSshConfiguration(await this.assets.get(assetId));
     const credential = (await this.credentials.list()).find((candidate) => candidate.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
@@ -120,15 +127,57 @@ export class SshService implements AssetProvider {
       config.passphrase = credential.passphrase;
     }
 
-    const client = new Client();
-    return new Promise((resolve, reject) => {
-      client.once('ready', () => resolve(client));
-      client.once('error', (error) => {
+    let proxySession: SshClientSession | undefined;
+    try {
+      if (asset.proxyAssetId) {
+        const proxyAsset = requireSshConfiguration(await this.assets.get(asset.proxyAssetId));
+        proxySession = await this.connectClient(proxyAsset.id, nextProxyChain);
+        config.sock = await new Promise<ClientChannel>((resolve, reject) => {
+          proxySession?.client.forwardOut('127.0.0.1', 0, asset.host, asset.port, (error, channel) => {
+            if (error) reject(error);
+            else resolve(channel);
+          });
+        });
+      }
+
+      const client = new Client();
+      try {
+        return await new Promise<SshClientSession>((resolve, reject) => {
+          let settled = false;
+          client.on('error', (error) => {
+            if (settled) {
+              proxySession?.close();
+              return;
+            }
+            settled = true;
+            reject(error);
+          });
+          client.once('ready', () => {
+            if (settled) return;
+            settled = true;
+            let closed = false;
+            const session: SshClientSession = {
+              client,
+              close: () => {
+                if (closed) return;
+                closed = true;
+                client.end();
+                proxySession?.close();
+              },
+            };
+            client.once('close', () => proxySession?.close());
+            resolve(session);
+          });
+          client.connect(config);
+        });
+      } catch (error) {
         client.end();
-        reject(error);
-      });
-      client.connect(config);
-    });
+        throw error;
+      }
+    } catch (error) {
+      proxySession?.close();
+      throw error;
+    }
   }
 
   async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
@@ -140,8 +189,10 @@ export class SshService implements AssetProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
+      proxyAssetId: values.proxyAssetId?.trim() || undefined,
     };
     requireSshConfiguration(asset);
+    await this.validateProxyChain(asset.id, asset.proxyAssetId);
     await this.assets.save({ ...asset, folder: record?.folder ?? folder });
     this.invalidate(asset.id);
   }
@@ -166,7 +217,7 @@ export class SshService implements AssetProvider {
     if (!credential.username) throw new Error('SSH username is required.');
     if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
     if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
-    const pty = new SshPseudoterminal(asset, credential, this.globalState);
+    const pty = new SshPseudoterminal(() => this.connectClient(asset.id));
     const terminal = vscode.window.createTerminal({
       name: `SSH: ${asset.name}`,
       pty,
@@ -186,6 +237,17 @@ export class SshService implements AssetProvider {
     }
   }
 
+  private async validateProxyChain(assetId: string, proxyAssetId?: string): Promise<void> {
+    const visited = new Set([assetId]);
+    let currentId = proxyAssetId;
+    while (currentId) {
+      if (visited.has(currentId)) throw new Error('SSH proxy chain contains a cycle.');
+      visited.add(currentId);
+      const proxy = requireSshConfiguration(await this.assets.get(currentId));
+      currentId = proxy.proxyAssetId;
+    }
+  }
+
   dispose(): void {
     this.closed.dispose();
     this.invalidate();
@@ -195,17 +257,13 @@ export class SshService implements AssetProvider {
 class SshPseudoterminal implements vscode.Pseudoterminal {
   private readonly writeEmitter = new vscode.EventEmitter<string>();
   readonly onDidWrite = this.writeEmitter.event;
-  private client?: Client;
+  private session?: SshClientSession;
   private channel?: ClientChannel;
   private dimensions: vscode.TerminalDimensions = { columns: 80, rows: 24 };
   private closed = false;
   private ended = false;
 
-  constructor(
-    private readonly asset: SshConnectionConfiguration,
-    private readonly credential: Credential,
-    private readonly globalState: vscode.Memento,
-  ) {}
+  constructor(private readonly connectClient: () => Promise<SshClientSession>) {}
 
   open(initialDimensions: vscode.TerminalDimensions | undefined): void {
     if (initialDimensions) this.dimensions = initialDimensions;
@@ -215,7 +273,7 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
   close(): void {
     this.closed = true;
     this.channel?.close();
-    this.client?.end();
+    this.session?.close();
     this.writeEmitter.dispose();
   }
 
@@ -229,28 +287,13 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
   }
 
   private connect(): void {
-    const client = new Client();
-    this.client = client;
-    const config: ConnectConfig = {
-      host: this.asset.host,
-      port: this.asset.port,
-      username: this.credential.username,
-      readyTimeout: 20000,
-      keepaliveInterval: 10000,
-      hostVerifier: (key: Buffer, verify: VerifyCallback) => {
-        void this.verifyHost(key).then(verify, () => verify(false));
-      },
-    };
-    if (this.credential.type === 'password') config.password = this.credential.password;
-    else {
-      config.privateKey = this.credential.privateKey;
-      config.passphrase = this.credential.passphrase;
-    }
-
-    client
-      .on('ready', () => {
-        if (this.closed) return client.end();
-        client.shell(
+    void this.connectClient()
+      .then((session) => {
+        if (this.closed) return session.close();
+        this.session = session;
+        session.client.on('error', (error) => this.showError(error));
+        session.client.once('close', () => this.finish());
+        session.client.shell(
           {
             term: 'xterm-256color',
             cols: this.dimensions.columns,
@@ -258,7 +301,10 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
           },
           (error, channel) => {
             if (error) return this.showError(error);
-            if (this.closed) return channel.close();
+            if (this.closed) {
+              session.close();
+              return channel.close();
+            }
             this.channel = channel;
             channel.on('data', (data: Buffer) => this.writeEmitter.fire(data.toString('utf8')));
             channel.stderr.on('data', (data: Buffer) => this.writeEmitter.fire(data.toString('utf8')));
@@ -266,13 +312,7 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
           },
         );
       })
-      .on('error', (error) => this.showError(error))
-      .on('close', () => this.finish());
-    client.connect(config);
-  }
-
-  private async verifyHost(key: Buffer): Promise<boolean> {
-    return verifySshHost(this.asset, this.globalState, key);
+      .catch((error: unknown) => this.showError(error instanceof Error ? error : new Error(String(error))));
   }
 
   private showError(error: Error): void {
@@ -285,7 +325,8 @@ class SshPseudoterminal implements vscode.Pseudoterminal {
     if (this.closed || this.ended) return;
     this.ended = true;
     this.channel = undefined;
-    this.client?.end();
+    this.session?.close();
+    this.session = undefined;
     this.writeEmitter.fire('\r\nSSH connection closed.\r\n');
   }
 }
@@ -318,7 +359,8 @@ function requireSshConfiguration(value: AssetRecord): SshConnectionConfiguration
     !Number.isInteger(asset.port) ||
     asset.port < 1 ||
     asset.port > 65535 ||
-    typeof asset.credentialId !== 'string'
+    typeof asset.credentialId !== 'string' ||
+    (asset.proxyAssetId !== undefined && typeof asset.proxyAssetId !== 'string')
   )
     throw new Error(`Invalid SSH configuration: ${value.name}`);
   return value as SshConnectionConfiguration;

@@ -8,6 +8,11 @@ export interface Credential {
   passphrase?: string;
 }
 
+export interface CredentialSummary {
+  id: string;
+  name: string;
+}
+
 export type CredentialHostMessage =
   | { type: 'credentialsUpdated'; credentials: Credential[] }
   | { type: 'credentialError'; message: string };

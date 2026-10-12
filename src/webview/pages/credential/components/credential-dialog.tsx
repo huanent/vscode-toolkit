@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Field } from '@base-ui/react/field';
+import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Input } from '@/webview/components/input';
@@ -53,23 +55,33 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!name}>
+          <Button type="submit" form="credential-form">
             Save
           </Button>
         </>
       }
     >
-      <div className="flex flex-col gap-3 py-2">
+      <Form id="credential-form" onFormSubmit={handleSave} className="flex flex-col gap-3 py-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium">Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Credential Name" />
+          <Field.Root name="name" className="grid gap-1">
+            <Field.Label className="text-xs font-medium">Name</Field.Label>
+            <Input
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Credential Name"
+            />
+            <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
+              Name is required.
+            </Field.Error>
+          </Field.Root>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium">Type</label>
           <select
             className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
             value={type}
-            onChange={(e) => setType(e.target.value as 'password' | 'privateKey')}
+            onChange={(event) => setType(event.target.value as 'password' | 'privateKey')}
           >
             <option value="password">Password</option>
             <option value="privateKey">Private Key</option>
@@ -77,7 +89,11 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium">Username</label>
-          <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username (optional)" />
+          <Input
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Username (optional)"
+          />
         </div>
         {type === 'password' && (
           <div className="flex flex-col gap-1">
@@ -85,7 +101,7 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
             <Input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
             />
           </div>
@@ -97,7 +113,7 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
               <textarea
                 className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 text-xs text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
                 value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
+                onChange={(event) => setPrivateKey(event.target.value)}
                 placeholder="-----BEGIN PRIVATE KEY-----..."
               />
             </div>
@@ -106,13 +122,13 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
               <Input
                 type="password"
                 value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
+                onChange={(event) => setPassphrase(event.target.value)}
                 placeholder="Passphrase (optional)"
               />
             </div>
           </>
         )}
-      </div>
+      </Form>
     </Dialog>
   );
 }

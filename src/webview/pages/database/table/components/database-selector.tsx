@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Field } from '@base-ui/react/field';
+import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Icon } from '@/webview/components/icons';
@@ -203,38 +205,35 @@ export function DatabaseSelector({
               <Button variant="secondary" onClick={() => setCreatingDatabase(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" disabled={!newDatabaseName.trim()} onClick={handleCreateSubmit}>
+              <Button variant="primary" type="submit" form="create-database-form">
                 Create
               </Button>
             </>
           }
         >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateSubmit();
-            }}
-            className="flex flex-col gap-2 py-2"
-          >
-            <label htmlFor="database-name-input" className="text-xs font-medium">
-              Database Name
-            </label>
-            <Input
-              id="database-name-input"
-              value={newDatabaseName}
-              onChange={(e) => {
-                setNewDatabaseName(e.target.value);
-                setCreateError(null);
-              }}
-              placeholder="e.g. my_database"
-              autoFocus
-            />
+          <Form id="create-database-form" onFormSubmit={handleCreateSubmit} className="flex flex-col gap-2 py-2">
+            <Field.Root name="databaseName" className="grid gap-1">
+              <Field.Label className="text-xs font-medium">Database Name</Field.Label>
+              <Input
+                required
+                value={newDatabaseName}
+                onChange={(e) => {
+                  setNewDatabaseName(e.target.value);
+                  setCreateError(null);
+                }}
+                placeholder="e.g. my_database"
+                autoFocus
+              />
+              <Field.Error match="valueMissing" className="text-xs text-(--vscode-errorForeground)">
+                Database name is required.
+              </Field.Error>
+            </Field.Root>
             {createError && (
               <p className="text-xs text-(--vscode-errorForeground)" role="alert">
                 {createError}
               </p>
             )}
-          </form>
+          </Form>
         </Dialog>
       )}
     </>

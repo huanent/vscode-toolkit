@@ -5,6 +5,7 @@ import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { AssetProvider } from './asset-provider';
 import type { AssetEditorData, AssetEditorMessage, AssetFormValues } from './protocol';
 import type { AssetRecord, AssetService } from './service';
+import type { Credential } from '@/features/credential/protocol';
 import type { CredentialService } from '@/features/credential/service';
 
 export function openAssetEditor(
@@ -30,12 +31,29 @@ export function openAssetEditor(
   const storageDirectory = resolveStorageDirectory(context, 'assets');
   const bridge = serveWebviewData(panel.webview, async () => {
     const creds = await credentials.list();
+    const sshConnections =
+      provider.type === 'ssh'
+        ? (await service.list()).flatMap((record) => {
+            if (
+              record.id === previous?.id ||
+              record.type !== 'ssh' ||
+              !('host' in record) ||
+              typeof record.host !== 'string' ||
+              !('port' in record) ||
+              typeof record.port !== 'number'
+            ) {
+              return [];
+            }
+            return [{ id: record.id, name: record.name, host: record.host, port: record.port }];
+          })
+        : [];
     return {
       assetType: provider.type,
       label: provider.label,
       editing: Boolean(previous),
       values,
       credentials: creds.map((c) => ({ id: c.id, name: c.name })),
+      sshConnections,
     } satisfies AssetEditorData;
   });
   const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
@@ -53,11 +71,22 @@ export function openAssetEditor(
         await provider.saveConfiguration(message.values, current, folder);
         await refresh();
         panel.dispose();
+      } else if (message.type === 'createCredential') {
+        if (!('credential' in message) || !isCredential(message.credential) || message.credential.id !== '') {
+          throw new Error('Invalid credential.');
+        }
+        await credentials.save(message.credential);
+        const savedCredentials = await credentials.list();
+        await panel.webview.postMessage({
+          type: 'credentialsUpdated',
+          credentials: savedCredentials.map((credential) => ({ id: credential.id, name: credential.name })),
+          createdId: message.credential.id,
+        } satisfies AssetEditorMessage);
       }
     } catch (error) {
       if (!disposed)
         await panel.webview.postMessage({
-          type: 'saveError',
+          type: message.type === 'createCredential' ? 'credentialError' : 'saveError',
           message: error instanceof Error ? error.message : String(error),
         } satisfies AssetEditorMessage);
     } finally {
@@ -73,11 +102,26 @@ export function openAssetEditor(
   context.subscriptions.push(panel, bridge, listener, closed);
 }
 
+function isCredential(value: unknown): value is Credential {
+  if (!value || typeof value !== 'object') return false;
+  const credential = value as Partial<Credential>;
+  return (
+    typeof credential.id === 'string' &&
+    typeof credential.name === 'string' &&
+    (credential.type === 'password' || credential.type === 'privateKey') &&
+    (credential.username === undefined || typeof credential.username === 'string') &&
+    (credential.password === undefined || typeof credential.password === 'string') &&
+    (credential.privateKey === undefined || typeof credential.privateKey === 'string') &&
+    (credential.passphrase === undefined || typeof credential.passphrase === 'string')
+  );
+}
+
 function isFormValues(value: unknown): value is AssetFormValues {
   if (!value || typeof value !== 'object') return false;
   const values = value as Partial<AssetFormValues>;
   return (
     [values.name, values.host, values.database, values.credentialId].every((field) => typeof field === 'string') &&
+    (values.proxyAssetId === undefined || typeof values.proxyAssetId === 'string') &&
     typeof values.tls === 'boolean' &&
     typeof values.port === 'number' &&
     Number.isInteger(values.port) &&

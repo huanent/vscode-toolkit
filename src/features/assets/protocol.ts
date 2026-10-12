@@ -1,3 +1,5 @@
+import type { Credential, CredentialSummary } from '@/features/credential/protocol';
+
 export interface AssetFormValues {
   name: string;
   host: string;
@@ -5,6 +7,7 @@ export interface AssetFormValues {
   database: string;
   tls: boolean;
   credentialId: string;
+  proxyAssetId?: string;
 }
 
 export interface AssetEditorData {
@@ -12,10 +15,20 @@ export interface AssetEditorData {
   label: string;
   editing: boolean;
   values: AssetFormValues;
-  credentials: { id: string; name: string }[];
+  credentials: CredentialSummary[];
+  sshConnections: { id: string; name: string; host: string; port: number }[];
 }
 
-export type AssetEditorMessage = { type: 'saveError'; message: string } | { type: 'privateKeySelected'; path: string };
+export type AssetEditorMessage =
+  | { type: 'saveError'; message: string }
+  | { type: 'privateKeySelected'; path: string }
+  | { type: 'credentialsUpdated'; credentials: CredentialSummary[]; createdId: string }
+  | { type: 'credentialError'; message: string };
+
+export type AssetEditorRequest =
+  | { type: 'save'; values: AssetFormValues }
+  | { type: 'cancel' }
+  | { type: 'createCredential'; credential: Credential };
 
 export interface AssetViewEntry {
   path: string;

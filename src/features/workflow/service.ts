@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { access, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { access, lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { WorkflowDefinition, WorkflowFolderRecord, WorkflowRecord, WorkflowRecordEntry } from './protocol';
@@ -128,7 +128,12 @@ export async function renameWorkflowEntry(directory: string, id: string, rawName
   const parentDirectory = entry.parentId ? index.folderPaths.get(entry.parentId) : directory;
   if (!folderPath || !parentDirectory) throw new Error('Workflow folder no longer exists.');
   const newPath = path.join(parentDirectory, name);
-  if (await pathExists(newPath)) throw new Error(`"${name}" already exists in this folder.`);
+  if (await pathExists(newPath)) {
+    const [sourceStats, targetStats] = await Promise.all([lstat(folderPath), lstat(newPath)]);
+    if (sourceStats.dev !== targetStats.dev || sourceStats.ino !== targetStats.ino) {
+      throw new Error(`"${name}" already exists in this folder.`);
+    }
+  }
   await rename(folderPath, newPath);
 }
 

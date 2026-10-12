@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Form } from '@base-ui/react/form';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
 import { Autocomplete } from '@/webview/components/autocomplete';
 import { Button } from '@/webview/components/button';
@@ -271,7 +272,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
           <Button
             size="sm"
             variant="primary"
-            onClick={handleSubmit}
+            type="submit"
+            form="table-schema-form"
             disabled={isSubmitting || Boolean(validationError)}
           >
             {isSubmitting ? (table ? 'Saving...' : 'Creating...') : table ? 'Save' : 'Create Table'}
@@ -279,48 +281,50 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
         </>
       }
     >
-      <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="schema-table-name" className="text-xs font-medium text-(--vscode-descriptionForeground)">
-            Table Name
-          </label>
-          <Input
-            id="schema-table-name"
-            value={tableName}
-            onChange={(e) => {
-              setTableName(e.target.value);
-              setError(null);
-            }}
-            placeholder="Table name"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
-            <Button variant="secondary" size="sm" prefix={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
-              Add Column
-            </Button>
+      <Form id="table-schema-form" onFormSubmit={handleSubmit}>
+        <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="schema-table-name" className="text-xs font-medium text-(--vscode-descriptionForeground)">
+              Table Name
+            </label>
+            <Input
+              id="schema-table-name"
+              value={tableName}
+              onChange={(e) => {
+                setTableName(e.target.value);
+                setError(null);
+              }}
+              placeholder="Table name"
+            />
           </div>
 
-          <Table
-            ariaLabel="Columns"
-            columns={tableColumns}
-            rows={columns}
-            rowKey={(col) => col.id}
-            className="max-h-64 rounded border border-(--vscode-panel-border)"
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
+              <Button variant="secondary" size="sm" prefix={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
+                Add Column
+              </Button>
+            </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2 text-xs text-(--vscode-errorForeground)"
-          >
-            {error}
+            <Table
+              ariaLabel="Columns"
+              columns={tableColumns}
+              rows={columns}
+              rowKey={(col) => col.id}
+              className="max-h-64 rounded border border-(--vscode-panel-border)"
+            />
           </div>
-        )}
-      </fieldset>
+
+          {error && (
+            <div
+              role="alert"
+              className="rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2 text-xs text-(--vscode-errorForeground)"
+            >
+              {error}
+            </div>
+          )}
+        </fieldset>
+      </Form>
     </Dialog>
   );
 }

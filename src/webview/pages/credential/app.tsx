@@ -5,7 +5,7 @@ import { Icon } from '@/webview/components/icons';
 import { Table, type TableColumn } from '@/webview/components/table';
 import { useHostData, postToHost } from '@/webview/utils/host-data';
 import type { Credential, CredentialHostMessage, CredentialWebviewMessage } from '@/features/credential/protocol';
-import { CredentialDialog } from './components/CredentialDialog';
+import { CredentialDialog } from './components/credential-dialog';
 import '@/webview/styles.css';
 
 function App() {

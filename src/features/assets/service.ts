@@ -155,7 +155,12 @@ export class AssetService {
     const parentFolder = path.posix.dirname(folder);
     const parent = parentFolder === '.' ? this.directory : await this.resolveFolder(parentFolder);
     const target = path.join(parent, name);
-    if (await pathExists(target)) throw new Error(`"${name}" already exists in this folder.`);
+    if (await pathExists(target)) {
+      const [sourceStats, targetStats] = await Promise.all([lstat(source), lstat(target)]);
+      if (sourceStats.dev !== targetStats.dev || sourceStats.ino !== targetStats.ino) {
+        throw new Error(`"${name}" already exists in this folder.`);
+      }
+    }
     await rename(source, target);
   }
 

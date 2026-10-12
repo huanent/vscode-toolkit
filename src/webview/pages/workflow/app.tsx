@@ -6,6 +6,7 @@ import type {
   WorkflowEditorRequest,
   WorkflowStep,
 } from '@/features/workflow/protocol';
+import { Form } from '@base-ui/react/form';
 import { Button } from '@/webview/components/button';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Icon } from '@/webview/components/icons';
@@ -116,7 +117,7 @@ function App() {
         </div>
       </header>
 
-      <form className="grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
+      <Form className="grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
         <label className="grid gap-1 text-xs">
           Name
           <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
@@ -279,7 +280,7 @@ function App() {
             )}
           </div>
         )}
-      </form>
+      </Form>
     </main>
   );
 }
