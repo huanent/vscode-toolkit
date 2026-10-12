@@ -42,6 +42,21 @@ export class AssetService {
     return entries.sort((first, second) => first.name.localeCompare(second.name));
   }
 
+  async listFolders(): Promise<string[]> {
+    await mkdir(this.directory, { recursive: true });
+    const folders: string[] = [];
+    const traverse = async (dir: string) => {
+      for (const entry of await readdir(dir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const folder = path.join(dir, entry.name);
+        folders.push(path.relative(this.directory, folder).split(path.sep).join('/'));
+        await traverse(folder);
+      }
+    };
+    await traverse(this.directory);
+    return folders.sort((first, second) => first.localeCompare(second));
+  }
+
   async get(id: string): Promise<AssetRecord> {
     const asset = (await this.list()).find((entry) => entry.id === id);
     if (!asset) throw new Error('Asset no longer exists.');
@@ -96,6 +111,16 @@ export class AssetService {
     await this.context.secrets.delete(this.secretKey(asset));
   }
 
+  async createFolder(name: string, parentFolder?: string): Promise<void> {
+    const folderName = name.trim();
+    if (!folderName || folderName === '.' || folderName === '..' || /[\\/\0]/.test(folderName)) {
+      throw new Error('Enter a valid asset folder name.');
+    }
+    await mkdir(this.directory, { recursive: true });
+    const parent = parentFolder ? await this.resolveFolder(parentFolder) : this.directory;
+    await mkdir(path.join(parent, folderName));
+  }
+
   getSecret(asset: AssetRecord): Thenable<string | undefined> {
     return this.context.secrets.get(this.secretKey(asset));
   }
@@ -106,6 +131,31 @@ export class AssetService {
 
   private get directory(): string {
     return resolveStorageDirectory(this.context, 'assets');
+  }
+
+  private async resolveFolder(folder: string): Promise<string> {
+    if (
+      !folder ||
+      folder.startsWith('/') ||
+      folder.split('/').some((segment) => !segment || segment === '.' || segment === '..' || /[\\\0]/.test(segment))
+    ) {
+      throw new Error('Invalid asset folder path.');
+    }
+    let target = path.resolve(this.directory);
+    for (const segment of folder.split('/')) {
+      target = path.join(target, segment);
+      let stats;
+      try {
+        stats = await lstat(target);
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+          throw new Error('Asset folder no longer exists.');
+        }
+        throw error;
+      }
+      if (!stats.isDirectory() || stats.isSymbolicLink()) throw new Error('Invalid asset folder path.');
+    }
+    return target;
   }
 
   private async findRecordPath(id: string): Promise<string | undefined> {

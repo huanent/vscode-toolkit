@@ -19,18 +19,35 @@ export function createAssetsView(
     return provider;
   };
   const list = async (): Promise<AssetTreeEntry[]> => {
-    const assets = await service.list();
+    const [assets, folders] = await Promise.all([service.list(), service.listFolders()]);
     const entries = assets.map((asset) => {
       const entry = providerFor(asset.type).toViewEntry(asset);
       return { ...entry, path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path };
     });
-    return buildAssetTree(entries);
+    return buildAssetTree(entries, folders);
   };
   const refresh = async () => {
     const webview = activeWebview;
     const entries = await list();
     if (webview && webview === activeWebview)
       await webview.postMessage({ type: 'assetsUpdated', entries } satisfies AssetsMessage);
+  };
+  const createFolder = async (target: unknown) => {
+    const parentFolder =
+      target && typeof target === 'object' && 'assetFolderPath' in target && typeof target.assetFolderPath === 'string'
+        ? target.assetFolderPath
+        : undefined;
+    const name = await vscode.window.showInputBox({
+      prompt: 'Name the asset folder',
+      placeHolder: 'databases',
+      validateInput: (value) =>
+        !value.trim() || value === '.' || value === '..' || /[\\/\0]/.test(value)
+          ? 'Enter a valid folder name.'
+          : undefined,
+    });
+    if (name === undefined) return;
+    await service.createFolder(name, parentFolder);
+    await refresh();
   };
   const act = async (request: AssetRequest) => {
     try {
@@ -84,6 +101,11 @@ export function createAssetsView(
     );
   }
   context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.assets.createFolder', (target: unknown) =>
+      createFolder(target).catch((error: unknown) =>
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+      ),
+    ),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('toolkit.storagePath')) {
         for (const provider of providers) provider.invalidate();
@@ -105,27 +127,38 @@ export function createAssetsView(
   };
 }
 
-function buildAssetTree(entries: AssetViewEntry[]): AssetTreeEntry[] {
+function buildAssetTree(entries: AssetViewEntry[], folders: string[]): AssetTreeEntry[] {
   const roots: AssetTreeEntry[] = [];
   const directories = new Map<string, Extract<AssetTreeEntry, { type: 'directory' }>>();
 
-  for (const entry of entries) {
-    const segments = entry.path.split('/').filter(Boolean);
+  const ensureDirectory = (folderPath: string): AssetTreeEntry[] => {
     let children = roots;
     let directoryPath = '';
 
-    for (const name of segments.slice(0, -1)) {
+    for (const name of folderPath.split('/').filter(Boolean)) {
       directoryPath = directoryPath ? `${directoryPath}/${name}` : name;
       let directory = directories.get(directoryPath);
       if (!directory) {
-        directory = { path: directoryPath, name, type: 'directory', children: [] };
+        directory = {
+          path: directoryPath,
+          name,
+          type: 'directory',
+          children: [],
+          context: { webviewSection: 'assets', assetFolderPath: directoryPath },
+        };
         directories.set(directoryPath, directory);
         children.push(directory);
       }
       children = directory.children;
     }
+    return children;
+  };
 
-    children.push(entry);
+  for (const folder of folders) ensureDirectory(folder);
+  for (const entry of entries) {
+    const segments = entry.path.split('/').filter(Boolean);
+    const parentPath = segments.slice(0, -1).join('/');
+    ensureDirectory(parentPath).push(entry);
   }
 
   return roots;

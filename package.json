@@ -218,6 +218,11 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.assets.createFolder",
+        "title": "New Folder",
+        "category": "Assets"
+      },
+      {
         "command": "toolkit.assets.edit",
         "title": "Edit",
         "category": "Assets"
@@ -534,6 +539,11 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.assets.createFolder",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
+          "group": "1_create@0"
+        },
         {
           "command": "toolkit.assets.add",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",

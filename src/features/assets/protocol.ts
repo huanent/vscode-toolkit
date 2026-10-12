@@ -30,6 +30,7 @@ export interface AssetDirectoryEntry {
   name: string;
   type: 'directory';
   children: AssetTreeEntry[];
+  context?: Record<string, string | number | boolean>;
 }
 
 export type AssetTreeEntry = AssetViewEntry | AssetDirectoryEntry;
