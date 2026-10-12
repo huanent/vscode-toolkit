@@ -133,10 +133,10 @@ function App() {
     <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3">
         <Icon name="table" variant="muted" size="sm" />
-        <h1 className="min-w-0 truncate text-sm font-semibold" title={name}>
+        <h1 className="min-w-0 truncate  font-semibold" title={name}>
           {name}
         </h1>
-        <span className="ml-auto shrink-0 text-xs tabular-nums text-(--vscode-descriptionForeground)">
+        <span className="ml-auto shrink-0  tabular-nums text-(--vscode-descriptionForeground)">
           {table.rowCount.toLocaleString()} rows
         </span>
       </div>
@@ -150,13 +150,13 @@ function App() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <span className="ml-auto text-xs tabular-nums text-(--vscode-descriptionForeground)">
+        <span className="ml-auto  tabular-nums text-(--vscode-descriptionForeground)">
           {table.columnCount.toLocaleString()} columns
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         {state.error && (
-          <p className="px-3 py-1 text-xs text-(--vscode-errorForeground)" role="alert">
+          <p className="px-3 py-1  text-(--vscode-errorForeground)" role="alert">
             {state.error}
           </p>
         )}
@@ -171,12 +171,12 @@ function App() {
             className="min-w-full"
           />
         ) : (
-          <div className="grid h-full place-items-center text-sm text-(--vscode-descriptionForeground)">
+          <div className="grid h-full place-items-center  text-(--vscode-descriptionForeground)">
             This table has no columns.
           </div>
         )}
       </div>
-      <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--vscode-panel-border) px-3 py-1 text-xs text-(--vscode-descriptionForeground)">
+      <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--vscode-panel-border) px-3 py-1  text-(--vscode-descriptionForeground)">
         <span className="shrink-0 tabular-nums">
           {hasActiveFilters
             ? `${(table.filteredRowCount ?? rows.length).toLocaleString()} matching rows${

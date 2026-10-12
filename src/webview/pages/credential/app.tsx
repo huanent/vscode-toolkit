@@ -51,11 +51,6 @@ function App() {
 
   const columns: TableColumn<Credential>[] = [
     {
-      key: 'name',
-      header: 'Name',
-      cell: (row) => row.name,
-    },
-    {
       key: 'type',
       header: 'Type',
       cell: (row) => row.type,
@@ -64,6 +59,11 @@ function App() {
       key: 'username',
       header: 'Username',
       cell: (row) => row.username || '-',
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      cell: (row) => row.description || '-',
     },
     {
       key: 'actions',

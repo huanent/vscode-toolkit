@@ -52,7 +52,7 @@ export function openAssetEditor(
       label: provider.label,
       editing: Boolean(previous),
       values,
-      credentials: creds.map((c) => ({ id: c.id, name: c.name })),
+      credentials: creds.map(({ id, description, type, username }) => ({ id, description, type, username })),
       sshConnections,
     } satisfies AssetEditorData;
   });
@@ -79,7 +79,12 @@ export function openAssetEditor(
         const savedCredentials = await credentials.list();
         await panel.webview.postMessage({
           type: 'credentialsUpdated',
-          credentials: savedCredentials.map((credential) => ({ id: credential.id, name: credential.name })),
+          credentials: savedCredentials.map(({ id, description, type, username }) => ({
+            id,
+            description,
+            type,
+            username,
+          })),
           createdId: message.credential.id,
         } satisfies AssetEditorMessage);
       }
@@ -107,7 +112,7 @@ function isCredential(value: unknown): value is Credential {
   const credential = value as Partial<Credential>;
   return (
     typeof credential.id === 'string' &&
-    typeof credential.name === 'string' &&
+    typeof credential.description === 'string' &&
     (credential.type === 'password' || credential.type === 'privateKey') &&
     (credential.username === undefined || typeof credential.username === 'string') &&
     (credential.password === undefined || typeof credential.password === 'string') &&

@@ -13,7 +13,7 @@ export function Input({ className, prefix, suffix, ...props }: InputProps) {
   const input = (
     <BaseInput
       className={cn(
-        'h-7 w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) placeholder:text-(--vscode-input-placeholderForeground) focus:border-(--vscode-focusBorder) focus:outline-none aria-invalid:border-(--vscode-inputValidation-errorBorder) disabled:cursor-not-allowed disabled:opacity-50',
+        'w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-1 text-sm text-(--vscode-input-foreground) placeholder:text-(--vscode-input-placeholderForeground) focus:border-(--vscode-focusBorder) focus:outline-none aria-invalid:border-(--vscode-inputValidation-errorBorder) disabled:cursor-not-allowed disabled:opacity-50',
         hasSlots && 'flex-1 border-0 bg-transparent px-0 disabled:opacity-100',
         className,
       )}
@@ -26,7 +26,7 @@ export function Input({ className, prefix, suffix, ...props }: InputProps) {
   return (
     <div
       className={cn(
-        'flex w-full min-w-0 items-center gap-2 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-xs text-(--vscode-input-foreground) focus-within:border-(--vscode-focusBorder) has-aria-invalid:border-(--vscode-inputValidation-errorBorder)',
+        'flex w-full min-w-0 items-center gap-2 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2  text-(--vscode-input-foreground) focus-within:border-(--vscode-focusBorder) has-aria-invalid:border-(--vscode-inputValidation-errorBorder)',
         props.disabled && 'cursor-not-allowed opacity-50',
       )}
     >

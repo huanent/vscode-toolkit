@@ -13,7 +13,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
     return (
       <Loading
         label={input ? `Running query on ${input.databaseName}...` : `Running ${engine} query...`}
-        className="p-4 text-sm"
+        className="p-4 "
       />
     );
   }
@@ -66,7 +66,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
           tabIndex={0}
           className="max-h-125 overflow-auto border border-(--vscode-panel-border)"
         >
-          <table className="w-max min-w-full border-separate border-spacing-0 text-xs select-text">
+          <table className="w-max min-w-full border-separate border-spacing-0  select-text">
             <thead className="sticky top-0 z-10">
               <tr>
                 {result.columns.map((column, index) => (
@@ -114,14 +114,14 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
           </table>
         </section>
       ) : result.hasResultSet ? (
-        <div className="border border-(--vscode-panel-border) p-3 text-sm text-(--vscode-descriptionForeground)">
+        <div className="border border-(--vscode-panel-border) p-3  text-(--vscode-descriptionForeground)">
           No rows returned.
         </div>
       ) : (
-        <div className="border border-(--vscode-panel-border) p-3 text-sm">
+        <div className="border border-(--vscode-panel-border) p-3 ">
           <span>{result.changes} row(s) affected.</span>
           {result.lastInsertRowId !== undefined && (
-            <span className="ml-3 text-xs text-(--vscode-descriptionForeground)">
+            <span className="ml-3  text-(--vscode-descriptionForeground)">
               Last inserted row ID: {result.lastInsertRowId}
             </span>
           )}
@@ -129,7 +129,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
       )}
 
       {result.truncated && (
-        <p className="text-xs text-(--vscode-descriptionForeground)">
+        <p className=" text-(--vscode-descriptionForeground)">
           Showing {result.rows.length} of {result.rowCount} rows.
         </p>
       )}

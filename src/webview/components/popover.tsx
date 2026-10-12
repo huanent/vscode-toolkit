@@ -28,7 +28,7 @@ export function Popover({
         <BasePopover.Positioner sideOffset={sideOffset} align={align} className="z-50">
           <BasePopover.Popup
             className={cn(
-              'overflow-hidden rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-xs text-(--vscode-foreground) shadow-md focus:outline-none',
+              'overflow-hidden rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background))  text-(--vscode-foreground) shadow-md focus:outline-none',
               className,
             )}
           >

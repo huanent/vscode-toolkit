@@ -16,7 +16,7 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
     return (
       <Loading
         label={request ? `Sending ${request.method} ${request.url}...` : 'Running HTTP request...'}
-        className="p-4 text-sm"
+        className="p-4 "
       />
     );
   }

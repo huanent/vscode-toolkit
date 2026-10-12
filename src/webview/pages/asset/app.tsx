@@ -64,7 +64,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           <FormItem
             name="name"
             label="Connection name"
-            className="text-xs"
+            className=""
             error="Connection name is required."
             match="valueMissing"
           >
@@ -74,13 +74,13 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             <FormItem
               name="host"
               label="Host"
-              className="text-xs sm:col-span-2"
+              className=" sm:col-span-2"
               error="Host is required."
               match="valueMissing"
             >
               <Input required value={values.host} onChange={(event) => update('host', event.target.value)} />
             </FormItem>
-            <FormItem name="port" label="Port" className="text-xs" error="Enter a port between 1 and 65535.">
+            <FormItem name="port" label="Port" className="" error="Enter a port between 1 and 65535.">
               <Input
                 required
                 type="number"
@@ -115,7 +115,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             <FormItem
               name="proxyAssetId"
               label="Proxy tunnel (optional)"
-              className="text-xs"
+              className=""
               control={{
                 value: values.proxyAssetId ?? '',
                 onValueChange: (value) => update('proxyAssetId', value || undefined),
@@ -133,21 +133,17 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           )}
           {mysql && (
             <>
-              <FormItem name="database" label="Default database (optional)" className="text-xs">
+              <FormItem name="database" label="Default database (optional)" className="">
                 <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
               </FormItem>
-              <FormItem
-                name="tls"
-                label="TLS certificate verification"
-                className="flex flex-row items-center gap-2 text-xs"
-              >
+              <FormItem name="tls" label="TLS certificate verification" className="flex flex-row items-center gap-2 ">
                 <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
               </FormItem>
             </>
           )}
         </fieldset>
         {error && (
-          <p role="alert" className="mt-4 wrap-break-word text-xs text-(--vscode-errorForeground)">
+          <p role="alert" className="mt-4 wrap-break-word  text-(--vscode-errorForeground)">
             {error}
           </p>
         )}
@@ -166,10 +162,10 @@ function AssetForm({ data }: { data: AssetEditorData }) {
 
 function App() {
   const state = useHostData<AssetEditorData>();
-  if (state.status === 'loading') return <p className="p-4 text-xs">Loading...</p>;
+  if (state.status === 'loading') return <p className="p-4 ">Loading...</p>;
   if (state.status === 'error')
     return (
-      <p role="alert" className="p-4 text-xs text-(--vscode-errorForeground)">
+      <p role="alert" className="p-4  text-(--vscode-errorForeground)">
         {state.message}
       </p>
     );

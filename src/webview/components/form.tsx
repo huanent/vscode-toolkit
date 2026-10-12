@@ -24,10 +24,10 @@ export function Form(props: FormProps) {
 export function FormItem({ label, error, match, control, className, children, ...props }: FormItemProps) {
   return (
     <Field.Root {...props} className={cn('grid gap-1', className)}>
-      {label && <Field.Label className="text-xs font-medium">{label}</Field.Label>}
+      {label && <Field.Label className=" font-medium">{label}</Field.Label>}
       {control ? <Field.Control {...control} render={children as ReactElement} /> : children}
       {error && (
-        <Field.Error match={match} className="text-xs text-(--vscode-errorForeground)">
+        <Field.Error match={match} className=" text-(--vscode-errorForeground)">
           {error}
         </Field.Error>
       )}

@@ -13,9 +13,9 @@ export function HttpHeaders({ headers }: HttpHeadersProps) {
     <Collapsible title={`Headers (${entries.length})`} className="min-w-0">
       <div className="text-(--vscode-descriptionForeground) pl-3">
         {entries.length === 0 ? (
-          <div className="py-2 text-sm text-(--vscode-descriptionForeground)">No headers</div>
+          <div className="py-2  text-(--vscode-descriptionForeground)">No headers</div>
         ) : (
-          <dl className="http-headers-grid text-xs">
+          <dl className="http-headers-grid ">
             {entries.map(([name, value]) => (
               <Fragment key={name}>
                 <dt className="break-all font-semibold">{name}</dt>

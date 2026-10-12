@@ -59,7 +59,7 @@ export function Tabs({
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 px-3 text-sm',
+                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 px-3 ',
                   bottom ? 'border-t-2' : 'flex-1 border-b',
                   isActive
                     ? 'border-(--vscode-panelTitle-activeBorder,var(--vscode-focusBorder)) text-(--vscode-panelTitle-activeForeground,var(--vscode-foreground))'

@@ -17,12 +17,12 @@ export function ResultText({ title, content, language, action, description }: Re
     <section className="min-w-0" aria-label={title}>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
         <div className="flex min-w-0 items-center gap-2">
-          <h3 className="shrink-0 text-xs font-semibold">{title}</h3>
+          <h3 className="shrink-0  font-semibold">{title}</h3>
           {description && (
-            <span className="min-w-0 truncate text-xs text-(--vscode-descriptionForeground)">{description}</span>
+            <span className="min-w-0 truncate  text-(--vscode-descriptionForeground)">{description}</span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-1 text-xs text-(--vscode-descriptionForeground)">
+        <div className="flex flex-wrap items-center gap-1  text-(--vscode-descriptionForeground)">
           {action}
           <Button
             variant="ghost"
@@ -51,11 +51,11 @@ export function ResultText({ title, content, language, action, description }: Re
         </div>
       </div>
       {content ? (
-        <pre className="max-h-125 overflow-auto rounded-sm border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 font-mono text-xs text-(--vscode-editor-foreground) select-text whitespace-pre-wrap wrap-break-word">
+        <pre className="max-h-125 overflow-auto rounded-sm border border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 font-mono  text-(--vscode-editor-foreground) select-text whitespace-pre-wrap wrap-break-word">
           {content}
         </pre>
       ) : (
-        <div className="border border-(--vscode-panel-border) p-3 text-xs text-(--vscode-descriptionForeground)">
+        <div className="border border-(--vscode-panel-border) p-3  text-(--vscode-descriptionForeground)">
           Empty {title.toLowerCase()}
         </div>
       )}

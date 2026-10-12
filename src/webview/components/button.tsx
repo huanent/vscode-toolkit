@@ -22,9 +22,9 @@ const variants = {
 } as const;
 
 const sizes = {
-  sm: { regular: 'h-6 min-w-6 px-2 text-xs', icon: 'size-6 p-0 text-xs' },
-  md: { regular: 'h-7 min-w-7 px-3 text-xs', icon: 'size-7 p-0 text-xs' },
-  lg: { regular: 'h-8 min-w-8 px-4 text-sm', icon: 'size-8 p-0 text-sm' },
+  sm: { regular: 'h-6 min-w-6 px-2 ', icon: 'size-6 p-0 ' },
+  md: { regular: 'h-7 min-w-7 px-3 ', icon: 'size-7 p-0 ' },
+  lg: { regular: 'h-8 min-w-8 px-4 ', icon: 'size-8 p-0 ' },
 } as const;
 
 export function Button({

@@ -63,7 +63,7 @@ export function DatabaseSelector({
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 max-w-48 gap-1.5 px-2 text-xs font-normal"
+            className="h-7 max-w-48 gap-1.5 px-2  font-normal"
             title={currentDatabase ? `Database: ${currentDatabase}` : 'Select database'}
             aria-label="Select and manage databases"
             disabled={disabled}
@@ -83,14 +83,14 @@ export function DatabaseSelector({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 prefix={<Icon name="search" size="sm" variant="muted" />}
-                className="h-6 text-xs"
+                className="h-6 "
                 autoFocus
               />
             </div>
           )}
           <div className="min-h-0 flex-1 overflow-auto p-1">
             {filteredDatabases.length === 0 ? (
-              <div className="p-2 text-center text-xs text-(--vscode-descriptionForeground)">No databases found</div>
+              <div className="p-2 text-center  text-(--vscode-descriptionForeground)">No databases found</div>
             ) : (
               filteredDatabases.map((db) => {
                 const isSelected = db === currentDatabase;
@@ -224,7 +224,7 @@ export function DatabaseSelector({
               />
             </FormItem>
             {createError && (
-              <p className="text-xs text-(--vscode-errorForeground)" role="alert">
+              <p className=" text-(--vscode-errorForeground)" role="alert">
                 {createError}
               </p>
             )}

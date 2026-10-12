@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { ComponentPropsWithRef } from 'react';
 import type { Credential, CredentialSummary } from '@/features/credential/protocol';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
+import { Select, type SelectProps } from '@/webview/components/select';
 import { CredentialDialog } from './credential-dialog';
 
 interface CredentialSelectorProps {
@@ -14,26 +14,21 @@ export function CredentialSelector({
   credentials,
   onCreate,
   ...selectProps
-}: CredentialSelectorProps & ComponentPropsWithRef<'select'>) {
+}: CredentialSelectorProps & Omit<SelectProps, 'options' | 'placeholder' | 'aria-label'>) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <>
       <div className="flex min-w-0 items-start gap-2">
-        <select
+        <Select
           {...selectProps}
           aria-label="Credential"
-          className="h-7 w-full rounded border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-        >
-          <option value="" disabled>
-            Select a credential
-          </option>
-          {credentials.map((credential) => (
-            <option key={credential.id} value={credential.id}>
-              {credential.name}
-            </option>
-          ))}
-        </select>
+          placeholder="Select a credential"
+          options={credentials.map((credential) => ({
+            value: credential.id,
+            label: `${credential.username || '-'} - ${credential.type === 'password' ? 'Password' : 'Private Key'} - ${credential.description || '-'}`,
+          }))}
+        />
         <Button variant="ghost" prefix={<Icon name="add" />} onClick={() => setDialogOpen(true)}></Button>
       </div>
       <CredentialDialog

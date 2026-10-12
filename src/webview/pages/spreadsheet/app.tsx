@@ -71,7 +71,7 @@ function App() {
 function SpreadsheetTable({ rows }: { rows: string[][] }) {
   const columnCount = Math.max(0, ...rows.map((row) => row.length));
   return (
-    <table className="border-separate border-spacing-0 text-xs">
+    <table className="border-separate border-spacing-0 ">
       <thead className="sticky top-0 z-2">
         <tr>
           <th className="sticky left-0 z-3 h-7 min-w-12 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background)" />

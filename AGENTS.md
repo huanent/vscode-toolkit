@@ -5,7 +5,7 @@ These instructions apply to the entire repository. Webview-specific rules apply 
 ## Project-Wide Rules
 
 - Do not add tests unless the user explicitly requests them, including during bug fixes, feature work, and refactors.
-- Refactors and renames do not need to preserve backward compatibility unless the user explicitly requests it.
+- Breaking or destructive changes, refactors, and renames do not need to preserve backward compatibility unless the user explicitly requests it.
 - Use `kebab-case` for code filenames, `PascalCase` for React components and TypeScript types, and `camelCase` for functions and variables.
 - When a file's responsibility changes, promptly rename it to reflect its current responsibility.
 - When a file accumulates too many responsibilities, split it into focused files with clear ownership.
@@ -60,5 +60,5 @@ Reuse the shared webview infrastructure; do not re-implement it per feature:
 - Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
 - Never use inline `style` attributes in webview JSX; the CSP uses `default-src 'none'`.
 - Use VS Code CSS variables for colors so the webview follows the active theme.
-- Use built-in integer Tailwind tokens for dimensions, such as `mt-2`, `px-4`, `size-10`, and `text-sm`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens.
+- Use built-in integer Tailwind tokens for dimensions, such as `mt-2`, `px-4`, `size-10`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens.
 - Before adding styles, check for reusable integer Tailwind tokens and VS Code theme variables.

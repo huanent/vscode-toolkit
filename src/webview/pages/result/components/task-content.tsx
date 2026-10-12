@@ -26,7 +26,7 @@ function ResultTaskContent({ task }: { task: ResultTask }) {
   const content = task.output ?? task.error ?? task.input;
   return (
     <div className="flex flex-col gap-3 p-4">
-      <div className="text-xs text-(--vscode-descriptionForeground)">
+      <div className=" text-(--vscode-descriptionForeground)">
         No result renderer is registered for &quot;{task.kind}&quot;.
       </div>
       {content !== undefined && (
@@ -56,7 +56,7 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
         </div>
         <footer
           aria-label="Task status"
-          className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1 text-xs text-(--vscode-descriptionForeground)"
+          className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1  text-(--vscode-descriptionForeground)"
         >
           <span className={`flex items-center gap-1 ${presentation.className}`} role="status">
             <Icon
@@ -77,7 +77,7 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
   }
 
   if (loading) {
-    return <Loading label="Loading task history..." className="p-4 text-sm" />;
+    return <Loading label="Loading task history..." className="p-4 " />;
   }
 
   if (error) {

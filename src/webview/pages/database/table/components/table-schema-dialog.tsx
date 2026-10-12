@@ -301,7 +301,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
+              <span className=" font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
               <Button variant="secondary" size="sm" prefix={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
                 Add Column
               </Button>
@@ -319,7 +319,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
           {error && (
             <div
               role="alert"
-              className="rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2 text-xs text-(--vscode-errorForeground)"
+              className="rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2  text-(--vscode-errorForeground)"
             >
               {error}
             </div>

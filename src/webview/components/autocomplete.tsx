@@ -42,7 +42,7 @@ export function Autocomplete({ items, value, onValueChange, disabled, suffix, ..
       </BaseAutocomplete.InputGroup>
       <BaseAutocomplete.Portal>
         <BaseAutocomplete.Positioner align="start" sideOffset={4} className="z-50 w-(--anchor-width)">
-          <BaseAutocomplete.Popup className="max-h-64 w-full overflow-auto rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-xs text-(--vscode-foreground) shadow-sm">
+          <BaseAutocomplete.Popup className="max-h-64 w-full overflow-auto rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-foreground) shadow-sm">
             <BaseAutocomplete.List>
               {(item: string) => (
                 <BaseAutocomplete.Item

@@ -33,7 +33,7 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           value={option.value}
           disabled={option.disabled}
-          className="inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-sm px-2 text-xs text-(--vscode-foreground) enabled:hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-sm px-2  text-(--vscode-foreground) enabled:hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
         >
           {option.label}
         </Toggle>

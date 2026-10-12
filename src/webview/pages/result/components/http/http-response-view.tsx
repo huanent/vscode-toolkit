@@ -25,13 +25,13 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
   return (
     <div className="flex min-w-0 flex-col px-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
+        <div className="flex min-w-0 flex-1 items-center gap-2 ">
           <span className="shrink-0 font-mono font-semibold">{response.request.method}</span>
           <span className="min-w-0 truncate font-mono select-text" title={response.request.url}>
             {response.request.url}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-2 font-mono text-xs">
+        <div className="flex shrink-0 items-center gap-2 font-mono ">
           <span className={statusColorClass}>
             {response.status} {response.statusText}
           </span>

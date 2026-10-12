@@ -11,7 +11,7 @@ export function ErrorMessage({ message, className }: ErrorMessageProps) {
     <div
       role="alert"
       className={cn(
-        'flex min-w-0 items-start gap-2 rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2 text-xs text-(--vscode-errorForeground)',
+        'flex min-w-0 items-start gap-2 rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2  text-(--vscode-errorForeground)',
         className,
       )}
     >

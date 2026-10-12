@@ -1,6 +1,6 @@
 export interface Credential {
   id: string;
-  name: string;
+  description: string;
   type: 'password' | 'privateKey';
   username?: string;
   password?: string;
@@ -10,7 +10,9 @@ export interface Credential {
 
 export interface CredentialSummary {
   id: string;
-  name: string;
+  description: string;
+  type: 'password' | 'privateKey';
+  username?: string;
 }
 
 export type CredentialHostMessage =

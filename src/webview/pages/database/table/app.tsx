@@ -86,8 +86,8 @@ function App() {
             <div className="grid min-h-0 flex-1 place-items-center px-4 text-center">
               <div className="grid justify-items-center">
                 <Icon name="database" size="2xl" variant="muted" className="mb-3" />
-                <h2 className="text-sm font-semibold">No tables found</h2>
-                <p className="mt-1 text-xs text-(--vscode-descriptionForeground)">
+                <h2 className=" font-semibold">No tables found</h2>
+                <p className="mt-1  text-(--vscode-descriptionForeground)">
                   {state.data.engine === 'mysql'
                     ? `Database "${state.data.currentDatabase ?? ''}" contains no tables.`
                     : 'This SQLite database contains no user tables.'}
@@ -96,7 +96,7 @@ function App() {
             </div>
           )}
         </section>
-        <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1 text-xs tabular-nums text-(--vscode-descriptionForeground)">
+        <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1  tabular-nums text-(--vscode-descriptionForeground)">
           <span>
             {query
               ? `${visibleTables.length.toLocaleString()} of ${tables.length.toLocaleString()} tables`
