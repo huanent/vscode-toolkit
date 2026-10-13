@@ -22,27 +22,55 @@ export function sortEntries(entries: readonly ExplorerEntry[]): ExplorerEntry[] 
   });
 }
 
-/** Formats the location as slash-separated names, e.g. `project/src/features`. */
-export function formatAddress(index: ReadonlyMap<string, ExplorerEntry>, location: ExplorerLocation): string {
-  if (location === null) return '';
-  const segments = location.split('/');
-  return segments.map((_, depth) => index.get(segments.slice(0, depth + 1).join('/'))?.name ?? '').join('/');
+/** Filesystem path of an entry, e.g. `/Users/me/project/src`. */
+export function getEntryPath(entry: ExplorerEntry): string {
+  return decodeURIComponent(new URL(entry.uri).pathname);
 }
 
-/** Resolves a typed address to a directory location. Returns `undefined` when no directory matches. */
-export function resolveAddress(entries: readonly ExplorerEntry[], address: string): ExplorerLocation | undefined {
-  const names = address
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-  if (!names.length) return null;
+/** Formats the current folder's filesystem path. The workspace root (`null`) has no address. */
+export function formatAddress(index: ReadonlyMap<string, ExplorerEntry>, location: ExplorerLocation): string {
+  const folder = location === null ? undefined : index.get(location);
+  return folder ? getEntryPath(folder) : '';
+}
 
-  let candidates: readonly ExplorerEntry[] = entries;
-  let target: ExplorerEntry | undefined;
-  for (const name of names) {
-    target = candidates.find((entry) => entry.name === name);
-    if (!target) return undefined;
-    candidates = target.children ?? [];
+export type AddressSegment = {
+  name: string;
+  /** Entry id of the folder this segment opens; `undefined` when the folder is not listed in the explorer. */
+  location?: string;
+};
+
+/** Splits the current folder's filesystem path into breadcrumb segments, starting from the root. */
+export function getAddressSegments(
+  index: ReadonlyMap<string, ExplorerEntry>,
+  location: ExplorerLocation,
+): AddressSegment[] {
+  const address = formatAddress(index, location);
+  if (!address) return [];
+
+  const locationByPath = new Map<string, string>();
+  for (const entry of index.values()) {
+    if (entry.type === 'directory') locationByPath.set(getEntryPath(entry), entry.id);
   }
-  return target?.type === 'directory' ? target.id : undefined;
+
+  const segments: AddressSegment[] = [{ name: '/' }];
+  let path = '';
+  for (const name of address.split('/').filter(Boolean)) {
+    path += `/${name}`;
+    segments.push({ name, location: locationByPath.get(path) });
+  }
+  return segments;
+}
+
+/** Resolves a typed filesystem path to a directory location. Returns `undefined` when no directory matches. */
+export function resolveAddress(
+  index: ReadonlyMap<string, ExplorerEntry>,
+  address: string,
+): ExplorerLocation | undefined {
+  const path = address.trim().replace(/\/+$/, '');
+  if (!path) return null;
+
+  for (const entry of index.values()) {
+    if (entry.type === 'directory' && getEntryPath(entry) === path) return entry.id;
+  }
+  return undefined;
 }

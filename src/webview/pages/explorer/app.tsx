@@ -11,6 +11,7 @@ import { FileListView } from '@/webview/pages/explorer/components/file-list-view
 import {
   type ExplorerLocation,
   formatAddress,
+  getAddressSegments,
   indexEntries,
   resolveAddress,
   sortEntries,
@@ -82,15 +83,17 @@ function App() {
     <main className="flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
       <ExplorerToolbar
         address={formatAddress(index, currentLocation)}
+        addressSegments={getAddressSegments(index, currentLocation)}
         canGoBack={history.length > 0}
         viewMode={viewMode}
         onBack={goBack}
         onAddressSubmit={(address) => {
-          const target = resolveAddress(entries, address);
+          const target = resolveAddress(index, address);
           if (target === undefined) return false;
           navigate(target);
           return true;
         }}
+        onNavigate={navigate}
         onViewModeChange={setViewMode}
       />
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden" aria-label="Files">
