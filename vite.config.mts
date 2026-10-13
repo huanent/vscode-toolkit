@@ -1,5 +1,4 @@
 import { readFileSync, readdirSync } from 'node:fs';
-import { cp } from 'node:fs/promises';
 import { builtinModules } from 'node:module';
 import { relative, resolve, sep } from 'node:path';
 import { defineConfig, type Plugin, type UserConfig } from 'vite';
@@ -67,15 +66,7 @@ export default defineConfig(({ mode }) => {
   const extensionBuild = target === 'extension';
   const targetConfig: Pick<UserConfig, 'plugins' | 'build'> = extensionBuild
     ? {
-        plugins: [
-          {
-            name: 'copy-extension-resources',
-            closeBundle: () =>
-              cp(resolve(import.meta.dirname, 'resource'), resolve(import.meta.dirname, 'dist/resource'), {
-                recursive: true,
-              }),
-          },
-        ],
+        plugins: [],
         build: {
           lib: {
             entry: resolve(import.meta.dirname, 'src/extension.ts'),
@@ -88,8 +79,7 @@ export default defineConfig(({ mode }) => {
               ...builtinModules,
               ...builtinModules.map((name) => `node:${name}`),
               'node:sqlite',
-              'ssh2',
-              'yauzl',
+              'cpu-features',
             ],
             output: {
               exports: 'named',

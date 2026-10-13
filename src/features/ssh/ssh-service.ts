@@ -36,7 +36,7 @@ export class SshService implements AssetProvider {
   getFormValues(record?: AssetRecord): AssetFormValues {
     const previous = record ? requireSshConfiguration(record) : undefined;
     return {
-      name: previous?.name ?? 'SSH',
+      name: previous?.name ?? '',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
       credentialId: previous?.credentialId ?? '',

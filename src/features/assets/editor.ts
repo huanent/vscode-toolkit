@@ -16,8 +16,9 @@ export function openAssetEditor(
   credentials: CredentialService,
   previous?: AssetRecord,
   folder?: string,
+  draft?: AssetRecord,
 ): void {
-  const values = provider.getFormValues(previous);
+  const values = provider.getFormValues(draft ?? previous);
   const assetsUri = vscode.Uri.file(__dirname);
   const panel = vscode.window.createWebviewPanel(
     'toolkit.assetEditor',

@@ -113,6 +113,13 @@ export class AssetService {
     }
   }
 
+  async copyName(asset: AssetRecord): Promise<string> {
+    const names = new Set((await this.list()).map((entry) => entry.name));
+    let name = `${asset.name} copy`;
+    for (let index = 2; names.has(name); index++) name = `${asset.name} copy ${index}`;
+    return name;
+  }
+
   async delete(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
     const target = (await this.findRecordPath(asset.id)) ?? path.join(this.directory, `${asset.id}.json`);

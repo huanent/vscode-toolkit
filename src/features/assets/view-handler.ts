@@ -137,6 +137,19 @@ export function createAssetsView(
           return;
         await service.delete(asset);
         providerFor(asset.type).invalidate(asset.id);
+      } else if (request.action === 'duplicate') {
+        const draft = { ...asset, name: await service.copyName(asset) };
+        openAssetEditor(
+          context,
+          service,
+          providerFor(asset.type),
+          refresh,
+          credentials,
+          undefined,
+          asset.folder,
+          draft,
+        );
+        return;
       } else {
         await providerFor(asset.type).execute(asset, request);
       }
@@ -147,7 +160,7 @@ export function createAssetsView(
       await vscode.window.showErrorMessage(message);
     }
   };
-  for (const action of ['add', 'edit', 'query'] as const) {
+  for (const action of ['add', 'edit', 'duplicate', 'query'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(
         `toolkit.assets.${action}`,
@@ -268,7 +281,7 @@ function isAssetRequest(value: unknown): value is AssetRequest {
   return (
     message.type === 'assetAction' &&
     typeof message.action === 'string' &&
-    ['add', 'edit', 'delete', 'connect', 'query', 'preview'].includes(message.action) &&
+    ['add', 'edit', 'delete', 'duplicate', 'connect', 'query', 'preview'].includes(message.action) &&
     [message.id, message.database, message.table, message.assetType, message.folder].every(
       (field) => field === undefined || typeof field === 'string',
     )

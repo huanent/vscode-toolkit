@@ -37,7 +37,7 @@ export class MysqlService implements AssetProvider {
   getFormValues(record?: AssetRecord): AssetFormValues {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
     return {
-      name: previous?.name ?? 'MySQL',
+      name: previous?.name ?? '',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 3306,
       credentialId: previous?.credentialId ?? '',

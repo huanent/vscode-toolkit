@@ -56,7 +56,7 @@ export type AssetsMessage =
 
 export interface AssetRequest {
   type: 'assetAction';
-  action: 'add' | 'edit' | 'delete' | 'connect' | 'query' | 'preview';
+  action: 'add' | 'edit' | 'delete' | 'duplicate' | 'connect' | 'query' | 'preview';
   id?: string;
   database?: string;
   table?: string;
