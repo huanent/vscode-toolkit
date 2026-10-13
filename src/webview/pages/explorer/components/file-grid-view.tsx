@@ -20,17 +20,17 @@ function describeEntry(entry: ExplorerEntry): string {
 
 export function FileGridView({ entries, onOpen }: FileGridViewProps) {
   return (
-    <ul aria-label="Files" className="flex flex-wrap gap-1">
+    <ul aria-label="Files" className="min-h-0 flex-1 overflow-auto grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] content-start gap-2 p-2">
       {entries.map((entry) => (
         <li key={entry.id}>
           <button
             type="button"
             title={describeEntry(entry)}
-            className="flex w-24 cursor-pointer flex-col items-center gap-1 rounded-sm p-2 hover:bg-(--vscode-list-hoverBackground)"
-            onClick={() => onOpen(entry)}
+            className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-md border border-transparent p-3 transition-colors hover:border-(--vscode-focusBorder) hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+            onDoubleClick={() => onOpen(entry)}
           >
             <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="2xl" />
-            <span className="line-clamp-2 w-full wrap-break-word text-center text-sm">{entry.name}</span>
+            <span className="line-clamp-2 w-full wrap-break-word text-center text-sm leading-4">{entry.name}</span>
           </button>
         </li>
       ))}

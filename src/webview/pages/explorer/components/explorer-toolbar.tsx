@@ -33,7 +33,7 @@ export function ExplorerToolbar({
   };
 
   return (
-    <header className="flex items-center gap-1 border-b border-(--vscode-panel-border) p-1">
+    <header className="flex items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-2 shrink-0">
       <Button
         variant="ghost"
         size="md"
@@ -45,7 +45,7 @@ export function ExplorerToolbar({
       <Input
         aria-label="Address"
         aria-invalid={invalid || undefined}
-        className="min-w-0 flex-1"
+        className="min-w-0 flex-1 rounded-md"
         value={draft ?? address}
         onChange={(event) => {
           setDraft(event.target.value);

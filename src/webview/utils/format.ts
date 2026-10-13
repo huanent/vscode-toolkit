@@ -11,5 +11,9 @@ export function formatSize(size: number): string {
 }
 
 export function formatDateTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  const date = new Date(timestamp);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  return `${day} ${time}`;
 }

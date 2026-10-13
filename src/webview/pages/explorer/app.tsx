@@ -79,7 +79,7 @@ function App() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
+    <main className="flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
       <ExplorerToolbar
         address={formatAddress(index, currentLocation)}
         canGoBack={history.length > 0}
@@ -93,7 +93,7 @@ function App() {
         }}
         onViewModeChange={setViewMode}
       />
-      <section className="min-h-0 flex-1 overflow-auto p-2" aria-label="Files">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden" aria-label="Files">
         {children.length === 0 ? (
           <Empty title="Empty folder" description="This folder has no files." icon="folder" />
         ) : viewMode === 'list' ? (
