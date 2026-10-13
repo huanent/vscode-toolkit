@@ -38,7 +38,6 @@
   }
 }
 
-/* font-size stays off :root so rem-based Tailwind spacing (h-7, p-4, ...) keeps its default scale. */
 :root {
   font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
   color: var(--vscode-foreground);

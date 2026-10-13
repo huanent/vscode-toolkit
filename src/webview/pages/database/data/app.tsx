@@ -60,7 +60,7 @@ function createColumn(
       </div>
     ),
     headerClassName: 'min-w-36 max-w-80 bg-(--vscode-editor-background) text-left',
-    className: 'h-7 max-w-80 font-mono',
+    className: 'h-6 max-w-80 font-mono',
     cell: (row) => {
       const value = row.values[columnIndex] ?? null;
       const displayValue = value === null ? 'NULL' : String(value);

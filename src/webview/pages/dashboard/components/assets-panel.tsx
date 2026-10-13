@@ -30,10 +30,6 @@ export function AssetsPanel({
             ariaLabel="Assets"
             collapseAllTrigger={collapseAllTrigger}
             items={entries}
-            onActivate={(item) => {
-              const request = toAssetRequest(item);
-              if (request) postToHost(request);
-            }}
             renderActions={(item) => {
               const request = toAssetRequest(item);
               if (!request) return null;

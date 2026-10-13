@@ -74,11 +74,11 @@ function SpreadsheetTable({ rows }: { rows: string[][] }) {
     <table className="border-separate border-spacing-0 ">
       <thead className="sticky top-0 z-2">
         <tr>
-          <th className="sticky left-0 z-3 h-7 min-w-12 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background)" />
+          <th className="sticky left-0 z-3 h-6 min-w-12 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background)" />
           {Array.from({ length: columnCount }, (_, index) => (
             <th
               key={index}
-              className="h-7 min-w-28 max-w-80 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-center font-normal text-(--vscode-descriptionForeground)"
+              className="h-6 min-w-28 max-w-80 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-center font-normal text-(--vscode-descriptionForeground)"
             >
               {getColumnName(index)}
             </th>
@@ -88,13 +88,13 @@ function SpreadsheetTable({ rows }: { rows: string[][] }) {
       <tbody>
         {rows.map((row, rowIndex) => (
           <tr key={rowIndex}>
-            <th className="sticky left-0 z-1 h-7 min-w-12 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-right font-normal text-(--vscode-descriptionForeground)">
+            <th className="sticky left-0 z-1 h-6 min-w-12 border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-right font-normal text-(--vscode-descriptionForeground)">
               {rowIndex + 1}
             </th>
             {Array.from({ length: columnCount }, (_, columnIndex) => (
               <td
                 key={columnIndex}
-                className="h-7 min-w-28 max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 text-ellipsis whitespace-nowrap"
+                className="h-6 min-w-28 max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 text-ellipsis whitespace-nowrap"
                 title={row[columnIndex] ?? ''}
               >
                 {row[columnIndex] ?? ''}

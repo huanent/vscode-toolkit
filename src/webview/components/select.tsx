@@ -19,7 +19,7 @@ export type SelectProps = Omit<SelectRootProps<string>, 'children' | 'items' | '
 };
 
 const scrollArrowClassName =
-  'z-10 flex h-6 w-full items-center justify-center bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-descriptionForeground)';
+  'z-10 flex w-full items-center justify-center bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-descriptionForeground)';
 
 export function Select({
   options,

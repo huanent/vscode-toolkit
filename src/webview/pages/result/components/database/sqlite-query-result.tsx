@@ -73,7 +73,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
                   <th
                     key={`${index}:${column}`}
                     scope="col"
-                    className="h-7 min-w-36 max-w-80 break-words border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-left font-medium"
+                    className="h-6 min-w-36 max-w-80 break-words border-r border-b border-(--vscode-panel-border) bg-(--vscode-sideBar-background) px-2 text-left font-medium"
                   >
                     {column}
                   </th>
@@ -86,7 +86,7 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
                   {result.columns.map((column, columnIndex) => (
                     <td
                       key={`${columnIndex}:${column}`}
-                      className="h-7 max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 font-mono text-ellipsis whitespace-nowrap"
+                      className="h-6 max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 font-mono text-ellipsis whitespace-nowrap"
                       title={formatCell(row[columnIndex] ?? null)}
                     >
                       <span

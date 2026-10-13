@@ -1,5 +1,5 @@
 export const fieldClassName =
-  'h-7 w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) placeholder:text-(--vscode-input-placeholderForeground) focus:border-(--vscode-focusBorder) focus:outline-none aria-invalid:border-(--vscode-inputValidation-errorBorder) data-invalid:border-(--vscode-inputValidation-errorBorder) disabled:cursor-not-allowed disabled:opacity-50';
+  'h-6 w-full min-w-0 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) placeholder:text-(--vscode-input-placeholderForeground) focus:border-(--vscode-focusBorder) focus:outline-none aria-invalid:border-(--vscode-inputValidation-errorBorder) data-invalid:border-(--vscode-inputValidation-errorBorder) disabled:cursor-not-allowed disabled:opacity-50';
 
 export const popupClassName =
   'rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-editorWidget-foreground,var(--vscode-foreground)) shadow-sm outline-none';

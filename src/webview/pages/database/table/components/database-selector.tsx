@@ -63,7 +63,7 @@ export function DatabaseSelector({
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 max-w-48 gap-1.5 px-2  font-normal"
+            className="h-6 max-w-48 gap-1.5 px-2  font-normal"
             title={currentDatabase ? `Database: ${currentDatabase}` : 'Select database'}
             aria-label="Select and manage databases"
             disabled={disabled}

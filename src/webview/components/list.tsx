@@ -3,7 +3,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { AriaRole, Key, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type ListItemState = {
-  focused: boolean;
   selected: boolean;
   listHasFocus: boolean;
 };
@@ -128,7 +127,6 @@ export function List<T>({
       listId={listId}
       itemRole={itemRole}
       selected={listItem.key === selectedKey}
-      focused={listItem.key === activeKey}
       listHasFocus={listHasFocus}
       onClick={(event) => handleItemClick(listItem, event)}
     />
@@ -168,13 +166,12 @@ type ListRowProps<T> = {
   listId: string;
   itemRole: AriaRole;
   selected: boolean;
-  focused: boolean;
   listHasFocus: boolean;
   onClick: (event: MouseEvent<HTMLDivElement>) => void;
 };
 
-function ListRow<T>({ listItem, listId, itemRole, selected, focused, listHasFocus, onClick }: ListRowProps<T>) {
-  const state = { focused, selected, listHasFocus };
+function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClick }: ListRowProps<T>) {
+  const state = { selected, listHasFocus };
   const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
 
   return (
@@ -182,10 +179,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, focused, listHasFocu
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex min-h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm',
-        focused &&
-          listHasFocus &&
-          'outline -outline-offset-1 outline-(--vscode-list-focusOutline,var(--vscode-focusBorder))',
+        'group relative flex h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm',
         !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
         selected &&
           listHasFocus &&
@@ -204,9 +198,11 @@ function ListRow<T>({ listItem, listId, itemRole, selected, focused, listHasFocu
     >
       {icon}
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-        <span className="truncate">{listItem.label}</span>
+        <span className="max-w-full shrink-0 truncate">{listItem.label}</span>
         {listItem.description !== undefined && (
-          <span className="truncate text-sm text-(--vscode-descriptionForeground)">{listItem.description}</span>
+          <span className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
+            {listItem.description}
+          </span>
         )}
       </div>
       {listItem.actions && (
