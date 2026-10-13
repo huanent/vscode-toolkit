@@ -11,8 +11,6 @@ export interface AssetsViewHandler extends WebviewViewHandler {
   refresh(): Promise<void>;
 }
 
-const aiAccessBadge = { text: 'AI', label: 'AI tool access enabled' };
-
 export function createAssetsView(
   context: vscode.ExtensionContext,
   service: AssetService,
@@ -35,11 +33,11 @@ export function createAssetsView(
       return {
         ...entry,
         icon: provider.icon,
-        badge: isAiEnabled(asset) ? aiAccessBadge : undefined,
         path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
         context: {
           ...entry.context,
           ...(asset.folder ? { assetFolderPath: asset.folder } : {}),
+          ...(isAiEnabled(asset) ? { assetAiEnabled: true } : {}),
           ...hostContext,
         },
       };
@@ -114,6 +112,12 @@ export function createAssetsView(
     for (const asset of assets) providerFor(asset.type).invalidate(asset.id);
     await refresh();
   };
+  const copyAiReference = async (id: string) => {
+    const asset = await service.get(id);
+    const path = asset.folder ? `${asset.folder}/${asset.name}` : asset.name;
+    await vscode.env.clipboard.writeText(`[Asset "${path}", id: ${asset.id}, type: ${asset.type}]`);
+    void vscode.window.setStatusBarMessage('AI reference copied to clipboard', 2000);
+  };
   const act = async (request: AssetRequest) => {
     try {
       if (request.action === 'add') {
@@ -184,6 +188,12 @@ export function createAssetsView(
       if (typeof argument?.assetHost !== 'string') return;
       await vscode.env.clipboard.writeText(argument.assetHost);
       void vscode.window.setStatusBarMessage('Host copied to clipboard', 2000);
+    }),
+    vscode.commands.registerCommand('toolkit.assets.copyAiReference', (argument?: { assetId?: unknown }) => {
+      if (typeof argument?.assetId !== 'string') return;
+      return copyAiReference(argument.assetId).catch((error: unknown) =>
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+      );
     }),
     vscode.commands.registerCommand('toolkit.assets.createFolder', (target: unknown) =>
       createFolder(target).catch((error: unknown) =>

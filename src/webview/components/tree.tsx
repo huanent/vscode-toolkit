@@ -4,13 +4,10 @@ import type { Key, KeyboardEvent, ReactNode } from 'react';
 import { Icon } from '@/webview/components/icons';
 import { List } from '@/webview/components/list';
 
-export type TreeBadge = { text: string; label: string };
-
 type TreeItemBase = {
   path: string;
   name: string;
   icon?: string;
-  badge?: TreeBadge;
   context?: Readonly<Record<string, string | number | boolean>>;
 };
 
@@ -99,12 +96,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderA
             {node.item.type === 'file' && <Icon className="py-1" name={node.item.icon ?? 'file'} />}
           </>
         ),
-        label: (
-          <>
-            {node.item.name}
-            {node.item.badge && <TreeBadgeMarker badge={node.item.badge} />}
-          </>
-        ),
+        label: node.item.name,
         description: node.item.type === 'file' ? node.item.detail : undefined,
         context: node.item.context,
         actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,
@@ -120,17 +112,6 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderA
       onItemClick={activateNode}
       onKeyDown={handleKeyDown}
     />
-  );
-}
-
-function TreeBadgeMarker({ badge }: { badge: TreeBadge }) {
-  return (
-    <span
-      className="ml-1 shrink-0 rounded-sm bg-(--vscode-badge-background) px-1 text-xs leading-none text-(--vscode-badge-foreground)"
-      title={badge.label}
-    >
-      {badge.text}
-    </span>
   );
 }
 

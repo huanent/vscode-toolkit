@@ -459,6 +459,11 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.assets.copyAiReference",
+        "title": "Copy AI Reference",
+        "category": "Assets"
+      },
+      {
         "command": "toolkit.assets.query",
         "title": "Run SQL Query",
         "category": "Assets"
@@ -767,6 +772,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.assets.copyAiReference",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.rename",
           "when": "false"
         },
@@ -859,6 +868,11 @@
           "command": "toolkit.assets.copyHost",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetHost",
           "group": "2_actions@4"
+        },
+        {
+          "command": "toolkit.assets.copyAiReference",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetAiEnabled",
+          "group": "2_actions@6"
         },
         {
           "command": "toolkit.assets.edit",
