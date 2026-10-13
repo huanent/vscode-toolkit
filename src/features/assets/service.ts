@@ -9,6 +9,7 @@ export interface AssetRecord {
   type: string;
   name: string;
   folder?: string;
+  enableAI?: boolean;
 }
 
 export class AssetService {
@@ -60,6 +61,12 @@ export class AssetService {
   async get(id: string): Promise<AssetRecord> {
     const asset = (await this.list()).find((entry) => entry.id === id);
     if (!asset) throw new Error('Asset no longer exists.');
+    return asset;
+  }
+
+  async requireAiAsset(id: string): Promise<AssetRecord> {
+    const asset = await this.get(id);
+    if (!isAiEnabled(asset)) throw new Error('Asset is not enabled for AI.');
     return asset;
   }
 
@@ -236,6 +243,10 @@ export class AssetService {
   private secretKey(asset: AssetRecord): string {
     return `${asset.type}:${this.directory}:${asset.id}`;
   }
+}
+
+export function isAiEnabled(asset: AssetRecord): boolean {
+  return asset.enableAI !== false;
 }
 
 function isAssetRecord(value: unknown): value is AssetRecord {

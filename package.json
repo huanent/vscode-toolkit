@@ -322,21 +322,25 @@
         }
       },
       {
-        "name": "workflowCreate",
-        "displayName": "Create Workflow",
+        "name": "workflowUpsert",
+        "displayName": "Create or Update Workflow",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "workflowCreate",
-        "modelDescription": "Create a saved workflow from ordered steps. Steps run in order and stop at the first failure. Returns the new workflow ID.",
+        "toolReferenceName": "workflowUpsert",
+        "modelDescription": "Create a saved workflow from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Returns the workflow ID and whether it was created or updated.",
         "inputSchema": {
           "type": "object",
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "Existing workflow ID to update. Omit to create a new workflow."
+            },
             "name": {
               "type": "string",
               "description": "Workflow name."
             },
             "folderId": {
               "type": "string",
-              "description": "Optional destination folder ID. Omit to create the workflow at the root."
+              "description": "Optional destination folder ID for new workflows. Ignored when updating."
             },
             "steps": {
               "type": "array",

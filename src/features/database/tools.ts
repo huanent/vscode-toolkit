@@ -22,7 +22,7 @@ export function registerDatabaseTools(mysql: MysqlService): vscode.Disposable {
       const controller = new AbortController();
       const cancellation = token.onCancellationRequested(() => controller.abort());
       try {
-        const asset = await mysql.requireAsset(input.id);
+        const asset = await mysql.requireAiAsset(input.id);
         const result = await mysql.query(asset, input.database, input.sql, controller.signal);
         return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
       } finally {

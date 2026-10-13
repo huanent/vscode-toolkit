@@ -132,6 +132,9 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               </FormItem>
             </>
           )}
+          <FormItem name="enableAI" label="Allow AI tool access" className="flex flex-row items-center gap-2 ">
+            <Checkbox checked={values.enableAI} onCheckedChange={(checked) => update('enableAI', checked)} />
+          </FormItem>
         </fieldset>
         {error && <ErrorMessage message={error} className="mt-4" />}
         <footer className="mt-6 flex gap-2 border-t border-(--vscode-panel-border) pt-4">

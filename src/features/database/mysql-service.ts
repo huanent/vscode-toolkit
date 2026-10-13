@@ -41,6 +41,7 @@ export class MysqlService implements AssetProvider {
       credentialId: previous?.credentialId ?? '',
       database: previous?.database ?? '',
       tls: previous?.tls ?? false,
+      enableAI: record?.enableAI !== false,
     };
   }
 
@@ -58,7 +59,7 @@ export class MysqlService implements AssetProvider {
     };
     requireMysqlConfiguration(asset);
     if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
-    await this.assets.save({ ...asset, folder: record?.folder ?? folder });
+    await this.assets.save({ ...asset, enableAI: values.enableAI, folder: record?.folder ?? folder });
   }
 
   invalidate(id?: string): void {
@@ -96,6 +97,10 @@ export class MysqlService implements AssetProvider {
   async requireAsset(id: string): Promise<MysqlConnectionConfiguration> {
     const record = await this.assets.get(id);
     return requireMysqlConfiguration(record);
+  }
+
+  async requireAiAsset(id: string): Promise<MysqlConnectionConfiguration> {
+    return requireMysqlConfiguration(await this.assets.requireAiAsset(id));
   }
 
   async readDatabaseDocument(assetId: string, databaseName?: string): Promise<DatabaseDocument> {

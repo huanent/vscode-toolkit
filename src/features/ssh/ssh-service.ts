@@ -41,6 +41,7 @@ export class SshService implements AssetProvider {
       proxyAssetId: previous?.proxyAssetId ?? '',
       database: '',
       tls: false,
+      enableAI: record?.enableAI !== false,
     };
   }
 
@@ -193,7 +194,7 @@ export class SshService implements AssetProvider {
     };
     requireSshConfiguration(asset);
     await this.validateProxyChain(asset.id, asset.proxyAssetId);
-    await this.assets.save({ ...asset, folder: record?.folder ?? folder });
+    await this.assets.save({ ...asset, enableAI: values.enableAI, folder: record?.folder ?? folder });
     this.invalidate(asset.id);
   }
 
@@ -234,6 +235,16 @@ export class SshService implements AssetProvider {
       if (id && assetId !== id) continue;
       for (const terminal of terminals) terminal.dispose();
       this.terminals.delete(assetId);
+    }
+  }
+
+  async requireAiAccess(assetId: string): Promise<void> {
+    const visited = new Set<string>();
+    let currentId: string | undefined = assetId;
+    while (currentId && !visited.has(currentId)) {
+      visited.add(currentId);
+      const asset = requireSshConfiguration(await this.assets.requireAiAsset(currentId));
+      currentId = asset.proxyAssetId;
     }
   }
 

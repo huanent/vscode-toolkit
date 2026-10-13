@@ -17,7 +17,8 @@ interface WorkflowStepInput {
   remotePath?: string;
 }
 
-interface CreateWorkflowInput {
+interface UpsertWorkflowInput {
+  id?: string;
   name: string;
   folderId?: string;
   steps: WorkflowStepInput[];
@@ -36,17 +37,27 @@ export function registerWorkflowTools(
   const getDirectory = () => resolveStorageDirectory(context, 'workflows');
 
   return [
-    vscode.lm.registerTool<CreateWorkflowInput>('workflowCreate', {
+    vscode.lm.registerTool<UpsertWorkflowInput>('workflowUpsert', {
       async invoke({ input }) {
+        const directory = getDirectory();
+        const existing = input.id === undefined ? undefined : await readWorkflowRecord(directory, input.id);
+        if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
         const workflow: WorkflowDefinition = { steps: input.steps.map(toWorkflowStep) };
         await validateWorkflow(workflow, ssh);
-        const record = await saveWorkflowRecord(getDirectory(), randomUUID(), input.name, workflow, input.folderId);
+        const record = await saveWorkflowRecord(
+          directory,
+          input.id ?? randomUUID(),
+          input.name,
+          workflow,
+          input.folderId,
+        );
         await refresh();
         return jsonResult({
           id: record.id,
           name: record.name,
           ...(record.parentId ? { folderId: record.parentId } : {}),
           stepCount: workflow.steps.length,
+          action: existing ? 'updated' : 'created',
         });
       },
     }),
@@ -65,6 +76,9 @@ export function registerWorkflowTools(
       async invoke({ input }, token) {
         const record = await readWorkflowRecord(getDirectory(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
+        for (const step of record.workflow.steps) {
+          if (step.type !== 'local-command') await ssh.requireAiAccess(step.hostId);
+        }
         return jsonResult(await workflowResults.runWorkflowAndWait(record.name, record.workflow, token));
       },
     }),

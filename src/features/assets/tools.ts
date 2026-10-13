@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { AssetService } from './service';
+import { isAiEnabled, type AssetService } from './service';
 
 interface SearchAssetsInput {
   keyword: string;
@@ -11,7 +11,7 @@ export function registerAssetTools(assets: AssetService): vscode.Disposable {
       const keyword = input.keyword.trim().toLowerCase();
       if (!keyword) throw new Error('Enter an asset search keyword.');
 
-      const matches = (await assets.list()).filter((asset) => {
+      const matches = (await assets.list()).filter(isAiEnabled).filter((asset) => {
         const record = asset as typeof asset & { host?: unknown; port?: unknown; database?: unknown };
         return [record.id, record.type, record.name, record.folder, record.host, record.port, record.database].some(
           (value) =>

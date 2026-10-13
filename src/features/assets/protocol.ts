@@ -6,6 +6,7 @@ export interface AssetFormValues {
   port: number;
   database: string;
   tls: boolean;
+  enableAI: boolean;
   credentialId: string;
   proxyAssetId?: string;
 }
