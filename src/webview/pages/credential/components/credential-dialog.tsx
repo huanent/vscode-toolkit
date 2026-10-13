@@ -3,6 +3,7 @@ import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Form, FormItem } from '@/webview/components/form';
 import { Input } from '@/webview/components/input';
+import { Textarea } from '@/webview/components/textarea';
 import type { Credential } from '@/features/credential/protocol';
 
 interface CredentialDialogProps {
@@ -98,10 +99,7 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
               label="Private Key"
               control={{ value: privateKey, onValueChange: setPrivateKey }}
             >
-              <textarea
-                className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                placeholder="-----BEGIN PRIVATE KEY-----..."
-              />
+              <Textarea className="font-mono" placeholder="-----BEGIN PRIVATE KEY-----..." />
             </FormItem>
             <FormItem name="passphrase" label="Passphrase">
               <Input
@@ -120,11 +118,7 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
           match="valueMissing"
           control={{ value: description, onValueChange: setDescription, required: true }}
         >
-          <textarea
-            rows={3}
-            className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-            placeholder="Credential description"
-          />
+          <Textarea rows={3} placeholder="Credential description" />
         </FormItem>
       </Form>
     </Dialog>

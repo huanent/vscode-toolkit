@@ -13,19 +13,17 @@ import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { mountWebview } from '@/webview/bootstrap';
+import { WorkflowStepEditor } from '@/webview/pages/workflow/components/workflow-step-editor';
+import { convertStep, createStepItem, type WorkflowStepItem } from '@/webview/pages/workflow/step-model';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
+const expandByDefaultLimit = 3;
+
 type WorkflowEditorForm = {
   name: string;
-  workflow: WorkflowDefinition;
+  steps: WorkflowStepItem[];
 };
-
-const workflowTypes = [
-  { value: 'local-command', label: 'Local command' },
-  { value: 'sftp', label: 'SFTP transfer' },
-  { value: 'ssh-command', label: 'SSH command' },
-] as const;
 
 function App() {
   const state = useHostData<WorkflowEditorData, WorkflowEditorMessage>((message, previous) => {
@@ -43,7 +41,9 @@ function App() {
 
   useEffect(() => {
     if (state.status === 'loaded' && !form) {
-      setForm({ name: state.data.name, workflow: state.data.workflow });
+      const { steps } = state.data.workflow;
+      const expanded = steps.length <= expandByDefaultLimit;
+      setForm({ name: state.data.name, steps: steps.map((step) => createStepItem(step, expanded)) });
     }
   }, [state, form]);
 
@@ -55,42 +55,60 @@ function App() {
     );
   }
 
-  const workflow = form.workflow;
-  const updateWorkflow = (workflow: WorkflowDefinition) => {
-    setForm((current) => (current ? { ...current, workflow } : current));
+  const steps = form.steps;
+  const allCollapsed = steps.every((item) => !item.expanded);
+  const defaultHostId = state.data.sshConnections[0]?.id ?? '';
+  const updateSteps = (update: (items: WorkflowStepItem[]) => WorkflowStepItem[]) => {
+    setForm((current) => (current ? { ...current, steps: update(current.steps) } : current));
   };
   const updateStep = (index: number, step: WorkflowStep) => {
-    updateWorkflow({ steps: workflow.steps.map((current, stepIndex) => (stepIndex === index ? step : current)) });
+    updateSteps((items) => items.map((item, itemIndex) => (itemIndex === index ? { ...item, step } : item)));
   };
-  const createStep = (type: WorkflowStep['type']): WorkflowStep => {
-    const firstHostId = state.data.sshConnections[0]?.id ?? '';
-    if (type === 'local-command') return { type, command: '' };
-    if (type === 'sftp') return { type, hostId: firstHostId, direction: 'upload', localPath: '', remotePath: '' };
-    return { type, hostId: firstHostId, command: '' };
+  const toggleStep = (index: number) => {
+    updateSteps((items) =>
+      items.map((item, itemIndex) => (itemIndex === index ? { ...item, expanded: !item.expanded } : item)),
+    );
+  };
+  const setAllExpanded = (expanded: boolean) => {
+    updateSteps((items) => items.map((item) => ({ ...item, expanded })));
+  };
+  const addStep = () => {
+    updateSteps((items) => [...items, createStepItem(convertStep(undefined, 'local-command', defaultHostId), true)]);
+  };
+  const duplicateStep = (index: number) => {
+    updateSteps((items) => {
+      const source = items[index];
+      if (!source) return items;
+      return [...items.slice(0, index + 1), createStepItem({ ...source.step }, true), ...items.slice(index + 1)];
+    });
   };
   const moveStep = (index: number, offset: number) => {
-    const targetIndex = index + offset;
-    if (targetIndex < 0 || targetIndex >= workflow.steps.length) return;
-    const steps = [...workflow.steps];
-    [steps[index], steps[targetIndex]] = [steps[targetIndex], steps[index]];
-    updateWorkflow({ steps });
+    updateSteps((items) => {
+      const targetIndex = index + offset;
+      if (targetIndex < 0 || targetIndex >= items.length) return items;
+      const next = [...items];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
   };
   const removeStep = (index: number) => {
-    if (workflow.steps.length <= 1) return;
-    updateWorkflow({ steps: workflow.steps.filter((_, stepIndex) => stepIndex !== index) });
+    updateSteps((items) => (items.length <= 1 ? items : items.filter((_, itemIndex) => itemIndex !== index)));
   };
   const send = (type: WorkflowEditorRequest['type']) => {
-    postToHost({ type, name: form.name, workflow: form.workflow } satisfies WorkflowEditorRequest);
+    const workflow: WorkflowDefinition = { steps: form.steps.map((item) => item.step) };
+    postToHost({ type, name: form.name, workflow } satisfies WorkflowEditorRequest);
   };
 
   return (
     <main className="flex min-h-screen flex-col text-(--vscode-foreground)">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-(--vscode-panel-border) px-5 py-4">
+      <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
           <Icon name="debug-line-by-line" size="lg" />
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">{form.name || 'New workflow'}</h1>
-            <p className=" text-(--vscode-descriptionForeground)">Workflow editor</p>
+            <p className="text-(--vscode-descriptionForeground)">
+              {steps.length} {steps.length === 1 ? 'step' : 'steps'}
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -108,189 +126,48 @@ function App() {
           <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
         </FormItem>
         <div className="grid gap-3">
-          {workflow.steps.map((step, index) => (
-            <section key={index} className="grid gap-3 border border-(--vscode-panel-border) p-3">
-              <header className="flex items-center justify-between gap-2">
-                <h2 className=" font-semibold">Step {index + 1}</h2>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Move step ${index + 1} up`}
-                    title="Move up"
-                    prefix={<Icon name="arrow-up" />}
-                    disabled={index === 0}
-                    onClick={() => moveStep(index, -1)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Move step ${index + 1} down`}
-                    title="Move down"
-                    prefix={<Icon name="arrow-down" />}
-                    disabled={index === workflow.steps.length - 1}
-                    onClick={() => moveStep(index, 1)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Remove step ${index + 1}`}
-                    title="Remove step"
-                    prefix={<Icon name="trash" />}
-                    disabled={workflow.steps.length <= 1}
-                    onClick={() => removeStep(index)}
-                  />
-                </div>
-              </header>
-              <FormItem
-                name={`steps.${index}.type`}
-                label="Operation"
-                className=""
-                control={{
-                  value: step.type,
-                  onValueChange: (value) => updateStep(index, createStep(value as WorkflowStep['type'])),
-                }}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">Steps</h2>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                prefix={<Icon name={allCollapsed ? 'expand-all' : 'collapse-all'} />}
+                onClick={() => setAllExpanded(allCollapsed)}
               >
-                <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
-                  {workflowTypes.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </FormItem>
-
-              {step.type === 'local-command' && (
-                <>
-                  <FormItem
-                    name={`steps.${index}.command`}
-                    label="Command"
-                    className=""
-                    control={{
-                      value: step.command,
-                      onValueChange: (value) => updateStep(index, { ...step, command: value }),
-                    }}
-                  >
-                    <textarea
-                      className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 font-mono  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                      placeholder="npm run build"
-                    />
-                  </FormItem>
-                  <FormItem name={`steps.${index}.cwd`} label="Working directory" className="">
-                    <Input
-                      value={step.cwd ?? ''}
-                      onChange={(event) => updateStep(index, { ...step, cwd: event.target.value || undefined })}
-                      placeholder="Defaults to the current workspace"
-                    />
-                  </FormItem>
-                </>
-              )}
-
-              {step.type === 'ssh-command' && (
-                <>
-                  <HostPicker
-                    value={step.hostId}
-                    hosts={state.data.sshConnections}
-                    onChange={(hostId) => updateStep(index, { ...step, hostId })}
-                  />
-                  <FormItem
-                    name={`steps.${index}.command`}
-                    label="Remote command"
-                    className=""
-                    control={{
-                      value: step.command,
-                      onValueChange: (value) => updateStep(index, { ...step, command: value }),
-                    }}
-                  >
-                    <textarea
-                      className="min-h-24 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) p-2 font-mono  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none"
-                      placeholder="uname -a"
-                    />
-                  </FormItem>
-                </>
-              )}
-
-              {step.type === 'sftp' && (
-                <>
-                  <HostPicker
-                    value={step.hostId}
-                    hosts={state.data.sshConnections}
-                    onChange={(hostId) => updateStep(index, { ...step, hostId })}
-                  />
-                  <FormItem
-                    name={`steps.${index}.direction`}
-                    label="Direction"
-                    className=""
-                    control={{
-                      value: step.direction,
-                      onValueChange: (value) =>
-                        updateStep(index, { ...step, direction: value as 'upload' | 'download' }),
-                    }}
-                  >
-                    <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
-                      <option value="upload">Upload local file to host</option>
-                      <option value="download">Download host file to local</option>
-                    </select>
-                  </FormItem>
-                  <FormItem name={`steps.${index}.localPath`} label="Local file path" className="">
-                    <Input
-                      value={step.localPath}
-                      onChange={(event) => updateStep(index, { ...step, localPath: event.target.value })}
-                      placeholder="/path/to/file"
-                    />
-                  </FormItem>
-                  <FormItem name={`steps.${index}.remotePath`} label="Remote file path" className="">
-                    <Input
-                      value={step.remotePath}
-                      onChange={(event) => updateStep(index, { ...step, remotePath: event.target.value })}
-                      placeholder="/srv/files/file"
-                    />
-                  </FormItem>
-                </>
-              )}
-            </section>
-          ))}
-          <Button
-            variant="secondary"
-            prefix={<Icon name="add" />}
-            onClick={() => updateWorkflow({ steps: [...workflow.steps, createStep('local-command')] })}
-          >
+                {allCollapsed ? 'Expand all' : 'Collapse all'}
+              </Button>
+              <Button variant="secondary" size="sm" prefix={<Icon name="add" />} onClick={addStep}>
+                Add step
+              </Button>
+            </div>
+          </div>
+          <ol className="grid">
+            {steps.map((item, index) => (
+              <WorkflowStepEditor
+                key={item.id}
+                index={index}
+                total={steps.length}
+                step={item.step}
+                expanded={item.expanded}
+                hosts={state.data.sshConnections}
+                onToggle={() => toggleStep(index)}
+                onChange={(next) => updateStep(index, next)}
+                onTypeChange={(type) => updateStep(index, convertStep(item.step, type, defaultHostId))}
+                onMove={(offset) => moveStep(index, offset)}
+                onDuplicate={() => duplicateStep(index)}
+                onRemove={() => removeStep(index)}
+              />
+            ))}
+          </ol>
+          <Button variant="secondary" className="justify-self-start" prefix={<Icon name="add" />} onClick={addStep}>
             Add step
           </Button>
         </div>
 
-        {state.error && (
-          <p role="alert" className=" text-(--vscode-errorForeground)">
-            {state.error}
-          </p>
-        )}
+        {state.error && <ErrorMessage message={state.error} />}
       </Form>
     </main>
-  );
-}
-
-function HostPicker({
-  value,
-  hosts,
-  onChange,
-}: {
-  value: string;
-  hosts: WorkflowEditorData['sshConnections'];
-  onChange: (hostId: string) => void;
-}) {
-  return (
-    <FormItem name="hostId" label="SSH host" className="" control={{ value, onValueChange: onChange, required: true }}>
-      <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
-        <option value="" disabled>
-          {hosts.length ? 'Select an SSH host' : 'Add an SSH host in Assets'}
-        </option>
-        {hosts.map((host) => (
-          <option key={host.id} value={host.id}>
-            {host.name} ({host.host}:{host.port})
-          </option>
-        ))}
-      </select>
-    </FormItem>
   );
 }
 
