@@ -3,8 +3,14 @@ import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Form, FormItem } from '@/webview/components/form';
 import { Input } from '@/webview/components/input';
+import { Select, type SelectOption } from '@/webview/components/select';
 import { Textarea } from '@/webview/components/textarea';
 import type { Credential } from '@/features/credential/protocol';
+
+const credentialTypeOptions: readonly SelectOption[] = [
+  { value: 'password', label: 'Password' },
+  { value: 'privateKey', label: 'Private Key' },
+];
 
 interface CredentialDialogProps {
   open: boolean;
@@ -62,18 +68,13 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
       }
     >
       <Form id="credential-form" onFormSubmit={handleSave} className="flex flex-col gap-3 py-2">
-        <FormItem
-          name="type"
-          label="Type"
-          control={{
-            value: type,
-            onValueChange: (value) => setType(value as 'password' | 'privateKey'),
-          }}
-        >
-          <select className="h-7 w-full rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2  text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
-            <option value="password">Password</option>
-            <option value="privateKey">Private Key</option>
-          </select>
+        <FormItem name="type" label="Type">
+          <Select
+            ariaLabel="Type"
+            value={type}
+            onValueChange={(value) => setType(value as 'password' | 'privateKey')}
+            options={credentialTypeOptions}
+          />
         </FormItem>
         <FormItem name="username" label="Username">
           <Input
