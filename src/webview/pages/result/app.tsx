@@ -8,7 +8,7 @@ function App() {
   const { state, loading, error } = useResultState();
 
   return (
-    <main className="flex h-screen min-h-0 flex-col md:flex-row">
+    <main className="flex h-screen min-h-0 flex-col md:flex-row text-sm">
       <section aria-label="Task result" className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <TaskContent
           task={state?.selectedTask}

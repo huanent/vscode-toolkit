@@ -8,10 +8,12 @@ import type {
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Form, FormItem } from '@/webview/components/form';
 import { CredentialSelector } from '@/webview/pages/credential/components/credential-selector';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
+import { Select } from '@/webview/components/select';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -105,23 +107,19 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             />
           </FormItem>
           {ssh && (
-            <FormItem
-              name="proxyAssetId"
-              label="Proxy tunnel (optional)"
-              className=""
-              control={{
-                value: values.proxyAssetId ?? '',
-                onValueChange: (value) => update('proxyAssetId', value || undefined),
-              }}
-            >
-              <select className="h-7 w-full rounded border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus:border-(--vscode-focusBorder) focus:outline-none">
-                <option value="">Direct connection</option>
-                {data.sshConnections.map((connection) => (
-                  <option key={connection.id} value={connection.id}>
-                    {connection.name} ({connection.host}:{connection.port})
-                  </option>
-                ))}
-              </select>
+            <FormItem name="proxyAssetId" label="Proxy tunnel (optional)" className="">
+              <Select
+                ariaLabel="Proxy tunnel"
+                value={values.proxyAssetId ?? ''}
+                onValueChange={(value) => update('proxyAssetId', value || undefined)}
+                options={[
+                  { value: '', label: 'Direct connection' },
+                  ...data.sshConnections.map((connection) => ({
+                    value: connection.id,
+                    label: `${connection.name} (${connection.host}:${connection.port})`,
+                  })),
+                ]}
+              />
             </FormItem>
           )}
           {mysql && (
@@ -135,11 +133,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             </>
           )}
         </fieldset>
-        {error && (
-          <p role="alert" className="mt-4 wrap-break-word  text-(--vscode-errorForeground)">
-            {error}
-          </p>
-        )}
+        {error && <ErrorMessage message={error} className="mt-4" />}
         <footer className="mt-6 flex gap-2 border-t border-(--vscode-panel-border) pt-4">
           <Button type="submit" disabled={saving} prefix={<Icon name={saving ? 'loading' : 'save'} />}>
             {saving ? 'Saving...' : 'Save'}
