@@ -1,6 +1,23 @@
 @import 'tailwindcss';
 @import '@vscode/codicons/dist/codicon.css';
 
+/* Text scale derived from a 13px base; text-base is 13px. */
+@theme {
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-base: 13px;
+  --text-lg: 15px;
+  --text-xl: 16px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 29px;
+  --text-5xl: 39px;
+  --text-6xl: 49px;
+  --text-7xl: 59px;
+  --text-8xl: 78px;
+  --text-9xl: 104px;
+}
+
 @layer base {
   /* Inset ring so scroll containers never clip keyboard focus, matching VS Code. */
   :focus-visible {
@@ -21,19 +38,21 @@
   }
 }
 
+/* font-size stays off :root so rem-based Tailwind spacing (h-7, p-4, ...) keeps its default scale. */
 :root {
   font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
-  font-size: 13px;
   color: var(--vscode-foreground);
 }
 
 * {
   box-sizing: border-box;
 }
+
 body {
   margin: 0;
   padding: 0;
   min-width: 240px;
   min-height: 100vh;
   background-color: transparent;
+  font-size: 13px;
 }
