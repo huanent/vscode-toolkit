@@ -79,9 +79,7 @@ function App() {
         </div>
         <section aria-label="Database tables" className="flex min-h-0 flex-1 flex-col">
           {tables.length ? (
-            <div className="min-h-0 flex-1 overflow-auto">
-              <TableManagement tables={visibleTables} onEditSchema={setEditingTable} />
-            </div>
+            <TableManagement tables={visibleTables} onEditSchema={setEditingTable} />
           ) : (
             <div className="grid min-h-0 flex-1 place-items-center px-4 text-center">
               <div className="grid justify-items-center">

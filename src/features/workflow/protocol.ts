@@ -1,7 +1,7 @@
 export type WorkflowStep =
   | { type: 'local-command'; command: string; cwd?: string }
-  | { type: 'sftp'; hostId: string; direction: 'upload' | 'download'; localPath: string; remotePath: string }
-  | { type: 'ssh-command'; hostId: string; command: string };
+  | { type: 'sftp'; assetId: string; direction: 'upload' | 'download'; localPath: string; remotePath: string }
+  | { type: 'ssh-command'; assetId: string; command: string };
 
 export interface WorkflowDefinition {
   steps: WorkflowStep[];

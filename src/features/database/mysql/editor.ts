@@ -13,6 +13,7 @@ import type {
 } from '@/features/database/protocol';
 import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
 import type { MysqlService } from '@/features/database/mysql-service';
+import { formatTabTitle } from '@/shared/tab-title';
 import { registerMysqlQueryEditor } from './query-editor';
 
 export const mysqlEditorViewType = 'toolkit.mysqlEditor';
@@ -23,11 +24,11 @@ export const mysqlOpenSqlEditorCommand = 'toolkit.mysql.openSqlEditor';
 export const mysqlScheme = 'toolkit-mysql';
 export const mysqlTableScheme = 'toolkit-mysql-table';
 
-export function createMysqlUri(assetId: string, name?: string): vscode.Uri {
-  const query = name
-    ? `id=${encodeURIComponent(assetId)}&name=${encodeURIComponent(name)}`
-    : `id=${encodeURIComponent(assetId)}`;
-  return vscode.Uri.parse(`${mysqlScheme}:/database?${query}`);
+export function createMysqlUri(assetId: string, name?: string, folder?: string): vscode.Uri {
+  const params = [`id=${encodeURIComponent(assetId)}`];
+  if (name) params.push(`name=${encodeURIComponent(name)}`);
+  if (folder) params.push(`folder=${encodeURIComponent(folder)}`);
+  return vscode.Uri.parse(`${mysqlScheme}:/database?${params.join('&')}`);
 }
 
 export function parseMysqlUri(uri: vscode.Uri): { assetId: string } {
@@ -119,6 +120,8 @@ export function registerMysqlEditor(
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
       const { assetId } = parseMysqlUri(uri);
+      const params = new URLSearchParams(uri.query);
+      panel.title = formatTabTitle(params.get('name') ?? 'MySQL Database', params.get('folder') ?? undefined);
 
       const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'openSqlEditor') {
@@ -234,6 +237,7 @@ export function registerMysqlEditor(
     viewType: mysqlTableEditorViewType,
     page: 'database/data',
     icon: 'table',
+    title: (uri) => new URLSearchParams(uri.query).get('name') ?? 'MySQL Table',
     validate: validateMysqlTableUri,
     load: (uri) => {
       const { assetId, databaseName, tableName } = parseMysqlTableUri(uri);

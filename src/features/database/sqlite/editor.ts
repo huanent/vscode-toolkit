@@ -145,6 +145,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
     viewType: sqliteTableEditorViewType,
     page: 'database/data',
     icon: 'table',
+    title: (uri) => new URLSearchParams(uri.query).get('name') ?? 'SQLite Table',
     validate: validateSqliteTableUri,
     load: readSqliteTable,
     data: (uri) => ({ name: new URLSearchParams(uri.query).get('name') ?? 'SQLite Table' }),

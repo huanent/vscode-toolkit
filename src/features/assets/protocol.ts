@@ -35,6 +35,7 @@ export interface AssetViewEntry {
   path: string;
   name: string;
   type: 'file';
+  icon?: string;
   detail?: string;
   context: Record<string, string | number | boolean>;
 }

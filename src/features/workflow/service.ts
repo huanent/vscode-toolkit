@@ -388,11 +388,11 @@ function isWorkflowStep(value: unknown): boolean {
   }
   if (step.type === 'sftp') {
     return (
-      typeof step.hostId === 'string' &&
+      typeof step.assetId === 'string' &&
       (step.direction === 'upload' || step.direction === 'download') &&
       typeof step.localPath === 'string' &&
       typeof step.remotePath === 'string'
     );
   }
-  return step.type === 'ssh-command' && typeof step.hostId === 'string' && typeof step.command === 'string';
+  return step.type === 'ssh-command' && typeof step.assetId === 'string' && typeof step.command === 'string';
 }

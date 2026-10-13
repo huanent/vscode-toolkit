@@ -7,6 +7,7 @@ import { List } from '@/webview/components/list';
 type TreeItemBase = {
   path: string;
   name: string;
+  icon?: string;
   context?: Readonly<Record<string, string | number | boolean>>;
 };
 
@@ -92,7 +93,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderA
         icon: (
           <>
             <TreeRowIndentation node={node} activeIndentKey={activeIndentKey} />
-            {node.item.type === 'file' && <Icon className="py-1" name="file" />}
+            {node.item.type === 'file' && <Icon className="py-1" name={node.item.icon ?? 'file'} />}
           </>
         ),
         label: node.item.name,

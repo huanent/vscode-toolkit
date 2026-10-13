@@ -10,6 +10,8 @@ export interface WebviewEditorDefinition<TData> {
   page: string;
   /** Theme icon id, for example `file-zip`. */
   icon?: string;
+  /** Tab title; defaults to the document file name. */
+  title?: (uri: vscode.Uri) => string;
   /** Rejects unsupported documents when the editor opens. */
   validate?: (uri: vscode.Uri) => void;
   /** Reads the payload posted to the webview after it signals `ready`. */
@@ -43,6 +45,7 @@ export function registerWebviewEditor<TData>(
         const uri = (document as vscode.CustomDocument & { uri: vscode.Uri }).uri;
         panel.webview.options = { enableScripts: true, localResourceRoots: [assetsUri] };
         if (definition.icon) panel.iconPath = new vscode.ThemeIcon(definition.icon);
+        if (definition.title) panel.title = definition.title(uri);
 
         const bridge = serveWebviewData(panel.webview, () => definition.load(uri), { once: false });
         const panelCleanup = definition.onPanelResolved?.(uri, panel);

@@ -11,7 +11,7 @@ interface WorkflowStepInput {
   type: 'local-command' | 'ssh-command' | 'sftp';
   command?: string;
   cwd?: string;
-  hostId?: string;
+  assetId?: string;
   direction?: 'upload' | 'download';
   localPath?: string;
   remotePath?: string;
@@ -77,7 +77,7 @@ export function registerWorkflowTools(
         const record = await readWorkflowRecord(getDirectory(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
         for (const step of record.workflow.steps) {
-          if (step.type !== 'local-command') await ssh.requireAiAccess(step.hostId);
+          if (step.type !== 'local-command') await ssh.requireAiAccess(step.assetId);
         }
         return jsonResult(await workflowResults.runWorkflowAndWait(record.name, record.workflow, token));
       },
@@ -93,20 +93,20 @@ function toWorkflowStep(step: WorkflowStepInput, index: number): WorkflowStep {
     if (!step.direction) throw new Error(`Enter the SFTP direction for step ${index + 1}.`);
     return {
       type: 'sftp',
-      hostId: step.hostId ?? '',
+      assetId: step.assetId ?? '',
       direction: step.direction,
       localPath: step.localPath ?? '',
       remotePath: step.remotePath ?? '',
     };
   }
-  return { type: 'ssh-command', hostId: step.hostId ?? '', command: step.command ?? '' };
+  return { type: 'ssh-command', assetId: step.assetId ?? '', command: step.command ?? '' };
 }
 
 function describeStep(step: WorkflowStep, index: number): string {
   const prefix = `${index + 1}.`;
   if (step.type === 'local-command') return `${prefix} Local command: ${step.command}`;
-  if (step.type === 'ssh-command') return `${prefix} SSH ${step.hostId}: ${step.command}`;
-  return `${prefix} SFTP ${step.direction} ${step.localPath} -> ${step.remotePath} (${step.hostId})`;
+  if (step.type === 'ssh-command') return `${prefix} SSH ${step.assetId}: ${step.command}`;
+  return `${prefix} SFTP ${step.direction} ${step.localPath} -> ${step.remotePath} (${step.assetId})`;
 }
 
 function jsonResult(value: unknown): vscode.LanguageModelToolResult {

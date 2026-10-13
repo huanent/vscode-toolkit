@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import type {
-  DatabaseCellValue,
-  DatabaseTable,
-  DatabaseTableFilterResult,
-  DatabaseTableFilters,
+import {
+  databaseTablePageSize,
+  type DatabaseCellValue,
+  type DatabaseTable,
+  type DatabaseTableFilterResult,
+  type DatabaseTableFilters,
 } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
@@ -15,24 +17,12 @@ import '@/webview/styles.css';
 
 type DatabaseRow = { values: DatabaseCellValue[]; rowNumber: number };
 
-const rowNumberColumn: TableColumn<DatabaseRow> = {
-  key: 'row-number',
-  header: '#',
-  align: 'right',
-  headerClassName:
-    'sticky left-0 z-30 w-12 min-w-12 max-w-12 bg-(--vscode-editor-background) text-(--vscode-descriptionForeground)',
-  className:
-    'sticky left-0 z-10 w-12 min-w-12 max-w-12 bg-(--vscode-editor-background) tabular-nums text-(--vscode-descriptionForeground)',
-  cell: (row) => row.rowNumber,
-};
-
 function createColumn(
   column: DatabaseTable['columns'][number],
   columnIndex: number,
   filter: string,
   onFilterChange: (value: string) => void,
 ): TableColumn<DatabaseRow> {
-  const typeDescription = column.type || 'Any';
   return {
     key: column.name,
     align: 'left',
@@ -40,15 +30,6 @@ function createColumn(
       <div className="grid gap-1 py-1">
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate font-medium">{column.name}</span>
-          {column.primaryKey && (
-            <span className="shrink-0 text-(--vscode-descriptionForeground)" title="Primary key">
-              PK
-            </span>
-          )}
-        </span>
-        <span className="block truncate text-(--vscode-descriptionForeground)">
-          {typeDescription}
-          {column.notNull ? ' · NOT NULL' : ''}
         </span>
         <Input
           type="search"
@@ -86,19 +67,20 @@ function App() {
   const name = getRootData('name') ?? 'Database Table';
   const [search, setSearch] = useState('');
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(0);
   const hasActiveFilters = Boolean(search.trim() || Object.values(columnFilters).some((filter) => filter.trim()));
 
   useEffect(() => {
     if (state.status !== 'loaded') return;
     const requestId = ++latestRequestId.current;
-    if (!hasRequestedFilters.current && !hasActiveFilters) return;
-    const filters: DatabaseTableFilters = { search, columns: columnFilters };
+    if (!hasRequestedFilters.current && !hasActiveFilters && page === 0) return;
+    const filters: DatabaseTableFilters = { search, columns: columnFilters, page };
     const timeout = window.setTimeout(() => {
       hasRequestedFilters.current = true;
       postToHost({ type: 'filterTable', requestId, filters });
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [search, columnFilters, state.status, hasActiveFilters]);
+  }, [search, columnFilters, page, state.status, hasActiveFilters]);
 
   useEffect(() => {
     document.title = name;
@@ -120,26 +102,21 @@ function App() {
 
   const table = state.data;
   const rows = table.rows.map((values, index) => ({ values, rowNumber: index + 1 }));
+  const totalRows = table.filteredRowCount ?? table.rowCount;
+  const pageCount = Math.max(1, Math.ceil(totalRows / databaseTablePageSize));
+  const firstRow = page * databaseTablePageSize + 1;
+  const lastRow = page * databaseTablePageSize + table.rows.length;
   const columns: readonly TableColumn<DatabaseRow>[] = [
-    rowNumberColumn,
     ...table.columns.map((column, columnIndex) =>
-      createColumn(column, columnIndex, columnFilters[column.name] ?? '', (value) =>
-        setColumnFilters((filters) => ({ ...filters, [column.name]: value })),
-      ),
+      createColumn(column, columnIndex, columnFilters[column.name] ?? '', (value) => {
+        setColumnFilters((filters) => ({ ...filters, [column.name]: value }));
+        setPage(0);
+      }),
     ),
   ];
 
   return (
     <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3">
-        <Icon name="table" variant="muted" size="sm" />
-        <h1 className="min-w-0 truncate  font-semibold" title={name}>
-          {name}
-        </h1>
-        <span className="ml-auto shrink-0  tabular-nums text-(--vscode-descriptionForeground)">
-          {table.rowCount.toLocaleString()} rows
-        </span>
-      </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-2">
         <Icon name="search" size="sm" variant="muted" />
         <Input
@@ -148,47 +125,66 @@ function App() {
           aria-label="Search rows"
           placeholder="Search rows..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(0);
+          }}
         />
         <span className="ml-auto  tabular-nums text-(--vscode-descriptionForeground)">
           {table.columnCount.toLocaleString()} columns
         </span>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto">
-        {state.error && (
-          <p className="px-3 py-1  text-(--vscode-errorForeground)" role="alert">
-            {state.error}
-          </p>
-        )}
-        {table.columns.length ? (
-          <Table
-            ariaLabel={`${name} data`}
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.rowNumber}
-            border
-            emptyMessage={hasActiveFilters ? 'No matching rows.' : 'This table is empty.'}
-            className="min-w-full"
-          />
-        ) : (
-          <div className="grid h-full place-items-center  text-(--vscode-descriptionForeground)">
-            This table has no columns.
-          </div>
-        )}
-      </div>
+      {state.error && (
+        <p className="shrink-0 px-3 py-1  text-(--vscode-errorForeground)" role="alert">
+          {state.error}
+        </p>
+      )}
+      {table.columns.length ? (
+        <Table
+          ariaLabel={`${name} data`}
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.rowNumber}
+          border
+          emptyMessage={hasActiveFilters ? 'No matching rows.' : 'This table is empty.'}
+          className="min-h-0 flex-1"
+        />
+      ) : (
+        <div className="grid min-h-0 flex-1 place-items-center  text-(--vscode-descriptionForeground)">
+          This table has no columns.
+        </div>
+      )}
       <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--vscode-panel-border) px-3 py-1  text-(--vscode-descriptionForeground)">
         <span className="shrink-0 tabular-nums">
-          {hasActiveFilters
-            ? `${(table.filteredRowCount ?? rows.length).toLocaleString()} matching rows${
-                (table.filteredRowCount ?? rows.length) > rows.length ? ` (${rows.length.toLocaleString()} shown)` : ''
-              }`
-            : `${table.rows.length.toLocaleString()} of ${table.rowCount.toLocaleString()} rows`}
+          {totalRows
+            ? `${firstRow.toLocaleString()}-${lastRow.toLocaleString()} of ${totalRows.toLocaleString()} ${hasActiveFilters ? 'matching rows' : 'rows'}`
+            : `No ${hasActiveFilters ? 'matching rows' : 'rows'}`}
         </span>
-        {((hasActiveFilters ? (table.filteredRowCount ?? 0) > table.rows.length : table.rowCount > table.rows.length) ||
-          table.columnCount > table.columns.length) && (
-          <span className="text-right">
-            Preview limited to {table.rows.length} rows and {table.columns.length} columns
+        <div role="group" aria-label="Pagination" className="ml-auto flex shrink-0 items-center gap-1 tabular-nums">
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Previous page"
+            aria-label="Previous page"
+            prefix={<Icon name="chevron-left" size="sm" />}
+            disabled={page === 0}
+            onClick={() => setPage((current) => current - 1)}
+          />
+          <span>
+            {page + 1} / {pageCount}
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Next page"
+            aria-label="Next page"
+            prefix={<Icon name="chevron-right" size="sm" />}
+            disabled={page + 1 >= pageCount}
+            onClick={() => setPage((current) => current + 1)}
+          />
+        </div>
+        {table.columnCount > table.columns.length && (
+          <span className="text-right">Preview limited to {table.columns.length} columns</span>
         )}
       </footer>
     </main>

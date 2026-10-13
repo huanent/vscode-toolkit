@@ -5,6 +5,7 @@ import type { AssetRecord } from './service';
 export interface AssetProvider extends Disposable {
   type: string;
   label: string;
+  icon: string;
   getFormValues(previous?: AssetRecord): AssetFormValues;
   saveConfiguration(values: AssetFormValues, previous?: AssetRecord, folder?: string): Promise<void>;
   toViewEntry(asset: AssetRecord): AssetViewEntry;

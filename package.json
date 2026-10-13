@@ -366,7 +366,7 @@
                     "type": "string",
                     "description": "Optional working directory for local-command steps. Defaults to the first workspace folder."
                   },
-                  "hostId": {
+                  "assetId": {
                     "type": "string",
                     "description": "SSH asset ID for ssh-command and sftp steps."
                   },

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { formatTabTitle } from '@/shared/tab-title';
 import type { WorkflowEditorData, WorkflowEditorMessage, WorkflowEditorRequest, WorkflowRecord } from './protocol';
 import {
   isWorkflowDefinition,
@@ -41,24 +42,34 @@ export function registerWorkflowEditor(
   workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable {
+  const readEditorRecord = async (uri: vscode.Uri): Promise<WorkflowRecord> => {
+    const id = parseWorkflowEditorUri(uri);
+    const record = await readWorkflowRecord(getWorkflowDirectory(), id);
+    return (
+      record ?? {
+        kind: 'workflow',
+        id,
+        name: 'New Workflow',
+        parentId: getWorkflowEditorParentId(uri),
+        workflow: { steps: [{ type: 'local-command', command: '' }] },
+      }
+    );
+  };
   return registerWebviewEditor<WorkflowEditorData>(context, {
     viewType: workflowEditorViewType,
     page: 'workflow',
     icon: 'debug-line-by-line',
     validate: parseWorkflowEditorUri,
     load: async (uri) => {
-      const id = parseWorkflowEditorUri(uri);
-      const record = await readWorkflowRecord(getWorkflowDirectory(), id);
-      const initial: WorkflowRecord = record ?? {
-        kind: 'workflow',
-        id,
-        name: 'New Workflow',
-        parentId: getWorkflowEditorParentId(uri),
-        workflow: { steps: [{ type: 'local-command', command: '' }] },
-      };
+      const initial = await readEditorRecord(uri);
       return { ...initial, sshConnections: await ssh.listConnections() };
     },
     onPanelResolved: (_uri, panel) => {
+      void readEditorRecord(_uri)
+        .then((record) => {
+          panel.title = formatTabTitle(record.name, record.parentId);
+        })
+        .catch(() => undefined);
       const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (!isWorkflowEditorRequest(message)) return;
         try {
@@ -72,7 +83,7 @@ export function registerWorkflowEditor(
               message.workflow,
               getWorkflowEditorParentId(_uri),
             );
-            panel.title = record.name;
+            panel.title = formatTabTitle(record.name, record.parentId);
             await refresh();
             await panel.webview.postMessage({
               type: 'workflowSaved',

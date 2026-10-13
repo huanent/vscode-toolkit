@@ -57,7 +57,7 @@ function App() {
 
   const steps = form.steps;
   const allCollapsed = steps.every((item) => !item.expanded);
-  const defaultHostId = state.data.sshConnections[0]?.id ?? '';
+  const defaultAssetId = state.data.sshConnections[0]?.id ?? '';
   const updateSteps = (update: (items: WorkflowStepItem[]) => WorkflowStepItem[]) => {
     setForm((current) => (current ? { ...current, steps: update(current.steps) } : current));
   };
@@ -73,7 +73,7 @@ function App() {
     updateSteps((items) => items.map((item) => ({ ...item, expanded })));
   };
   const addStep = () => {
-    updateSteps((items) => [...items, createStepItem(convertStep(undefined, 'local-command', defaultHostId), true)]);
+    updateSteps((items) => [...items, createStepItem(convertStep(undefined, 'local-command', defaultAssetId), true)]);
   };
   const duplicateStep = (index: number) => {
     updateSteps((items) => {
@@ -101,27 +101,7 @@ function App() {
 
   return (
     <main className="flex min-h-screen flex-col text-(--vscode-foreground)">
-      <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) px-5 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Icon name="debug-line-by-line" size="lg" />
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold">{form.name || 'New workflow'}</h1>
-            <p className="text-(--vscode-descriptionForeground)">
-              {steps.length} {steps.length === 1 ? 'step' : 'steps'}
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="secondary" prefix={<Icon name="play" />} onClick={() => send('runWorkflow')}>
-            Run
-          </Button>
-          <Button prefix={<Icon name="save" />} onClick={() => send('saveWorkflow')}>
-            Save
-          </Button>
-        </div>
-      </header>
-
-      <Form className="grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
+      <Form className="mx-auto grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
         <FormItem name="name" label="Name" className="">
           <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
         </FormItem>
@@ -153,7 +133,7 @@ function App() {
                 hosts={state.data.sshConnections}
                 onToggle={() => toggleStep(index)}
                 onChange={(next) => updateStep(index, next)}
-                onTypeChange={(type) => updateStep(index, convertStep(item.step, type, defaultHostId))}
+                onTypeChange={(type) => updateStep(index, convertStep(item.step, type, defaultAssetId))}
                 onMove={(offset) => moveStep(index, offset)}
                 onDuplicate={() => duplicateStep(index)}
                 onRemove={() => removeStep(index)}
@@ -166,6 +146,15 @@ function App() {
         </div>
 
         {state.error && <ErrorMessage message={state.error} />}
+
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" prefix={<Icon name="play" />} onClick={() => send('runWorkflow')}>
+            Run
+          </Button>
+          <Button prefix={<Icon name="save" />} onClick={() => send('saveWorkflow')}>
+            Save
+          </Button>
+        </div>
       </Form>
     </main>
   );

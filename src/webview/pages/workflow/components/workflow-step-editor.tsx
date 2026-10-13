@@ -151,8 +151,12 @@ export function WorkflowStepEditor({
 
             {step.type === 'ssh-command' && (
               <>
-                <FormItem name={`steps.${index}.hostId`} label="SSH host">
-                  <HostSelect value={step.hostId} hosts={hosts} onChange={(hostId) => onChange({ ...step, hostId })} />
+                <FormItem name={`steps.${index}.assetId`} label="SSH host">
+                  <HostSelect
+                    value={step.assetId}
+                    hosts={hosts}
+                    onChange={(assetId) => onChange({ ...step, assetId })}
+                  />
                 </FormItem>
                 <FormItem
                   name={`steps.${index}.command`}
@@ -167,11 +171,11 @@ export function WorkflowStepEditor({
             {step.type === 'sftp' && (
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <FormItem name={`steps.${index}.hostId`} label="SSH host">
+                  <FormItem name={`steps.${index}.assetId`} label="SSH host">
                     <HostSelect
-                      value={step.hostId}
+                      value={step.assetId}
                       hosts={hosts}
-                      onChange={(hostId) => onChange({ ...step, hostId })}
+                      onChange={(assetId) => onChange({ ...step, assetId })}
                     />
                   </FormItem>
                   <FormItem name={`steps.${index}.direction`} label="Direction">
@@ -215,7 +219,7 @@ function HostSelect({
 }: {
   value: string;
   hosts: readonly WorkflowSshConnection[];
-  onChange: (hostId: string) => void;
+  onChange: (assetId: string) => void;
 }) {
   return (
     <Select

@@ -28,13 +28,13 @@ export function createStepItem(step: WorkflowStep, expanded: boolean): WorkflowS
 export function convertStep(
   step: WorkflowStep | undefined,
   type: WorkflowStep['type'],
-  defaultHostId: string,
+  defaultAssetId: string,
 ): WorkflowStep {
   const command = step && 'command' in step ? step.command : '';
-  const hostId = step && 'hostId' in step && step.hostId ? step.hostId : defaultHostId;
+  const assetId = step && 'assetId' in step && step.assetId ? step.assetId : defaultAssetId;
   if (type === 'local-command') return { type, command };
-  if (type === 'ssh-command') return { type, hostId, command };
-  return { type, hostId, direction: 'upload', localPath: '', remotePath: '' };
+  if (type === 'ssh-command') return { type, assetId, command };
+  return { type, assetId, direction: 'upload', localPath: '', remotePath: '' };
 }
 
 export function getStepTypeLabel(type: WorkflowStep['type']): string {
@@ -43,7 +43,7 @@ export function getStepTypeLabel(type: WorkflowStep['type']): string {
 
 export function describeStep(step: WorkflowStep, hosts: readonly WorkflowSshConnection[]): string {
   if (step.type === 'local-command') return firstLine(step.command) || 'No command';
-  const hostName = hosts.find((host) => host.id === step.hostId)?.name ?? 'No host selected';
+  const hostName = hosts.find((host) => host.id === step.assetId)?.name ?? 'No host selected';
   if (step.type === 'ssh-command') return `${hostName} · ${firstLine(step.command) || 'No command'}`;
   const [from, to] =
     step.direction === 'upload' ? [step.localPath, step.remotePath] : [step.remotePath, step.localPath];
@@ -52,8 +52,8 @@ export function describeStep(step: WorkflowStep, hosts: readonly WorkflowSshConn
 
 export function isStepComplete(step: WorkflowStep): boolean {
   if (step.type === 'local-command') return step.command.trim() !== '';
-  if (step.type === 'ssh-command') return step.hostId !== '' && step.command.trim() !== '';
-  return step.hostId !== '' && step.localPath.trim() !== '' && step.remotePath.trim() !== '';
+  if (step.type === 'ssh-command') return step.assetId !== '' && step.command.trim() !== '';
+  return step.assetId !== '' && step.localPath.trim() !== '' && step.remotePath.trim() !== '';
 }
 
 function firstLine(value: string): string {

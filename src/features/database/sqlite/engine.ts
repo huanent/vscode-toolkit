@@ -1,10 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
-import type {
-  DatabaseDocument,
-  DatabaseQueryResult,
-  DatabaseTable,
-  DatabaseTableFilters,
-  UpdateSqliteTableSchemaOptions,
+import {
+  databaseTablePageSize,
+  type DatabaseDocument,
+  type DatabaseQueryResult,
+  type DatabaseTable,
+  type DatabaseTableFilters,
+  type UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import {
   buildSqliteTableSchemaStatements,
@@ -12,7 +13,6 @@ import {
   sqliteTemporaryTablePrefix,
 } from '@/features/database/sqlite-schema';
 
-const maxPreviewRows = 100;
 const maxPreviewColumns = 50;
 const maxQueryResultRows = 1000;
 
@@ -178,9 +178,10 @@ function readTable(database: DatabaseSync, name: string, filters?: DatabaseTable
       )
     : undefined;
   const selectedColumns = columns.length ? columns.map((column) => quoteIdentifier(column.name)).join(', ') : '*';
+  const offset = (filters?.page ?? 0) * databaseTablePageSize;
   const rows = database
-    .prepare(`SELECT ${selectedColumns} FROM ${quotedName}${whereClause} LIMIT ?`)
-    .all(...parameters, maxPreviewRows)
+    .prepare(`SELECT ${selectedColumns} FROM ${quotedName}${whereClause} LIMIT ? OFFSET ?`)
+    .all(...parameters, databaseTablePageSize, offset)
     .map((row) => columns.map((column) => toDisplayValue(row[column.name])));
   return {
     name,

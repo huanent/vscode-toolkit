@@ -10,7 +10,7 @@ export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshSer
     if (step.type === 'local-command') {
       if (!step.command.trim()) throw new Error(`Enter the command for step ${index + 1}.`);
     } else {
-      if (!connections.some((host) => host.id === step.hostId)) {
+      if (!connections.some((host) => host.id === step.assetId)) {
         throw new Error(`Select an existing SSH host for step ${index + 1}.`);
       }
       if (step.type === 'ssh-command' && !step.command.trim()) {
@@ -77,11 +77,11 @@ async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal)
   }
 
   if (step.type === 'sftp') {
-    await ssh.transferFile(step.hostId, step.direction, step.localPath, step.remotePath);
+    await ssh.transferFile(step.assetId, step.direction, step.localPath, step.remotePath);
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
-  const result = await ssh.runCommand(step.hostId, step.command);
+  const result = await ssh.runCommand(step.assetId, step.command);
   return {
     success: result.exitCode === 0,
     message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,

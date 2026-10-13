@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Client, type ClientChannel, type ConnectConfig, type VerifyCallback } from 'ssh2';
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
+import { formatTabTitle } from '@/shared/tab-title';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
@@ -15,6 +16,7 @@ interface SshClientSession {
 export class SshService implements AssetProvider {
   readonly type = 'ssh';
   readonly label = 'SSH';
+  readonly icon = 'terminal';
   private readonly terminals = new Map<string, Set<vscode.Terminal>>();
   private readonly closed: vscode.Disposable;
 
@@ -204,7 +206,7 @@ export class SshService implements AssetProvider {
       path: asset.id,
       name: asset.name,
       type: 'file',
-      detail: `SSH - ${asset.host}:${asset.port}`,
+      detail: asset.host,
       context: { assetId: asset.id, assetType: this.type },
     };
   }
@@ -220,7 +222,7 @@ export class SshService implements AssetProvider {
     if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
     const pty = new SshPseudoterminal(() => this.connectClient(asset.id));
     const terminal = vscode.window.createTerminal({
-      name: `SSH: ${asset.name}`,
+      name: formatTabTitle(asset.name, record.folder),
       pty,
       location: vscode.TerminalLocation.Editor,
     });

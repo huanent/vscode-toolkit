@@ -119,7 +119,7 @@ export function TableManagement({ tables, onEditSchema }: TableManagementProps) 
         postToHost({ type: 'openTable', tableName: table.name });
       }}
       emptyMessage="No matching tables."
-      className="min-w-full"
+      className="min-h-0 flex-1"
     />
   );
 }

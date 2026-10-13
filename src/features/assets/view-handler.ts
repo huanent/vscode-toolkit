@@ -26,11 +26,13 @@ export function createAssetsView(
   const list = async (): Promise<AssetTreeEntry[]> => {
     const [assets, folders] = await Promise.all([service.list(), service.listFolders()]);
     const entries = assets.map((asset) => {
-      const entry = providerFor(asset.type).toViewEntry(asset);
+      const provider = providerFor(asset.type);
+      const entry = provider.toViewEntry(asset);
       const hostContext: Record<string, string | number | boolean> =
         'host' in asset && typeof asset.host === 'string' ? { assetHost: asset.host } : {};
       return {
         ...entry,
+        icon: provider.icon,
         path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
         context: {
           ...entry.context,

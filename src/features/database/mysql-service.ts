@@ -2,15 +2,16 @@ import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { escapeId } from 'mysql2';
 import { createConnection, type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
-import type {
-  DatabaseColumn,
-  DatabaseDocument,
-  DatabaseQueryResult,
-  DatabaseTable,
-  MysqlConnectionConfiguration,
-  SqliteTableColumnDefinition,
-  DatabaseTableFilters,
-  UpdateTableSchemaMessage,
+import {
+  databaseTablePageSize,
+  type DatabaseColumn,
+  type DatabaseDocument,
+  type DatabaseQueryResult,
+  type DatabaseTable,
+  type MysqlConnectionConfiguration,
+  type SqliteTableColumnDefinition,
+  type DatabaseTableFilters,
+  type UpdateTableSchemaMessage,
 } from './protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
@@ -23,6 +24,7 @@ import type { CredentialService } from '@/features/credential/service';
 export class MysqlService implements AssetProvider {
   readonly type = 'mysql';
   readonly label = 'MySQL';
+  readonly icon = 'database';
   private readonly connections = new Set<Connection>();
   private disposed = false;
 
@@ -72,7 +74,7 @@ export class MysqlService implements AssetProvider {
       path: asset.id,
       name: asset.name,
       type: 'file',
-      detail: `MySQL - ${asset.host}:${asset.port}`,
+      detail: asset.host,
       context: { assetId: asset.id, assetType: this.type },
     };
   }
@@ -82,13 +84,13 @@ export class MysqlService implements AssetProvider {
     if (request.action === 'connect') {
       await vscode.commands.executeCommand(
         'vscode.openWith',
-        createMysqlUri(asset.id, asset.name),
+        createMysqlUri(asset.id, asset.name, record.folder),
         mysqlEditorViewType,
       );
     } else if (request.action === 'query') {
       await vscode.commands.executeCommand(
         'vscode.openWith',
-        createMysqlUri(asset.id, asset.name),
+        createMysqlUri(asset.id, asset.name, record.folder),
         mysqlEditorViewType,
       );
     }
@@ -220,9 +222,10 @@ export class MysqlService implements AssetProvider {
             .then(([countRows]) => Number(countRows[0]?.count ?? 0))
         : undefined;
 
+      const offset = (filters?.page ?? 0) * databaseTablePageSize;
       const [rows] = await connection.query(
         {
-          sql: `SELECT * FROM ${escapeId(tableName)}${whereClause} LIMIT 1000`,
+          sql: `SELECT * FROM ${escapeId(tableName)}${whereClause} LIMIT ${databaseTablePageSize} OFFSET ${offset}`,
           rowsAsArray: true,
           timeout: 60000,
         },
