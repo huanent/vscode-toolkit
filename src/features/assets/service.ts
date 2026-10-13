@@ -88,8 +88,9 @@ export class AssetService {
     delete savedAsset.scope;
     const targetDirectory = await this.prepareFolder(scope, folder);
 
-    const duplicate = (await this.list()).find((entry) => entry.id !== asset.id && entry.name === asset.name);
-    if (duplicate) throw new Error('An asset with this name already exists.');
+    if (await this.hasNameConflict(asset.id, asset.name, folder)) {
+      throw new Error('An asset with this name already exists in that folder.');
+    }
 
     const current = await this.findRecord(asset.id);
     const target = path.join(targetDirectory, `${asset.id}.json`);
@@ -115,7 +116,9 @@ export class AssetService {
   }
 
   async copyName(asset: AssetRecord): Promise<string> {
-    const names = new Set((await this.list()).map((entry) => entry.name));
+    const names = new Set(
+      (await this.list()).filter((entry) => (entry.folder ?? '') === (asset.folder ?? '')).map((entry) => entry.name),
+    );
     let name = `${asset.name} copy`;
     for (let index = 2; names.has(name); index++) name = `${asset.name} copy ${index}`;
     return name;
@@ -145,6 +148,10 @@ export class AssetService {
     const targetDirectory = await this.prepareFolder(source.scope, destinationFolder);
     const target = path.join(targetDirectory, `${id}.json`);
     if (source.path === target) return;
+    const asset = await this.get(id);
+    if (await this.hasNameConflict(id, asset.name, destinationFolder)) {
+      throw new Error('An asset with this name already exists in that folder.');
+    }
     if (await pathExists(target)) throw new Error('An asset with this name already exists in that folder.');
     await rename(source.path, target);
   }
@@ -246,6 +253,12 @@ export class AssetService {
     const directory = folderPath(root.directory, folder);
     await mkdir(directory, { recursive: true });
     return directory;
+  }
+
+  private async hasNameConflict(id: string, name: string, folder?: string): Promise<boolean> {
+    return (await this.list()).some(
+      (entry) => entry.id !== id && entry.name === name && (entry.folder ?? '') === (folder ?? ''),
+    );
   }
 
   private async findRecord(id: string): Promise<{ path: string; scope: StorageScope } | undefined> {
