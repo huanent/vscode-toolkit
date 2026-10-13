@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
 import { workflowEditorViewType } from './editor';
 import { showFolderPicker } from '@/host/utils/folder-picker';
 import {
@@ -49,8 +49,8 @@ async function moveWorkflow(
 ): Promise<void> {
   const id = parseWorkflowEntryId(target);
   if (!id) return;
-  const directory = resolveStorageDirectory(context, 'workflows');
-  const entries = await readWorkflowRecords(directory);
+  const roots = resolveStorageRoots(context, 'workflows');
+  const entries = await readWorkflowRecords(roots);
   const entry = entries.find((candidate) => candidate.id === id);
   if (!entry) throw new Error('Workflow entry no longer exists.');
   const folders = entries
@@ -63,7 +63,7 @@ async function moveWorkflow(
   const selected = await showFolderPicker(folders);
   if (!selected) return;
 
-  await moveWorkflowEntry(directory, id, selected.folderPath);
+  await moveWorkflowEntry(roots, id, selected.folderPath);
   await refresh();
 }
 
@@ -84,7 +84,7 @@ async function deleteWorkflow(
   );
   if (confirmation !== 'Delete') return;
 
-  const deletedIds = await deleteWorkflowEntry(resolveStorageDirectory(context, 'workflows'), id);
+  const deletedIds = await deleteWorkflowEntry(resolveStorageRoots(context, 'workflows'), id);
   for (const deletedId of deletedIds) await closeWorkflowTabs(deletedId);
   await refresh();
 }
@@ -106,7 +106,7 @@ async function renameWorkflow(
   });
   if (name === undefined) return;
 
-  await renameWorkflowEntry(resolveStorageDirectory(context, 'workflows'), id, name);
+  await renameWorkflowEntry(resolveStorageRoots(context, 'workflows'), id, name);
   await refresh();
 }
 
@@ -117,7 +117,7 @@ async function createWorkflowFolder(
 ): Promise<void> {
   const name = await vscode.window.showInputBox({ prompt: 'Folder name', validateInput: validateFolderName });
   if (name === undefined) return;
-  await saveWorkflowFolder(resolveStorageDirectory(context, 'workflows'), name, parseWorkflowParentId(target));
+  await saveWorkflowFolder(resolveStorageRoots(context, 'workflows'), name, parseWorkflowParentId(target));
   await refresh();
 }
 

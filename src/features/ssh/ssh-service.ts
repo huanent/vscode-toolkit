@@ -44,6 +44,7 @@ export class SshService implements AssetProvider {
       database: '',
       tls: false,
       enableAI: record?.enableAI !== false,
+      storageScope: record?.scope ?? 'global',
     };
   }
 
@@ -196,7 +197,12 @@ export class SshService implements AssetProvider {
     };
     requireSshConfiguration(asset);
     await this.validateProxyChain(asset.id, asset.proxyAssetId);
-    await this.assets.save({ ...asset, enableAI: values.enableAI, folder: record?.folder ?? folder });
+    await this.assets.save({
+      ...asset,
+      enableAI: values.enableAI,
+      folder: record?.folder ?? folder,
+      scope: values.storageScope,
+    });
     this.invalidate(asset.id);
   }
 

@@ -16,7 +16,7 @@ import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
 import { CredentialService } from '@/features/credential/service';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
 import type { CollapseDashboardTreeMessage } from '@/shared/dashboard-protocol';
 
 interface WebviewRegistration {
@@ -57,7 +57,7 @@ export function registerWebviews(
     registerMysqlEditor(context, mysql, tasks),
     registerWorkflowEditor(
       context,
-      () => resolveStorageDirectory(context, 'workflows'),
+      () => resolveStorageRoots(context, 'workflows'),
       ssh,
       workflowResults,
       workflowFiles.refresh,

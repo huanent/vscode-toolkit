@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { isWorkspaceStorageAvailable, resolveStorageDirectory } from '@/host/utils/storage';
 import type { AssetProvider } from './asset-provider';
 import type { AssetEditorData, AssetEditorMessage, AssetFormValues } from './protocol';
 import type { AssetRecord, AssetService } from './service';
 import type { Credential } from '@/features/credential/protocol';
 import type { CredentialService } from '@/features/credential/service';
+import { isStorageScope } from '@/shared/storage-scope';
 
 export function openAssetEditor(
   context: vscode.ExtensionContext,
@@ -52,6 +53,7 @@ export function openAssetEditor(
       assetType: provider.type,
       label: provider.label,
       editing: Boolean(previous),
+      workspaceStorageAvailable: isWorkspaceStorageAvailable(),
       values,
       credentials: creds.map(({ id, description, type, username }) => ({ id, description, type, username })),
       sshConnections,
@@ -130,6 +132,7 @@ function isFormValues(value: unknown): value is AssetFormValues {
     (values.proxyAssetId === undefined || typeof values.proxyAssetId === 'string') &&
     typeof values.tls === 'boolean' &&
     typeof values.enableAI === 'boolean' &&
+    isStorageScope(values.storageScope) &&
     typeof values.port === 'number' &&
     Number.isInteger(values.port) &&
     values.port > 0 &&

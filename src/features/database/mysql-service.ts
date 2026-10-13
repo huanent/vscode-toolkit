@@ -44,6 +44,7 @@ export class MysqlService implements AssetProvider {
       database: previous?.database ?? '',
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
+      storageScope: record?.scope ?? 'global',
     };
   }
 
@@ -61,7 +62,12 @@ export class MysqlService implements AssetProvider {
     };
     requireMysqlConfiguration(asset);
     if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
-    await this.assets.save({ ...asset, enableAI: values.enableAI, folder: record?.folder ?? folder });
+    await this.assets.save({
+      ...asset,
+      enableAI: values.enableAI,
+      folder: record?.folder ?? folder,
+      scope: values.storageScope,
+    });
   }
 
   invalidate(id?: string): void {

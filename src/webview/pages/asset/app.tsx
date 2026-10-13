@@ -14,6 +14,7 @@ import { CredentialSelector } from '@/webview/pages/credential/components/creden
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Select } from '@/webview/components/select';
+import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -72,6 +73,13 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           >
             <Input required autoFocus value={values.name} onChange={(event) => update('name', event.target.value)} />
           </FormItem>
+          <FormItem name="storageScope" label="Storage location" className="">
+            <StorageScopeSelector
+              value={values.storageScope}
+              workspaceAvailable={data.workspaceStorageAvailable}
+              onValueChange={(storageScope) => update('storageScope', storageScope)}
+            />
+          </FormItem>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormItem
               name="host"
@@ -94,7 +102,13 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               />
             </FormItem>
           </div>
-          <FormItem name="credentialId" className="min-w-0 flex-1" error="Select a credential." match="valueMissing">
+          <FormItem
+            name="credentialId"
+            label="Credential"
+            className="min-w-0 flex-1"
+            error="Select a credential."
+            match="valueMissing"
+          >
             <CredentialSelector
               required
               value={values.credentialId}

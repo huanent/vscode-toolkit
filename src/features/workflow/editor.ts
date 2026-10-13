@@ -1,13 +1,16 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { isWorkspaceStorageAvailable } from '@/host/utils/storage';
 import { formatTabTitle } from '@/shared/tab-title';
-import type { WorkflowEditorData, WorkflowEditorMessage, WorkflowEditorRequest, WorkflowRecord } from './protocol';
+import { isStorageScope, type StorageRoot } from '@/shared/storage-scope';
+import type { WorkflowEditorData, WorkflowEditorMessage, WorkflowEditorRequest } from './protocol';
 import {
   isWorkflowDefinition,
   readWorkflowRecord,
   saveWorkflowRecord,
   validateWorkflowFolderId,
   validateWorkflowId,
+  type StoredWorkflowRecord,
 } from './service';
 import { validateWorkflow } from './runner';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -37,14 +40,14 @@ export function parseWorkflowEditorUri(uri: vscode.Uri): string {
 
 export function registerWorkflowEditor(
   context: vscode.ExtensionContext,
-  getWorkflowDirectory: () => string,
+  getWorkflowRoots: () => StorageRoot[],
   ssh: SshService,
   workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable {
-  const readEditorRecord = async (uri: vscode.Uri): Promise<WorkflowRecord> => {
+  const readEditorRecord = async (uri: vscode.Uri): Promise<StoredWorkflowRecord> => {
     const id = parseWorkflowEditorUri(uri);
-    const record = await readWorkflowRecord(getWorkflowDirectory(), id);
+    const record = await readWorkflowRecord(getWorkflowRoots(), id);
     return (
       record ?? {
         kind: 'workflow',
@@ -52,6 +55,7 @@ export function registerWorkflowEditor(
         name: 'New Workflow',
         parentId: getWorkflowEditorParentId(uri),
         workflow: { steps: [{ type: 'local-command', command: '' }] },
+        scope: 'global',
       }
     );
   };
@@ -61,8 +65,13 @@ export function registerWorkflowEditor(
     icon: 'debug-line-by-line',
     validate: parseWorkflowEditorUri,
     load: async (uri) => {
-      const initial = await readEditorRecord(uri);
-      return { ...initial, sshConnections: await ssh.listConnections() };
+      const { scope, ...initial } = await readEditorRecord(uri);
+      return {
+        ...initial,
+        storageScope: scope,
+        workspaceStorageAvailable: isWorkspaceStorageAvailable(),
+        sshConnections: await ssh.listConnections(),
+      };
     },
     onPanelResolved: (_uri, panel) => {
       void readEditorRecord(_uri)
@@ -77,11 +86,12 @@ export function registerWorkflowEditor(
             await validateWorkflow(message.workflow, ssh);
             const id = parseWorkflowEditorUri(_uri);
             const record = await saveWorkflowRecord(
-              getWorkflowDirectory(),
+              getWorkflowRoots(),
               id,
               message.name,
               message.workflow,
               getWorkflowEditorParentId(_uri),
+              message.storageScope,
             );
             panel.title = formatTabTitle(record.name, record.parentId);
             await refresh();
@@ -113,10 +123,11 @@ function getWorkflowEditorParentId(uri: vscode.Uri): string | undefined {
 
 function isWorkflowEditorRequest(value: unknown): value is WorkflowEditorRequest {
   if (!value || typeof value !== 'object') return false;
-  const request = value as Partial<WorkflowEditorRequest>;
+  const request = value as Partial<WorkflowEditorRequest> & { storageScope?: unknown };
   return (
     (request.type === 'saveWorkflow' || request.type === 'runWorkflow') &&
     typeof request.name === 'string' &&
-    isWorkflowDefinition(request.workflow)
+    isWorkflowDefinition(request.workflow) &&
+    (request.type === 'runWorkflow' || isStorageScope(request.storageScope))
   );
 }

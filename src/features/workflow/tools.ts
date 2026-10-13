@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { randomUUID } from 'node:crypto';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
 import type { SshService } from '@/features/ssh/ssh-service';
 import type { WorkflowDefinition, WorkflowStep } from './protocol';
 import type { WorkflowResultService } from './result-service';
@@ -34,22 +34,23 @@ export function registerWorkflowTools(
   workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable[] {
-  const getDirectory = () => resolveStorageDirectory(context, 'workflows');
+  const getRoots = () => resolveStorageRoots(context, 'workflows');
 
   return [
     vscode.lm.registerTool<UpsertWorkflowInput>('workflowUpsert', {
       async invoke({ input }) {
-        const directory = getDirectory();
-        const existing = input.id === undefined ? undefined : await readWorkflowRecord(directory, input.id);
+        const roots = getRoots();
+        const existing = input.id === undefined ? undefined : await readWorkflowRecord(roots, input.id);
         if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
         const workflow: WorkflowDefinition = { steps: input.steps.map(toWorkflowStep) };
         await validateWorkflow(workflow, ssh);
         const record = await saveWorkflowRecord(
-          directory,
+          roots,
           input.id ?? randomUUID(),
           input.name,
           workflow,
           input.folderId,
+          existing?.scope ?? 'global',
         );
         await refresh();
         return jsonResult({
@@ -63,7 +64,7 @@ export function registerWorkflowTools(
     }),
     vscode.lm.registerTool<RunWorkflowInput>('workflowRun', {
       async prepareInvocation({ input }) {
-        const record = await readWorkflowRecord(getDirectory(), input.id);
+        const record = await readWorkflowRecord(getRoots(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
         return {
           invocationMessage: `Running workflow ${record.name}`,
@@ -74,7 +75,7 @@ export function registerWorkflowTools(
         };
       },
       async invoke({ input }, token) {
-        const record = await readWorkflowRecord(getDirectory(), input.id);
+        const record = await readWorkflowRecord(getRoots(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
         for (const step of record.workflow.steps) {
           if (step.type !== 'local-command') await ssh.requireAiAccess(step.assetId);

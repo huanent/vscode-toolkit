@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
 import type {
   WorkflowDefinition,
   WorkflowEditorOpenRequest,
@@ -24,20 +24,18 @@ export function createWorkflowFilesView(context: vscode.ExtensionContext): Workf
   let disposed = false;
   let editorOpener: ((id: string, name: string, parentId?: string) => Promise<void>) | undefined;
   let runner: WorkflowRunner | undefined;
-  const getWorkflowDirectory = () => {
-    return resolveStorageDirectory(context, 'workflows');
-  };
+  const getWorkflowRoots = () => resolveStorageRoots(context, 'workflows');
   const refresh = async () => {
     const webview = activeWebview;
     if (!webview || disposed) return;
-    const entries = await readWorkflowRecords(getWorkflowDirectory());
+    const entries = await readWorkflowRecords(getWorkflowRoots());
     if (disposed || activeWebview !== webview) return;
     await webview.postMessage({ type: 'workflowFilesUpdated', entries } satisfies WorkflowFilesWebviewMessage);
   };
   const openEditor = async (requestedId?: string, parentId?: string) => {
     if (disposed) return;
     const record = requestedId
-      ? await readWorkflowRecord(getWorkflowDirectory(), requestedId)
+      ? await readWorkflowRecord(getWorkflowRoots(), requestedId)
       : createWorkflowRecord(parentId);
     if (requestedId && !record) throw new Error('Workflow no longer exists.');
     if (!record) throw new Error('Could not create workflow.');
@@ -45,14 +43,14 @@ export function createWorkflowFilesView(context: vscode.ExtensionContext): Workf
     await editorOpener(record.id, record.name, record.parentId);
   };
   const runFile = async (id: string) => {
-    const record = await readWorkflowRecord(getWorkflowDirectory(), id);
+    const record = await readWorkflowRecord(getWorkflowRoots(), id);
     if (!record) throw new Error('Workflow no longer exists.');
     if (!runner) throw new Error('Workflow runner is not available.');
     await runner(record.name, record.workflow);
   };
 
   const handler: WebviewViewHandler = {
-    load: () => readWorkflowRecords(getWorkflowDirectory()),
+    load: () => readWorkflowRecords(getWorkflowRoots()),
     onResolve: (webview) => {
       if (!disposed) activeWebview = webview;
     },

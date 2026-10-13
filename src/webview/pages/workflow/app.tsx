@@ -6,6 +6,7 @@ import type {
   WorkflowEditorRequest,
   WorkflowStep,
 } from '@/features/workflow/protocol';
+import type { StorageScope } from '@/shared/storage-scope';
 import { Button } from '@/webview/components/button';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Form, FormItem } from '@/webview/components/form';
@@ -13,6 +14,7 @@ import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { mountWebview } from '@/webview/bootstrap';
+import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
 import { WorkflowStepEditor } from '@/webview/pages/workflow/components/workflow-step-editor';
 import { convertStep, createStepItem, type WorkflowStepItem } from '@/webview/pages/workflow/step-model';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
@@ -22,6 +24,7 @@ const expandByDefaultLimit = 3;
 
 type WorkflowEditorForm = {
   name: string;
+  storageScope: StorageScope;
   steps: WorkflowStepItem[];
 };
 
@@ -43,7 +46,11 @@ function App() {
     if (state.status === 'loaded' && !form) {
       const { steps } = state.data.workflow;
       const expanded = steps.length <= expandByDefaultLimit;
-      setForm({ name: state.data.name, steps: steps.map((step) => createStepItem(step, expanded)) });
+      setForm({
+        name: state.data.name,
+        storageScope: state.data.storageScope,
+        steps: steps.map((step) => createStepItem(step, expanded)),
+      });
     }
   }, [state, form]);
 
@@ -94,16 +101,20 @@ function App() {
   const removeStep = (index: number) => {
     updateSteps((items) => (items.length <= 1 ? items : items.filter((_, itemIndex) => itemIndex !== index)));
   };
-  const send = (type: WorkflowEditorRequest['type']) => {
-    const workflow: WorkflowDefinition = { steps: form.steps.map((item) => item.step) };
-    postToHost({ type, name: form.name, workflow } satisfies WorkflowEditorRequest);
-  };
+  const workflow: WorkflowDefinition = { steps: form.steps.map((item) => item.step) };
 
   return (
     <main className="flex min-h-screen flex-col text-(--vscode-foreground)">
       <Form className="mx-auto grid w-full max-w-3xl gap-5 px-5 py-5" onSubmit={(event) => event.preventDefault()}>
         <FormItem name="name" label="Name" className="">
           <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+        </FormItem>
+        <FormItem name="storageScope" label="Storage location" className="">
+          <StorageScopeSelector
+            value={form.storageScope}
+            workspaceAvailable={state.data.workspaceStorageAvailable}
+            onValueChange={(storageScope) => setForm({ ...form, storageScope })}
+          />
         </FormItem>
         <div className="grid gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -148,10 +159,26 @@ function App() {
         {state.error && <ErrorMessage message={state.error} />}
 
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" prefix={<Icon name="play" />} onClick={() => send('runWorkflow')}>
+          <Button
+            variant="secondary"
+            prefix={<Icon name="play" />}
+            onClick={() =>
+              postToHost({ type: 'runWorkflow', name: form.name, workflow } satisfies WorkflowEditorRequest)
+            }
+          >
             Run
           </Button>
-          <Button prefix={<Icon name="save" />} onClick={() => send('saveWorkflow')}>
+          <Button
+            prefix={<Icon name="save" />}
+            onClick={() =>
+              postToHost({
+                type: 'saveWorkflow',
+                name: form.name,
+                workflow,
+                storageScope: form.storageScope,
+              } satisfies WorkflowEditorRequest)
+            }
+          >
             Save
           </Button>
         </div>

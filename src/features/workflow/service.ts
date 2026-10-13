@@ -3,14 +3,22 @@ import { access, lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/pr
 import * as path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { WorkflowDefinition, WorkflowFolderRecord, WorkflowRecord, WorkflowRecordEntry } from './protocol';
+import { findStorageRoot, type StorageRoot, type StorageScope } from '@/shared/storage-scope';
 
 const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 
+export type StoredWorkflowRecord = WorkflowRecord & { scope: StorageScope };
+
+interface StoredWorkflowLocation {
+  path: string;
+  root: StorageRoot;
+  parentId?: string;
+}
+
 interface WorkflowStorageIndex {
   entries: WorkflowRecordEntry[];
-  workflowPaths: Map<string, string>;
-  workflowParents: Map<string, string | undefined>;
-  folderPaths: Map<string, string>;
+  workflows: Map<string, StoredWorkflowLocation>;
+  folders: Map<string, StorageRoot[]>;
 }
 
 export function createWorkflowRecord(parentId?: string): WorkflowRecord {
@@ -23,60 +31,57 @@ export function createWorkflowRecord(parentId?: string): WorkflowRecord {
   };
 }
 
-export async function readWorkflowRecords(directory: string): Promise<WorkflowRecordEntry[]> {
-  const index = await readWorkflowStorage(directory);
+export async function readWorkflowRecords(roots: readonly StorageRoot[]): Promise<WorkflowRecordEntry[]> {
+  const index = await readWorkflowStorage(roots);
   return index.entries.sort((first, second) => entryNameCollator.compare(first.name, second.name));
 }
 
-export async function readWorkflowRecord(directory: string, id: string): Promise<WorkflowRecord | undefined> {
+export async function readWorkflowRecord(
+  roots: readonly StorageRoot[],
+  id: string,
+): Promise<StoredWorkflowRecord | undefined> {
   validateWorkflowId(id);
-  const index = await readWorkflowStorage(directory);
-  const recordPath = index.workflowPaths.get(id);
-  if (!recordPath) return undefined;
-  const value: unknown = JSON.parse(await readFile(recordPath, 'utf8'));
+  const index = await readWorkflowStorage(roots);
+  const location = index.workflows.get(id);
+  if (!location) return undefined;
+  const value: unknown = JSON.parse(await readFile(location.path, 'utf8'));
   if (!isWorkflowRecord(value) || value.id !== id) throw new Error('Invalid workflow record.');
-  return { ...value, kind: 'workflow', parentId: index.workflowParents.get(id) };
+  return { ...value, kind: 'workflow', parentId: location.parentId, scope: location.root.scope };
 }
 
 export async function saveWorkflowRecord(
-  directory: string,
+  roots: readonly StorageRoot[],
   id: string,
   name: string,
   workflow: WorkflowDefinition,
-  parentId?: string,
-): Promise<WorkflowRecord> {
+  parentId: string | undefined,
+  scope: StorageScope,
+): Promise<StoredWorkflowRecord> {
   validateWorkflowId(id);
   if (!name.trim() || /[\\/\0]/.test(name)) throw new Error('Enter a valid workflow name.');
   if (!isWorkflowDefinition(workflow)) throw new Error('Invalid workflow definition.');
   if (parentId) validateWorkflowFolderId(parentId);
-  const index = await readWorkflowStorage(directory);
-  const existingPath = index.workflowPaths.get(id);
-  const actualParentId = existingPath ? index.workflowParents.get(id) : parentId;
-  const targetDirectory = actualParentId ? index.folderPaths.get(actualParentId) : directory;
-  if (!targetDirectory) throw new Error('The parent folder no longer exists.');
-  const record = {
+  const index = await readWorkflowStorage(roots);
+  const existing = index.workflows.get(id);
+  const actualParentId = existing ? existing.parentId : parentId;
+  if (actualParentId && !index.folders.has(actualParentId)) throw new Error('The parent folder no longer exists.');
+  const root = findStorageRoot(roots, scope);
+  const targetDirectory = actualParentId ? workflowFolderPath(root, actualParentId) : root.directory;
+  const record: WorkflowRecord = {
     kind: 'workflow',
     id,
     name: name.trim(),
     parentId: actualParentId,
     workflow,
-  } satisfies WorkflowRecord;
+  };
   const target = path.join(targetDirectory, `${id}.json`);
   await writeJsonFile(target, record);
-  if (existingPath && existingPath !== target) await rm(existingPath, { force: true });
-  return record;
-}
-
-export async function deleteWorkflowRecord(directory: string, id: string): Promise<void> {
-  validateWorkflowId(id);
-  const index = await readWorkflowStorage(directory);
-  const recordPath = index.workflowPaths.get(id);
-  if (!recordPath) throw new Error('Workflow no longer exists.');
-  await rm(recordPath);
+  if (existing && existing.path !== target) await rm(existing.path, { force: true });
+  return { ...record, scope: root.scope };
 }
 
 export async function saveWorkflowFolder(
-  directory: string,
+  roots: readonly StorageRoot[],
   name: string,
   parentId?: string,
 ): Promise<WorkflowFolderRecord> {
@@ -84,36 +89,33 @@ export async function saveWorkflowFolder(
   if (!trimmedName || trimmedName === '.' || trimmedName === '..' || /[\\/\0]/.test(trimmedName)) {
     throw new Error('Enter a valid folder name.');
   }
-  const index = await readWorkflowStorage(directory);
-  const parentDirectory = parentId ? index.folderPaths.get(parentId) : directory;
-  if (!parentDirectory) throw new Error('The parent folder no longer exists.');
+  const index = await readWorkflowStorage(roots);
+  const root = parentId ? index.folders.get(parentId)?.[0] : findStorageRoot(roots, 'global');
+  if (!root) throw new Error('The parent folder no longer exists.');
   if (index.entries.some((record) => record.parentId === parentId && record.name === trimmedName)) {
     throw new Error(`"${trimmedName}" already exists in this folder.`);
   }
-  const folderPath = path.join(parentDirectory, trimmedName);
-  await mkdir(folderPath);
-  const id = path.relative(directory, folderPath).split(path.sep).join('/');
+  await mkdir(root.directory, { recursive: true });
+  const id = parentId ? `${parentId}/${trimmedName}` : trimmedName;
+  await mkdir(workflowFolderPath(root, id));
   return { kind: 'folder', id, name: trimmedName, parentId };
 }
 
-export async function renameWorkflowEntry(directory: string, id: string, rawName: string): Promise<void> {
+export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: string, rawName: string): Promise<void> {
   const name = rawName.trim();
   if (!name || name === '.' || name === '..' || /[\\/\0]/.test(name)) {
     throw new Error('Enter a valid workflow name.');
   }
 
-  const index = await readWorkflowStorage(directory);
+  const index = await readWorkflowStorage(roots);
   const entry = index.entries.find((candidate) => candidate.id === id);
   if (!entry) throw new Error('Workflow entry no longer exists.');
   if (entry.name === name) return;
 
   if (entry.type === 'workflow') {
-    validateWorkflowId(id);
-    const recordPath = index.workflowPaths.get(id);
-    const value: unknown = recordPath ? JSON.parse(await readFile(recordPath, 'utf8')) : undefined;
-    const record = isWorkflowRecord(value) ? value : undefined;
+    const record = await readWorkflowRecord(roots, id);
     if (!record) throw new Error('Workflow entry no longer exists.');
-    await saveWorkflowRecord(directory, id, name, record.workflow, record.parentId);
+    await saveWorkflowRecord(roots, id, name, record.workflow, record.parentId, record.scope);
     return;
   }
 
@@ -124,47 +126,66 @@ export async function renameWorkflowEntry(directory: string, id: string, rawName
   ) {
     throw new Error(`"${name}" already exists in this folder.`);
   }
-  const folderPath = index.folderPaths.get(id);
-  const parentDirectory = entry.parentId ? index.folderPaths.get(entry.parentId) : directory;
-  if (!folderPath || !parentDirectory) throw new Error('Workflow folder no longer exists.');
-  const newPath = path.join(parentDirectory, name);
-  if (await pathExists(newPath)) {
-    const [sourceStats, targetStats] = await Promise.all([lstat(folderPath), lstat(newPath)]);
-    if (sourceStats.dev !== targetStats.dev || sourceStats.ino !== targetStats.ino) {
-      throw new Error(`"${name}" already exists in this folder.`);
+  const folderRoots = index.folders.get(id);
+  if (!folderRoots) throw new Error('Workflow folder no longer exists.');
+  const moves = folderRoots.map((root) => {
+    const source = workflowFolderPath(root, id);
+    return { source, target: path.join(path.dirname(source), name) };
+  });
+  for (const move of moves) {
+    if (await pathExists(move.target)) {
+      const [sourceStats, targetStats] = await Promise.all([lstat(move.source), lstat(move.target)]);
+      if (sourceStats.dev !== targetStats.dev || sourceStats.ino !== targetStats.ino) {
+        throw new Error(`"${name}" already exists in this folder.`);
+      }
     }
   }
-  await rename(folderPath, newPath);
+  for (const move of moves) await rename(move.source, move.target);
 }
 
-export async function moveWorkflowEntry(directory: string, id: string, parentId?: string): Promise<void> {
-  const index = await readWorkflowStorage(directory);
+export async function moveWorkflowEntry(roots: readonly StorageRoot[], id: string, parentId?: string): Promise<void> {
+  const index = await readWorkflowStorage(roots);
   const entry = index.entries.find((candidate) => candidate.id === id);
   if (!entry) throw new Error('Workflow entry no longer exists.');
   if (parentId) validateWorkflowFolderId(parentId);
-  const targetDirectory = parentId ? index.folderPaths.get(parentId) : directory;
-  if (!targetDirectory) throw new Error('The destination folder no longer exists.');
+  if (parentId && !index.folders.has(parentId)) throw new Error('The destination folder no longer exists.');
 
   if (entry.type === 'folder' && parentId && (parentId === id || parentId.startsWith(`${id}/`))) {
     throw new Error('A folder cannot be moved into itself.');
   }
   if (entry.parentId === parentId) return;
 
-  const source = entry.type === 'folder' ? index.folderPaths.get(id) : index.workflowPaths.get(id);
-  if (!source) throw new Error('Workflow entry no longer exists.');
-  const target = path.join(targetDirectory, entry.type === 'folder' ? entry.name : `${id}.json`);
+  if (entry.type === 'folder') {
+    const moves = (index.folders.get(id) ?? []).map((root) => {
+      const destination = parentId ? workflowFolderPath(root, parentId) : root.directory;
+      return { source: workflowFolderPath(root, id), destination, target: path.join(destination, entry.name) };
+    });
+    for (const move of moves) {
+      if (await pathExists(move.target)) throw new Error(`"${entry.name}" already exists in that folder.`);
+    }
+    for (const move of moves) {
+      await mkdir(move.destination, { recursive: true });
+      await rename(move.source, move.target);
+    }
+    return;
+  }
+
+  const location = index.workflows.get(id);
+  if (!location) throw new Error('Workflow entry no longer exists.');
+  const destination = parentId ? workflowFolderPath(location.root, parentId) : location.root.directory;
+  const target = path.join(destination, `${id}.json`);
   if (await pathExists(target)) throw new Error(`"${entry.name}" already exists in that folder.`);
-  await rename(source, target);
+  await mkdir(destination, { recursive: true });
+  await rename(location.path, target);
 }
 
-export async function deleteWorkflowEntry(directory: string, id: string): Promise<string[]> {
-  const index = await readWorkflowStorage(directory);
+export async function deleteWorkflowEntry(roots: readonly StorageRoot[], id: string): Promise<string[]> {
+  const index = await readWorkflowStorage(roots);
   const entry = index.entries.find((record) => record.id === id);
   if (!entry) throw new Error('Workflow entry no longer exists.');
   if (entry.type === 'workflow') {
-    validateWorkflowId(id);
-    const recordPath = index.workflowPaths.get(id);
-    if (recordPath) await rm(recordPath, { force: true });
+    const location = index.workflows.get(id);
+    if (location) await rm(location.path, { force: true });
     return [id];
   }
 
@@ -179,9 +200,9 @@ export async function deleteWorkflowEntry(directory: string, id: string): Promis
       }
     }
   }
-  const folderPath = index.folderPaths.get(id);
-  if (!folderPath) throw new Error('Workflow folder no longer exists.');
-  await rm(folderPath, { recursive: true, force: true });
+  const folderRoots = index.folders.get(id);
+  if (!folderRoots) throw new Error('Workflow folder no longer exists.');
+  for (const root of folderRoots) await rm(workflowFolderPath(root, id), { recursive: true, force: true });
   return [...ids];
 }
 
@@ -206,26 +227,18 @@ export function validateWorkflowFolderId(id: string): void {
   }
 }
 
-async function readWorkflowStorage(directory: string): Promise<WorkflowStorageIndex> {
-  await mkdir(directory, { recursive: true });
-  await migrateLegacyWorkflowStorage(directory);
+async function readWorkflowStorage(roots: readonly StorageRoot[]): Promise<WorkflowStorageIndex> {
+  const index: WorkflowStorageIndex = { entries: [], workflows: new Map(), folders: new Map() };
+  const folderEntries = new Map<string, WorkflowRecordEntry>();
 
-  const index: WorkflowStorageIndex = {
-    entries: [],
-    workflowPaths: new Map(),
-    workflowParents: new Map(),
-    folderPaths: new Map(),
-  };
-
-  const visit = async (currentDirectory: string, parentId?: string): Promise<void> => {
+  const visit = async (root: StorageRoot, currentDirectory: string, parentId?: string): Promise<void> => {
     const children = await readdir(currentDirectory, { withFileTypes: true });
     for (const child of children) {
       if (!child.isDirectory()) continue;
-      const childPath = path.join(currentDirectory, child.name);
-      const id = path.relative(directory, childPath).split(path.sep).join('/');
-      index.folderPaths.set(id, childPath);
-      index.entries.push({ id, name: child.name, type: 'folder', parentId });
-      await visit(childPath, id);
+      const id = parentId ? `${parentId}/${child.name}` : child.name;
+      index.folders.set(id, [...(index.folders.get(id) ?? []), root]);
+      if (!folderEntries.has(id)) folderEntries.set(id, { id, name: child.name, type: 'folder', parentId });
+      await visit(root, path.join(currentDirectory, child.name), id);
     }
 
     for (const child of children) {
@@ -234,9 +247,8 @@ async function readWorkflowStorage(directory: string): Promise<WorkflowStorageIn
       try {
         const value: unknown = JSON.parse(await readFile(recordPath, 'utf8'));
         if (!isWorkflowRecord(value) || child.name !== `${value.id}.json`) continue;
-        if (index.workflowPaths.has(value.id)) throw new Error('Duplicate workflow id.');
-        index.workflowPaths.set(value.id, recordPath);
-        index.workflowParents.set(value.id, parentId);
+        if (index.workflows.has(value.id)) throw new Error('Duplicate workflow id.');
+        index.workflows.set(value.id, { path: recordPath, root, parentId });
         index.entries.push({ id: value.id, name: value.name, type: 'workflow', parentId });
       } catch (error) {
         if (error instanceof Error && error.message === 'Duplicate workflow id.') throw error;
@@ -244,8 +256,17 @@ async function readWorkflowStorage(directory: string): Promise<WorkflowStorageIn
     }
   };
 
-  await visit(directory);
+  for (const root of roots) {
+    if (!(await pathExists(root.directory))) continue;
+    await migrateLegacyWorkflowStorage(root.directory);
+    await visit(root, root.directory);
+  }
+  index.entries.push(...folderEntries.values());
   return index;
+}
+
+function workflowFolderPath(root: StorageRoot, folderId: string): string {
+  return path.join(root.directory, ...folderId.split('/'));
 }
 
 async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {

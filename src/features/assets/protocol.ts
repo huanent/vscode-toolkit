@@ -1,4 +1,5 @@
 import type { Credential, CredentialSummary } from '@/features/credential/protocol';
+import type { StorageScope } from '@/shared/storage-scope';
 
 export interface AssetFormValues {
   name: string;
@@ -7,6 +8,7 @@ export interface AssetFormValues {
   database: string;
   tls: boolean;
   enableAI: boolean;
+  storageScope: StorageScope;
   credentialId: string;
   proxyAssetId?: string;
 }
@@ -15,6 +17,7 @@ export interface AssetEditorData {
   assetType: string;
   label: string;
   editing: boolean;
+  workspaceStorageAvailable: boolean;
   values: AssetFormValues;
   credentials: CredentialSummary[];
   sshConnections: { id: string; name: string; host: string; port: number }[];
