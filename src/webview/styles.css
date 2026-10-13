@@ -54,5 +54,5 @@ body {
   min-width: 240px;
   min-height: 100vh;
   background-color: transparent;
-  font-size: 13px;
+  font-size: var(--text-base);
 }

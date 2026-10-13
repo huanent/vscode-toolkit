@@ -1,11 +1,10 @@
 import { Field } from '@base-ui/react/field';
-import { Form as BaseForm } from '@base-ui/react/form';
-import type { ComponentProps, ReactElement, ReactNode } from 'react';
 import { cn } from 'cn';
+import type { ComponentProps, ReactElement, ReactNode } from 'react';
 
-type FormProps = ComponentProps<typeof BaseForm>;
+export { Form } from '@base-ui/react/form';
 
-interface FormItemProps extends Omit<ComponentProps<typeof Field.Root>, 'children'> {
+type FormItemProps = Omit<ComponentProps<typeof Field.Root>, 'children'> & {
   label?: ReactNode;
   error?: ReactNode;
   match?: ComponentProps<typeof Field.Error>['match'];
@@ -15,19 +14,15 @@ interface FormItemProps extends Omit<ComponentProps<typeof Field.Root>, 'childre
     required?: boolean;
   };
   children: ReactNode;
-}
-
-export function Form(props: FormProps) {
-  return <BaseForm {...props} />;
-}
+};
 
 export function FormItem({ label, error, match, control, className, children, ...props }: FormItemProps) {
   return (
     <Field.Root {...props} className={cn('grid gap-1', className)}>
-      {label && <Field.Label className=" font-medium">{label}</Field.Label>}
+      {label != null && <Field.Label className="font-medium">{label}</Field.Label>}
       {control ? <Field.Control {...control} render={children as ReactElement} /> : children}
-      {error && (
-        <Field.Error match={match} className=" text-(--vscode-errorForeground)">
+      {error != null && (
+        <Field.Error match={match} className="text-(--vscode-errorForeground)">
           {error}
         </Field.Error>
       )}

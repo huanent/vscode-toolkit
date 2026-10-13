@@ -1,9 +1,12 @@
 import { Autocomplete as BaseAutocomplete } from '@base-ui/react/autocomplete';
+import { cn } from 'cn';
+import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { Input, type InputProps } from '@/webview/components/input';
+import { popupClassName, popupItemClassName } from '@/webview/components/surface-styles';
 
 export type AutocompleteProps = Omit<InputProps, 'value' | 'onChange' | 'list'> & {
-  items: string[];
+  items: readonly string[];
   value: string;
   onValueChange: (value: string) => void;
 };
@@ -28,12 +31,16 @@ export function Autocomplete({ items, value, onValueChange, disabled, suffix, ..
                 <>
                   {suffix}
                   <BaseAutocomplete.Trigger
-                    aria-label="Show options"
-                    title="Show options"
-                    className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-(--vscode-input-foreground) enabled:hover:bg-(--vscode-toolbar-hoverBackground) disabled:cursor-not-allowed"
-                  >
-                    <Icon name="chevron-down" size="sm" />
-                  </BaseAutocomplete.Trigger>
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        prefix={<Icon name="chevron-down" size="sm" />}
+                        aria-label="Show options"
+                        title="Show options"
+                      />
+                    }
+                  />
                 </>
               }
             />
@@ -42,14 +49,10 @@ export function Autocomplete({ items, value, onValueChange, disabled, suffix, ..
       </BaseAutocomplete.InputGroup>
       <BaseAutocomplete.Portal>
         <BaseAutocomplete.Positioner align="start" sideOffset={4} className="z-50 w-(--anchor-width)">
-          <BaseAutocomplete.Popup className="max-h-64 w-full overflow-auto rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-foreground) shadow-sm">
+          <BaseAutocomplete.Popup className={cn(popupClassName, 'max-h-64 w-full overflow-auto')}>
             <BaseAutocomplete.List>
               {(item: string) => (
-                <BaseAutocomplete.Item
-                  key={item}
-                  value={item}
-                  className="cursor-pointer px-3 py-1 data-highlighted:bg-(--vscode-list-activeSelectionBackground) data-highlighted:text-(--vscode-list-activeSelectionForeground)"
-                >
+                <BaseAutocomplete.Item key={item} value={item} className={popupItemClassName}>
                   {item}
                 </BaseAutocomplete.Item>
               )}

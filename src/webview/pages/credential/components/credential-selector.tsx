@@ -15,7 +15,7 @@ export function CredentialSelector({
   credentials,
   onCreate,
   ...selectProps
-}: CredentialSelectorProps & Omit<SelectProps, 'options' | 'placeholder' | 'aria-label'>) {
+}: CredentialSelectorProps & Omit<SelectProps, 'options' | 'placeholder' | 'ariaLabel'>) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
@@ -24,7 +24,7 @@ export function CredentialSelector({
         <Select
           {...selectProps}
           className={cn('min-w-0 flex-1', selectProps.className)}
-          aria-label="Credential"
+          ariaLabel="Credential"
           placeholder="Select a credential"
           options={credentials.map((credential) => ({
             value: credential.id,

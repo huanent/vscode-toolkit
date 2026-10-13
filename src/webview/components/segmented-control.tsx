@@ -2,13 +2,13 @@ import { Toggle } from '@base-ui/react/toggle';
 import { ToggleGroup } from '@base-ui/react/toggle-group';
 import type { ReactNode } from 'react';
 
-interface SegmentedControlProps<T extends string> {
+type SegmentedControlProps<T extends string> = {
   ariaLabel: string;
   options: readonly { value: T; label: ReactNode; disabled?: boolean }[];
   value: T;
   onValueChange: (value: T) => void;
   disabled?: boolean;
-}
+};
 
 export function SegmentedControl<T extends string>({
   ariaLabel,
@@ -33,7 +33,7 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           value={option.value}
           disabled={option.disabled}
-          className="inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-sm px-2  text-(--vscode-foreground) enabled:hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-sm px-2 text-(--vscode-foreground) enabled:hover:bg-(--vscode-list-hoverBackground) data-pressed:bg-(--vscode-list-activeSelectionBackground) data-pressed:text-(--vscode-list-activeSelectionForeground) disabled:cursor-not-allowed disabled:opacity-50"
         >
           {option.label}
         </Toggle>

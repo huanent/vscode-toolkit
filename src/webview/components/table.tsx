@@ -39,7 +39,7 @@ export function Table<T>({
 }: TableProps<T>) {
   return (
     <div className={cn('min-w-0 overflow-auto', border && 'border border-(--vscode-panel-border)', className)}>
-      <table className="w-max min-w-full border-separate border-spacing-0 " aria-label={ariaLabel}>
+      <table className="w-max min-w-full border-separate border-spacing-0" aria-label={ariaLabel}>
         <thead className="sticky top-0 z-10">
           <tr>
             {columns.map((column) => (
@@ -62,10 +62,11 @@ export function Table<T>({
           {rows.map((row, rowIndex) => (
             <tr
               key={rowKey?.(row, rowIndex) ?? rowIndex}
-              className={cn(
-                onRowClick &&
-                  'cursor-pointer hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
-              )}
+              className={
+                onRowClick
+                  ? 'cursor-pointer hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)'
+                  : undefined
+              }
               onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
             >
               {columns.map((column) => (
@@ -87,7 +88,7 @@ export function Table<T>({
             <tr>
               <td
                 colSpan={Math.max(1, columns.length)}
-                className="h-14 px-3 text-center text-(--vscode-descriptionForeground)"
+                className="h-14 px-2 text-center text-(--vscode-descriptionForeground)"
               >
                 {emptyMessage}
               </td>

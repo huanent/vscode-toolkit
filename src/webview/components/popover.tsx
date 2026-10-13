@@ -1,16 +1,17 @@
 import { Popover as BasePopover } from '@base-ui/react/popover';
 import { cn } from 'cn';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { popupClassName } from '@/webview/components/surface-styles';
 
-export interface PopoverProps {
+export type PopoverProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  trigger: ReactNode;
+  trigger: ReactElement;
   children: ReactNode;
   className?: string;
   sideOffset?: number;
   align?: 'start' | 'center' | 'end';
-}
+};
 
 export function Popover({
   open,
@@ -23,21 +24,12 @@ export function Popover({
 }: PopoverProps) {
   return (
     <BasePopover.Root open={open} onOpenChange={onOpenChange}>
-      <BasePopover.Trigger render={trigger as React.ReactElement} />
+      <BasePopover.Trigger render={trigger} />
       <BasePopover.Portal>
         <BasePopover.Positioner sideOffset={sideOffset} align={align} className="z-50">
-          <BasePopover.Popup
-            className={cn(
-              'overflow-hidden rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background))  text-(--vscode-foreground) shadow-md focus:outline-none',
-              className,
-            )}
-          >
-            {children}
-          </BasePopover.Popup>
+          <BasePopover.Popup className={cn(popupClassName, 'overflow-hidden', className)}>{children}</BasePopover.Popup>
         </BasePopover.Positioner>
       </BasePopover.Portal>
     </BasePopover.Root>
   );
 }
-
-export { BasePopover };

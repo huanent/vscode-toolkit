@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react';
 import { Tabs as BaseTabs } from '@base-ui/react/tabs';
 import { cn } from 'cn';
+import type { ReactNode } from 'react';
 
 export type Tab = {
   id: string;
   label: string;
   icon?: ReactNode;
-  context?: Record<string, string | boolean>;
+  context?: Readonly<Record<string, string | number | boolean>>;
 };
 
 type TabsProps = {
-  tabs: Tab[];
+  tabs: readonly Tab[];
   activeTabId: string;
   onChange: (tabId: string) => void;
   children: ReactNode;
@@ -59,7 +59,7 @@ export function Tabs({
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap border-0 px-3 ',
+                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap px-3',
                   bottom ? 'border-t-2' : 'flex-1 border-b',
                   isActive
                     ? 'border-(--vscode-panelTitle-activeBorder,var(--vscode-focusBorder)) text-(--vscode-panelTitle-activeForeground,var(--vscode-foreground))'

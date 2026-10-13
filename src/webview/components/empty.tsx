@@ -1,19 +1,19 @@
-import { Icon } from './icons';
+import { Icon } from '@/webview/components/icons';
 
-type EmptyStateProps = {
+type EmptyProps = {
   title: string;
   description: string;
   icon: string;
 };
 
-export function Empty({ title, description, icon }: EmptyStateProps) {
+export function Empty({ title, description, icon }: EmptyProps) {
   return (
     <section className="grid min-w-0 justify-items-center gap-2 px-4 py-6 text-center" aria-label={title}>
       <div className="grid size-8 place-items-center" aria-hidden="true">
         <Icon name={icon} size="xl" variant="muted" />
       </div>
-      <h2 className="max-w-full break-words  font-semibold">{title}</h2>
-      <p className="max-w-lg break-words  text-(--vscode-descriptionForeground)">{description}</p>
+      <h2 className="max-w-full wrap-break-word font-semibold">{title}</h2>
+      <p className="max-w-lg wrap-break-word text-(--vscode-descriptionForeground)">{description}</p>
     </section>
   );
 }

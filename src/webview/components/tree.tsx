@@ -1,8 +1,8 @@
 import { cn } from 'cn';
-import { DisclosureIcon, Icon } from '@/webview/components/icons';
-import { List } from '@/webview/components/list';
 import { useEffect, useState } from 'react';
-import type { Key, KeyboardEvent, MouseEvent } from 'react';
+import type { Key, KeyboardEvent } from 'react';
+import { Icon } from '@/webview/components/icons';
+import { List } from '@/webview/components/list';
 
 type TreeItemBase = {
   path: string;
@@ -49,7 +49,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
       ? focusedNode.key
       : focusedNode.parentKey
     : null;
-  const updateExpanded = (key: Key, expanded: boolean) => {
+  const setExpanded = (key: Key, expanded: boolean) => {
     setExpandedKeys((current) => {
       if (current.has(key) === expanded) return current;
       const next = new Set(current);
@@ -58,23 +58,9 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
       return next;
     });
   };
-  const toggleExpanded = (key: Key) => {
-    setExpandedKeys((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-  const handleItemClick = (node: TreeNodeModel, event: MouseEvent<HTMLDivElement>) => {
-    const isExpanderClick = event.target instanceof Element && event.target.closest('[data-tree-expander]') !== null;
-    if (isExpanderClick) {
-      if (node.expandable) toggleExpanded(node.key);
-    } else if (node.expandable) {
-      toggleExpanded(node.key);
-    } else if (node.item.type === 'file') {
-      onActivate?.(node.item);
-    }
+  const activateNode = (node: TreeNodeModel) => {
+    if (node.expandable) setExpanded(node.key, !node.expanded);
+    else if (node.item.type === 'file') onActivate?.(node.item);
   };
   const handleKeyDown = (
     event: KeyboardEvent<HTMLDivElement>,
@@ -86,14 +72,14 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
     event.stopPropagation();
     if (!currentItem) return;
     if (event.key === 'ArrowLeft') {
-      if (currentItem.expandable && currentItem.expanded) updateExpanded(currentItem.key, false);
+      if (currentItem.expandable && currentItem.expanded) setExpanded(currentItem.key, false);
       else if (currentItem.parentKey !== null)
         focusItem(visibleItems.find((node) => node.key === currentItem.parentKey));
       return;
     }
     if (!currentItem.expandable) return;
     if (currentItem.expanded) focusItem(currentItem.children[0]);
-    else updateExpanded(currentItem.key, true);
+    else setExpanded(currentItem.key, true);
   };
 
   return (
@@ -119,11 +105,8 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
       role="tree"
       itemRole="treeitem"
       onFocusedKeyChange={setFocusedKey}
-      onActivate={(node) => {
-        if (node.expandable) toggleExpanded(node.key);
-        else if (node.item.type === 'file') onActivate?.(node.item);
-      }}
-      onItemClick={handleItemClick}
+      onActivate={activateNode}
+      onItemClick={activateNode}
       onKeyDown={handleKeyDown}
     />
   );
@@ -175,20 +158,13 @@ function TreeRowIndentation({ node, activeIndentKey }: TreeRowIndentationProps) 
     <div className="relative flex shrink-0 items-center self-stretch">
       <TreeIndentGuides itemPath={node.item.path} activeIndentKey={activeIndentKey} />
       {Array.from({ length: node.level - 1 }, (_, index) => (
-        <span key={`indent-${index}`} className={cn('relative z-10 shrink-0 self-stretch', 'w-5')} aria-hidden="true" />
+        <span key={`indent-${index}`} className="relative z-10 w-5 shrink-0 self-stretch" aria-hidden="true" />
       ))}
-      {node.item.type === 'directory' ? (
-        <span
-          className={cn(
-            'relative z-10 py-1 ml-1 grid shrink-0 place-items-center self-center',
-            node.expandable && 'cursor-pointer',
-          )}
-          data-tree-expander
-          aria-hidden="true"
-        >
-          <DisclosureIcon expanded={node.expanded} />
+      {node.item.type === 'directory' && (
+        <span className="relative z-10 ml-1 grid shrink-0 cursor-pointer place-items-center self-center py-1">
+          <Icon name="chevron-right" className={cn('transition-transform', node.expanded && 'rotate-90')} />
         </span>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -209,8 +185,7 @@ function TreeIndentGuides({ itemPath, activeIndentKey }: TreeIndentGuidesProps) 
           <span
             key={index}
             className={cn(
-              'shrink-0 self-stretch border-l',
-              'w-5',
+              'w-5 shrink-0 self-stretch border-l',
               active
                 ? 'border-(--vscode-tree-indentGuidesStroke) opacity-100'
                 : 'border-(--vscode-tree-inactiveIndentGuidesStroke) opacity-60',

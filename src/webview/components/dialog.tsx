@@ -1,9 +1,11 @@
 import { Dialog as BaseDialog } from '@base-ui/react/dialog';
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
-import { Icon } from './icons';
+import { Button } from '@/webview/components/button';
+import { Icon } from '@/webview/components/icons';
+import { popupClassName } from '@/webview/components/surface-styles';
 
-export interface DialogProps {
+export type DialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
@@ -11,7 +13,7 @@ export interface DialogProps {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
-}
+};
 
 export function Dialog({ open, onOpenChange, title, description, children, footer, className }: DialogProps) {
   return (
@@ -20,25 +22,23 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-(--vscode-editor-background) opacity-60" />
         <BaseDialog.Popup
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-sm border border-(--vscode-widget-border,var(--vscode-panel-border)) bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) p-3 text-(--vscode-editorWidget-foreground,var(--vscode-foreground)) shadow-sm focus:outline-none',
+            popupClassName,
+            'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden p-3',
             className,
           )}
         >
           <div className="flex shrink-0 items-start justify-between gap-3 border-b border-(--vscode-panel-border) pb-3">
             <div className="min-w-0 flex-1">
-              <BaseDialog.Title className="wrap-break-word  font-semibold">{title}</BaseDialog.Title>
-              {description && (
-                <BaseDialog.Description className="mt-1 wrap-break-word  text-(--vscode-descriptionForeground)">
+              <BaseDialog.Title className="wrap-break-word font-semibold">{title}</BaseDialog.Title>
+              {description != null && (
+                <BaseDialog.Description className="mt-1 wrap-break-word text-(--vscode-descriptionForeground)">
                   {description}
                 </BaseDialog.Description>
               )}
             </div>
             <BaseDialog.Close
-              className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground)"
-              aria-label="Close"
-            >
-              <Icon name="close" size="md" />
-            </BaseDialog.Close>
+              render={<Button variant="ghost" size="sm" prefix={<Icon name="close" />} aria-label="Close" />}
+            />
           </div>
           <div className="min-h-0 min-w-0 overflow-auto">{children}</div>
           {footer != null && (
@@ -51,5 +51,3 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
     </BaseDialog.Root>
   );
 }
-
-export { BaseDialog };

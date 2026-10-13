@@ -10,13 +10,14 @@ export type IconProps = {
   className?: string;
 };
 
+// Important modifier: codicon.css sets font-size outside Tailwind layers.
 const sizeClasses: Record<IconSize, string> = {
-  sm: '!text-[12px]',
-  md: '!text-[16px]',
-  lg: '!text-[20px]',
-  xl: '!text-[24px]',
-  '2xl': '!text-[32px]',
-  '3xl': '!text-[40px]',
+  sm: 'text-sm!',
+  md: 'text-xl!',
+  lg: 'text-2xl!',
+  xl: 'text-3xl!',
+  '2xl': 'text-4xl!',
+  '3xl': 'text-5xl!',
 };
 
 const variantClasses: Record<IconVariant, string> = {
@@ -37,10 +38,4 @@ export function Icon({ name, size = 'md', variant = 'default', className }: Icon
       aria-hidden="true"
     />
   );
-}
-
-type SizedIconProps = Pick<IconProps, 'size'>;
-
-export function DisclosureIcon({ expanded, size = 'md' }: SizedIconProps & { expanded: boolean }) {
-  return <Icon name="chevron-right" size={size} className={cn('transition-transform', expanded && 'rotate-90')} />;
 }
