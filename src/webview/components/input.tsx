@@ -20,7 +20,7 @@ export function Input({ className, prefix, suffix, ...props }: InputProps) {
         props.disabled && 'cursor-not-allowed opacity-50',
       )}
     >
-      {prefix != null && <span className="inline-flex shrink-0 items-center">{prefix}</span>}
+      {prefix != null && <div className="inline-flex shrink-0 items-center">{prefix}</div>}
       <BaseInput
         className={cn(
           'h-full min-w-0 flex-1 bg-transparent p-0 placeholder:text-(--vscode-input-placeholderForeground) focus:outline-none disabled:opacity-100',
@@ -28,7 +28,7 @@ export function Input({ className, prefix, suffix, ...props }: InputProps) {
         )}
         {...props}
       />
-      {suffix != null && <span className="inline-flex shrink-0 items-center">{suffix}</span>}
+      {suffix != null && <div className="inline-flex shrink-0 items-center">{suffix}</div>}
     </div>
   );
 }

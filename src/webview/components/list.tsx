@@ -197,12 +197,12 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       onClick={onClick}
     >
       {icon}
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-        <span className="max-w-full shrink-0 truncate">{listItem.label}</span>
+      <div className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">
+        <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
         {listItem.description !== undefined && (
-          <span className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
+          <div className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
             {listItem.description}
-          </span>
+          </div>
         )}
       </div>
       {listItem.actions && (

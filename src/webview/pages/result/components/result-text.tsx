@@ -18,9 +18,7 @@ export function ResultText({ title, content, language, action, description }: Re
       <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="shrink-0  font-semibold">{title}</h3>
-          {description && (
-            <span className="min-w-0 truncate  text-(--vscode-descriptionForeground)">{description}</span>
-          )}
+          {description && <div className="min-w-0 truncate  text-(--vscode-descriptionForeground)">{description}</div>}
         </div>
         <div className="flex flex-wrap items-center gap-1  text-(--vscode-descriptionForeground)">
           {action}

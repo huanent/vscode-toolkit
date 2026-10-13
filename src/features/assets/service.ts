@@ -74,7 +74,7 @@ export class AssetService {
 
   async requireAiAsset(id: string): Promise<AssetRecord> {
     const asset = await this.get(id);
-    if (!isAiEnabled(asset)) throw new Error('Asset is not enabled for AI.');
+    if (!isAiEnabled(asset)) throw new Error('Asset access is disabled.');
     return asset;
   }
 

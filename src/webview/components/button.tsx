@@ -51,15 +51,15 @@ export function Button({
       {...props}
     >
       {prefix != null && (
-        <span aria-hidden="true" className="inline-flex shrink-0 items-center justify-center">
+        <div aria-hidden="true" className="inline-flex shrink-0 items-center justify-center">
           {prefix}
-        </span>
+        </div>
       )}
       {children}
       {suffix != null && (
-        <span aria-hidden="true" className="inline-flex shrink-0 items-center justify-center">
+        <div aria-hidden="true" className="inline-flex shrink-0 items-center justify-center">
           {suffix}
-        </span>
+        </div>
       )}
     </BaseButton>
   );

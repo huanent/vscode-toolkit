@@ -215,7 +215,7 @@
         "displayName": "Search Assets",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "assetsSearch",
-        "modelDescription": "Search configured Toolkit assets by keyword. Returns matching asset IDs and non-secret connection metadata.",
+        "modelDescription": "Search saved Toolkit connection assets by keyword. Asset types: 'ssh' (SSH hosts, used by sshExecute, sftpTransfer, and SSH workflow steps) and 'mysql' (MySQL databases, used by sqlExecute). Returns matching assets with id, type, name, folder, host, port, and database. Secrets are never returned.",
         "inputSchema": {
           "type": "object",
           "properties": {

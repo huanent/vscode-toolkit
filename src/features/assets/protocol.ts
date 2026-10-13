@@ -39,6 +39,7 @@ export interface AssetViewEntry {
   name: string;
   type: 'file';
   icon?: string;
+  badge?: { text: string; label: string };
   detail?: string;
   context: Record<string, string | number | boolean>;
 }

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import type { AssetRequest, AssetsMessage, AssetTreeEntry, AssetViewEntry } from './protocol';
 import type { AssetProvider } from './asset-provider';
-import type { AssetService } from './service';
+import { isAiEnabled, type AssetService } from './service';
 import { openAssetEditor } from './editor';
 import type { CredentialService } from '@/features/credential/service';
 import { showFolderPicker } from '@/host/utils/folder-picker';
@@ -10,6 +10,8 @@ import { showFolderPicker } from '@/host/utils/folder-picker';
 export interface AssetsViewHandler extends WebviewViewHandler {
   refresh(): Promise<void>;
 }
+
+const aiAccessBadge = { text: 'AI', label: 'AI tool access enabled' };
 
 export function createAssetsView(
   context: vscode.ExtensionContext,
@@ -33,6 +35,7 @@ export function createAssetsView(
       return {
         ...entry,
         icon: provider.icon,
+        badge: isAiEnabled(asset) ? aiAccessBadge : undefined,
         path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
         context: {
           ...entry.context,
