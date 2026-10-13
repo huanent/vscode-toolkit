@@ -4,6 +4,7 @@ import { registerScripts } from '@/features/scripts/register-scripts';
 import { registerTempCommands } from '@/features/temp/commands';
 import { registerWorkflowCommands } from '@/features/workflow/commands';
 import { registerCredentialCommands } from '@/features/credential/commands';
+import { registerExplorerCommands } from '@/features/explorer/commands';
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -17,5 +18,6 @@ export function registerCommands(
   registerTempCommands(context, refreshTempFiles);
   registerWorkflowCommands(context, refreshWorkflowFiles, openWorkflowEditor);
   registerCredentialCommands(context);
+  registerExplorerCommands(context);
   registerScripts(context);
 }

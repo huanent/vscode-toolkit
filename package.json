@@ -470,7 +470,7 @@
       },
       {
         "command": "toolkit.credential.manage",
-        "title": "Manage Credentials",
+        "title": "Credentials",
         "icon": "$(key)",
         "category": "Toolkit"
       },
@@ -478,6 +478,18 @@
         "command": "toolkit.credential.add",
         "title": "Add Credential",
         "icon": "$(add)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.open",
+        "title": "Explorer",
+        "icon": "$(folder-opened)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
         "category": "Toolkit"
       },
       {
@@ -695,7 +707,12 @@
         {
           "command": "toolkit.credential.manage",
           "when": "view == toolkit.dashboard",
-          "group": "1_more"
+          "group": "1_more@1"
+        },
+        {
+          "command": "toolkit.explorer.open",
+          "when": "view == toolkit.dashboard",
+          "group": "1_more@2"
         }
       ],
       "editor/title": [
@@ -722,6 +739,11 @@
         {
           "command": "toolkit.credential.add",
           "when": "activeWebviewPanelId == toolkit.credential",
+          "group": "navigation@1"
+        },
+        {
+          "command": "toolkit.explorer.refresh",
+          "when": "activeWebviewPanelId == toolkit.explorer",
           "group": "navigation@1"
         }
       ],
@@ -825,6 +847,10 @@
         },
         {
           "command": "toolkit.credential.add",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.refresh",
           "when": "false"
         },
         {
