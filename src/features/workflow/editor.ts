@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { spawn } from 'node:child_process';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type { WorkflowEditorData, WorkflowEditorMessage, WorkflowEditorRequest, WorkflowRecord } from './protocol';
 import {
@@ -9,7 +8,9 @@ import {
   validateWorkflowFolderId,
   validateWorkflowId,
 } from './service';
+import { validateWorkflow } from './runner';
 import type { SshService } from '@/features/ssh/ssh-service';
+import type { WorkflowResultService } from './result-service';
 
 export const workflowEditorViewType = 'toolkit.workflowEditor';
 export const workflowEditorScheme = 'toolkit-workflow-editor';
@@ -37,11 +38,9 @@ export function registerWorkflowEditor(
   context: vscode.ExtensionContext,
   getWorkflowDirectory: () => string,
   ssh: SshService,
+  workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable {
-  const outputChannel = vscode.window.createOutputChannel('Toolkit Workflow');
-  context.subscriptions.push(outputChannel);
-
   return registerWebviewEditor<WorkflowEditorData>(context, {
     viewType: workflowEditorViewType,
     page: 'workflow',
@@ -63,8 +62,8 @@ export function registerWorkflowEditor(
       const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (!isWorkflowEditorRequest(message)) return;
         try {
-          await validateWorkflow(message.workflow, ssh);
           if (message.type === 'saveWorkflow') {
+            await validateWorkflow(message.workflow, ssh);
             const id = parseWorkflowEditorUri(_uri);
             const record = await saveWorkflowRecord(
               getWorkflowDirectory(),
@@ -82,8 +81,7 @@ export function registerWorkflowEditor(
             return;
           }
 
-          const result = await runWorkflow(message.name, message.workflow, ssh, outputChannel);
-          await panel.webview.postMessage({ type: 'workflowRunResult', ...result } satisfies WorkflowEditorMessage);
+          await workflowResults.runWorkflow(message.name, message.workflow);
         } catch (error) {
           await panel.webview.postMessage({
             type: 'workflowEditorError',
@@ -110,107 +108,4 @@ function isWorkflowEditorRequest(value: unknown): value is WorkflowEditorRequest
     typeof request.name === 'string' &&
     isWorkflowDefinition(request.workflow)
   );
-}
-
-async function validateWorkflow(workflow: WorkflowEditorRequest['workflow'], ssh: SshService): Promise<void> {
-  if (!workflow.steps.length) throw new Error('Add at least one workflow step.');
-  const connections = await ssh.listConnections();
-  for (const [index, step] of workflow.steps.entries()) {
-    if (step.type === 'local-command') {
-      if (!step.command.trim()) throw new Error(`Enter the command for step ${index + 1}.`);
-    } else {
-      if (!connections.some((host) => host.id === step.hostId)) {
-        throw new Error(`Select an existing SSH host for step ${index + 1}.`);
-      }
-      if (step.type === 'ssh-command' && !step.command.trim()) {
-        throw new Error(`Enter the SSH command for step ${index + 1}.`);
-      }
-      if (step.type === 'sftp' && (!step.localPath.trim() || !step.remotePath.trim())) {
-        throw new Error(`Enter both file paths for step ${index + 1}.`);
-      }
-    }
-  }
-}
-
-async function runWorkflow(
-  name: string,
-  workflow: WorkflowEditorRequest['workflow'],
-  ssh: SshService,
-  outputChannel: vscode.OutputChannel,
-): Promise<{ success: boolean; message: string; output?: string }> {
-  const outputs: string[] = [];
-  outputChannel.appendLine(`Workflow: ${name}`);
-  for (const [index, step] of workflow.steps.entries()) {
-    let result: { success: boolean; message: string; output?: string };
-    try {
-      result = await runStep(step, ssh);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      outputChannel.appendLine(`Step ${index + 1} failed: ${message}`);
-      outputChannel.show(true);
-      return {
-        success: false,
-        message: `Workflow stopped at step ${index + 1}: ${message}`,
-        output: outputs.join('\n\n'),
-      };
-    }
-    outputChannel.appendLine(`Step ${index + 1}: ${result.message}`);
-    if (result.output) {
-      outputs.push(`Step ${index + 1}\n${result.output}`);
-      outputChannel.appendLine(result.output);
-    }
-    if (!result.success) {
-      outputChannel.show(true);
-      return {
-        success: false,
-        message: `Workflow stopped at step ${index + 1}: ${result.message}`,
-        output: outputs.join('\n\n'),
-      };
-    }
-  }
-
-  outputChannel.show(true);
-  return {
-    success: true,
-    message: `Workflow completed (${workflow.steps.length} steps).`,
-    output: outputs.join('\n\n'),
-  };
-}
-
-async function runStep(
-  step: WorkflowEditorRequest['workflow']['steps'][number],
-  ssh: SshService,
-): Promise<{ success: boolean; message: string; output?: string }> {
-  if (step.type === 'local-command') {
-    const cwd = step.cwd?.trim() || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
-    const result = await runLocalCommand(step.command, cwd);
-    return {
-      success: result.exitCode === 0,
-      message: `Local command exited with code ${result.exitCode ?? 'unknown'}.`,
-      output: result.output,
-    };
-  }
-
-  if (step.type === 'sftp') {
-    await ssh.transferFile(step.hostId, step.direction, step.localPath, step.remotePath);
-    return { success: true, message: `SFTP ${step.direction} completed.` };
-  }
-
-  const result = await ssh.runCommand(step.hostId, step.command);
-  return {
-    success: result.exitCode === 0,
-    message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,
-    output: [result.stdout, result.stderr].filter(Boolean).join('\n').trim(),
-  };
-}
-
-function runLocalCommand(command: string, cwd: string): Promise<{ exitCode: number | null; output: string }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, { cwd, shell: true, windowsHide: true });
-    let output = '';
-    child.stdout.on('data', (data: Buffer) => (output += data.toString('utf8')));
-    child.stderr.on('data', (data: Buffer) => (output += data.toString('utf8')));
-    child.once('error', reject);
-    child.once('close', (exitCode) => resolve({ exitCode, output: output.trim() }));
-  });
 }

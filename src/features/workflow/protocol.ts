@@ -22,6 +22,12 @@ export interface WorkflowRecord {
   workflow: WorkflowDefinition;
 }
 
+export interface WorkflowRunOutcome {
+  success: boolean;
+  message: string;
+  output?: string;
+}
+
 export interface WorkflowFolderRecord {
   kind: 'folder';
   id: string;
@@ -39,13 +45,17 @@ export type WorkflowEditorRequest =
 
 export type WorkflowEditorMessage =
   | { type: 'workflowSaved'; name: string }
-  | { type: 'workflowRunResult'; success: boolean; message: string; output?: string }
   | { type: 'workflowEditorError'; message: string };
 
 export interface WorkflowEditorOpenRequest {
   type: 'openWorkflowEditor';
   id?: string;
   parentId?: string;
+}
+
+export interface WorkflowRunRequest {
+  type: 'runWorkflowFile';
+  id: string;
 }
 
 export interface WorkflowRecordEntry {

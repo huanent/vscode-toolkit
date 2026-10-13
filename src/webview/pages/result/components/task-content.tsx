@@ -5,6 +5,7 @@ import { Icon } from '@/webview/components/icons';
 import type { ResultTask } from '@/features/result/protocol';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
+import { WorkflowTaskResult } from './workflow/workflow-task-result';
 import { ResultText } from './result-text';
 import { formatTaskDuration, formatTaskKind, taskStatusPresentation } from '../task-presentation';
 
@@ -14,6 +15,7 @@ const taskRenderers = new Map<string, ResultTaskRenderer>();
 registerResultTaskRenderer('http', HttpTaskResult);
 registerResultTaskRenderer('sqlite', SqliteQueryResultView);
 registerResultTaskRenderer('mysql', SqliteQueryResultView);
+registerResultTaskRenderer('workflow', WorkflowTaskResult);
 
 export function registerResultTaskRenderer(kind: string, renderer: ResultTaskRenderer): void {
   taskRenderers.set(kind, renderer);

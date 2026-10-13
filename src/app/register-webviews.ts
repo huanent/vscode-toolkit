@@ -10,6 +10,8 @@ import { registerSshTools } from '@/features/ssh/tools';
 import { registerDatabaseTools } from '@/features/database/tools';
 import { registerAssetTools } from '@/features/assets/tools';
 import { createWorkflowEditorUri, registerWorkflowEditor, workflowEditorViewType } from '@/features/workflow/editor';
+import { WorkflowResultService } from '@/features/workflow/result-service';
+import { registerWorkflowTools } from '@/features/workflow/tools';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
@@ -34,7 +36,13 @@ export function registerWebviews(
   const credentials = new CredentialService(context);
   const mysql = new MysqlService(assets, tasks, credentials);
   const ssh = new SshService(assets, credentials, context.globalState);
-  context.subscriptions.push(registerAssetTools(assets), registerDatabaseTools(mysql), ...registerSshTools(ssh));
+  const workflowResults = new WorkflowResultService(tasks, ssh);
+  context.subscriptions.push(
+    registerAssetTools(assets),
+    registerDatabaseTools(mysql),
+    ...registerSshTools(ssh),
+    ...registerWorkflowTools(context, ssh, workflowResults, workflowFiles.refresh),
+  );
   workflowFiles.setEditorOpener(async (id, name, parentId) => {
     await vscode.commands.executeCommand(
       'vscode.openWith',
@@ -42,11 +50,18 @@ export function registerWebviews(
       workflowEditorViewType,
     );
   });
+  workflowFiles.setRunner((name, workflow) => workflowResults.runWorkflow(name, workflow));
   context.subscriptions.push(
     mysql,
     ssh,
     registerMysqlEditor(context, mysql, tasks),
-    registerWorkflowEditor(context, () => resolveStorageDirectory(context, 'workflows'), ssh, workflowFiles.refresh),
+    registerWorkflowEditor(
+      context,
+      () => resolveStorageDirectory(context, 'workflows'),
+      ssh,
+      workflowResults,
+      workflowFiles.refresh,
+    ),
   );
   const assetsView = createAssetsView(context, assets, [mysql, ssh], credentials);
   const composedDashboardHandler = composeWebviewHandlers({

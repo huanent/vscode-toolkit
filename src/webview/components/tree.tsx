@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
-import type { Key, KeyboardEvent } from 'react';
+import type { Key, KeyboardEvent, ReactNode } from 'react';
 import { Icon } from '@/webview/components/icons';
 import { List } from '@/webview/components/list';
 
@@ -14,13 +14,14 @@ export type TreeItem =
   | (TreeItemBase & { type: 'file'; detail?: string })
   | (TreeItemBase & { type: 'directory'; children?: readonly TreeItem[] });
 
-type TreeFileItem = Extract<TreeItem, { type: 'file' }>;
+export type TreeFileItem = Extract<TreeItem, { type: 'file' }>;
 
 type TreeProps = {
   ariaLabel: string;
   collapseAllTrigger?: number;
   items: readonly TreeItem[];
   onActivate?: (item: TreeFileItem) => void;
+  renderActions?: (item: TreeFileItem) => ReactNode;
 };
 
 type TreeNodeModel = {
@@ -35,7 +36,7 @@ type TreeNodeModel = {
   expanded: boolean;
 };
 
-export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeProps) {
+export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderActions }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   useEffect(() => {
@@ -97,6 +98,7 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate }: TreeP
         label: node.item.name,
         description: node.item.type === 'file' ? node.item.detail : undefined,
         context: node.item.context,
+        actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,
         expanded: node.item.type === 'directory' ? node.expanded : undefined,
         level: node.level,
         position: node.position,

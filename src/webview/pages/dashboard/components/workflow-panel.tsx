@@ -1,8 +1,10 @@
-import type { WorkflowEditorOpenRequest, WorkflowRecordEntry } from '@/features/workflow/protocol';
+import type { WorkflowRecordEntry, WorkflowRunRequest } from '@/features/workflow/protocol';
+import { Button } from '@/webview/components/button';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
+import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeItem } from '@/webview/components/tree';
+import { Tree, type TreeFileItem, type TreeItem } from '@/webview/components/tree';
 import { postToHost } from '@/webview/utils/host-data';
 
 type WorkflowPanelProps = {
@@ -27,11 +29,7 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
             ariaLabel="Workflow files"
             collapseAllTrigger={collapseAllTrigger}
             items={toWorkflowTreeItems(entries)}
-            onActivate={(item) => {
-              const id = item.context?.workflowId;
-              if (typeof id !== 'string') return;
-              postToHost({ type: 'openWorkflowEditor', id } satisfies WorkflowEditorOpenRequest);
-            }}
+            renderActions={renderWorkflowActions}
           />
         </div>
       ) : (
@@ -40,6 +38,21 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
 
       {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
     </section>
+  );
+}
+
+function renderWorkflowActions(item: TreeFileItem) {
+  const id = item.context?.workflowId;
+  if (typeof id !== 'string') return null;
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-label="Run workflow"
+      title="Run workflow"
+      prefix={<Icon name="play" />}
+      onClick={() => postToHost({ type: 'runWorkflowFile', id } satisfies WorkflowRunRequest)}
+    />
   );
 }
 

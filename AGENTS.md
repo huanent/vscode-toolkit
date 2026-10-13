@@ -32,11 +32,11 @@ These instructions apply to the entire repository. Webview-specific rules apply 
 ### File Ownership
 
 - `src/webview/bootstrap.tsx`: React webview entry point.
-- `src/webview/components/`: shared components and stable shared page structures.
+- `src/webview/components/`: generic shared components and stable shared page structures.
 - `src/webview/pages/<page>/`: page entries and page-specific components.
 - `src/webview/styles.css`: global base styles and VS Code theme integration only.
 
-Page entry files should compose components and manage page state rather than duplicate shared JSX. Reuse existing shared components; extract new shared components when used by multiple pages or when they represent a stable shared page structure.
+Page entry files should compose components and manage page state rather than duplicate shared JSX. Reuse existing shared components. Extract a shared component only when it is generic (no feature-specific data, labels, or behavior) and used by multiple pages or represents a stable shared page structure. Feature-specific compositions stay in the page's components, built directly from shared primitives such as `Button` and `Icon`.
 
 ### Host Integration
 
@@ -56,7 +56,7 @@ Reuse the shared webview infrastructure; do not re-implement it per feature:
 ## Webview UI and Styling
 
 - Prefer `@base-ui/react` primitives when building shared components in `src/webview/components/` whenever an equivalent control exists.
-- Prefer shared components from `src/webview/components/` when implementing UI. If a reusable control is missing, add or extend a shared component before using Base UI primitives directly or hand-rolling controls in pages.
+- Prefer shared components from `src/webview/components/` when implementing UI. If a generic reusable control is missing, add or extend a shared component before using Base UI primitives directly or hand-rolling controls in pages. Do not wrap feature-specific compositions in new shared components.
 - Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
 - Never use inline `style` attributes in webview JSX; the CSP uses `default-src 'none'`.
 - Use VS Code CSS variables for colors so the webview follows the active theme.

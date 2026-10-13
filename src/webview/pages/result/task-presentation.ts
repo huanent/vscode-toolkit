@@ -8,8 +8,10 @@ export const taskStatusPresentation: Record<ResultTaskStatus, { label: string; i
   interrupted: { label: 'Interrupted', icon: 'debug-pause', className: 'text-(--vscode-editorWarning-foreground)' },
 };
 
+const taskKindLabels: Record<string, string> = { http: 'HTTP', sqlite: 'SQLite', workflow: 'Workflow' };
+
 export function formatTaskKind(kind: string): string {
-  return kind === 'http' ? 'HTTP' : kind === 'sqlite' ? 'SQLite' : kind;
+  return taskKindLabels[kind] ?? kind;
 }
 
 export function formatTaskDuration(durationMs: number): string {

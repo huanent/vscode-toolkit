@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   WorkflowDefinition,
   WorkflowEditorData,
@@ -21,8 +21,6 @@ type WorkflowEditorForm = {
   workflow: WorkflowDefinition;
 };
 
-type WorkflowRunResult = Extract<WorkflowEditorMessage, { type: 'workflowRunResult' }>;
-
 const workflowTypes = [
   { value: 'local-command', label: 'Local command' },
   { value: 'sftp', label: 'SFTP transfer' },
@@ -42,16 +40,6 @@ function App() {
     return undefined;
   });
   const [form, setForm] = useState<WorkflowEditorForm>();
-  const [result, setResult] = useState<WorkflowRunResult>();
-  const receiveEditorMessage = useEffectEvent((event: MessageEvent<WorkflowEditorMessage>) => {
-    if (event.data.type === 'workflowRunResult') setResult(event.data);
-    if (event.data.type === 'workflowEditorError') setResult(undefined);
-  });
-
-  useEffect(() => {
-    window.addEventListener('message', receiveEditorMessage);
-    return () => window.removeEventListener('message', receiveEditorMessage);
-  }, []);
 
   useEffect(() => {
     if (state.status === 'loaded' && !form) {
@@ -70,7 +58,6 @@ function App() {
   const workflow = form.workflow;
   const updateWorkflow = (workflow: WorkflowDefinition) => {
     setForm((current) => (current ? { ...current, workflow } : current));
-    setResult(undefined);
   };
   const updateStep = (index: number, step: WorkflowStep) => {
     updateWorkflow({ steps: workflow.steps.map((current, stepIndex) => (stepIndex === index ? step : current)) });
@@ -93,7 +80,6 @@ function App() {
     updateWorkflow({ steps: workflow.steps.filter((_, stepIndex) => stepIndex !== index) });
   };
   const send = (type: WorkflowEditorRequest['type']) => {
-    setResult(undefined);
     postToHost({ type, name: form.name, workflow: form.workflow } satisfies WorkflowEditorRequest);
   };
 
@@ -277,17 +263,6 @@ function App() {
           <p role="alert" className=" text-(--vscode-errorForeground)">
             {state.error}
           </p>
-        )}
-        {result && (
-          <div
-            role="status"
-            className={result.success ? ' text-(--vscode-testing-iconPassed)' : ' text-(--vscode-errorForeground)'}
-          >
-            <p>{result.message}</p>
-            {result.output && (
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap font-mono">{result.output}</pre>
-            )}
-          </div>
         )}
       </Form>
     </main>
