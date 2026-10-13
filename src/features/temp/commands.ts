@@ -108,8 +108,7 @@ async function createTempEntry(
     const filePath = await createTempFile(directory, name);
     await refresh();
     const relativePath = path.relative(resolveStorageDirectory(context, 'temp'), filePath);
-    const document = await vscode.workspace.openTextDocument(createTempFileUri(relativePath));
-    await vscode.window.showTextDocument(document);
+    await vscode.commands.executeCommand('vscode.open', createTempFileUri(relativePath));
     return;
   }
 

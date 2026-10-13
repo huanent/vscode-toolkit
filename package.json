@@ -18,7 +18,7 @@
     "vscode:prepublish": "npm run validate && npm run build:production",
     "compile": "npm run validate && VITE_BUILD_TARGET=extension vite build --mode development && VITE_BUILD_TARGET=webview vite build --mode development",
     "build:production": "VITE_BUILD_TARGET=extension vite build --mode production && VITE_BUILD_TARGET=webview vite build --mode production",
-    "package": "mkdir -p packages && vsce package --out packages/toolkit-$npm_package_version.vsix",
+    "dev-install": "mkdir -p packages && vsce package --out packages/toolkit-$npm_package_version.vsix && code --install-extension packages/toolkit-$npm_package_version.vsix --force",
     "format": "oxfmt .",
     "check-types": "npm run check-types:host && npm run check-types:webview",
     "check-types:host": "tsc --noEmit -p tsconfig.host.json",

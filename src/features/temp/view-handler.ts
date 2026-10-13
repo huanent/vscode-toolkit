@@ -26,8 +26,7 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
       if (!isOpenTempFileRequest(message)) return;
       try {
         await getTempFilePath(getTempDirectory(), message.path);
-        const document = await vscode.workspace.openTextDocument(createTempFileUri(message.path));
-        await vscode.window.showTextDocument(document);
+        await vscode.commands.executeCommand('vscode.open', createTempFileUri(message.path));
       } catch (error) {
         await postTempFileError(webview, error);
       }
