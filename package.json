@@ -324,7 +324,7 @@
         "displayName": "Create or Update Workflow",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "workflowUpsert",
-        "modelDescription": "Create a saved workflow from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Returns the workflow ID and whether it was created or updated.",
+        "modelDescription": "Create a saved workflow from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Local command cwd and command, and sftp localPath, support placeholders: ${workspaceFolder}, ${workspaceFolderBasename}, ${userHome}, ${pathSeparator}, ${env:NAME}. Returns the workflow ID and whether it was created or updated.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -358,11 +358,11 @@
                   },
                   "command": {
                     "type": "string",
-                    "description": "Shell command for local-command and ssh-command steps."
+                    "description": "Shell command for local-command and ssh-command steps. local-command steps support placeholders such as ${workspaceFolder}."
                   },
                   "cwd": {
                     "type": "string",
-                    "description": "Optional working directory for local-command steps. Defaults to the first workspace folder."
+                    "description": "Optional working directory for local-command steps. Supports placeholders such as ${workspaceFolder}. Defaults to the first workspace folder."
                   },
                   "assetId": {
                     "type": "string",
@@ -378,7 +378,7 @@
                   },
                   "localPath": {
                     "type": "string",
-                    "description": "Local file path for sftp steps."
+                    "description": "Local file path for sftp steps. Supports placeholders such as ${workspaceFolder}."
                   },
                   "remotePath": {
                     "type": "string",

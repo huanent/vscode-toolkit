@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
 import type { WorkflowDefinition, WorkflowRunOutcome, WorkflowStep } from './protocol';
+import { resolveWorkflowPlaceholders } from './placeholders';
 import type { SshService } from '@/features/ssh/ssh-service';
 
 export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshService): Promise<void> {
@@ -67,8 +68,10 @@ export async function runWorkflow(
 
 async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal): Promise<WorkflowRunOutcome> {
   if (step.type === 'local-command') {
-    const cwd = step.cwd?.trim() || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
-    const result = await runLocalCommand(step.command, cwd, signal);
+    const cwd = step.cwd?.trim()
+      ? resolveWorkflowPlaceholders(step.cwd.trim())
+      : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+    const result = await runLocalCommand(resolveWorkflowPlaceholders(step.command), cwd, signal);
     return {
       success: result.exitCode === 0,
       message: `Local command exited with code ${result.exitCode ?? 'unknown'}.`,
@@ -77,7 +80,7 @@ async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal)
   }
 
   if (step.type === 'sftp') {
-    await ssh.transferFile(step.assetId, step.direction, step.localPath, step.remotePath);
+    await ssh.transferFile(step.assetId, step.direction, resolveWorkflowPlaceholders(step.localPath), step.remotePath);
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
