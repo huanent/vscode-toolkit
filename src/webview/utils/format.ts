@@ -9,3 +9,7 @@ export function formatSize(size: number): string {
   }
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unitIndex]}`;
 }
+
+export function formatDateTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}

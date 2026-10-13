@@ -1,13 +1,26 @@
+import { useState } from 'react';
 import type { ExplorerEntry, ExplorerWebviewMessage } from '@/features/explorer/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeItem } from '@/webview/components/tree';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
+import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';
+import { FileGridView } from '@/webview/pages/explorer/components/file-grid-view';
+import { FileListView } from '@/webview/pages/explorer/components/file-list-view';
+import {
+  type ExplorerLocation,
+  formatAddress,
+  indexEntries,
+  resolveAddress,
+  sortEntries,
+} from '@/webview/pages/explorer/explorer-location';
 import '@/webview/styles.css';
 
 function App() {
+  const [location, setLocation] = useState<ExplorerLocation>(null);
+  const [history, setHistory] = useState<ExplorerLocation[]>([]);
+  const [viewMode, setViewMode] = useState<ExplorerViewMode>('list');
   const state = useHostData<ExplorerEntry[]>();
 
   if (state.status === 'error') {
@@ -39,43 +52,58 @@ function App() {
     );
   }
 
-  const fileUris = collectFileUris(entries);
+  // A single workspace folder is the top level itself; multi-root workspaces keep folders as the top level.
+  const defaultLocation: ExplorerLocation = entries.length === 1 ? (entries[0]?.id ?? null) : null;
+  const effectiveLocation = location ?? defaultLocation;
+  const index = indexEntries(entries);
+  const folder = effectiveLocation === null ? null : (index.get(effectiveLocation) ?? null);
+  const currentLocation = folder?.id ?? null;
+  const children = sortEntries(folder ? (folder.children ?? []) : entries);
+
+  const navigate = (next: ExplorerLocation) => {
+    const target = next ?? defaultLocation;
+    if (target === currentLocation) return;
+    setHistory((previous) => [...previous, currentLocation]);
+    setLocation(target);
+  };
+
+  const goBack = () => {
+    if (!history.length) return;
+    setLocation(history[history.length - 1] ?? null);
+    setHistory(history.slice(0, -1));
+  };
+
+  const openEntry = (entry: ExplorerEntry) => {
+    if (entry.type === 'directory') navigate(entry.id);
+    else postToHost({ type: 'openFile', uri: entry.uri } satisfies ExplorerWebviewMessage);
+  };
 
   return (
     <main className="flex min-h-screen flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
-      <div className="min-h-0 flex-1 overflow-auto p-2">
-        <Tree
-          ariaLabel="Workspace files"
-          items={toTreeItems(entries)}
-          onActivate={(item) => {
-            const uri = fileUris.get(item.path);
-            if (uri) postToHost({ type: 'openFile', uri } satisfies ExplorerWebviewMessage);
-          }}
-        />
-      </div>
+      <ExplorerToolbar
+        address={formatAddress(index, currentLocation)}
+        canGoBack={history.length > 0}
+        viewMode={viewMode}
+        onBack={goBack}
+        onAddressSubmit={(address) => {
+          const target = resolveAddress(entries, address);
+          if (target === undefined) return false;
+          navigate(target);
+          return true;
+        }}
+        onViewModeChange={setViewMode}
+      />
+      <section className="min-h-0 flex-1 overflow-auto p-2" aria-label="Files">
+        {children.length === 0 ? (
+          <Empty title="Empty folder" description="This folder has no files." icon="folder" />
+        ) : viewMode === 'list' ? (
+          <FileListView entries={children} onOpen={openEntry} />
+        ) : (
+          <FileGridView entries={children} onOpen={openEntry} />
+        )}
+      </section>
     </main>
   );
-}
-
-function toTreeItems(entries: readonly ExplorerEntry[]): TreeItem[] {
-  return entries.map((entry) =>
-    entry.type === 'directory'
-      ? {
-          path: entry.id,
-          name: entry.name,
-          type: 'directory' as const,
-          children: toTreeItems(entry.children ?? []),
-        }
-      : { path: entry.id, name: entry.name, type: 'file' as const },
-  );
-}
-
-function collectFileUris(entries: readonly ExplorerEntry[], uris = new Map<string, string>()): Map<string, string> {
-  for (const entry of entries) {
-    if (entry.type === 'file') uris.set(entry.id, entry.uri);
-    else collectFileUris(entry.children ?? [], uris);
-  }
-  return uris;
 }
 
 mountWebview('root', <App />);

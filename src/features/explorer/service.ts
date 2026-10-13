@@ -2,15 +2,32 @@ import { posix } from 'node:path';
 import * as vscode from 'vscode';
 import type { ExplorerEntry } from './protocol';
 
-/** Lists workspace folders as trees. Files follow `files.exclude`; empty directories are not listed. */
+/** Lists workspace folders as trees with file stats. Files follow `files.exclude`; empty directories are not listed. */
 export async function listWorkspaceEntries(): Promise<ExplorerEntry[]> {
   const folders = vscode.workspace.workspaceFolders ?? [];
-  return Promise.all(
+  const entries = await Promise.all(
     folders.map(async (folder, index) => {
       const files = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, '**/*'));
       return buildFolderEntry(folder, String(index), files);
     }),
   );
+  await Promise.all(collectEntries(entries).map(addStats));
+  return entries;
+}
+
+function collectEntries(entries: readonly ExplorerEntry[]): ExplorerEntry[] {
+  return entries.flatMap((entry) => [entry, ...collectEntries(entry.children ?? [])]);
+}
+
+async function addStats(entry: ExplorerEntry): Promise<void> {
+  try {
+    const stat = await vscode.workspace.fs.stat(vscode.Uri.parse(entry.uri));
+    entry.createdAt = stat.ctime;
+    entry.modifiedAt = stat.mtime;
+    if (entry.type === 'file') entry.size = stat.size;
+  } catch {
+    // The entry may be removed between listing and stat.
+  }
 }
 
 export async function openWorkspaceFile(value: string): Promise<void> {
