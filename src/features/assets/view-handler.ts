@@ -113,9 +113,15 @@ export function createAssetsView(
     await refresh();
   };
   const copyAiReference = async (id: string) => {
-    const asset = await service.get(id);
+    const assets = await service.list();
+    const asset = assets.find((entry) => entry.id === id);
+    if (!asset) throw new Error('Asset no longer exists.');
+    const shortId = asset.id.slice(0, 8);
+    const conflict = assets.some((entry) => entry.id !== asset.id && entry.id.startsWith(shortId));
     const path = asset.folder ? `${asset.folder}/${asset.name}` : asset.name;
-    await vscode.env.clipboard.writeText(`[Asset "${path}", id: ${asset.id}, type: ${asset.type}]`);
+    await vscode.env.clipboard.writeText(
+      `[Asset "${path}", id: ${conflict ? asset.id : shortId}, type: ${asset.type}]`,
+    );
     void vscode.window.setStatusBarMessage('AI reference copied to clipboard', 2000);
   };
   const act = async (request: AssetRequest) => {

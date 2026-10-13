@@ -240,7 +240,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "SSH asset ID."
+              "description": "SSH asset ID or unique ID prefix."
             },
             "command": {
               "type": "string",
@@ -264,7 +264,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "SSH asset ID."
+              "description": "SSH asset ID or unique ID prefix."
             },
             "direction": {
               "type": "string",
@@ -302,7 +302,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "Database asset ID."
+              "description": "Database asset ID or unique ID prefix."
             },
             "database": {
               "type": "string",
@@ -366,7 +366,7 @@
                   },
                   "assetId": {
                     "type": "string",
-                    "description": "SSH asset ID for ssh-command and sftp steps."
+                    "description": "SSH asset ID or unique ID prefix for ssh-command and sftp steps."
                   },
                   "direction": {
                     "type": "string",

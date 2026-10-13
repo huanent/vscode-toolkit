@@ -67,7 +67,7 @@ export class AssetService {
   }
 
   async get(id: string): Promise<AssetRecord> {
-    const asset = (await this.list()).find((entry) => entry.id === id);
+    const asset = findAssetById(await this.list(), id);
     if (!asset) throw new Error('Asset no longer exists.');
     return asset;
   }
@@ -276,6 +276,14 @@ export class AssetService {
 
 export function isAiEnabled(asset: AssetRecord): boolean {
   return asset.enableAI !== false;
+}
+
+function findAssetById(assets: AssetRecord[], id: string): AssetRecord | undefined {
+  const exact = assets.find((entry) => entry.id === id);
+  if (exact || !id) return exact;
+  const matches = assets.filter((entry) => entry.id.startsWith(id));
+  if (matches.length > 1) throw new Error(`Asset ID prefix "${id}" matches multiple assets. Use a longer ID.`);
+  return matches[0];
 }
 
 function isAssetRecord(value: unknown): value is AssetRecord {

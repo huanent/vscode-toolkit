@@ -57,6 +57,10 @@ export class SshService implements AssetProvider {
       });
   }
 
+  async resolveConnectionId(assetId: string): Promise<string> {
+    return requireSshConfiguration(await this.assets.get(assetId)).id;
+  }
+
   async runCommand(assetId: string, command: string): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
     const session = await this.connectClient(assetId);
@@ -246,14 +250,15 @@ export class SshService implements AssetProvider {
     }
   }
 
-  async requireAiAccess(assetId: string): Promise<void> {
+  async requireAiAccess(assetId: string): Promise<string> {
     const visited = new Set<string>();
-    let currentId: string | undefined = assetId;
-    while (currentId && !visited.has(currentId)) {
-      visited.add(currentId);
-      const asset = requireSshConfiguration(await this.assets.requireAiAsset(currentId));
-      currentId = asset.proxyAssetId;
+    let asset = requireSshConfiguration(await this.assets.requireAiAsset(assetId));
+    const resolvedId = asset.id;
+    while (asset.proxyAssetId && !visited.has(asset.id)) {
+      visited.add(asset.id);
+      asset = requireSshConfiguration(await this.assets.requireAiAsset(asset.proxyAssetId));
     }
+    return resolvedId;
   }
 
   private async validateProxyChain(assetId: string, proxyAssetId?: string): Promise<void> {

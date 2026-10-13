@@ -42,7 +42,8 @@ export function registerWorkflowTools(
         const roots = getRoots();
         const existing = input.id === undefined ? undefined : await readWorkflowRecord(roots, input.id);
         if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
-        const workflow: WorkflowDefinition = { steps: input.steps.map(toWorkflowStep) };
+        const steps = await Promise.all(input.steps.map((step, index) => toWorkflowStep(step, index, ssh)));
+        const workflow: WorkflowDefinition = { steps };
         await validateWorkflow(workflow, ssh);
         const record = await saveWorkflowRecord(
           roots,
@@ -86,7 +87,7 @@ export function registerWorkflowTools(
   ];
 }
 
-function toWorkflowStep(step: WorkflowStepInput, index: number): WorkflowStep {
+async function toWorkflowStep(step: WorkflowStepInput, index: number, ssh: SshService): Promise<WorkflowStep> {
   if (step.type === 'local-command') {
     return { type: 'local-command', command: step.command ?? '', ...(step.cwd ? { cwd: step.cwd } : {}) };
   }
@@ -94,13 +95,17 @@ function toWorkflowStep(step: WorkflowStepInput, index: number): WorkflowStep {
     if (!step.direction) throw new Error(`Enter the SFTP direction for step ${index + 1}.`);
     return {
       type: 'sftp',
-      assetId: step.assetId ?? '',
+      assetId: await resolveStepAssetId(step.assetId, ssh),
       direction: step.direction,
       localPath: step.localPath ?? '',
       remotePath: step.remotePath ?? '',
     };
   }
-  return { type: 'ssh-command', assetId: step.assetId ?? '', command: step.command ?? '' };
+  return { type: 'ssh-command', assetId: await resolveStepAssetId(step.assetId, ssh), command: step.command ?? '' };
+}
+
+async function resolveStepAssetId(assetId: string | undefined, ssh: SshService): Promise<string> {
+  return assetId ? ssh.resolveConnectionId(assetId) : '';
 }
 
 function describeStep(step: WorkflowStep, index: number): string {

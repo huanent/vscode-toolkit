@@ -26,8 +26,8 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
         };
       },
       async invoke({ input }) {
-        await ssh.requireAiAccess(input.id);
-        const result = await ssh.runCommand(input.id, input.command);
+        const id = await ssh.requireAiAccess(input.id);
+        const result = await ssh.runCommand(id, input.command);
         return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
       },
     }),
@@ -42,8 +42,8 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
         };
       },
       async invoke({ input }) {
-        await ssh.requireAiAccess(input.id);
-        await ssh.transferFile(input.id, input.direction, input.localPath, input.remotePath);
+        const id = await ssh.requireAiAccess(input.id);
+        await ssh.transferFile(id, input.direction, input.localPath, input.remotePath);
         return new vscode.LanguageModelToolResult([
           new vscode.LanguageModelTextPart(
             JSON.stringify({
