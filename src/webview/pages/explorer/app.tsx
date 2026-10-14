@@ -3,11 +3,13 @@ import type { ExplorerDirectory, ExplorerEntry, ExplorerWebviewMessage } from '@
 import { mountWebview } from '@/webview/bootstrap';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
+import { DataList, type DataListColumn } from '@/webview/components/data-list';
+import { Icon } from '@/webview/components/icons';
 import { Loading } from '@/webview/components/loading';
+import { formatDateTime, formatSize } from '@/webview/utils/format';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';
 import { FileGridView } from '@/webview/pages/explorer/components/file-grid-view';
-import { FileListView } from '@/webview/pages/explorer/components/file-list-view';
 import {
   formatAddress,
   getAddressSegments,
@@ -15,6 +17,54 @@ import {
   sortEntries,
 } from '@/webview/pages/explorer/explorer-location';
 import '@/webview/styles.css';
+
+const columns: DataListColumn<ExplorerEntry>[] = [
+  {
+    key: 'name',
+    header: 'Name',
+    className: 'flex-1',
+    headerClassName: 'pl-5',
+    cell: (entry) => (
+      <div className="flex min-w-0 items-center gap-1">
+        <Icon name={entry.type === 'directory' ? 'folder' : 'file'} className="size-4 shrink-0" />
+        <span className="truncate">{entry.name}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'modified',
+    header: 'Modified',
+    className: 'w-36 shrink-0 whitespace-nowrap',
+    align: 'right',
+    cell: (entry) => (
+      <div className="text-(--vscode-descriptionForeground)">
+        {entry.modifiedAt === undefined ? '—' : formatDateTime(entry.modifiedAt)}
+      </div>
+    ),
+  },
+  {
+    key: 'created',
+    header: 'Created',
+    className: 'w-36 shrink-0 whitespace-nowrap',
+    align: 'right',
+    cell: (entry) => (
+      <div className="text-(--vscode-descriptionForeground)">
+        {entry.createdAt === undefined ? '—' : formatDateTime(entry.createdAt)}
+      </div>
+    ),
+  },
+  {
+    key: 'size',
+    header: 'Size',
+    className: 'w-14 shrink-0 whitespace-nowrap',
+    align: 'right',
+    cell: (entry) => (
+      <div className="text-(--vscode-descriptionForeground)">
+        {entry.size === undefined ? '—' : formatSize(entry.size)}
+      </div>
+    ),
+  },
+];
 
 function App() {
   const [viewMode, setViewMode] = useState<ExplorerViewMode>(() =>
@@ -87,7 +137,13 @@ function App() {
         {children.length === 0 ? (
           <Empty title="Empty folder" description="This folder has no files." icon="folder" />
         ) : viewMode === 'list' ? (
-          <FileListView entries={children} onOpen={openEntry} />
+          <DataList
+            ariaLabel="Files"
+            entries={children}
+            columns={columns}
+            entryKey={(entry) => entry.id}
+            onOpen={openEntry}
+          />
         ) : (
           <FileGridView entries={children} onOpen={openEntry} />
         )}

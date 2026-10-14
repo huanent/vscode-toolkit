@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
-import { Table, type TableColumn } from '@/webview/components/table';
+import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { useHostData, postToHost } from '@/webview/utils/host-data';
 import type { Credential, CredentialHostMessage, CredentialWebviewMessage } from '@/features/credential/protocol';
 import { CredentialDialog } from './components/credential-dialog';
@@ -49,25 +49,29 @@ function App() {
     setDialogOpen(false);
   };
 
-  const columns: TableColumn<Credential>[] = [
+  const columns: DataListColumn<Credential>[] = [
     {
       key: 'type',
       header: 'Type',
+      className: 'w-28 shrink-0',
       cell: (row) => row.type,
     },
     {
       key: 'username',
       header: 'Username',
+      className: 'w-36 shrink-0 truncate',
       cell: (row) => row.username || '-',
     },
     {
       key: 'description',
       header: 'Description',
+      className: 'flex-1 truncate',
       cell: (row) => row.description || '-',
     },
     {
       key: 'actions',
       header: 'Actions',
+      className: 'w-20 shrink-0',
       align: 'right',
       cell: (row) => (
         <div className="flex justify-end gap-1">
@@ -85,13 +89,14 @@ function App() {
 
   return (
     <div className="flex h-screen">
-      <div className="flex-1 min-h-0">
-        <Table
+      <div className="flex min-w-0 flex-1 min-h-0 flex-col">
+        <DataList
           ariaLabel="Credentials"
           columns={columns}
-          rows={credentials}
-          rowKey={(row) => row.id}
-          className="h-full"
+          entries={credentials}
+          entryKey={(row) => row.id}
+          onOpen={handleEdit}
+          emptyMessage="No credentials."
         />
       </div>
       <CredentialDialog

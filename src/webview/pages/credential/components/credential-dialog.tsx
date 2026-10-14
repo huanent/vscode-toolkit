@@ -6,6 +6,7 @@ import { Input } from '@/webview/components/input';
 import { Select, type SelectOption } from '@/webview/components/select';
 import { Textarea } from '@/webview/components/textarea';
 import type { Credential } from '@/features/credential/protocol';
+import { Icon } from '@/webview/components/icons';
 
 const credentialTypeOptions: readonly SelectOption[] = [
   { value: 'password', label: 'Password' },
@@ -58,10 +59,10 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
       title={credential ? 'Edit Credential' : 'Add Credential'}
       footer={
         <>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" form="credential-form">
+          <Button prefix={<Icon name="save" />} type="submit" form="credential-form">
             Save
           </Button>
         </>

@@ -62,5 +62,5 @@ Reuse the shared webview infrastructure; do not re-implement it per feature:
 - Use `div` as the container for `ReactNode` slots such as `prefix`, `suffix`, `description`, and `actions`. Use `span` only when the slot's value type is `string`, because callers may pass `span` or block elements into `ReactNode` slots.
 - Never use inline `style` attributes in webview JSX; the CSP uses `default-src 'none'`.
 - Use VS Code CSS variables for colors so the webview follows the active theme.
-- Use built-in integer Tailwind tokens for dimensions, such as `mt-2`, `px-4`, `size-10`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens.
+- Use built-in integer Tailwind tokens, such as `mt-2`, `px-4`, `size-10` `p-1.5`. Do not use arbitrary values, explicit pixel or relative units, or fractional dimension tokens.
 - Before adding styles, check for reusable integer Tailwind tokens and VS Code theme variables.
