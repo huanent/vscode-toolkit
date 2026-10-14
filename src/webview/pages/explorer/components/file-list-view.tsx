@@ -11,7 +11,7 @@ export function FileListView({ entries, onOpen }: FileListViewProps) {
   return (
     <div aria-label="Files" className="flex min-h-0 flex-1 flex-col bg-(--vscode-editor-background)">
       <div className="flex shrink-0 items-center gap-3 overflow-y-scroll [scrollbar-color:transparent_transparent] border-b border-(--vscode-panel-border) px-4 py-2 text-xs font-medium text-(--vscode-descriptionForeground)">
-        <div className="min-w-0 flex-1 pl-6">Name</div>
+        <div className="min-w-0 flex-1 pl-5">Name</div>
         <div className="w-36 shrink-0 text-right whitespace-nowrap">Modified</div>
         <div className="w-36 shrink-0 text-right whitespace-nowrap">Created</div>
         <div className="w-14 shrink-0 text-right whitespace-nowrap">Size</div>
@@ -27,7 +27,7 @@ export function FileListView({ entries, onOpen }: FileListViewProps) {
               if (event.key === 'Enter') onOpen(entry);
             }}
           >
-            <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
               <Icon name={entry.type === 'directory' ? 'folder' : 'file'} className="size-4 shrink-0" />
               <span className="truncate text-(--vscode-foreground)">{entry.name}</span>
             </div>

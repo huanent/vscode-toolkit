@@ -41,7 +41,11 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         if (mode === 'back') history = history.slice(0, -1);
         else if (mode === 'navigate' && data.location !== location) history.push(location);
         location = data.location;
-        return { ...data, canGoBack: history.length > 0 };
+        return {
+          ...data,
+          canGoBack: history.length > 0,
+          favorites: context.globalState.get<string[]>('explorer.favorites', []),
+        };
       };
       const publish = async (next: string | null, mode: 'navigate' | 'back' | 'refresh') => {
         try {
@@ -74,7 +78,17 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
             await publish(resolveDirectoryAddress(message.address, location), 'navigate');
           else if (message.type === 'setViewMode' && (message.mode === 'list' || message.mode === 'grid'))
             await context.globalState.update('explorer.viewMode', message.mode);
-          else if (message.type === 'goBack' && history.length) {
+          else if (message.type === 'toggleFavorite' && typeof message.address === 'string') {
+            const favorites = context.globalState.get<string[]>('explorer.favorites', []);
+            const address = message.address;
+            await context.globalState.update(
+              'explorer.favorites',
+              favorites.includes(address)
+                ? favorites.filter((favorite) => favorite !== address)
+                : [...favorites, address],
+            );
+            await publish(location, 'refresh');
+          } else if (message.type === 'goBack' && history.length) {
             await publish(history[history.length - 1] ?? null, 'back');
           }
         } catch (error) {

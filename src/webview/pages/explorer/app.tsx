@@ -68,6 +68,8 @@ function App() {
         address={formatAddress(index, location)}
         addressSegments={getAddressSegments(index, location)}
         canGoBack={canGoBack}
+        favorites={state.data.favorites ?? []}
+        onToggleFavorite={(address) => postToHost({ type: 'toggleFavorite', address } satisfies ExplorerWebviewMessage)}
         viewMode={viewMode}
         onBack={() => postToHost({ type: 'goBack' } satisfies ExplorerWebviewMessage)}
         onAddressSubmit={(address) => {

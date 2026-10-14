@@ -18,6 +18,7 @@ export interface ExplorerDirectory {
   entries: ExplorerEntry[];
   canGoBack: boolean;
   hasWorkspace: boolean;
+  favorites?: string[];
 }
 
 export type ExplorerWebviewMessage =
@@ -25,4 +26,5 @@ export type ExplorerWebviewMessage =
   | { type: 'readDirectory'; uri: string | null }
   | { type: 'navigateAddress'; address: string }
   | { type: 'setViewMode'; mode: 'list' | 'grid' }
+  | { type: 'toggleFavorite'; address: string }
   | { type: 'goBack' };
