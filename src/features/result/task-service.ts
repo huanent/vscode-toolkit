@@ -69,6 +69,8 @@ export class ResultTaskService {
       input: definition.input,
     };
     const controller = new AbortController();
+    const previous = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
+    if (previous && previous.status !== 'running') this.tasks.set(previous.id, toSummary(previous));
     this.tasks.set(task.id, task);
     this.controllers.set(task.id, controller);
     this.selectedTaskId = task.id;
@@ -88,8 +90,13 @@ export class ResultTaskService {
   }
 
   public async selectTask(taskId: string): Promise<void> {
-    await this.getStore();
+    const store = await this.getStore();
     if (!this.tasks.has(taskId)) return;
+    const detail = await store.read(taskId);
+    if (!this.tasks.has(taskId)) return;
+    const previous = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
+    if (previous && previous.status !== 'running') this.tasks.set(previous.id, toSummary(previous));
+    if (this.tasks.get(taskId)?.status !== 'running') this.tasks.set(taskId, detail);
     this.selectedTaskId = taskId;
     await this.publish();
   }
@@ -122,7 +129,10 @@ export class ResultTaskService {
       await store.delete(taskId);
       this.tasks.delete(taskId);
       this.controllers.delete(taskId);
-      if (this.selectedTaskId === taskId) this.selectedTaskId = this.getOrderedTasks()[0]?.id;
+      if (this.selectedTaskId === taskId) {
+        this.selectedTaskId = this.getOrderedTasks()[0]?.id;
+        if (this.selectedTaskId) await this.selectTask(this.selectedTaskId);
+      }
     });
     await this.publish();
   }
@@ -136,16 +146,17 @@ export class ResultTaskService {
       const recoveredTask: ResultTask =
         task.status === 'running'
           ? {
-              ...task,
+              ...(await store.read(task.id)),
               status: 'interrupted',
               error: 'Task was interrupted when VS Code closed.',
               updatedAt: Date.now(),
             }
           : task;
-      this.tasks.set(recoveredTask.id, recoveredTask);
+      this.tasks.set(recoveredTask.id, toSummary(recoveredTask));
       if (recoveredTask !== task) await store.save(recoveredTask);
     }
     this.selectedTaskId = this.getOrderedTasks()[0]?.id;
+    if (this.selectedTaskId) this.tasks.set(this.selectedTaskId, await store.read(this.selectedTaskId));
   }
 
   private async executeTask<TOutput>(
@@ -179,7 +190,7 @@ export class ResultTaskService {
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       await store.save(task);
-      this.tasks.set(task.id, task);
+      this.tasks.set(task.id, this.selectedTaskId === task.id ? task : toSummary(task));
     });
     await this.publish();
   }

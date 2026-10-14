@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 export async function withSqliteFile<TResult>(
   uri: vscode.Uri,
   mode: 'read' | 'write',
-  operation: (databasePath: string) => TResult,
+  operation: (databasePath: string) => TResult | Promise<TResult>,
 ): Promise<TResult> {
   if (uri.scheme === 'file') {
     if (mode === 'write') {
@@ -21,7 +21,7 @@ export async function withSqliteFile<TResult>(
   const temporaryPath = path.join(temporaryDirectory, path.posix.basename(uri.path) || 'database.sqlite');
   try {
     await writeFile(temporaryPath, originalData);
-    const result = operation(temporaryPath);
+    const result = await operation(temporaryPath);
     if (mode === 'write') {
       const updatedData = await readFile(temporaryPath);
       if (!Buffer.from(originalData).equals(updatedData)) {

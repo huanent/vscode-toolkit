@@ -247,7 +247,7 @@ export function registerMysqlEditor(
       const { assetId, databaseName, tableName } = parseMysqlTableUri(uri);
       return registerTableDataHandler(
         panel,
-        (filters) => mysqlService.readTable(assetId, databaseName, tableName, filters),
+        (filters, counts) => mysqlService.readTable(assetId, databaseName, tableName, filters, counts),
         (mutation) => mysqlService.mutateRow(assetId, databaseName, tableName, mutation),
       );
     },

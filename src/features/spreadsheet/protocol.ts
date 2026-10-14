@@ -3,4 +3,5 @@ export interface SpreadsheetSheet {
   rows: string[][];
   rowCount: number;
   columnCount: number;
+  truncated?: boolean;
 }

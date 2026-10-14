@@ -37,7 +37,15 @@ function App() {
             state.data.map((item, index) => (
               <TabPanel key={`${item.name}-${index}`} tabId={String(index)}>
                 {item.rows.length ? (
-                  <SpreadsheetTable rows={item.rows} />
+                  <>
+                    {item.truncated && (
+                      <div role="status" className="px-2 py-1 text-sm text-(--vscode-descriptionForeground)">
+                        Preview: {item.rows.length} of {item.rowCount} rows, {Math.min(item.columnCount, 100)} of{' '}
+                        {item.columnCount} columns.
+                      </div>
+                    )}
+                    <SpreadsheetTable rows={item.rows} />
+                  </>
                 ) : (
                   <div className="grid h-full place-items-center text-(--vscode-descriptionForeground)">
                     This spreadsheet is empty.
@@ -69,7 +77,7 @@ function App() {
 }
 
 function SpreadsheetTable({ rows }: { rows: string[][] }) {
-  const columnCount = Math.max(0, ...rows.map((row) => row.length));
+  const columnCount = rows.reduce((maximum, row) => Math.max(maximum, row.length), 0);
   return (
     <table className="border-separate border-spacing-0 ">
       <thead className="sticky top-0 z-2">

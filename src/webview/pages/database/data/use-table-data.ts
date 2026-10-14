@@ -51,10 +51,10 @@ export function useTableData() {
     if (state.status !== 'loaded' || (queryKey === initialQuery && request.current.id === 0)) return;
     const requestId = request.current.id + 1;
     request.current = { id: requestId, key: queryKey, page };
-    const filters: DatabaseTableFilters = { search, columns: columnFilters, page };
+    const filters: DatabaseTableFilters = { search, columns: columnFilters, page, revision };
     const timeout = window.setTimeout(() => postToHost({ type: 'filterTable', requestId, filters }), 250);
     return () => window.clearTimeout(timeout);
-  }, [queryKey, search, columnFilters, page, state.status]);
+  }, [queryKey, search, columnFilters, page, revision, state.status]);
 
   useEffect(() => {
     document.title = name;

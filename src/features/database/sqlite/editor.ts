@@ -154,7 +154,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
     onPanelResolved: (uri, panel) =>
       registerTableDataHandler(
         panel,
-        (filters) => readSqliteTable(uri, filters),
+        (filters, counts) => readSqliteTable(uri, filters, counts),
         (mutation) => mutateSqliteTableRow(uri, mutation),
       ),
   });

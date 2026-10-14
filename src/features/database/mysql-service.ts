@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
-import { escapeId } from 'mysql2';
-import { createConnection, type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
+import { createConnection, escapeId, type Connection as CoreConnection } from 'mysql2';
+import { type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import {
   databaseTablePageSize,
   type DatabaseColumn,
@@ -12,6 +12,7 @@ import {
   type MysqlConnectionConfiguration,
   type SqliteTableColumnDefinition,
   type DatabaseTableFilters,
+  type DatabaseTableCounts,
   type UpdateTableSchemaMessage,
 } from './protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
@@ -28,6 +29,7 @@ export class MysqlService implements AssetProvider {
   readonly label = 'MySQL';
   readonly icon = 'database';
   private readonly connections = new Set<Connection>();
+  private readonly queryConnections = new WeakMap<Connection, CoreConnection>();
   private disposed = false;
 
   constructor(
@@ -191,6 +193,7 @@ export class MysqlService implements AssetProvider {
     databaseName: string,
     tableName: string,
     filters?: DatabaseTableFilters,
+    counts?: DatabaseTableCounts,
   ): Promise<DatabaseTable> {
     const asset = await this.requireAsset(assetId);
     return this.withConnection(asset, databaseName, undefined, async (connection) => {
@@ -213,24 +216,26 @@ export class MysqlService implements AssetProvider {
       const { where, parameters, active } = buildTableFilter(columns, filters);
       const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
 
-      let rowCount = 0;
-      try {
-        const [countRows] = await connection.query<RowDataPacket[]>({
-          sql: `SELECT COUNT(*) AS count FROM ${escapeId(tableName)}`,
-          timeout: 60000,
-        });
-        rowCount = Number(countRows[0]?.count ?? 0);
-      } catch {
-        // Fallback to 0 if count query fails
-      }
+      let rowCount = counts?.rowCount ?? 0;
+      if (!counts)
+        try {
+          const [countRows] = await connection.query<RowDataPacket[]>({
+            sql: `SELECT COUNT(*) AS count FROM ${escapeId(tableName)}`,
+            timeout: 60000,
+          });
+          rowCount = Number(countRows[0]?.count ?? 0);
+        } catch {
+          // Fallback to 0 if count query fails
+        }
 
       const filteredRowCount = active
-        ? await connection
+        ? (counts?.filteredRowCount ??
+          (await connection
             .query<RowDataPacket[]>(
               { sql: `SELECT COUNT(*) AS count FROM ${escapeId(tableName)}${whereClause}`, timeout: 60000 },
               parameters,
             )
-            .then(([countRows]) => Number(countRows[0]?.count ?? 0))
+            .then(([countRows]) => Number(countRows[0]?.count ?? 0))))
         : undefined;
 
       const offset = (filters?.page ?? 0) * databaseTablePageSize;
@@ -385,7 +390,37 @@ export class MysqlService implements AssetProvider {
     signal: AbortSignal,
   ): Promise<DatabaseQueryResult> {
     return this.withConnection(asset, database, signal, async (connection) => {
-      const [rows, fields] = await connection.query({ sql, rowsAsArray: true, timeout: 60000 });
+      const { rows, fields, rowCount } = await new Promise<{
+        rows: unknown[][] | ResultSetHeader;
+        fields: Array<{ name: string }>;
+        rowCount: number;
+      }>((resolve, reject) => {
+        const rows: unknown[][] = [];
+        let fields: Array<{ name: string }> = [];
+        let header: ResultSetHeader | undefined;
+        let rowCount = 0;
+        const abort = () => reject(new Error('MySQL operation was cancelled.'));
+        signal.addEventListener('abort', abort, { once: true });
+        const query = this.queryConnections.get(connection)!.query({ sql, rowsAsArray: true, timeout: 60000 });
+        query.on('fields', (metadata: unknown) => {
+          if (Array.isArray(metadata)) fields = metadata;
+        });
+        query.on('result', (row: unknown[] | ResultSetHeader) => {
+          if (Array.isArray(row)) {
+            rowCount += 1;
+            if (rows.length < 1000) rows.push(row);
+          } else header = row;
+        });
+        query.once('error', (error) => {
+          signal.removeEventListener('abort', abort);
+          reject(error);
+        });
+        query.once('end', () => {
+          signal.removeEventListener('abort', abort);
+          resolve({ rows: header ?? rows, fields, rowCount });
+        });
+        if (signal.aborted) abort();
+      });
       if (!Array.isArray(rows)) {
         const result = rows as ResultSetHeader;
         return {
@@ -417,8 +452,8 @@ export class MysqlService implements AssetProvider {
                       : JSON.stringify(value),
             ),
           ),
-        rowCount: values.length,
-        truncated: values.length > 1000,
+        rowCount,
+        truncated: rowCount > 1000,
         changes: 0,
       };
     });
@@ -440,7 +475,7 @@ export class MysqlService implements AssetProvider {
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
-    const connection = await createConnection({
+    const coreConnection = createConnection({
       host: asset.host,
       port: asset.port,
       user: credential.username,
@@ -453,6 +488,14 @@ export class MysqlService implements AssetProvider {
       dateStrings: true,
       multipleStatements: false,
     });
+    const connection = coreConnection.promise();
+    this.queryConnections.set(connection, coreConnection);
+    try {
+      await connection.connect();
+    } catch (error) {
+      connection.destroy();
+      throw error;
+    }
     if (this.disposed || signal?.aborted) {
       connection.destroy();
       throw new Error('MySQL operation was cancelled.');

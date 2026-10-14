@@ -69,9 +69,12 @@ export default defineConfig(({ mode }) => {
         plugins: [],
         build: {
           lib: {
-            entry: resolve(import.meta.dirname, 'src/extension.ts'),
+            entry: {
+              extension: resolve(import.meta.dirname, 'src/extension.ts'),
+              'sqlite-process': resolve(import.meta.dirname, 'src/features/database/sqlite/process.ts'),
+            },
             formats: ['cjs'],
-            fileName: () => 'extension.js',
+            fileName: (_format, entryName) => `${entryName}.js`,
           },
           rollupOptions: {
             external: [

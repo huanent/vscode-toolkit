@@ -50,7 +50,11 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       header: 'Rows',
       align: 'right',
       className: 'w-28 shrink-0 whitespace-nowrap tabular-nums',
-      cell: (table) => <div className="text-(--vscode-descriptionForeground)">{table.rowCount.toLocaleString()}</div>,
+      cell: (table) => (
+        <div className="text-(--vscode-descriptionForeground)">
+          {table.rowCountKnown === false ? 'Not counted' : table.rowCount.toLocaleString()}
+        </div>
+      ),
     },
     {
       key: 'actions',

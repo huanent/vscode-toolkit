@@ -1,14 +1,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { withSqliteFile } from './file-access';
-import {
-  applySqliteTableDeletion,
-  applySqliteTableSchema,
-  mutateSqliteRow,
-  readDatabase,
-  readFilteredTable,
-  runSqliteQuery,
-} from './engine';
+import { runSqliteOperation } from './process-client';
 import type {
   CreateSqliteTableOptions,
   DatabaseDocument,
@@ -16,6 +9,7 @@ import type {
   DatabaseRowMutation,
   DatabaseTable,
   DatabaseTableFilters,
+  DatabaseTableCounts,
   UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import { buildSqliteCreateTableStatement } from '@/features/database/sqlite-schema';
@@ -29,7 +23,7 @@ export function validateSqliteUri(uri: vscode.Uri): void {
 
 export async function readSqliteDatabase(uri: vscode.Uri): Promise<DatabaseDocument> {
   validateSqliteUri(uri);
-  return withSqliteFile(uri, 'read', readDatabase);
+  return withSqliteFile(uri, 'read', (databasePath) => runSqliteOperation('readDatabase', [databasePath]));
 }
 
 export function createSqliteTableUri(databaseUri: vscode.Uri, tableName: string): vscode.Uri {
@@ -38,24 +32,38 @@ export function createSqliteTableUri(databaseUri: vscode.Uri, tableName: string)
   );
 }
 
-export async function readSqliteTable(uri: vscode.Uri, filters?: DatabaseTableFilters): Promise<DatabaseTable> {
+export async function readSqliteTable(
+  uri: vscode.Uri,
+  filters?: DatabaseTableFilters,
+  counts?: DatabaseTableCounts,
+): Promise<DatabaseTable> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
-  return withSqliteFile(databaseUri, 'read', (databasePath) => readFilteredTable(databasePath, tableName, filters));
+  return withSqliteFile(databaseUri, 'read', (databasePath) =>
+    runSqliteOperation('readFilteredTable', [databasePath, tableName, filters, counts]),
+  );
 }
 
 export async function mutateSqliteTableRow(uri: vscode.Uri, mutation: DatabaseRowMutation): Promise<void> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
-  await withSqliteFile(databaseUri, 'write', (databasePath) => mutateSqliteRow(databasePath, tableName, mutation));
+  await withSqliteFile(databaseUri, 'write', (databasePath) =>
+    runSqliteOperation('mutateSqliteRow', [databasePath, tableName, mutation]),
+  );
 }
 
 export function validateSqliteTableUri(uri: vscode.Uri): void {
   parseSqliteTableUri(uri);
 }
 
-export async function executeSqliteQuery(uri: vscode.Uri, sql: string): Promise<DatabaseQueryResult> {
+export async function executeSqliteQuery(
+  uri: vscode.Uri,
+  sql: string,
+  signal?: AbortSignal,
+): Promise<DatabaseQueryResult> {
   validateSqliteUri(uri);
   if (!sql.trim()) throw new Error('SQL query is empty.');
-  return withSqliteFile(uri, 'write', (databasePath) => runSqliteQuery(databasePath, sql));
+  return withSqliteFile(uri, 'write', (databasePath) =>
+    runSqliteOperation('runSqliteQuery', [databasePath, sql], signal),
+  );
 }
 
 export async function createSqliteTable(uri: vscode.Uri, options: CreateSqliteTableOptions): Promise<void> {
@@ -66,13 +74,17 @@ export async function createSqliteTable(uri: vscode.Uri, options: CreateSqliteTa
 export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {
   validateSqliteUri(uri);
   validateSchemaOptions(options);
-  await withSqliteFile(uri, 'write', (databasePath) => applySqliteTableSchema(databasePath, options));
+  await withSqliteFile(uri, 'write', (databasePath) =>
+    runSqliteOperation('applySqliteTableSchema', [databasePath, options]),
+  );
 }
 
 export async function deleteSqliteTable(uri: vscode.Uri, tableName: string): Promise<void> {
   validateSqliteUri(uri);
   if (!tableName.trim()) throw new Error('Table name is required.');
-  await withSqliteFile(uri, 'write', (databasePath) => applySqliteTableDeletion(databasePath, tableName));
+  await withSqliteFile(uri, 'write', (databasePath) =>
+    runSqliteOperation('applySqliteTableDeletion', [databasePath, tableName]),
+  );
 }
 
 function validateSchemaOptions(options: UpdateSqliteTableSchemaOptions): void {

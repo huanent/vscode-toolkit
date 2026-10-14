@@ -17,6 +17,6 @@ export async function submitSqliteQuery(
     kind: 'sqlite',
     title: `${databaseName}: ${querySummary.slice(0, 64)}${querySummary.length > 64 ? '...' : ''}`,
     input: { databaseName, sql },
-    run: () => executeSqliteQuery(databaseUri, sql),
+    run: (signal) => executeSqliteQuery(databaseUri, sql, signal),
   });
 }

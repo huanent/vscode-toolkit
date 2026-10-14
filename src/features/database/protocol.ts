@@ -31,14 +31,18 @@ export interface DatabaseTable {
   columns: DatabaseColumn[];
   rows: DatabaseCellValue[][];
   filteredRowCount?: number;
+  rowCountKnown?: boolean;
 }
 
 export const databaseTablePageSize = 100;
+
+export type DatabaseTableCounts = Pick<DatabaseTable, 'rowCount' | 'filteredRowCount'>;
 
 export interface DatabaseTableFilters {
   search?: string;
   columns?: Record<string, string>;
   page?: number;
+  revision?: number;
 }
 
 export interface DatabaseTableFilterRequest {
@@ -96,14 +100,15 @@ export function isDatabaseTableFilterRequest(value: unknown): value is DatabaseT
   const message = value as Partial<DatabaseTableFilterRequest>;
   if (message.type !== 'filterTable' || !Number.isSafeInteger(message.requestId)) return false;
   if (!message.filters || typeof message.filters !== 'object') return false;
-  const { search, columns, page } = message.filters;
+  const { search, columns, page, revision } = message.filters;
   return (
     (search === undefined || typeof search === 'string') &&
     (columns === undefined ||
       (typeof columns === 'object' &&
         columns !== null &&
         Object.values(columns).every((filter) => typeof filter === 'string'))) &&
-    (page === undefined || (Number.isSafeInteger(page) && page >= 0))
+    (page === undefined || (Number.isSafeInteger(page) && page >= 0)) &&
+    (revision === undefined || (Number.isSafeInteger(revision) && revision >= 0))
   );
 }
 

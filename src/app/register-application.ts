@@ -7,6 +7,7 @@ import { registerXmlFormatter } from '@/features/xml/register-xml-formatter';
 import { registerArchiveEditor } from '@/features/archive/editor';
 import { registerSpreadsheetEditor } from '@/features/spreadsheet/editor';
 import { registerSqliteEditor } from '@/features/database/sqlite/editor';
+import { disposeSqliteProcesses } from '@/features/database/sqlite/process-client';
 import { registerHttpLanguage } from '@/features/http/register-http';
 import { HttpResultService } from '@/features/http/result-service';
 import { ResultTaskService } from '@/features/result/task-service';
@@ -15,6 +16,7 @@ import { createWorkflowFilesView } from '@/features/workflow/view-handler';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 
 export async function registerApplication(context: vscode.ExtensionContext): Promise<void> {
+  context.subscriptions.push({ dispose: disposeSqliteProcesses });
   const tasks = new ResultTaskService();
   context.subscriptions.push(tasks);
   try {

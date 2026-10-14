@@ -6,6 +6,7 @@ import {
   type DatabaseQueryResult,
   type DatabaseTable,
   type DatabaseTableFilters,
+  type DatabaseTableCounts,
   type UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import {
@@ -175,7 +176,7 @@ export function readDatabase(databasePath: string): DatabaseDocument {
       .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND substr(name, 1, 7) <> 'sqlite_' ORDER BY name")
       .all()
       .map((row) => String(row.name));
-    return { engine: 'sqlite', tables: tables.map((name) => readTable(database, name)) };
+    return { engine: 'sqlite', tables: tables.map((name) => readTable(database, name, undefined, true)) };
   } finally {
     database.close();
   }
@@ -185,18 +186,25 @@ export function readFilteredTable(
   databasePath: string,
   tableName: string,
   filters?: DatabaseTableFilters,
+  counts?: DatabaseTableCounts,
 ): DatabaseTable {
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
     const exists = database.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?").get(tableName);
     if (!exists) throw new Error(`SQLite table not found: ${tableName}`);
-    return readTable(database, tableName, filters);
+    return readTable(database, tableName, filters, false, counts);
   } finally {
     database.close();
   }
 }
 
-function readTable(database: DatabaseSync, name: string, filters?: DatabaseTableFilters): DatabaseTable {
+function readTable(
+  database: DatabaseSync,
+  name: string,
+  filters?: DatabaseTableFilters,
+  schemaOnly = false,
+  counts?: DatabaseTableCounts,
+): DatabaseTable {
   const quotedName = quoteIdentifier(name);
   const columnRows = database.prepare(`PRAGMA table_xinfo(${quotedName})`).all();
   const allColumns = columnRows.map((row) => ({
@@ -207,14 +215,20 @@ function readTable(database: DatabaseSync, name: string, filters?: DatabaseTable
     readOnly: Number(row.hidden) !== 0 || /BLOB/i.test(String(row.type)),
   }));
   const columns = allColumns.slice(0, maxPreviewColumns);
+  if (schemaOnly) {
+    return { name, rowCount: 0, rowCountKnown: false, columnCount: allColumns.length, columns: allColumns, rows: [] };
+  }
   const { where, parameters, active } = buildTableFilter(columns, filters);
   const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
-  const rowCount = Number(database.prepare(`SELECT COUNT(*) AS row_count FROM ${quotedName}`).get()?.row_count ?? 0);
+  const rowCount =
+    counts?.rowCount ??
+    Number(database.prepare(`SELECT COUNT(*) AS row_count FROM ${quotedName}`).get()?.row_count ?? 0);
   const filteredRowCount = active
-    ? Number(
+    ? (counts?.filteredRowCount ??
+      Number(
         database.prepare(`SELECT COUNT(*) AS row_count FROM ${quotedName}${whereClause}`).get(...parameters)
           ?.row_count ?? 0,
-      )
+      ))
     : undefined;
   const selectedColumns = columns.length ? columns.map((column) => quoteIdentifier(column.name)).join(', ') : '*';
   const offset = (filters?.page ?? 0) * databaseTablePageSize;
