@@ -23,8 +23,8 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
   const body = side === 'request' ? response.request.body : displayBody;
 
   return (
-    <div className="flex min-w-0 flex-col px-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex min-w-0 flex-col h-full">
+      <div className="shrink-0 flex items-center gap-2 px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 ">
           <span className="shrink-0 font-mono font-semibold">{response.request.method}</span>
           <span className="min-w-0 truncate font-mono select-text" title={response.request.url}>
@@ -47,12 +47,14 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
           ]}
         />
       </div>
-      <HttpHeaders headers={headers} />
-      <ResultText
-        title={side === 'request' ? 'Request body' : 'Response body'}
-        content={body ?? ''}
-        language={side === 'response' && response.isJson ? 'json' : undefined}
-      />
+      <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
+        <HttpHeaders headers={headers} />
+        <ResultText
+          title={side === 'request' ? 'Request body' : 'Response body'}
+          content={body ?? ''}
+          language={side === 'response' && response.isJson ? 'json' : undefined}
+        />
+      </div>
     </div>
   );
 }
