@@ -3,7 +3,6 @@ import type { WorkflowSshConnection, WorkflowStep } from '@/features/workflow/pr
 export type WorkflowStepItem = {
   id: string;
   step: WorkflowStep;
-  expanded: boolean;
 };
 
 export const workflowTypeOptions = [
@@ -19,9 +18,9 @@ export const directionOptions = [
 
 let nextStepId = 0;
 
-export function createStepItem(step: WorkflowStep, expanded: boolean): WorkflowStepItem {
+export function createStepItem(step: WorkflowStep): WorkflowStepItem {
   nextStepId += 1;
-  return { id: `step-${nextStepId}`, step, expanded };
+  return { id: `step-${nextStepId}`, step };
 }
 
 // Carries over fields the new operation shares with the previous one, so switching type keeps input.
@@ -30,6 +29,7 @@ export function convertStep(
   type: WorkflowStep['type'],
   defaultAssetId: string,
 ): WorkflowStep {
+  if (step?.type === type) return step;
   const command = step && 'command' in step ? step.command : '';
   const assetId = step && 'assetId' in step && step.assetId ? step.assetId : defaultAssetId;
   if (type === 'local-command') return { type, command };
@@ -50,10 +50,11 @@ export function describeStep(step: WorkflowStep, hosts: readonly WorkflowSshConn
   return `${hostName} · ${from || '...'} → ${to || '...'}`;
 }
 
-export function isStepComplete(step: WorkflowStep): boolean {
+export function isStepComplete(step: WorkflowStep, hosts: readonly WorkflowSshConnection[]): boolean {
   if (step.type === 'local-command') return step.command.trim() !== '';
-  if (step.type === 'ssh-command') return step.assetId !== '' && step.command.trim() !== '';
-  return step.assetId !== '' && step.localPath.trim() !== '' && step.remotePath.trim() !== '';
+  const hasHost = hosts.some((host) => host.id === step.assetId);
+  if (step.type === 'ssh-command') return hasHost && step.command.trim() !== '';
+  return hasHost && step.localPath.trim() !== '' && step.remotePath.trim() !== '';
 }
 
 function firstLine(value: string): string {

@@ -85,7 +85,7 @@ export function registerWorkflowEditor(
           if (message.type === 'saveWorkflow') {
             await validateWorkflow(message.workflow, ssh);
             const id = parseWorkflowEditorUri(_uri);
-            const record = await saveWorkflowRecord(
+            await saveWorkflowRecord(
               getWorkflowRoots(),
               id,
               message.name,
@@ -93,12 +93,8 @@ export function registerWorkflowEditor(
               getWorkflowEditorParentId(_uri),
               message.storageScope,
             );
-            panel.title = formatTabTitle(record.name, record.parentId);
             await refresh();
-            await panel.webview.postMessage({
-              type: 'workflowSaved',
-              name: record.name,
-            } satisfies WorkflowEditorMessage);
+            panel.dispose();
             return;
           }
 
