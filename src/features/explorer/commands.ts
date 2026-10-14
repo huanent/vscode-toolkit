@@ -72,6 +72,8 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
           else if (message.type === 'readDirectory') await publish(message.uri, 'navigate');
           else if (message.type === 'navigateAddress')
             await publish(resolveDirectoryAddress(message.address, location), 'navigate');
+          else if (message.type === 'setViewMode' && (message.mode === 'list' || message.mode === 'grid'))
+            await context.globalState.update('explorer.viewMode', message.mode);
           else if (message.type === 'goBack' && history.length) {
             await publish(history[history.length - 1] ?? null, 'back');
           }
@@ -94,6 +96,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
       panel.webview.html = getWebviewHtml(panel.webview, vscode.Uri.joinPath(context.extensionUri, 'dist'), {
         page: 'explorer',
         title: 'Explorer',
+        data: { viewMode: context.globalState.get<string>('explorer.viewMode', 'list') },
       });
     }),
     vscode.commands.registerCommand('toolkit.explorer.refresh', async () => {

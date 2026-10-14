@@ -4,7 +4,7 @@ import { mountWebview } from '@/webview/bootstrap';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
 import { Loading } from '@/webview/components/loading';
-import { postToHost, useHostData } from '@/webview/utils/host-data';
+import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';
 import { FileGridView } from '@/webview/pages/explorer/components/file-grid-view';
 import { FileListView } from '@/webview/pages/explorer/components/file-list-view';
@@ -17,7 +17,9 @@ import {
 import '@/webview/styles.css';
 
 function App() {
-  const [viewMode, setViewMode] = useState<ExplorerViewMode>('list');
+  const [viewMode, setViewMode] = useState<ExplorerViewMode>(() =>
+    getRootData('viewMode') === 'grid' ? 'grid' : 'list',
+  );
   const state = useHostData<ExplorerDirectory>();
 
   if (state.status === 'error') {
@@ -73,7 +75,10 @@ function App() {
           return true;
         }}
         onNavigate={navigate}
-        onViewModeChange={setViewMode}
+        onViewModeChange={(mode) => {
+          setViewMode(mode);
+          postToHost({ type: 'setViewMode', mode } satisfies ExplorerWebviewMessage);
+        }}
       />
       {state.error && <ErrorMessage message={state.error} />}
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden" aria-label="Files">

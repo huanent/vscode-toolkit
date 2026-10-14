@@ -20,17 +20,22 @@ function describeEntry(entry: ExplorerEntry): string {
 
 export function FileGridView({ entries, onOpen }: FileGridViewProps) {
   return (
-    <ul aria-label="Files" className="min-h-0 flex-1 overflow-auto grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] content-start gap-2 p-2">
+    <ul aria-label="Files" className="flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-auto p-2">
       {entries.map((entry) => (
-        <li key={entry.id}>
+        <li key={entry.id} className="w-24 max-w-full min-w-0">
           <button
             type="button"
             title={describeEntry(entry)}
-            className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-md border border-transparent p-3 transition-colors hover:border-(--vscode-focusBorder) hover:bg-(--vscode-list-hoverBackground) focus-visible:outline focus-visible:outline-1 focus-visible:outline-(--vscode-focusBorder)"
+            className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-2 py-1 transition-colors hover:bg-(--vscode-list-hoverBackground) focus-visible:border-(--vscode-focusBorder) focus-visible:bg-(--vscode-list-hoverBackground)"
             onDoubleClick={() => onOpen(entry)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') onOpen(entry);
+            }}
           >
-            <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="2xl" />
-            <span className="line-clamp-2 w-full wrap-break-word text-center text-sm leading-4">{entry.name}</span>
+            <div className="flex size-8 shrink-0 items-center justify-center">
+              <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="3xl" />
+            </div>
+            <span className="line-clamp-2 h-8 w-full wrap-anywhere text-center text-sm leading-4">{entry.name}</span>
           </button>
         </li>
       ))}

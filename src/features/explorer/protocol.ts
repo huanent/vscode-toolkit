@@ -24,4 +24,5 @@ export type ExplorerWebviewMessage =
   | { type: 'openFile'; uri: string }
   | { type: 'readDirectory'; uri: string | null }
   | { type: 'navigateAddress'; address: string }
+  | { type: 'setViewMode'; mode: 'list' | 'grid' }
   | { type: 'goBack' };
