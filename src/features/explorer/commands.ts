@@ -8,11 +8,18 @@ import { listDirectory, openExplorerFile, resolveDirectoryAddress } from './serv
 export function registerExplorerCommands(context: vscode.ExtensionContext): void {
   let panel: vscode.WebviewPanel | undefined;
   let refresh: (() => Promise<void>) | undefined;
+  let navigate: ((location: string) => Promise<void>) | undefined;
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.explorer.open', () => {
+    vscode.commands.registerCommand('toolkit.explorer.open', async (uri?: vscode.Uri) => {
+      let requestedLocation: string | undefined;
+      if (uri) {
+        const stat = await vscode.workspace.fs.stat(uri);
+        requestedLocation = (stat.type & vscode.FileType.Directory ? uri : vscode.Uri.joinPath(uri, '..')).toString();
+      }
       if (panel) {
         panel.reveal();
+        if (requestedLocation) await navigate?.(requestedLocation);
         return;
       }
 
@@ -25,7 +32,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
 
       const target = panel;
       const folders = vscode.workspace.workspaceFolders ?? [];
-      let location: string | null = folders[0]?.uri.toString() ?? null;
+      let location: string | null = requestedLocation ?? folders[0]?.uri.toString() ?? null;
       let history: (string | null)[] = [];
       let revision = 0;
       const load = async (next: string | null, mode: 'navigate' | 'back' | 'refresh') => {
@@ -64,6 +71,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         }
       };
       refresh = () => publish(location, 'refresh');
+      navigate = (next) => publish(next, 'navigate');
       const bridge = serveWebviewData<ExplorerDirectory>(target.webview, async () => {
         const data = await load(location, 'refresh');
         if (!data) throw new Error('Directory loading was superseded.');
@@ -105,6 +113,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         messageListener.dispose();
         panel = undefined;
         refresh = undefined;
+        navigate = undefined;
       });
 
       panel.webview.html = getWebviewHtml(panel.webview, vscode.Uri.joinPath(context.extensionUri, 'dist'), {
@@ -112,6 +121,9 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         title: 'Explorer',
         data: { viewMode: context.globalState.get<string>('explorer.viewMode', 'list') },
       });
+    }),
+    vscode.commands.registerCommand('toolkit.explorer.openInExplorer', async (uri: vscode.Uri) => {
+      await vscode.commands.executeCommand('toolkit.explorer.open', uri);
     }),
     vscode.commands.registerCommand('toolkit.explorer.refresh', async () => {
       await refresh?.();

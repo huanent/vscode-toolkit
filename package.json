@@ -488,6 +488,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.explorer.openInExplorer",
+        "title": "Open in Explorer",
+        "icon": "$(folder-opened)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.explorer.refresh",
         "title": "Refresh",
         "icon": "$(refresh)",
@@ -993,6 +999,10 @@
         }
       ],
       "explorer/context": [
+        {
+          "command": "toolkit.explorer.openInExplorer",
+          "group": "navigation@8"
+        },
         {
           "submenu": "toolkit.sourceControl",
           "when": "explorerResourceIsFolder && resourcePath in toolkit.gitRepositoryFolders",
