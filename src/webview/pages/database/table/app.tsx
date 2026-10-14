@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { DatabaseDocument, DatabaseTable } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/button';
+import { Empty } from '@/webview/components/empty';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
@@ -33,7 +35,7 @@ function App() {
         <div
           role="toolbar"
           aria-label="Database tools"
-          className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-2 py-1"
+          className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) p-2"
         >
           {state.data.databases && (
             <DatabaseSelector
@@ -59,7 +61,6 @@ function App() {
             <Button
               variant="ghost"
               size="md"
-              className="size-7 p-0"
               title="Create table"
               aria-label="Create table"
               prefix={<Icon name="add" />}
@@ -68,7 +69,6 @@ function App() {
             <Button
               variant="ghost"
               size="md"
-              className="size-7 p-0"
               title="Open SQL Editor"
               aria-label="Open SQL Editor"
               prefix={<Icon name="code" />}
@@ -81,15 +81,15 @@ function App() {
             <TableManagement tables={visibleTables} onEditSchema={setEditingTable} />
           ) : (
             <div className="grid min-h-0 flex-1 place-items-center px-4 text-center">
-              <div className="grid justify-items-center">
-                <Icon name="database" size="2xl" variant="muted" className="mb-3" />
-                <h2 className=" font-semibold">No tables found</h2>
-                <p className="mt-1  text-(--vscode-descriptionForeground)">
-                  {state.data.engine === 'mysql'
+              <Empty
+                icon="database"
+                title="No tables found"
+                description={
+                  state.data.engine === 'mysql'
                     ? `Database "${state.data.currentDatabase ?? ''}" contains no tables.`
-                    : 'This SQLite database contains no user tables.'}
-                </p>
-              </div>
+                    : 'This SQLite database contains no user tables.'
+                }
+              />
             </div>
           )}
         </section>
@@ -120,9 +120,7 @@ function App() {
       {state.status === 'loading' ? (
         <Loading label="Reading database..." />
       ) : (
-        <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
-          {state.message}
-        </p>
+        <ErrorMessage message={state.message} className="w-full max-w-lg" />
       )}
     </main>
   );

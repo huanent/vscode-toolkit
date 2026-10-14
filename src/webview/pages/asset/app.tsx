@@ -13,6 +13,7 @@ import { Form, FormItem } from '@/webview/components/form';
 import { CredentialSelector } from '@/webview/pages/credential/components/credential-selector';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
+import { Loading } from '@/webview/components/loading';
 import { Select } from '@/webview/components/select';
 import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
@@ -166,12 +167,11 @@ function AssetForm({ data }: { data: AssetEditorData }) {
 
 function App() {
   const state = useHostData<AssetEditorData>();
-  if (state.status === 'loading') return <p className="p-4 ">Loading...</p>;
-  if (state.status === 'error')
+  if (state.status !== 'loaded')
     return (
-      <p role="alert" className="p-4  text-(--vscode-errorForeground)">
-        {state.message}
-      </p>
+      <main className="mx-auto w-full max-w-2xl p-4 sm:p-6">
+        {state.status === 'loading' ? <Loading label="Loading..." /> : <ErrorMessage message={state.message} />}
+      </main>
     );
   return <AssetForm data={state.data} />;
 }

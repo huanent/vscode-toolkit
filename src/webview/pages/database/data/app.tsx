@@ -1,6 +1,8 @@
 import { databaseTablePageSize } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/button';
+import { Empty } from '@/webview/components/empty';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
@@ -17,13 +19,12 @@ function App() {
 
   if (state.status !== 'loaded') {
     return (
-      <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-sm text-(--vscode-foreground)">
+      <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
         {state.status === 'loading' ? (
           <Loading label="Reading table..." />
         ) : (
-          <div className="flex max-w-lg flex-col items-center gap-3 text-center" role="alert">
-            <Icon name="warning" size="2xl" variant="muted" />
-            <p className="m-0 text-(--vscode-errorForeground)">{state.message}</p>
+          <div className="flex w-full max-w-lg flex-col items-center gap-3">
+            <ErrorMessage message={state.message} className="w-full" />
             <Button variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
               Retry
             </Button>
@@ -43,8 +44,12 @@ function App() {
   const error = data.mutationError ?? state.error;
 
   return (
-    <main className="flex h-dvh min-w-0 select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-sm text-(--vscode-foreground)">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) p-2">
+    <main className="flex h-dvh min-w-0 select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
+      <div
+        role="toolbar"
+        aria-label="Table data tools"
+        className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) p-2"
+      >
         <div className="min-w-32 flex-1 sm:max-w-80">
           <Input
             type="search"
@@ -122,8 +127,8 @@ function App() {
             onDelete={(original) => data.mutate({ operation: 'delete', values: {}, original })}
           />
         ) : (
-          <div className="grid min-h-0 flex-1 place-items-center  text-(--vscode-descriptionForeground)">
-            This table has no columns.
+          <div className="grid min-h-0 flex-1 place-items-center">
+            <Empty icon="table" title="No columns found" description="This table has no columns." />
           </div>
         )}
       </section>
