@@ -1,10 +1,9 @@
 export interface ExplorerEntry {
-  /** Unique tree key: the workspace folder index followed by the relative path segments. */
+  /** Directory or file URI. */
   id: string;
   name: string;
   type: 'file' | 'directory';
   uri: string;
-  children?: ExplorerEntry[];
   /** Size in bytes; files only. */
   size?: number;
   /** Creation time in milliseconds since the epoch. */
@@ -13,4 +12,16 @@ export interface ExplorerEntry {
   modifiedAt?: number;
 }
 
-export type ExplorerWebviewMessage = { type: 'openFile'; uri: string };
+export interface ExplorerDirectory {
+  location: string | null;
+  ancestors: ExplorerEntry[];
+  entries: ExplorerEntry[];
+  canGoBack: boolean;
+  hasWorkspace: boolean;
+}
+
+export type ExplorerWebviewMessage =
+  | { type: 'openFile'; uri: string }
+  | { type: 'readDirectory'; uri: string | null }
+  | { type: 'navigateAddress'; address: string }
+  | { type: 'goBack' };

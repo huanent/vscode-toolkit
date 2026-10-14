@@ -14,9 +14,9 @@ type ExplorerToolbarProps = {
   canGoBack: boolean;
   viewMode: ExplorerViewMode;
   onBack: () => void;
-  /** Returns `false` when the address does not match a folder. */
+  /** Returns whether the address navigation request was accepted. */
   onAddressSubmit: (address: string) => boolean;
-  onNavigate: (location: string) => void;
+  onNavigate: (location: string | null) => void;
   onViewModeChange: (mode: ExplorerViewMode) => void;
 };
 
@@ -45,10 +45,9 @@ export function ExplorerToolbar({
   };
 
   return (
-    <header className="flex items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-2 shrink-0">
+    <header className="flex items-center gap-1 border-b border-(--vscode-panel-border) px-2 py-1 shrink-0">
       <Button
         variant="ghost"
-        size="md"
         aria-label="Back"
         disabled={!canGoBack}
         onClick={onBack}
@@ -59,7 +58,7 @@ export function ExplorerToolbar({
           autoFocus
           aria-label="Address"
           aria-invalid={invalid || undefined}
-          className="min-w-0 flex-1 rounded-md"
+          className="h-7! min-w-0 flex-1 rounded-md"
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value);
@@ -87,7 +86,7 @@ export function ExplorerToolbar({
             value: 'list',
             label: (
               <>
-                <Icon name="list-unordered" size="sm" />
+                <Icon name="three-bars" />
                 <span className="sr-only">List</span>
               </>
             ),
@@ -96,7 +95,7 @@ export function ExplorerToolbar({
             value: 'grid',
             label: (
               <>
-                <Icon name="gather" size="sm" />
+                <Icon name="microsoft" />
                 <span className="sr-only">Grid</span>
               </>
             ),

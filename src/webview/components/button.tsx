@@ -1,6 +1,7 @@
 import { Button as BaseButton, type ButtonProps as BaseButtonProps } from '@base-ui/react/button';
 import { cn } from 'cn';
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
+import { Icon } from '@/webview/components/icons';
 
 export type ButtonProps = Omit<BaseButtonProps, 'className' | 'prefix'> & {
   className?: string;
@@ -24,7 +25,7 @@ const variants = {
 const sizes = {
   sm: { regular: 'h-5 min-w-5 px-1', icon: 'size-5 p-0' },
   md: { regular: 'h-6 min-w-6 px-2', icon: 'size-6 p-0' },
-  lg: { regular: 'h-8 min-w-8 px-3', icon: 'size-8 p-0' },
+  lg: { regular: 'h-7 min-w-7 px-3', icon: 'size-7 p-0' },
 } as const;
 
 export function Button({
@@ -37,7 +38,8 @@ export function Button({
   type = 'button',
   ...props
 }: ButtonProps) {
-  const iconOnly = children == null && (prefix != null || suffix != null);
+  const iconOnly =
+    (children == null && (prefix != null || suffix != null)) || (isValidElement(children) && children.type === Icon);
 
   return (
     <BaseButton

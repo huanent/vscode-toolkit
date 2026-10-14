@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ExplorerEntry, ExplorerWebviewMessage } from '@/features/explorer/protocol';
+import type { ExplorerDirectory, ExplorerEntry, ExplorerWebviewMessage } from '@/features/explorer/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
@@ -9,20 +9,16 @@ import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer
 import { FileGridView } from '@/webview/pages/explorer/components/file-grid-view';
 import { FileListView } from '@/webview/pages/explorer/components/file-list-view';
 import {
-  type ExplorerLocation,
   formatAddress,
   getAddressSegments,
   indexEntries,
-  resolveAddress,
   sortEntries,
 } from '@/webview/pages/explorer/explorer-location';
 import '@/webview/styles.css';
 
 function App() {
-  const [location, setLocation] = useState<ExplorerLocation>(null);
-  const [history, setHistory] = useState<ExplorerLocation[]>([]);
   const [viewMode, setViewMode] = useState<ExplorerViewMode>('list');
-  const state = useHostData<ExplorerEntry[]>();
+  const state = useHostData<ExplorerDirectory>();
 
   if (state.status === 'error') {
     return (
@@ -40,8 +36,8 @@ function App() {
     );
   }
 
-  const entries = state.data;
-  if (!entries.length) {
+  const { entries, ancestors, location, canGoBack, hasWorkspace } = state.data;
+  if (!hasWorkspace) {
     return (
       <main className="grid min-h-screen place-items-center bg-(--vscode-editor-background) text-(--vscode-foreground)">
         <Empty
@@ -53,25 +49,10 @@ function App() {
     );
   }
 
-  // A single workspace folder is the top level itself; multi-root workspaces keep folders as the top level.
-  const defaultLocation: ExplorerLocation = entries.length === 1 ? (entries[0]?.id ?? null) : null;
-  const effectiveLocation = location ?? defaultLocation;
-  const index = indexEntries(entries);
-  const folder = effectiveLocation === null ? null : (index.get(effectiveLocation) ?? null);
-  const currentLocation = folder?.id ?? null;
-  const children = sortEntries(folder ? (folder.children ?? []) : entries);
-
-  const navigate = (next: ExplorerLocation) => {
-    const target = next ?? defaultLocation;
-    if (target === currentLocation) return;
-    setHistory((previous) => [...previous, currentLocation]);
-    setLocation(target);
-  };
-
-  const goBack = () => {
-    if (!history.length) return;
-    setLocation(history[history.length - 1] ?? null);
-    setHistory(history.slice(0, -1));
+  const index = indexEntries(ancestors);
+  const children = sortEntries(entries);
+  const navigate = (uri: string | null) => {
+    if (uri !== location) postToHost({ type: 'readDirectory', uri } satisfies ExplorerWebviewMessage);
   };
 
   const openEntry = (entry: ExplorerEntry) => {
@@ -82,20 +63,19 @@ function App() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
       <ExplorerToolbar
-        address={formatAddress(index, currentLocation)}
-        addressSegments={getAddressSegments(index, currentLocation)}
-        canGoBack={history.length > 0}
+        address={formatAddress(index, location)}
+        addressSegments={getAddressSegments(index, location)}
+        canGoBack={canGoBack}
         viewMode={viewMode}
-        onBack={goBack}
+        onBack={() => postToHost({ type: 'goBack' } satisfies ExplorerWebviewMessage)}
         onAddressSubmit={(address) => {
-          const target = resolveAddress(index, address);
-          if (target === undefined) return false;
-          navigate(target);
+          postToHost({ type: 'navigateAddress', address } satisfies ExplorerWebviewMessage);
           return true;
         }}
         onNavigate={navigate}
         onViewModeChange={setViewMode}
       />
+      {state.error && <ErrorMessage message={state.error} />}
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden" aria-label="Files">
         {children.length === 0 ? (
           <Empty title="Empty folder" description="This folder has no files." icon="folder" />

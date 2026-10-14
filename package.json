@@ -675,6 +675,11 @@
     ],
     "keybindings": [
       {
+        "command": "toolkit.explorer.open",
+        "key": "ctrl+shift+;",
+        "mac": "cmd+shift+;"
+      },
+      {
         "command": "toolkit.sqlite.executeQuery",
         "key": "ctrl+enter",
         "mac": "cmd+enter",
