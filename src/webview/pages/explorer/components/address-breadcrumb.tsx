@@ -45,7 +45,7 @@ export function AddressBreadcrumb({ segments, onNavigate, onEdit }: AddressBread
                 onNavigate(segment.location);
               }}
             >
-              {index === 0 ? <Icon name="home" /> : <span className="sm">{segment.name}</span>}
+              {index === 0 ? <Icon name="home" /> : <span className="text-sm">{segment.name}</span>}
             </Button>
           </Fragment>
         );

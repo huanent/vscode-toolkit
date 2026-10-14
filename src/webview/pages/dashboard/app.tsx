@@ -12,19 +12,19 @@ const tabs: Tab[] = [
   {
     id: 'workflow',
     label: 'Workflow',
-    icon: <Icon name="debug-line-by-line" size="md" />,
+    icon: <Icon name="debug-line-by-line" size="lg" />,
     context: { webviewSection: 'workflow', preventDefaultContextMenuItems: true },
   },
   {
     id: 'assets',
     label: 'Assets',
-    icon: <Icon name="layers" size="md" />,
+    icon: <Icon name="layers" size="lg" />,
     context: { webviewSection: 'assets', preventDefaultContextMenuItems: true },
   },
   {
     id: 'temp',
     label: 'Temp',
-    icon: <Icon name="history" size="md" />,
+    icon: <Icon name="history" size="lg" />,
     context: { webviewSection: 'temp', preventDefaultContextMenuItems: true },
   },
 ];

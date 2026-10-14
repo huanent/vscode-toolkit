@@ -1,6 +1,8 @@
 import { Input as BaseInput, type InputProps as BaseInputProps } from '@base-ui/react/input';
 import { cn } from 'cn';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Button } from '@/webview/components/button';
+import { Icon } from '@/webview/components/icons';
 import { fieldClassName } from '@/webview/components/surface-styles';
 
 export type InputProps = Omit<BaseInputProps, 'prefix'> & {
@@ -8,9 +10,13 @@ export type InputProps = Omit<BaseInputProps, 'prefix'> & {
   suffix?: ReactNode;
 };
 
-export function Input({ className, prefix, suffix, ...props }: InputProps) {
-  if (prefix == null && suffix == null) {
-    return <BaseInput className={cn(fieldClassName, className)} {...props} />;
+export function Input({ className, prefix, suffix, type, ...props }: InputProps) {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const isPassword = type === 'password';
+  const visibilityLabel = passwordVisible ? 'Hide password' : 'Show password';
+
+  if (prefix == null && suffix == null && !isPassword) {
+    return <BaseInput className={cn(fieldClassName, className)} type={type} {...props} />;
   }
 
   return (
@@ -27,8 +33,23 @@ export function Input({ className, prefix, suffix, ...props }: InputProps) {
           className,
         )}
         {...props}
+        type={isPassword && passwordVisible ? 'text' : type}
       />
       {suffix != null && <div className="inline-flex shrink-0 items-center">{suffix}</div>}
+      {isPassword && (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={props.disabled}
+          aria-label={visibilityLabel}
+          title={visibilityLabel}
+          aria-pressed={passwordVisible}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => setPasswordVisible((visible) => !visible)}
+        >
+          <Icon name={passwordVisible ? 'eye-closed' : 'eye'} size="sm" />
+        </Button>
+      )}
     </div>
   );
 }

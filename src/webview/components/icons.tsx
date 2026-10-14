@@ -10,14 +10,13 @@ export type IconProps = {
   className?: string;
 };
 
-// Important modifier: codicon.css sets font-size outside Tailwind layers.
 const sizeClasses: Record<IconSize, string> = {
   sm: 'text-sm!',
-  md: 'text-xl!',
-  lg: 'text-2xl!',
-  xl: 'text-3xl!',
-  '2xl': 'text-4xl!',
-  '3xl': 'text-5xl!',
+  md: 'text-base!',
+  lg: 'text-lg!',
+  xl: 'text-xl!',
+  '2xl': 'text-2xl!',
+  '3xl': 'text-3xl!',
 };
 
 const variantClasses: Record<IconVariant, string> = {
