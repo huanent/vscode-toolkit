@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["react", "react-dom"]
+  },
+  "include": ["src/webview/**/*.ts", "src/webview/**/*.tsx", "src/shared/**/*.ts", "src/vite-env.d.ts"]
+}

@@ -1,0 +1,216 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "HTTP",
+  "scopeName": "source.http",
+  "patterns": [
+    {
+      "include": "#request-separator"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#variable-definition"
+    },
+    {
+      "include": "#request-line"
+    },
+    {
+      "include": "#response-line"
+    },
+    {
+      "include": "#headers"
+    },
+    {
+      "include": "#json-body"
+    },
+    {
+      "include": "#xml-body"
+    },
+    {
+      "include": "#variables"
+    }
+  ],
+  "repository": {
+    "request-separator": {
+      "match": "^\\s*(###+)(?:\\s+(.*))?$",
+      "captures": {
+        "1": {
+          "name": "keyword.operator.separator.http punctuation.definition.separator.http"
+        },
+        "2": {
+          "name": "entity.name.section.http comment.line.number-sign.http"
+        }
+      }
+    },
+    "comments": {
+      "patterns": [
+        {
+          "match": "^\\s*(#)\\s*(@[a-zA-Z0-9_-]+)(?:\\s+(.*))?$",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.http comment.line.number-sign.http"
+            },
+            "2": {
+              "name": "storage.type.annotation.http keyword.other.directive.http"
+            },
+            "3": {
+              "name": "variable.other.readwrite.http"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(#.*)$",
+          "captures": {
+            "1": {
+              "name": "comment.line.number-sign.http"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(//.*)$",
+          "captures": {
+            "1": {
+              "name": "comment.line.double-slash.http"
+            }
+          }
+        }
+      ]
+    },
+    "variable-definition": {
+      "begin": "^\\s*(@[a-zA-Z0-9_.-]+)\\s*(=)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.other.assignment.http"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.http"
+        }
+      },
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#variables"
+        },
+        {
+          "name": "string.unquoted.variable-value.http",
+          "match": "[^\\r\\n]+"
+        }
+      ]
+    },
+    "request-line": {
+      "begin": "^\\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE|LOCK|UNLOCK|PROPFIND|PROPPATCH|COPY|MOVE|MKCOL|MKCALENDAR|ACL|SEARCH)\\s+",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.http-method.http"
+        }
+      },
+      "end": "$",
+      "patterns": [
+        {
+          "name": "constant.language.http-version.http",
+          "match": "\\bHTTP\\/[0-9]+(?:\\.[0-9]+)?\\b"
+        },
+        {
+          "include": "#variables"
+        },
+        {
+          "match": "(\\?|&)([^=&#\\s]+)(=)([^&#\\s]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.query.http"
+            },
+            "2": {
+              "name": "variable.parameter.url.http"
+            },
+            "3": {
+              "name": "punctuation.separator.key-value.http"
+            },
+            "4": {
+              "name": "string.unquoted.url-param.http"
+            }
+          }
+        },
+        {
+          "name": "punctuation.definition.endpoint.http",
+          "match": "https?:\\/\\/"
+        },
+        {
+          "name": "string.unquoted.url.http",
+          "match": "[^\\s?#]+"
+        }
+      ]
+    },
+    "response-line": {
+      "match": "^\\s*(HTTP\\/[0-9]+(?:\\.[0-9]+)?)\\s+([0-9]{3})(?:\\s+(.*))?$",
+      "captures": {
+        "1": {
+          "name": "constant.language.http-version.http"
+        },
+        "2": {
+          "name": "constant.numeric.http-status.http"
+        },
+        "3": {
+          "name": "string.unquoted.http"
+        }
+      }
+    },
+    "headers": {
+      "begin": "^\\s*([A-Za-z0-9_-]+)\\s*(:)\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "support.type.header.http entity.name.tag.http"
+        },
+        "2": {
+          "name": "punctuation.separator.key-value.http"
+        }
+      },
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#variables"
+        },
+        {
+          "name": "string.unquoted.header-value.http",
+          "match": "[^\\r\\n]+"
+        }
+      ]
+    },
+    "json-body": {
+      "begin": "^\\s*(?=[{\\[])",
+      "end": "(?=^\\s*###)",
+      "patterns": [
+        {
+          "include": "#variables"
+        },
+        {
+          "include": "source.json"
+        }
+      ]
+    },
+    "xml-body": {
+      "begin": "^\\s*(?=<)",
+      "end": "(?=^\\s*###)",
+      "patterns": [
+        {
+          "include": "#variables"
+        },
+        {
+          "include": "text.xml"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.language.system.http",
+          "match": "\\{\\{\\$[a-zA-Z0-9_]+(?:\\s+[^}]+)?\\}\\}"
+        },
+        {
+          "name": "variable.other.readwrite.http",
+          "match": "\\{\\{[a-zA-Z0-9_.-]+\\}\\}"
+        }
+      ]
+    }
+  }
+}

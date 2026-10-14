@@ -1,17 +1,6 @@
-import * as vscode from 'vscode';
-import { FeatureTreeProvider } from './features/featureTreeProvider';
-import { NetworkPanel } from './features/network/networkPanel';
+import type * as vscode from 'vscode';
+import { registerApplication } from '@/app/register-application';
 
-export function activate(context: vscode.ExtensionContext): void {
-	context.subscriptions.push(
-		vscode.window.registerTreeDataProvider(
-			FeatureTreeProvider.viewType,
-			new FeatureTreeProvider(),
-		),
-		vscode.commands.registerCommand('vscode-toolkit.openNetwork', () => {
-			NetworkPanel.show(context.extensionUri);
-		}),
-	);
+export function activate(context: vscode.ExtensionContext): Promise<void> {
+  return registerApplication(context);
 }
-
-export function deactivate(): void { }
