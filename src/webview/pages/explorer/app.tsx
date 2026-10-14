@@ -6,7 +6,6 @@ import { ErrorMessage } from '@/webview/components/error-message';
 import { DataGrid } from '@/webview/components/data-grid';
 import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { Icon } from '@/webview/components/icons';
-import { IconLabel } from '@/webview/components/icon-label';
 import { Loading } from '@/webview/components/loading';
 import { formatDateTime, formatSize } from '@/webview/utils/format';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
@@ -25,7 +24,12 @@ const columns: DataListColumn<ExplorerEntry>[] = [
     header: 'Name',
     className: 'flex-1',
     headerClassName: 'pl-5',
-    cell: (entry) => <IconLabel icon={entry.type === 'directory' ? 'folder' : 'file'} label={entry.name} />,
+    cell: (entry) => (
+      <div className="flex min-w-0 items-center gap-1">
+        <Icon name={entry.type === 'directory' ? 'folder' : 'file'} />
+        <span className="truncate">{entry.name}</span>
+      </div>
+    ),
   },
   {
     key: 'modified',

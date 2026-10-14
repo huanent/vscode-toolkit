@@ -2,7 +2,6 @@ import type { DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/button';
 import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { Icon } from '@/webview/components/icons';
-import { IconLabel } from '@/webview/components/icon-label';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface TableManagementProps {
@@ -17,7 +16,14 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       header: 'Name',
       className: 'flex-1',
       headerClassName: 'pl-5',
-      cell: (table) => <IconLabel icon="table" label={table.name} title={table.name} />,
+      cell: (table) => (
+        <div className="flex min-w-0 items-center gap-1">
+          <Icon name="table" />
+          <span className="truncate" title={table.name}>
+            {table.name}
+          </span>
+        </div>
+      ),
     },
     {
       key: 'columns',
