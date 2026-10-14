@@ -11,12 +11,12 @@ export type IconProps = {
 };
 
 const sizeClasses: Record<IconSize, string> = {
-  sm: 'text-sm!',
-  md: 'text-base!',
-  lg: 'text-lg!',
-  xl: 'text-xl!',
-  '2xl': 'text-2xl!',
-  '3xl': 'text-3xl!',
+  sm: 'text-sm/none!',
+  md: 'text-base/none!',
+  lg: 'text-lg/none!',
+  xl: 'text-xl/none!',
+  '2xl': 'text-2xl/none!',
+  '3xl': 'text-3xl/none!',
 };
 
 const variantClasses: Record<IconVariant, string> = {
@@ -28,7 +28,7 @@ export function Icon({ name, size = 'md', variant = 'default', className }: Icon
   return (
     <i
       className={cn(
-        'codicon shrink-0 leading-none',
+        'codicon inline-flex! shrink-0 items-center justify-center',
         `codicon-${name}`,
         sizeClasses[size],
         variantClasses[variant],

@@ -27,14 +27,13 @@ function App() {
     const tables = state.data.tables;
     const query = search.trim().toLowerCase();
     const visibleTables = tables.filter((table) => table.name.toLowerCase().includes(query));
-    const rowCount = tables.reduce((total, table) => total + table.rowCount, 0);
 
     return (
       <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
         <div
           role="toolbar"
           aria-label="Database tools"
-          className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-3 py-2"
+          className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-2 py-1"
         >
           {state.data.databases && (
             <DatabaseSelector
@@ -94,14 +93,6 @@ function App() {
             </div>
           )}
         </section>
-        <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1  tabular-nums text-(--vscode-descriptionForeground)">
-          <span>
-            {query
-              ? `${visibleTables.length.toLocaleString()} of ${tables.length.toLocaleString()} tables`
-              : `${tables.length.toLocaleString()} tables`}
-          </span>
-          <span>{rowCount.toLocaleString()} rows</span>
-        </footer>
         {(editingTable || creatingTable) && (
           <TableSchemaDialog
             key={editingTable?.name ?? 'create-table'}

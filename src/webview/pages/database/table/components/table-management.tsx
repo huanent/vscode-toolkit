@@ -1,7 +1,8 @@
 import type { DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/button';
+import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { Icon } from '@/webview/components/icons';
-import { Table, type TableColumn } from '@/webview/components/table';
+import { IconLabel } from '@/webview/components/icon-label';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface TableManagementProps {
@@ -9,53 +10,32 @@ interface TableManagementProps {
   onEditSchema: (table: DatabaseTable) => void;
 }
 
-function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly TableColumn<DatabaseTable>[] {
+function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly DataListColumn<DatabaseTable>[] {
   return [
     {
       key: 'name',
-      header: 'Table',
-      headerClassName: 'min-w-56 bg-(--vscode-editor-background)',
-      className: 'min-w-56',
-      cell: (table) => (
-        <div className="flex min-w-0 items-center gap-2">
-          <Icon name="table" variant="muted" size="sm" />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="min-w-0 justify-start"
-            title={`Open ${table.name}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              postToHost({ type: 'activeTableChanged', tableName: table.name });
-              postToHost({ type: 'openTable', tableName: table.name });
-            }}
-          >
-            <span className="truncate font-medium">{table.name}</span>
-          </Button>
-        </div>
-      ),
+      header: 'Name',
+      className: 'flex-1',
+      headerClassName: 'pl-5',
+      cell: (table) => <IconLabel icon="table" label={table.name} title={table.name} />,
     },
     {
       key: 'columns',
       header: 'Columns',
       align: 'right',
-      headerClassName: 'bg-(--vscode-editor-background)',
-      className: 'tabular-nums',
-      cell: (table) => table.columnCount,
+      className: 'w-20 shrink-0 whitespace-nowrap tabular-nums',
+      cell: (table) => <div className="text-(--vscode-descriptionForeground)">{table.columnCount}</div>,
     },
     {
       key: 'primaryKey',
       header: 'Primary key',
-      headerClassName: 'bg-(--vscode-editor-background)',
-      className: 'min-w-36',
+      className: 'w-36 shrink-0 whitespace-nowrap',
       cell: (table) => {
         const primaryKeys = table.columns.filter((column) => column.primaryKey).map((column) => column.name);
-        return primaryKeys.length ? (
-          <span className="truncate" title={primaryKeys.join(', ')}>
-            {primaryKeys.join(', ')}
-          </span>
-        ) : (
-          <span className="text-(--vscode-descriptionForeground)">None</span>
+        return (
+          <div className="truncate text-(--vscode-descriptionForeground)" title={primaryKeys.join(', ')}>
+            {primaryKeys.length ? primaryKeys.join(', ') : 'None'}
+          </div>
         );
       },
     },
@@ -63,14 +43,13 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       key: 'rows',
       header: 'Rows',
       align: 'right',
-      headerClassName: 'bg-(--vscode-editor-background)',
-      className: 'tabular-nums',
-      cell: (table) => table.rowCount.toLocaleString(),
+      className: 'w-28 shrink-0 whitespace-nowrap tabular-nums',
+      cell: (table) => <div className="text-(--vscode-descriptionForeground)">{table.rowCount.toLocaleString()}</div>,
     },
     {
       key: 'actions',
       header: 'Actions',
-      headerClassName: 'bg-(--vscode-editor-background)',
+      className: 'w-20 shrink-0',
       align: 'right',
       cell: (table) => (
         <div className="flex justify-end gap-1">
@@ -82,7 +61,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
               event.stopPropagation();
               onEditSchema(table);
             }}
-            prefix={<Icon name="edit" size="sm" />}
+            prefix={<Icon name="edit" />}
             variant="ghost"
             size="sm"
           />
@@ -94,10 +73,9 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
               event.stopPropagation();
               postToHost({ type: 'deleteTable', tableName: table.name });
             }}
-            prefix={<Icon name="trash" size="sm" />}
+            prefix={<Icon name="trash" />}
             variant="ghost"
             size="sm"
-            className="text-(--vscode-errorForeground) hover:text-(--vscode-errorForeground)"
           />
         </div>
       ),
@@ -109,12 +87,12 @@ export function TableManagement({ tables, onEditSchema }: TableManagementProps) 
   const columns = getTableColumns(onEditSchema);
 
   return (
-    <Table
+    <DataList
       ariaLabel="Database tables"
       columns={columns}
-      rows={tables}
-      rowKey={(table) => table.name}
-      onRowClick={(table) => {
+      entries={tables}
+      entryKey={(table) => table.name}
+      onOpen={(table) => {
         postToHost({ type: 'activeTableChanged', tableName: table.name });
         postToHost({ type: 'openTable', tableName: table.name });
       }}

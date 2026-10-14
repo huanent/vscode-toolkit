@@ -3,13 +3,14 @@ import type { ExplorerDirectory, ExplorerEntry, ExplorerWebviewMessage } from '@
 import { mountWebview } from '@/webview/bootstrap';
 import { Empty } from '@/webview/components/empty';
 import { ErrorMessage } from '@/webview/components/error-message';
+import { DataGrid } from '@/webview/components/data-grid';
 import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { Icon } from '@/webview/components/icons';
+import { IconLabel } from '@/webview/components/icon-label';
 import { Loading } from '@/webview/components/loading';
 import { formatDateTime, formatSize } from '@/webview/utils/format';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';
-import { FileGridView } from '@/webview/pages/explorer/components/file-grid-view';
 import {
   formatAddress,
   getAddressSegments,
@@ -24,18 +25,13 @@ const columns: DataListColumn<ExplorerEntry>[] = [
     header: 'Name',
     className: 'flex-1',
     headerClassName: 'pl-5',
-    cell: (entry) => (
-      <div className="flex min-w-0 items-center gap-1">
-        <Icon name={entry.type === 'directory' ? 'folder' : 'file'} className="size-4 shrink-0" />
-        <span className="truncate">{entry.name}</span>
-      </div>
-    ),
+    cell: (entry) => <IconLabel icon={entry.type === 'directory' ? 'folder' : 'file'} label={entry.name} />,
   },
   {
     key: 'modified',
     header: 'Modified',
     className: 'w-36 shrink-0 whitespace-nowrap',
-    align: 'right',
+    align: 'left',
     cell: (entry) => (
       <div className="text-(--vscode-descriptionForeground)">
         {entry.modifiedAt === undefined ? '—' : formatDateTime(entry.modifiedAt)}
@@ -46,7 +42,7 @@ const columns: DataListColumn<ExplorerEntry>[] = [
     key: 'created',
     header: 'Created',
     className: 'w-36 shrink-0 whitespace-nowrap',
-    align: 'right',
+    align: 'left',
     cell: (entry) => (
       <div className="text-(--vscode-descriptionForeground)">
         {entry.createdAt === undefined ? '—' : formatDateTime(entry.createdAt)}
@@ -65,6 +61,17 @@ const columns: DataListColumn<ExplorerEntry>[] = [
     ),
   },
 ];
+
+function describeEntry(entry: ExplorerEntry): string {
+  return [
+    entry.name,
+    entry.modifiedAt === undefined ? undefined : `Modified: ${formatDateTime(entry.modifiedAt)}`,
+    entry.createdAt === undefined ? undefined : `Created: ${formatDateTime(entry.createdAt)}`,
+    entry.size === undefined ? undefined : `Size: ${formatSize(entry.size)}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
 
 function App() {
   const [viewMode, setViewMode] = useState<ExplorerViewMode>(() =>
@@ -145,7 +152,15 @@ function App() {
             onOpen={openEntry}
           />
         ) : (
-          <FileGridView entries={children} onOpen={openEntry} />
+          <DataGrid
+            ariaLabel="Files"
+            entries={children}
+            entryKey={(entry) => entry.id}
+            label={(entry) => entry.name}
+            icon={(entry) => <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="3xl" />}
+            title={describeEntry}
+            onOpen={openEntry}
+          />
         )}
       </section>
     </main>
