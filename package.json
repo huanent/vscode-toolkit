@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Developer utilities for VS Code",
   "categories": [
     "Other"
@@ -19,6 +19,7 @@
     "compile": "npm run validate && VITE_BUILD_TARGET=extension vite build --mode development && VITE_BUILD_TARGET=webview vite build --mode development",
     "build:production": "VITE_BUILD_TARGET=extension vite build --mode production && VITE_BUILD_TARGET=webview vite build --mode production",
     "dev-install": "mkdir -p packages && vsce package --out packages/toolkit-$npm_package_version.vsix && code --install-extension packages/toolkit-$npm_package_version.vsix --force",
+    "publish": "vsce publish",
     "format": "oxfmt .",
     "check-types": "npm run check-types:host && npm run check-types:webview",
     "check-types:host": "tsc --noEmit -p tsconfig.host.json",
