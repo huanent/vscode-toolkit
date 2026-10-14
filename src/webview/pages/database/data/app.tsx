@@ -16,6 +16,9 @@ import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data'
 import '@/webview/styles.css';
 
 type DatabaseRow = { values: DatabaseCellValue[]; rowNumber: number };
+type TableSnapshot = DatabaseTable & { settledQuery?: string; displayedPage?: number };
+
+const initialQuery = JSON.stringify({ search: '', columns: {}, page: 0, revision: 0 });
 
 function createColumn(
   column: DatabaseTable['columns'][number],
@@ -24,13 +27,19 @@ function createColumn(
   onFilterChange: (value: string) => void,
 ): TableColumn<DatabaseRow> {
   return {
-    key: column.name,
+    key: `column-${columnIndex}`,
     align: 'left',
     header: (
       <div className="grid gap-1 py-1">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-medium">{column.name}</span>
-        </span>
+        <div className="flex min-w-0 items-center gap-2">
+          {column.primaryKey && <Icon name="key" size="sm" className="text-(--vscode-symbolIcon-keywordForeground)" />}
+          <span className="max-w-64 truncate font-medium text-(--vscode-foreground)" title={column.name}>
+            {column.name}
+          </span>
+          <span className="ml-auto max-w-32 truncate font-mono text-xs font-normal" title={column.type}>
+            {column.type || 'unknown'}
+          </span>
+        </div>
         <Input
           type="search"
           aria-label={`Filter ${column.name}`}
@@ -40,14 +49,23 @@ function createColumn(
         />
       </div>
     ),
-    headerClassName: 'min-w-36 max-w-80 bg-(--vscode-editor-background) text-left',
-    className: 'h-6 max-w-80 font-mono',
+    headerClassName: 'min-w-44 bg-(--vscode-editor-background) px-3!',
+    className: 'h-6 px-3! font-mono hover:bg-(--vscode-list-hoverBackground)',
     cell: (row) => {
       const value = row.values[columnIndex] ?? null;
-      const displayValue = value === null ? 'NULL' : String(value);
+      if (value === null || value === '') {
+        return (
+          <span className="text-xs italic text-(--vscode-descriptionForeground)">
+            {value === null ? 'NULL' : 'empty'}
+          </span>
+        );
+      }
       return (
-        <span className={value === null ? 'italic text-(--vscode-descriptionForeground)' : ''} title={displayValue}>
-          {displayValue}
+        <span
+          className={typeof value === 'number' ? 'text-(--vscode-debugTokenExpression-number)' : undefined}
+          title={String(value)}
+        >
+          {String(value)}
         </span>
       );
     },
@@ -55,123 +73,206 @@ function createColumn(
 }
 
 function App() {
-  const latestRequestId = useRef(0);
-  const hasRequestedFilters = useRef(false);
-  const state = useHostData<DatabaseTable, DatabaseTableFilterResult>((message, previous) => {
-    if (message.type !== 'tableFilterResult' || message.requestId !== latestRequestId.current) return previous;
-    if (message.error) {
-      return previous.status === 'loaded' ? { ...previous, error: message.error } : previous;
-    }
-    return message.data ? { status: 'loaded', data: message.data } : previous;
-  });
-  const name = getRootData('name') ?? 'Database Table';
   const [search, setSearch] = useState('');
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [page, setPage] = useState(0);
-  const hasActiveFilters = Boolean(search.trim() || Object.values(columnFilters).some((filter) => filter.trim()));
+  const [revision, setRevision] = useState(0);
+  const queryKey = JSON.stringify({ search, columns: columnFilters, page, revision });
+  const request = useRef({ id: 0, key: initialQuery, page: 0 });
+  const currentQuery = useRef(queryKey);
+  currentQuery.current = queryKey;
+  const state = useHostData<TableSnapshot, DatabaseTableFilterResult>((message, previous) => {
+    if (
+      message.type !== 'tableFilterResult' ||
+      message.requestId !== request.current.id ||
+      request.current.key !== currentQuery.current
+    )
+      return previous;
+    if (message.error) {
+      return previous.status === 'loaded'
+        ? { ...previous, error: message.error, data: { ...previous.data, settledQuery: request.current.key } }
+        : previous;
+    }
+    return message.data
+      ? {
+          status: 'loaded',
+          data: { ...message.data, settledQuery: request.current.key, displayedPage: request.current.page },
+        }
+      : previous;
+  });
+  const name = state.status === 'loaded' ? state.data.name : (getRootData('name') ?? 'Database Table');
+  const activeColumnCount = Object.values(columnFilters).filter((value) => value.trim()).length;
+  const hasActiveFilters = Boolean(search.trim() || activeColumnCount);
 
   useEffect(() => {
     if (state.status !== 'loaded') return;
-    const requestId = ++latestRequestId.current;
-    if (!hasRequestedFilters.current && !hasActiveFilters && page === 0) return;
+    if (queryKey === initialQuery && request.current.id === 0) return;
+    const requestId = request.current.id + 1;
+    request.current = { id: requestId, key: queryKey, page };
     const filters: DatabaseTableFilters = { search, columns: columnFilters, page };
     const timeout = window.setTimeout(() => {
-      hasRequestedFilters.current = true;
       postToHost({ type: 'filterTable', requestId, filters });
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [search, columnFilters, page, state.status, hasActiveFilters]);
+  }, [queryKey, search, columnFilters, page, state.status]);
 
   useEffect(() => {
     document.title = name;
   }, [name]);
 
+  function clearFilters() {
+    setSearch('');
+    setColumnFilters({});
+    setPage(0);
+  }
+
   if (state.status !== 'loaded') {
     return (
-      <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
+      <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-sm text-(--vscode-foreground)">
         {state.status === 'loading' ? (
           <Loading label="Reading table..." />
         ) : (
-          <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
-            {state.message}
-          </p>
+          <div className="flex max-w-lg flex-col items-center gap-3 text-center" role="alert">
+            <Icon name="warning" size="2xl" variant="muted" />
+            <p className="m-0 text-(--vscode-errorForeground)">{state.message}</p>
+            <Button variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
+              Retry
+            </Button>
+          </div>
         )}
       </main>
     );
   }
 
   const table = state.data;
-  const rows = table.rows.map((values, index) => ({ values, rowNumber: index + 1 }));
+  const pending = (table.settledQuery ?? initialQuery) !== queryKey;
+  const displayedPage = table.displayedPage ?? 0;
   const totalRows = table.filteredRowCount ?? table.rowCount;
   const pageCount = Math.max(1, Math.ceil(totalRows / databaseTablePageSize));
-  const firstRow = page * databaseTablePageSize + 1;
-  const lastRow = page * databaseTablePageSize + table.rows.length;
+  const firstRow = displayedPage * databaseTablePageSize + 1;
+  const lastRow = displayedPage * databaseTablePageSize + table.rows.length;
+  const rows = table.rows.map((values, index) => ({ values, rowNumber: firstRow + index }));
   const columns: readonly TableColumn<DatabaseRow>[] = [
     ...table.columns.map((column, columnIndex) =>
       createColumn(column, columnIndex, columnFilters[column.name] ?? '', (value) => {
-        setColumnFilters((filters) => ({ ...filters, [column.name]: value }));
+        setColumnFilters((filters) => {
+          const next = { ...filters };
+          if (value) next[column.name] = value;
+          else delete next[column.name];
+          return next;
+        });
         setPage(0);
       }),
     ),
   ];
 
   return (
-    <main className="flex h-dvh select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-2">
-        <Icon name="search" size="sm" variant="muted" />
-        <Input
-          type="search"
-          className="w-full sm:w-64"
-          aria-label="Search rows"
-          placeholder="Search rows..."
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(0);
-          }}
-        />
-        <span className="ml-auto  tabular-nums text-(--vscode-descriptionForeground)">
-          {table.columnCount.toLocaleString()} columns
-        </span>
+    <main className="flex h-dvh min-w-0 select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-sm text-(--vscode-foreground)">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) p-2">
+        <div className="relative min-w-32 flex-1 sm:max-w-80">
+          <Icon name="search" size="sm" variant="muted" className="pointer-events-none absolute inset-y-0 left-2" />
+          <Input
+            type="search"
+            className="w-full pl-7"
+            aria-label="Search rows"
+            placeholder="Search rows..."
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
+          />
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            prefix={<Icon name="clear-all" />}
+            title="Clear all filters"
+            aria-label="Clear all filters"
+            onClick={clearFilters}
+          />
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          <span role="status" className="text-xs text-(--vscode-descriptionForeground)">
+            {pending ? 'Updating...' : ''}
+          </span>
+          <Button
+            variant="ghost"
+            prefix={<Icon name="refresh" className={pending ? 'animate-spin motion-reduce:animate-none' : undefined} />}
+            title="Refresh data"
+            aria-label="Refresh data"
+            disabled={pending}
+            onClick={() => setRevision((value) => value + 1)}
+          />
+        </div>
       </div>
       {state.error && (
-        <p className="shrink-0 px-3 py-1  text-(--vscode-errorForeground)" role="alert">
-          {state.error}
-        </p>
-      )}
-      {table.columns.length ? (
-        <Table
-          ariaLabel={`${name} data`}
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.rowNumber}
-          border
-          emptyMessage={hasActiveFilters ? 'No matching rows.' : 'This table is empty.'}
-          className="min-h-0 flex-1"
-        />
-      ) : (
-        <div className="grid min-h-0 flex-1 place-items-center  text-(--vscode-descriptionForeground)">
-          This table has no columns.
+        <div
+          role="alert"
+          className="flex shrink-0 items-start gap-2 border-b border-(--vscode-panel-border) bg-(--vscode-inputValidation-errorBackground) px-4 py-2 text-(--vscode-errorForeground)"
+        >
+          <Icon name="warning" />
+          <span className="min-w-0 flex-1 wrap-break-word">{state.error}</span>
+          <Button
+            variant="ghost"
+            prefix={<Icon name="refresh" size="sm" />}
+            aria-label="Retry query"
+            title="Retry query"
+            disabled={pending}
+            onClick={() => setRevision((value) => value + 1)}
+          />
         </div>
       )}
-      <footer className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--vscode-panel-border) px-3 py-1  text-(--vscode-descriptionForeground)">
+      <section className="flex min-h-0 flex-1 flex-col" aria-label="Table data" aria-busy={pending}>
+        {table.columns.length ? (
+          <Table
+            ariaLabel={`${name} data`}
+            columns={columns}
+            rows={rows}
+            border
+            rowKey={(row) => row.rowNumber}
+            emptyMessage={
+              <div className="flex flex-col items-center gap-2 py-10">
+                <Icon name={hasActiveFilters ? 'search' : 'table'} size="2xl" variant="muted" />
+                <span>{hasActiveFilters ? 'No matching rows' : 'This table is empty'}</span>
+                {hasActiveFilters && (
+                  <Button variant="secondary" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            }
+            className="min-h-0 flex-1 border-y-0"
+          />
+        ) : (
+          <div className="grid min-h-0 flex-1 place-items-center  text-(--vscode-descriptionForeground)">
+            This table has no columns.
+          </div>
+        )}
+      </section>
+      <footer className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--vscode-panel-border) px-2 py-1 text-xs text-(--vscode-descriptionForeground)">
         <span className="shrink-0 tabular-nums">
-          {totalRows
-            ? `${firstRow.toLocaleString()}-${lastRow.toLocaleString()} of ${totalRows.toLocaleString()} ${hasActiveFilters ? 'matching rows' : 'rows'}`
-            : `No ${hasActiveFilters ? 'matching rows' : 'rows'}`}
+          {totalRows && table.rows.length
+            ? `${firstRow.toLocaleString()}-${lastRow.toLocaleString()} of ${totalRows.toLocaleString()} rows`
+            : '0 rows'}
         </span>
-        <div role="group" aria-label="Pagination" className="ml-auto flex shrink-0 items-center gap-1 tabular-nums">
+        {table.columnCount > table.columns.length && (
+          <span>
+            Showing {table.columns.length} of {table.columnCount} columns
+          </span>
+        )}
+        <nav aria-label="Pagination" className="ml-auto flex shrink-0 items-center gap-1 tabular-nums">
           <Button
             variant="ghost"
             size="sm"
             title="Previous page"
             aria-label="Previous page"
             prefix={<Icon name="chevron-left" size="sm" />}
-            disabled={page === 0}
-            onClick={() => setPage((current) => current - 1)}
+            disabled={pending || displayedPage === 0}
+            onClick={() => setPage(displayedPage - 1)}
           />
-          <span>
-            {page + 1} / {pageCount}
+          <span className="min-w-14 text-center">
+            {displayedPage + 1} / {pageCount.toLocaleString()}
           </span>
           <Button
             variant="ghost"
@@ -179,13 +280,10 @@ function App() {
             title="Next page"
             aria-label="Next page"
             prefix={<Icon name="chevron-right" size="sm" />}
-            disabled={page + 1 >= pageCount}
-            onClick={() => setPage((current) => current + 1)}
+            disabled={pending || displayedPage + 1 >= pageCount}
+            onClick={() => setPage(displayedPage + 1)}
           />
-        </div>
-        {table.columnCount > table.columns.length && (
-          <span className="text-right">Preview limited to {table.columns.length} columns</span>
-        )}
+        </nav>
       </footer>
     </main>
   );
