@@ -64,28 +64,33 @@ export function List<T>({
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   const [selectedKey, setSelectedKey] = useState<Key | null>(selectedKeyProp ?? null);
   const [listHasFocus, setListHasFocus] = useState(false);
+
   useEffect(() => {
     setSelectedKey(selectedKeyProp ?? null);
   }, [selectedKeyProp]);
-  const activeListItem = items.find((item) => item.key === focusedKey) ?? items[0];
+
+  const activeListItem: ListItem<T> | undefined = items.find((item) => item.key === focusedKey) ?? items[0];
   const activeKey = activeListItem?.key ?? null;
   const activeItem = activeListItem?.data;
+
   useEffect(() => {
     onFocusedKeyChange?.(activeKey);
   }, [activeKey, onFocusedKeyChange]);
 
-  const focusItem = (item: T | undefined) => {
-    if (item === undefined) return;
-    const key = items.find((listItem) => listItem.data === item)?.key;
-    if (key === undefined) return;
+  const selectKey = (key: Key) => {
     setFocusedKey(key);
     setSelectedKey(key);
   };
 
+  const focusItem = (item: T | undefined) => {
+    if (item === undefined) return;
+    const listItem = items.find((candidate) => candidate.data === item);
+    if (listItem) selectKey(listItem.key);
+  };
+
   const handleItemClick = (listItem: ListItem<T>, event: MouseEvent<HTMLDivElement>) => {
     listRef.current?.focus();
-    setFocusedKey(listItem.key);
-    setSelectedKey(listItem.key);
+    selectKey(listItem.key);
     onItemClick?.(listItem.data, event);
   };
 
@@ -99,28 +104,26 @@ export function List<T>({
     event.stopPropagation();
     if (!items.length) return;
 
-    const activeIndex = activeListItem === undefined ? -1 : items.indexOf(activeListItem);
-    switch (event.key) {
-      case 'ArrowDown':
-        focusItem(items[Math.min(activeIndex < 0 ? 0 : activeIndex + 1, items.length - 1)].data);
-        break;
-      case 'ArrowUp':
-        focusItem(items[Math.max(activeIndex < 0 ? items.length - 1 : activeIndex - 1, 0)].data);
-        break;
-      case 'Home':
-        focusItem(items[0].data);
-        break;
-      case 'End':
-        focusItem(items[items.length - 1].data);
-        break;
-      case 'Enter':
-      case ' ':
-        if (activeItem !== undefined) onActivate?.(activeItem);
-        break;
+    if (event.key === 'Enter' || event.key === ' ') {
+      if (activeItem !== undefined) onActivate?.(activeItem);
+      return;
     }
+
+    const activeIndex = Math.max(
+      items.findIndex((item) => item.key === activeKey),
+      0,
+    );
+    const last = items.length - 1;
+    const targetIndexes: Partial<Record<string, number>> = {
+      ArrowDown: Math.min(activeIndex + 1, last),
+      ArrowUp: Math.max(activeIndex - 1, 0),
+      Home: 0,
+      End: last,
+    };
+    selectKey(items[targetIndexes[event.key] ?? activeIndex].key);
   };
 
-  const renderItem = (listItem: ListItem<T>) => (
+  const renderRow = (listItem: ListItem<T>) => (
     <ListRow
       key={listItem.key}
       listItem={listItem}
@@ -142,9 +145,7 @@ export function List<T>({
       tabIndex={items.length ? 0 : -1}
       onFocus={() => {
         setListHasFocus(true);
-        if (!items.some((item) => item.key === focusedKey)) {
-          setFocusedKey(items[0]?.key ?? null);
-        }
+        setFocusedKey(activeKey);
       }}
       onBlur={() => setListHasFocus(false)}
       onKeyDown={handleKeyDown}
@@ -153,10 +154,10 @@ export function List<T>({
         ? groups.map((group) => (
             <div key={group.key} role="group" aria-label={typeof group.label === 'string' ? group.label : undefined}>
               <div className="px-2 py-1 font-semibold text-(--vscode-descriptionForeground)">{group.label}</div>
-              {group.items.map(renderItem)}
+              {group.items.map(renderRow)}
             </div>
           ))
-        : items.map(renderItem)}
+        : items.map(renderRow)}
     </div>
   );
 }
@@ -171,8 +172,7 @@ type ListRowProps<T> = {
 };
 
 function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClick }: ListRowProps<T>) {
-  const state = { selected, listHasFocus };
-  const icon = typeof listItem.icon === 'function' ? listItem.icon(state) : listItem.icon;
+  const icon = typeof listItem.icon === 'function' ? listItem.icon({ selected, listHasFocus }) : listItem.icon;
 
   return (
     <div
@@ -180,13 +180,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
         'group relative flex h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm',
-        !selected && 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)',
-        selected &&
-          listHasFocus &&
-          'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)',
-        selected &&
-          !listHasFocus &&
-          'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)',
+        getSelectionClassName(selected, listHasFocus),
       )}
       role={itemRole}
       aria-selected={selected}
@@ -197,7 +191,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       onClick={onClick}
     >
       {icon}
-      <div className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">
+      <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
         <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
         {listItem.description !== undefined && (
           <div className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
@@ -217,6 +211,13 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       )}
     </div>
   );
+}
+
+function getSelectionClassName(selected: boolean, listHasFocus: boolean): string {
+  if (!selected) return 'hover:bg-(--vscode-list-hoverBackground) hover:text-(--vscode-list-hoverForeground)';
+  return listHasFocus
+    ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
+    : 'bg-(--vscode-list-inactiveSelectionBackground) text-(--vscode-list-inactiveSelectionForeground)';
 }
 
 function getListItemId(listId: string, key: Key): string {
