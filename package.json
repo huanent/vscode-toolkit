@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Developer utilities for VS Code",
   "categories": [
     "Other"
