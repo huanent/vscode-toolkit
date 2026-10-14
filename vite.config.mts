@@ -80,6 +80,7 @@ export default defineConfig(({ mode }) => {
               ...builtinModules.map((name) => `node:${name}`),
               'node:sqlite',
               'cpu-features',
+              /\/sshcrypto\.node$/,
             ],
             output: {
               exports: 'named',
