@@ -3,11 +3,12 @@ import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/
 import { Autocomplete } from '@/webview/components/autocomplete';
 import { Button } from '@/webview/components/button';
 import { Checkbox } from '@/webview/components/checkbox';
+import { DataList, type DataListColumn } from '@/webview/components/data-list';
 import { Dialog } from '@/webview/components/dialog';
+import { ErrorMessage } from '@/webview/components/error-message';
 import { Form, FormItem } from '@/webview/components/form';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
-import { Table, type TableColumn } from '@/webview/components/table';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface EditableColumn {
@@ -163,18 +164,18 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
   };
 
   const validationError = validateSchema();
-  const tableColumns: TableColumn<EditableColumn>[] = [
+  const tableColumns: DataListColumn<EditableColumn>[] = [
     {
       key: 'name',
       header: 'Name',
-      className: 'border-b border-(--vscode-panel-border) p-1',
+      className: 'min-w-36 flex-1',
       cell: (col, index) => (
         <FormItem name={`columns.${col.id}.name`} className="contents">
           <Input
             ref={(input) => {
               if (!input || pendingColumnFocus.current !== col.id) return;
               pendingColumnFocus.current = null;
-              input.closest('tr')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+              input.closest('[role="row"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
               input.focus({ preventScroll: true });
               input.select();
             }}
@@ -189,7 +190,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     {
       key: 'type',
       header: 'Type',
-      className: 'border-b border-(--vscode-panel-border) p-1',
+      className: 'min-w-36 flex-1',
       cell: (col, index) => (
         <FormItem name={`columns.${col.id}.type`} className="contents">
           <Autocomplete
@@ -207,8 +208,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       key: 'primaryKey',
       header: 'PK',
       align: 'center',
-      headerClassName: 'min-w-0',
-      className: 'border-b border-(--vscode-panel-border) p-1',
+      className: 'w-10 shrink-0',
       cell: (col, index) => (
         <FormItem name={`columns.${col.id}.primaryKey`} className="contents">
           <Checkbox
@@ -224,8 +224,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       key: 'notNull',
       header: 'Not Null',
       align: 'center',
-      headerClassName: 'min-w-0 whitespace-nowrap',
-      className: 'border-b border-(--vscode-panel-border) p-1',
+      className: 'w-16 shrink-0 whitespace-nowrap',
       cell: (col, index) => (
         <FormItem name={`columns.${col.id}.notNull`} className="contents">
           <Checkbox
@@ -239,23 +238,22 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     },
     {
       key: 'action',
-      header: 'Action',
-      align: 'center',
-      headerClassName: 'min-w-0',
-      className: 'border-b border-(--vscode-panel-border) p-1',
+      header: 'Actions',
+      align: 'right',
+      className: 'w-16 shrink-0',
       cell: (col, index) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleRemoveColumn(col.id)}
-          disabled={isSubmitting || columns.length <= 1}
-          className="size-6 text-(--vscode-descriptionForeground) hover:text-(--vscode-errorForeground)"
-          title="Remove column"
-          aria-label={`Remove column ${col.name || index + 1}`}
-        >
-          <Icon name="trash" size="sm" />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleRemoveColumn(col.id)}
+            disabled={isSubmitting || columns.length <= 1}
+            prefix={<Icon name="trash" />}
+            title="Remove column"
+            aria-label={`Remove column ${col.name || index + 1}`}
+          />
+        </div>
       ),
     },
   ];
@@ -270,13 +268,13 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       className="w-176 max-w-full max-h-full"
       footer={
         <>
-          <Button size="sm" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
-            size="sm"
             variant="primary"
             type="submit"
+            prefix={<Icon name="save" />}
             form="table-schema-form"
             disabled={isSubmitting || Boolean(validationError)}
           >
@@ -299,31 +297,24 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
             />
           </FormItem>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className=" font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
-              <Button variant="secondary" size="sm" prefix={<Icon name="add" size="sm" />} onClick={handleAddColumn}>
+              <span className="font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
+              <Button type="button" variant="secondary" prefix={<Icon name="add" />} onClick={handleAddColumn}>
                 Add Column
               </Button>
             </div>
 
-            <Table
+            <DataList
               ariaLabel="Columns"
               columns={tableColumns}
-              rows={columns}
-              rowKey={(col) => col.id}
-              className="max-h-64 rounded border border-(--vscode-panel-border)"
+              entries={columns}
+              entryKey={(col) => col.id}
+              className="max-h-64 flex-none"
             />
           </div>
 
-          {error && (
-            <div
-              role="alert"
-              className="rounded border border-(--vscode-inputValidation-errorBorder) bg-(--vscode-inputValidation-errorBackground) p-2  text-(--vscode-errorForeground)"
-            >
-              {error}
-            </div>
-          )}
+          {error && <ErrorMessage message={error} />}
         </fieldset>
       </Form>
     </Dialog>

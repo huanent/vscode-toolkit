@@ -4,7 +4,7 @@ import type { Key, ReactNode } from 'react';
 export type DataListColumn<T> = {
   key: Key;
   header: ReactNode;
-  cell: (entry: T) => ReactNode;
+  cell: (entry: T, entryIndex: number) => ReactNode;
   className?: string;
   headerClassName?: string;
   align?: 'left' | 'center' | 'right';
@@ -66,7 +66,7 @@ export function DataList<T>({
         </div>
       </div>
       <div role="rowgroup" className="min-w-max py-1">
-        {entries.map((entry) => (
+        {entries.map((entry, entryIndex) => (
           <div
             key={entryKey(entry)}
             role="row"
@@ -101,7 +101,7 @@ export function DataList<T>({
                   column.className,
                 )}
               >
-                {column.cell(entry)}
+                {column.cell(entry, entryIndex)}
               </div>
             ))}
           </div>
