@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import {
   databaseTablePageSize,
   type DatabaseDocument,
+  type DatabaseRowMutation,
   type DatabaseQueryResult,
   type DatabaseTable,
   type DatabaseTableFilters,
@@ -12,9 +13,46 @@ import {
   quoteIdentifier,
   sqliteTemporaryTablePrefix,
 } from '@/features/database/sqlite-schema';
+import { buildRowMutation } from '@/features/database/row-mutation';
 
 const maxPreviewColumns = 50;
 const maxQueryResultRows = 1000;
+
+export function mutateSqliteRow(databasePath: string, tableName: string, mutation: DatabaseRowMutation): void {
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec('PRAGMA foreign_keys = ON');
+    database.exec('BEGIN IMMEDIATE');
+    try {
+      const columns = database
+        .prepare(`PRAGMA table_xinfo(${quoteIdentifier(tableName)})`)
+        .all()
+        .map((row) => ({
+          name: String(row.name),
+          type: String(row.type ?? ''),
+          notNull: Number(row.notnull) !== 0,
+          primaryKey: Number(row.pk) !== 0,
+          readOnly: Number(row.hidden) !== 0 || /BLOB/i.test(String(row.type)),
+        }));
+      const statement = buildRowMutation(tableName, columns, mutation, 'sqlite');
+      if (mutation.operation !== 'create') {
+        const count = database
+          .prepare(`SELECT COUNT(*) AS count FROM ${quoteIdentifier(tableName)} WHERE ${statement.where}`)
+          .get(...statement.keys);
+        if (Number(count?.count) !== 1)
+          throw new Error('The row no longer exists or cannot be uniquely identified. Refresh and try again.');
+      }
+      const result = database.prepare(statement.sql).run(...statement.parameters);
+      if (Number(result.changes) !== 1) throw new Error('The operation did not affect exactly one row.');
+      database.exec('COMMIT');
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    }
+  } finally {
+    database.close();
+  }
+}
 
 export function applySqliteTableDeletion(databasePath: string, tableName: string): void {
   const database = new DatabaseSync(databasePath);
@@ -160,12 +198,13 @@ export function readFilteredTable(
 
 function readTable(database: DatabaseSync, name: string, filters?: DatabaseTableFilters): DatabaseTable {
   const quotedName = quoteIdentifier(name);
-  const columnRows = database.prepare(`PRAGMA table_info(${quotedName})`).all();
+  const columnRows = database.prepare(`PRAGMA table_xinfo(${quotedName})`).all();
   const allColumns = columnRows.map((row) => ({
     name: String(row.name),
     type: row.type == null ? '' : String(row.type),
     notNull: Number(row.notnull) !== 0,
     primaryKey: Number(row.pk) !== 0,
+    readOnly: Number(row.hidden) !== 0 || /BLOB/i.test(String(row.type)),
   }));
   const columns = allColumns.slice(0, maxPreviewColumns);
   const { where, parameters, active } = buildTableFilter(columns, filters);

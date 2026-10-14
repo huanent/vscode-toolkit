@@ -9,6 +9,7 @@ import type {
   UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
 import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
+import { registerTableDataHandler } from '@/features/database/table-data-handler';
 import { registerSqliteQueryEditor } from './query-editor';
 import {
   createSqliteTableUri,
@@ -16,6 +17,7 @@ import {
   deleteSqliteTable,
   readSqliteDatabase,
   readSqliteTable,
+  mutateSqliteTableRow,
   updateSqliteTableSchema,
   validateSqliteTableUri,
   validateSqliteUri,
@@ -149,6 +151,12 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
     validate: validateSqliteTableUri,
     load: readSqliteTable,
     data: (uri) => ({ name: new URLSearchParams(uri.query).get('name') ?? 'SQLite Table' }),
+    onPanelResolved: (uri, panel) =>
+      registerTableDataHandler(
+        panel,
+        (filters) => readSqliteTable(uri, filters),
+        (mutation) => mutateSqliteTableRow(uri, mutation),
+      ),
   });
 
   return {

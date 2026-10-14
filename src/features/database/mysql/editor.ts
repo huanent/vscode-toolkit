@@ -7,11 +7,10 @@ import type {
   DatabaseDocument,
   DeleteDatabaseMessage,
   DeleteTableMessage,
-  DatabaseTableFilterResult,
   SelectDatabaseMessage,
   UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
-import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
+import { registerTableDataHandler } from '@/features/database/table-data-handler';
 import type { MysqlService } from '@/features/database/mysql-service';
 import { formatTabTitle } from '@/shared/tab-title';
 import { registerMysqlQueryEditor } from './query-editor';
@@ -244,18 +243,14 @@ export function registerMysqlEditor(
       return mysqlService.readTable(assetId, databaseName, tableName);
     },
     data: (uri) => ({ name: new URLSearchParams(uri.query).get('name') ?? 'MySQL Table' }),
-    onPanelResolved: (uri, panel) =>
-      panel.webview.onDidReceiveMessage(async (message: unknown) => {
-        if (!isDatabaseTableFilterRequest(message)) return;
-        const result: DatabaseTableFilterResult = { type: 'tableFilterResult', requestId: message.requestId };
-        try {
-          const { assetId, databaseName, tableName } = parseMysqlTableUri(uri);
-          result.data = await mysqlService.readTable(assetId, databaseName, tableName, message.filters);
-        } catch (error) {
-          result.error = error instanceof Error ? error.message : String(error);
-        }
-        await panel.webview.postMessage(result);
-      }),
+    onPanelResolved: (uri, panel) => {
+      const { assetId, databaseName, tableName } = parseMysqlTableUri(uri);
+      return registerTableDataHandler(
+        panel,
+        (filters) => mysqlService.readTable(assetId, databaseName, tableName, filters),
+        (mutation) => mysqlService.mutateRow(assetId, databaseName, tableName, mutation),
+      );
+    },
   });
 
   return {

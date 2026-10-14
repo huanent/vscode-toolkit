@@ -7,6 +7,7 @@ import {
   type DatabaseColumn,
   type DatabaseDocument,
   type DatabaseQueryResult,
+  type DatabaseRowMutation,
   type DatabaseTable,
   type MysqlConnectionConfiguration,
   type SqliteTableColumnDefinition,
@@ -20,6 +21,7 @@ import type { ResultTaskService } from '@/features/result/task-service';
 import { createMysqlUri, mysqlEditorViewType } from './mysql/editor';
 import { buildMysqlCreateTableStatement, isSystemDatabase } from './mysql/schema';
 import type { CredentialService } from '@/features/credential/service';
+import { buildRowMutation } from '@/features/database/row-mutation';
 
 export class MysqlService implements AssetProvider {
   readonly type = 'mysql';
@@ -194,7 +196,7 @@ export class MysqlService implements AssetProvider {
     return this.withConnection(asset, databaseName, undefined, async (connection) => {
       const [colRows] = await connection.query<RowDataPacket[]>(
         {
-          sql: 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
+          sql: 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
           timeout: 60000,
         },
         [databaseName, tableName],
@@ -204,6 +206,9 @@ export class MysqlService implements AssetProvider {
         type: String(col.COLUMN_TYPE),
         notNull: col.IS_NULLABLE === 'NO',
         primaryKey: col.COLUMN_KEY === 'PRI',
+        readOnly:
+          /(?:VIRTUAL|STORED) GENERATED/i.test(String(col.EXTRA)) ||
+          /binary|blob|bit|geometry|point|linestring|polygon/i.test(String(col.COLUMN_TYPE)),
       }));
       const { where, parameters, active } = buildTableFilter(columns, filters);
       const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
@@ -259,6 +264,70 @@ export class MysqlService implements AssetProvider {
         ),
         ...(filteredRowCount === undefined ? {} : { filteredRowCount }),
       };
+    });
+  }
+
+  async mutateRow(
+    assetId: string,
+    databaseName: string,
+    tableName: string,
+    mutation: DatabaseRowMutation,
+  ): Promise<void> {
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, databaseName, undefined, async (connection) => {
+      const [metadata] = await connection.query<RowDataPacket[]>(
+        {
+          sql: 'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
+          timeout: 60000,
+        },
+        [databaseName, tableName],
+      );
+      const columns = metadata.map((column) => ({
+        name: String(column.COLUMN_NAME),
+        type: String(column.COLUMN_TYPE),
+        notNull: column.IS_NULLABLE === 'NO',
+        primaryKey: column.COLUMN_KEY === 'PRI',
+        readOnly:
+          /(?:VIRTUAL|STORED) GENERATED/i.test(String(column.EXTRA)) ||
+          /binary|blob|bit|geometry|point|linestring|polygon/i.test(String(column.COLUMN_TYPE)),
+      }));
+      const statement = buildRowMutation(tableName, columns, mutation, 'mysql');
+      if (
+        columns.some((column) => column.primaryKey && /date|time|year|float|double/i.test(column.type)) &&
+        mutation.operation !== 'create'
+      ) {
+        throw new Error('Rows with temporal or floating-point primary keys cannot be safely edited here.');
+      }
+      const [engines] = await connection.query<RowDataPacket[]>(
+        {
+          sql: 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+          timeout: 60000,
+        },
+        [databaseName, tableName],
+      );
+      if (String(engines[0]?.ENGINE).toLowerCase() !== 'innodb')
+        throw new Error('Row operations require an InnoDB table.');
+      await connection.beginTransaction();
+      try {
+        if (mutation.operation !== 'create') {
+          const [matches] = await connection.query<RowDataPacket[]>(
+            { sql: `SELECT 1 FROM ${escapeId(tableName)} WHERE ${statement.where} LIMIT 2 FOR UPDATE`, timeout: 60000 },
+            statement.keys,
+          );
+          if (matches.length !== 1)
+            throw new Error('The row no longer exists or cannot be uniquely identified. Refresh and try again.');
+        }
+        const [result] = await connection.execute<ResultSetHeader>(
+          { sql: statement.sql, timeout: 60000 },
+          statement.parameters,
+        );
+        if (result.affectedRows > 1 || (mutation.operation !== 'update' && result.affectedRows !== 1))
+          throw new Error('The operation did not affect exactly one row.');
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      }
     });
   }
 

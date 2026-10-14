@@ -4,6 +4,7 @@ import { withSqliteFile } from './file-access';
 import {
   applySqliteTableDeletion,
   applySqliteTableSchema,
+  mutateSqliteRow,
   readDatabase,
   readFilteredTable,
   runSqliteQuery,
@@ -12,6 +13,7 @@ import type {
   CreateSqliteTableOptions,
   DatabaseDocument,
   DatabaseQueryResult,
+  DatabaseRowMutation,
   DatabaseTable,
   DatabaseTableFilters,
   UpdateSqliteTableSchemaOptions,
@@ -39,6 +41,11 @@ export function createSqliteTableUri(databaseUri: vscode.Uri, tableName: string)
 export async function readSqliteTable(uri: vscode.Uri, filters?: DatabaseTableFilters): Promise<DatabaseTable> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
   return withSqliteFile(databaseUri, 'read', (databasePath) => readFilteredTable(databasePath, tableName, filters));
+}
+
+export async function mutateSqliteTableRow(uri: vscode.Uri, mutation: DatabaseRowMutation): Promise<void> {
+  const { databaseUri, tableName } = parseSqliteTableUri(uri);
+  await withSqliteFile(databaseUri, 'write', (databasePath) => mutateSqliteRow(databasePath, tableName, mutation));
 }
 
 export function validateSqliteTableUri(uri: vscode.Uri): void {

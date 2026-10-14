@@ -21,6 +21,7 @@ export interface DatabaseColumn {
   type: string;
   notNull: boolean;
   primaryKey: boolean;
+  readOnly?: boolean;
 }
 
 export interface DatabaseTable {
@@ -51,6 +52,43 @@ export interface DatabaseTableFilterResult {
   requestId: number;
   data?: DatabaseTable;
   error?: string;
+}
+
+export interface DatabaseRowMutation {
+  operation: 'create' | 'update' | 'delete';
+  values: Record<string, DatabaseCellValue>;
+  original?: Record<string, DatabaseCellValue>;
+}
+
+export interface DatabaseRowMutationRequest extends DatabaseRowMutation {
+  type: 'mutateRow';
+  requestId: number;
+}
+
+export interface DatabaseRowMutationResult {
+  type: 'rowMutationResult';
+  requestId: number;
+  error?: string;
+  cancelled?: boolean;
+}
+
+export function isDatabaseRowMutationRequest(value: unknown): value is DatabaseRowMutationRequest {
+  if (typeof value !== 'object' || value === null) return false;
+  const message = value as Partial<DatabaseRowMutationRequest>;
+  const isRecord = (record: unknown): record is Record<string, DatabaseCellValue> =>
+    typeof record === 'object' &&
+    record !== null &&
+    !Array.isArray(record) &&
+    Object.values(record).every(
+      (cell) => cell === null || typeof cell === 'string' || (typeof cell === 'number' && Number.isFinite(cell)),
+    );
+  return (
+    message.type === 'mutateRow' &&
+    Number.isSafeInteger(message.requestId) &&
+    ['create', 'update', 'delete'].includes(message.operation ?? '') &&
+    isRecord(message.values) &&
+    (message.operation === 'create' || isRecord(message.original))
+  );
 }
 
 export function isDatabaseTableFilterRequest(value: unknown): value is DatabaseTableFilterRequest {
