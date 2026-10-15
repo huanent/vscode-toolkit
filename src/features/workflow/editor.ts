@@ -62,7 +62,7 @@ export function registerWorkflowEditor(
   return registerWebviewEditor<WorkflowEditorData>(context, {
     viewType: workflowEditorViewType,
     page: 'workflow/editor',
-    icon: 'debug-line-by-line',
+    icon: 'github-action',
     validate: parseWorkflowEditorUri,
     load: async (uri) => {
       const { scope, ...initial } = await readEditorRecord(uri);

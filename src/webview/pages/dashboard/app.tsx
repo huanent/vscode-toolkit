@@ -12,7 +12,7 @@ const tabs: Tab[] = [
   {
     id: 'workflow',
     label: 'Workflow',
-    icon: <Icon name="debug-line-by-line" size="lg" />,
+    icon: <Icon name="github-action" size="lg" />,
     context: { webviewSection: 'workflow', preventDefaultContextMenuItems: true },
   },
   {

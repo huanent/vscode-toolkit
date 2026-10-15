@@ -35,7 +35,7 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
           />
         </div>
       ) : (
-        <Empty title="No workflows" description="The workflow directory is empty." icon="debug-line-by-line" />
+        <Empty title="No workflows" description="The workflow directory is empty." icon="github-action" />
       )}
 
       {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
@@ -85,6 +85,7 @@ function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[
           path: itemPath,
           name: entry.name,
           type: 'file',
+          icon: 'github-action',
           context: {
             workflowId: entry.id,
             workflowName: entry.name,
