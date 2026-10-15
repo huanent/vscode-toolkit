@@ -1,6 +1,6 @@
 import { Collapsible as BaseCollapsible } from '@base-ui/react/collapsible';
 import type { ReactNode } from 'react';
-import { Icon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/ui/icons';
 
 type CollapsibleProps = {
   title: ReactNode;

@@ -1,10 +1,10 @@
 import { Autocomplete as BaseAutocomplete } from '@base-ui/react/autocomplete';
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { Input, type InputProps } from '@/webview/components/input';
-import { popupClassName, popupItemClassName } from '@/webview/components/surface-styles';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input, type InputProps } from '@/webview/components/ui/input';
+import { popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
 
 export type AutocompleteProps = Omit<InputProps, 'value' | 'onChange' | 'list'> & {
   items: readonly string[];

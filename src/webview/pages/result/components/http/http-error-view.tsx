@@ -1,6 +1,6 @@
 import type { HttpErrorData } from '@/features/http/protocol';
 import type { ResultTaskStatus } from '@/features/result/protocol';
-import { Icon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/ui/icons';
 
 interface HttpErrorViewProps {
   error: HttpErrorData;

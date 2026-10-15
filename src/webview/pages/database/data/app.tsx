@@ -1,11 +1,11 @@
 import { databaseTablePageSize } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Button } from '@/webview/components/button';
-import { Empty } from '@/webview/components/empty';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Loading } from '@/webview/components/loading';
+import { Button } from '@/webview/components/ui/button';
+import { Empty } from '@/webview/components/ui/empty';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Loading } from '@/webview/components/ui/loading';
 import { postToHost } from '@/webview/utils/host-data';
 import { DataTable } from '@/webview/pages/database/data/components/data-table';
 import { RowEditor } from '@/webview/pages/database/data/components/row-editor';

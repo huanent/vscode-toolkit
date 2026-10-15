@@ -1,9 +1,9 @@
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import type { DatabaseCellValue, DatabaseTable } from '@/features/database/protocol';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
 
 type DataColumn = {
   key: string;

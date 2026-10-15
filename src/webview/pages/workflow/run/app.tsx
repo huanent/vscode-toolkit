@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import type { WorkflowRunFormData, WorkflowRunFormRequest } from '@/features/workflow/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Button } from '@/webview/components/button';
-import { Checkbox } from '@/webview/components/checkbox';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Form, FormItem } from '@/webview/components/form';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Loading } from '@/webview/components/loading';
-import { Select } from '@/webview/components/select';
+import { Button } from '@/webview/components/ui/button';
+import { Checkbox } from '@/webview/components/ui/checkbox';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Loading } from '@/webview/components/ui/loading';
+import { Select } from '@/webview/components/ui/select';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 

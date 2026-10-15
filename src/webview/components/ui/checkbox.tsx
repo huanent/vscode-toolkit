@@ -1,6 +1,6 @@
 import { Checkbox as BaseCheckbox, type CheckboxRootProps } from '@base-ui/react/checkbox';
 import { cn } from 'cn';
-import { Icon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/ui/icons';
 
 export type CheckboxProps = Omit<CheckboxRootProps, 'className'> & {
   className?: string;

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { cn } from 'cn';
 import type { Credential, CredentialSummary } from '@/features/credential/protocol';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { Select, type SelectProps } from '@/webview/components/select';
-import { CredentialDialog } from './credential-dialog';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { Select, type SelectProps } from '@/webview/components/ui/select';
+import { CredentialDialog } from '@/webview/components/credential-dialog';
 
 interface CredentialSelectorProps {
   credentials: CredentialSummary[];

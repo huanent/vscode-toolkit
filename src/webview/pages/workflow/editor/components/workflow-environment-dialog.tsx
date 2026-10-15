@@ -1,12 +1,12 @@
 import { useId, useState } from 'react';
 import type { WorkflowEnvironmentVariable } from '@/features/workflow/protocol';
-import { Button } from '@/webview/components/button';
-import { Checkbox } from '@/webview/components/checkbox';
-import { Dialog } from '@/webview/components/dialog';
-import { Form, FormItem } from '@/webview/components/form';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Select } from '@/webview/components/select';
+import { Button } from '@/webview/components/ui/button';
+import { Checkbox } from '@/webview/components/ui/checkbox';
+import { Dialog } from '@/webview/components/ui/dialog';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Select } from '@/webview/components/ui/select';
 
 const controlOptions = [
   { value: 'input', label: 'Input' },

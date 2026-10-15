@@ -7,14 +7,13 @@ import type {
   WorkflowStep,
 } from '@/features/workflow/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Button } from '@/webview/components/button';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Form, FormItem } from '@/webview/components/form';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Loading } from '@/webview/components/loading';
-import { Popover } from '@/webview/components/popover';
-import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
+import { Button } from '@/webview/components/ui/button';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Form } from '@/webview/components/ui/form';
+import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
+import { Popover } from '@/webview/components/ui/popover';
+import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
 import { WorkflowStepEditor } from '@/webview/pages/workflow/editor/components/workflow-step-editor';
 import { WorkflowEnvironmentEditor } from '@/webview/pages/workflow/editor/components/workflow-environment-editor';
 import {
@@ -122,37 +121,15 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           save();
         }}
       >
-        <div className="grid gap-4 border-b border-(--vscode-panel-border) px-4 py-4 md:grid-cols-2">
-          <FormItem name="name" label="Name">
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Workflow name" />
-          </FormItem>
-          <div className="flex min-w-0 flex-wrap items-end gap-3">
-            <FormItem name="storageScope" label="Storage location" className="min-w-0 flex-1">
-              <StorageScopeSelector
-                value={storageScope}
-                workspaceAvailable={data.workspaceStorageAvailable}
-                onValueChange={setStorageScope}
-              />
-            </FormItem>
-            <Button
-              variant="secondary"
-              prefix={<Icon name="play" />}
-              disabled={!name.trim() || !validEnvironment || completeCount !== steps.length}
-              onClick={() =>
-                postToHost({
-                  type: 'runWorkflow',
-                  name,
-                  workflow: { steps: steps.map((item) => item.step), environment },
-                } satisfies WorkflowEditorRequest)
-              }
-            >
-              Run
-            </Button>
-            <Button type="submit" prefix={<Icon name="save" />} disabled={!name.trim() || !validEnvironment}>
-              Save
-            </Button>
-          </div>
-        </div>
+        <StorageEditorHeader
+          name={name}
+          onNameChange={setName}
+          namePlaceholder="Workflow name"
+          storageScope={storageScope}
+          onStorageScopeChange={setStorageScope}
+          workspaceStorageAvailable={data.workspaceStorageAvailable}
+          saveDisabled={!name.trim() || !validEnvironment}
+        />
 
         {error && (
           <div role="alert" className="px-4 py-3">

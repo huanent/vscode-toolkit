@@ -1,8 +1,8 @@
 import { Fragment, type ReactNode } from 'react';
 import { cn } from 'cn';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { fieldClassName } from '@/webview/components/surface-styles';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { fieldClassName } from '@/webview/components/ui/surface-styles';
 import type { AddressSegment } from '@/webview/pages/explorer/explorer-location';
 
 type AddressBreadcrumbProps = {

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Button } from '@/webview/components/button';
-import { Dialog } from '@/webview/components/dialog';
-import { Form, FormItem } from '@/webview/components/form';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Popover } from '@/webview/components/popover';
+import { Button } from '@/webview/components/ui/button';
+import { Dialog } from '@/webview/components/ui/dialog';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Popover } from '@/webview/components/ui/popover';
 
 interface DatabaseSelectorProps {
   databases: readonly string[];

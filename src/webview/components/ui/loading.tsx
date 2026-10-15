@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import { Icon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/ui/icons';
 
 type LoadingProps = {
   label: string;

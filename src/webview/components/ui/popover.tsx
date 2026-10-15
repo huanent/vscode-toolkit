@@ -1,7 +1,7 @@
 import { Popover as BasePopover } from '@base-ui/react/popover';
 import { cn } from 'cn';
 import type { ReactElement, ReactNode } from 'react';
-import { popupClassName } from '@/webview/components/surface-styles';
+import { popupClassName } from '@/webview/components/ui/surface-styles';
 
 export type PopoverProps = {
   open?: boolean;

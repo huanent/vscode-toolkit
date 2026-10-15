@@ -1,7 +1,7 @@
 import { Select as BaseSelect, type SelectRootProps } from '@base-ui/react/select';
 import { cn } from 'cn';
-import { Icon } from '@/webview/components/icons';
-import { fieldClassName, popupClassName, popupItemClassName } from '@/webview/components/surface-styles';
+import { Icon } from '@/webview/components/ui/icons';
+import { fieldClassName, popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
 
 export type SelectOption = {
   value: string;

@@ -1,10 +1,10 @@
 import type { AssetRequest, AssetTreeEntry } from '@/features/assets/protocol';
-import { Button } from '@/webview/components/button';
-import { Empty } from '@/webview/components/empty';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Icon } from '@/webview/components/icons';
-import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeFileItem } from '@/webview/components/tree';
+import { Button } from '@/webview/components/ui/button';
+import { Empty } from '@/webview/components/ui/empty';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
+import { Tree, type TreeFileItem } from '@/webview/components/ui/tree';
 import { postToHost } from '@/webview/utils/host-data';
 
 const panelContext = JSON.stringify({ webviewSection: 'assets', preventDefaultContextMenuItems: true });

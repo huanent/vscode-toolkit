@@ -1,7 +1,7 @@
 import type { ResultTask } from '@/features/result/protocol';
 import type { WorkflowRunOutcome } from '@/features/workflow/protocol';
-import { Empty } from '@/webview/components/empty';
-import { Loading } from '@/webview/components/loading';
+import { Empty } from '@/webview/components/ui/empty';
+import { Loading } from '@/webview/components/ui/loading';
 import { ResultText } from '../result-text';
 
 interface WorkflowTaskResultProps {

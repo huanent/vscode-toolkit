@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { WorkflowEnvironmentVariable } from '@/features/workflow/protocol';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
 import { WorkflowEnvironmentDialog } from './workflow-environment-dialog';
 
 export function WorkflowEnvironmentEditor({

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Dialog } from '@/webview/components/dialog';
-import { Form, FormItem } from '@/webview/components/form';
-import { Input } from '@/webview/components/input';
-import { Select, type SelectOption } from '@/webview/components/select';
-import { Textarea } from '@/webview/components/textarea';
+import { Dialog } from '@/webview/components/ui/dialog';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Input } from '@/webview/components/ui/input';
+import { Select, type SelectOption } from '@/webview/components/ui/select';
+import { Textarea } from '@/webview/components/ui/textarea';
 import type { Credential } from '@/features/credential/protocol';
 
 const credentialTypeOptions: readonly SelectOption[] = [

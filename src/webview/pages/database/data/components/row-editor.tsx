@@ -1,11 +1,11 @@
 import { useState, type ChangeEvent } from 'react';
 import type { DatabaseCellValue, DatabaseRowMutation, DatabaseTable } from '@/features/database/protocol';
-import { Button } from '@/webview/components/button';
-import { Dialog } from '@/webview/components/dialog';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Select } from '@/webview/components/select';
-import { Textarea } from '@/webview/components/textarea';
+import { Button } from '@/webview/components/ui/button';
+import { Dialog } from '@/webview/components/ui/dialog';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Select } from '@/webview/components/ui/select';
+import { Textarea } from '@/webview/components/ui/textarea';
 
 type FieldValue = { mode: 'omit' | 'value' | 'null'; value: string };
 type RowEditorProps = {

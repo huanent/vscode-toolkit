@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { HttpResponseData } from '@/features/http/protocol';
-import { SegmentedControl } from '@/webview/components/segmented-control';
+import { SegmentedControl } from '@/webview/components/ui/segmented-control';
 import { formatSize } from '@/webview/utils/format';
 import { HttpHeaders } from './http-headers';
 import { ResultText } from '../result-text';

@@ -6,16 +6,16 @@ import type {
   AssetFormValues,
 } from '@/features/assets/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Button } from '@/webview/components/button';
-import { Checkbox } from '@/webview/components/checkbox';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Form, FormItem } from '@/webview/components/form';
-import { CredentialSelector } from '@/webview/pages/credential/components/credential-selector';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Loading } from '@/webview/components/loading';
-import { Select } from '@/webview/components/select';
-import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
+import { Button } from '@/webview/components/ui/button';
+import { Checkbox } from '@/webview/components/ui/checkbox';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { CredentialSelector } from '@/webview/components/credential-selector';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Loading } from '@/webview/components/ui/loading';
+import { Select } from '@/webview/components/ui/select';
+import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -44,14 +44,9 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   }, []);
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-4 sm:p-6">
-      <header className="mb-6 flex items-center gap-2 border-b border-(--vscode-panel-border) pb-3">
-        <Icon name={data.icon} size="lg" />
-        <h1 className="text-lg font-semibold">
-          {data.editing ? 'Edit' : 'New'} {data.label} Connection
-        </h1>
-      </header>
+    <main className="min-h-screen text-(--vscode-foreground)">
       <Form
+        className="flex min-h-screen flex-col"
         onFormSubmit={() => {
           if (saving) return;
           setError(undefined);
@@ -62,102 +57,107 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           });
         }}
       >
-        <fieldset disabled={saving} className="grid min-w-0 gap-4 border-0 p-0">
-          <FormItem
-            name="name"
-            label="Connection name"
-            className=""
-            error="Connection name is required."
-            match="valueMissing"
-          >
-            <Input required autoFocus value={values.name} onChange={(event) => update('name', event.target.value)} />
-          </FormItem>
-          <FormItem name="storageScope" label="Storage location" className="">
-            <StorageScopeSelector
-              value={values.storageScope}
-              workspaceAvailable={data.workspaceStorageAvailable}
-              onValueChange={(storageScope) => update('storageScope', storageScope)}
-            />
-          </FormItem>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FormItem
-              name="host"
-              label="Host"
-              className=" sm:col-span-2"
-              error="Host is required."
-              match="valueMissing"
-            >
-              <Input required value={values.host} onChange={(event) => update('host', event.target.value)} />
-            </FormItem>
-            <FormItem name="port" label="Port" className="" error="Enter a port between 1 and 65535.">
-              <Input
-                required
-                type="number"
-                min={1}
-                max={65535}
-                step={1}
-                value={values.port}
-                onChange={(event) => update('port', Number(event.target.value))}
-              />
-            </FormItem>
-          </div>
-          <FormItem
-            name="credentialId"
-            label="Credential"
-            className="min-w-0 flex-1"
-            error="Select a credential."
-            match="valueMissing"
-          >
-            <CredentialSelector
-              required
-              value={values.credentialId}
-              onValueChange={(credentialId) => update('credentialId', credentialId)}
-              credentials={credentials}
-              onCreate={(credential) => {
-                setError(undefined);
-                postToHost({ type: 'createCredential', credential } satisfies AssetEditorRequest);
-              }}
-            />
-          </FormItem>
-          {data.capabilities.proxyTunnel && (
-            <FormItem name="proxyAssetId" label="Proxy tunnel (optional)" className="">
-              <Select
-                ariaLabel="Proxy tunnel"
-                value={values.proxyAssetId ?? ''}
-                onValueChange={(value) => update('proxyAssetId', value || undefined)}
-                options={[
-                  { value: '', label: 'Direct connection' },
-                  ...data.sshConnections.map((connection) => ({
-                    value: connection.id,
-                    label: `${connection.name} (${connection.host}:${connection.port})`,
-                  })),
-                ]}
-              />
-            </FormItem>
+        <fieldset disabled={saving} className="flex min-w-0 flex-1 flex-col border-0 p-0">
+          <StorageEditorHeader
+            name={values.name}
+            onNameChange={(name) => update('name', name)}
+            namePlaceholder="Connection name"
+            nameRequired
+            nameAutoFocus
+            storageScope={values.storageScope}
+            onStorageScopeChange={(storageScope) => update('storageScope', storageScope)}
+            workspaceStorageAvailable={data.workspaceStorageAvailable}
+            saveDisabled={saving}
+            saving={saving}
+          />
+          {error && (
+            <div role="alert" className="px-4 py-3">
+              <ErrorMessage message={error} />
+            </div>
           )}
-          {data.capabilities.database && (
-            <FormItem name="database" label="Default database (optional)" className="">
-              <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
-            </FormItem>
-          )}
-          {data.capabilities.tls && (
-            <FormItem name="tls" label="TLS certificate verification" className="flex flex-row items-center gap-2 ">
-              <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
-            </FormItem>
-          )}
-          <FormItem name="enableAI" label="Allow AI tool access" className="flex flex-row items-center gap-2 ">
-            <Checkbox checked={values.enableAI} onCheckedChange={(checked) => update('enableAI', checked)} />
-          </FormItem>
+          <section aria-label="Connection settings" className="min-w-0 flex-1 p-4 md:p-6">
+            <div className="mx-auto grid w-full max-w-3xl gap-5">
+              <header className="flex min-w-0 items-center gap-2 border-b border-(--vscode-panel-border) pb-4">
+                <Icon name={data.icon} size="lg" />
+                <h1 className="min-w-0 break-words text-xl font-semibold">{data.label} Connection</h1>
+              </header>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <FormItem
+                  name="host"
+                  label="Host"
+                  className="min-w-0 sm:col-span-2"
+                  error="Host is required."
+                  match="valueMissing"
+                >
+                  <Input required value={values.host} onChange={(event) => update('host', event.target.value)} />
+                </FormItem>
+                <FormItem name="port" label="Port" className="min-w-0" error="Enter a port between 1 and 65535.">
+                  <Input
+                    required
+                    type="number"
+                    min={1}
+                    max={65535}
+                    step={1}
+                    value={values.port}
+                    onChange={(event) => update('port', Number(event.target.value))}
+                  />
+                </FormItem>
+              </div>
+              <FormItem
+                name="credentialId"
+                label="Credential"
+                className="min-w-0 flex-1"
+                error="Select a credential."
+                match="valueMissing"
+              >
+                <CredentialSelector
+                  required
+                  value={values.credentialId}
+                  onValueChange={(credentialId) => update('credentialId', credentialId)}
+                  credentials={credentials}
+                  onCreate={(credential) => {
+                    setError(undefined);
+                    postToHost({ type: 'createCredential', credential } satisfies AssetEditorRequest);
+                  }}
+                />
+              </FormItem>
+              {data.capabilities.proxyTunnel && (
+                <FormItem name="proxyAssetId" label="Proxy tunnel (optional)" className="min-w-0">
+                  <Select
+                    ariaLabel="Proxy tunnel"
+                    value={values.proxyAssetId ?? ''}
+                    onValueChange={(value) => update('proxyAssetId', value || undefined)}
+                    options={[
+                      { value: '', label: 'Direct connection' },
+                      ...data.sshConnections.map((connection) => ({
+                        value: connection.id,
+                        label: `${connection.name} (${connection.host}:${connection.port})`,
+                      })),
+                    ]}
+                  />
+                </FormItem>
+              )}
+              {data.capabilities.database && (
+                <FormItem name="database" label="Default database (optional)" className="min-w-0">
+                  <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
+                </FormItem>
+              )}
+              {data.capabilities.tls && (
+                <FormItem name="tls" label="TLS certificate verification" className="flex flex-row items-center gap-2">
+                  <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
+                </FormItem>
+              )}
+              <FormItem name="enableAI" label="Allow AI tool access" className="flex flex-row items-center gap-2">
+                <Checkbox checked={values.enableAI} onCheckedChange={(checked) => update('enableAI', checked)} />
+              </FormItem>
+              <footer className="flex gap-2 border-t border-(--vscode-panel-border) pt-4">
+                <Button variant="secondary" disabled={saving} onClick={() => postToHost({ type: 'cancel' })}>
+                  Cancel
+                </Button>
+              </footer>
+            </div>
+          </section>
         </fieldset>
-        {error && <ErrorMessage message={error} className="mt-4" />}
-        <footer className="mt-6 flex gap-2 border-t border-(--vscode-panel-border) pt-4">
-          <Button type="submit" disabled={saving} prefix={<Icon name={saving ? 'loading' : 'save'} />}>
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
-          <Button variant="secondary" disabled={saving} onClick={() => postToHost({ type: 'cancel' })}>
-            Cancel
-          </Button>
-        </footer>
       </Form>
     </main>
   );

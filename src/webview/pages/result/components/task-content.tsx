@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
-import { Empty } from '@/webview/components/empty';
-import { Loading } from '@/webview/components/loading';
-import { Icon } from '@/webview/components/icons';
+import { Empty } from '@/webview/components/ui/empty';
+import { Loading } from '@/webview/components/ui/loading';
+import { Icon } from '@/webview/components/ui/icons';
 import type { ResultTask } from '@/features/result/protocol';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';

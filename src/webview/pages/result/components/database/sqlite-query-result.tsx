@@ -1,7 +1,7 @@
 import type { DatabaseCellValue, DatabaseQueryInput, DatabaseQueryResult } from '@/features/database/protocol';
 import type { ResultTask } from '@/features/result/protocol';
-import { Empty } from '@/webview/components/empty';
-import { Loading } from '@/webview/components/loading';
+import { Empty } from '@/webview/components/ui/empty';
+import { Loading } from '@/webview/components/ui/loading';
 import { ResultText } from '../result-text';
 import { formatTaskKind, taskStatusPresentation } from '../../task-presentation';
 

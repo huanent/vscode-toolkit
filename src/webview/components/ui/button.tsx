@@ -1,7 +1,7 @@
 import { Button as BaseButton, type ButtonProps as BaseButtonProps } from '@base-ui/react/button';
 import { cn } from 'cn';
 import { isValidElement, type ReactNode } from 'react';
-import { Icon } from '@/webview/components/icons';
+import { Icon } from '@/webview/components/ui/icons';
 
 export type ButtonProps = Omit<BaseButtonProps, 'className' | 'prefix'> & {
   className?: string;

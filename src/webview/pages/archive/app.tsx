@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { ArchiveTreeEntry } from '@/features/archive/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Empty } from '@/webview/components/empty';
-import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeItem } from '@/webview/components/tree';
+import { Empty } from '@/webview/components/ui/empty';
+import { Loading } from '@/webview/components/ui/loading';
+import { Tree, type TreeItem } from '@/webview/components/ui/tree';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import { formatSize } from '@/webview/utils/format';
 import '@/webview/styles.css';

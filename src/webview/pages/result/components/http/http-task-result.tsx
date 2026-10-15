@@ -1,7 +1,7 @@
 import type { ResultTask } from '@/features/result/protocol';
 import type { HttpErrorData, HttpRequestData, HttpResponseData } from '@/features/http/protocol';
-import { Empty } from '@/webview/components/empty';
-import { Loading } from '@/webview/components/loading';
+import { Empty } from '@/webview/components/ui/empty';
+import { Loading } from '@/webview/components/ui/loading';
 import { HttpErrorView } from './http-error-view';
 import { HttpResponseView } from './http-response-view';
 

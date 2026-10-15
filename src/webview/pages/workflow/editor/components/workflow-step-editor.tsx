@@ -1,8 +1,8 @@
 import type { WorkflowSshConnection, WorkflowStep } from '@/features/workflow/protocol';
-import { FormItem } from '@/webview/components/form';
-import { Input } from '@/webview/components/input';
-import { Select } from '@/webview/components/select';
-import { Textarea } from '@/webview/components/textarea';
+import { FormItem } from '@/webview/components/ui/form';
+import { Input } from '@/webview/components/ui/input';
+import { Select } from '@/webview/components/ui/select';
+import { Textarea } from '@/webview/components/ui/textarea';
 import { directionOptions, workflowTypeOptions } from '@/webview/pages/workflow/editor/step-model';
 
 type WorkflowStepEditorProps = {

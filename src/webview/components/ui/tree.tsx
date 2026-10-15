@@ -1,8 +1,8 @@
 import { cn } from 'cn';
 import { useEffect, useState } from 'react';
 import type { Key, KeyboardEvent, ReactNode } from 'react';
-import { Icon } from '@/webview/components/icons';
-import { List } from '@/webview/components/list';
+import { Icon } from '@/webview/components/ui/icons';
+import { List } from '@/webview/components/ui/list';
 
 type TreeItemBase = {
   path: string;

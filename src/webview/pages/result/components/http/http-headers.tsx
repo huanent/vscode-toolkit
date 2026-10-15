@@ -1,4 +1,4 @@
-import { Collapsible } from '@/webview/components/collapsible';
+import { Collapsible } from '@/webview/components/ui/collapsible';
 import { Fragment } from 'react';
 import './http-headers.css';
 

@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import type { TextareaHTMLAttributes } from 'react';
-import { fieldClassName } from '@/webview/components/surface-styles';
+import { fieldClassName } from '@/webview/components/ui/surface-styles';
 
 export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 

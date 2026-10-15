@@ -1,7 +1,7 @@
 import type { DatabaseTable } from '@/features/database/protocol';
-import { Button } from '@/webview/components/button';
-import { DataList, type DataListColumn } from '@/webview/components/data-list';
-import { Icon } from '@/webview/components/icons';
+import { Button } from '@/webview/components/ui/button';
+import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
+import { Icon } from '@/webview/components/ui/icons';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface TableManagementProps {

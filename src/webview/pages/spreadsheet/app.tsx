@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { SpreadsheetSheet } from '@/features/spreadsheet/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Loading } from '@/webview/components/loading';
-import { TabPanel, Tabs } from '@/webview/components/tabs';
+import { Loading } from '@/webview/components/ui/loading';
+import { TabPanel, Tabs } from '@/webview/components/ui/tabs';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 

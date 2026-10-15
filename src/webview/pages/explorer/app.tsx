@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import type { ExplorerDirectory, ExplorerEntry, ExplorerWebviewMessage } from '@/features/explorer/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Empty } from '@/webview/components/empty';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { DataGrid } from '@/webview/components/data-grid';
-import { DataList, type DataListColumn } from '@/webview/components/data-list';
-import { Icon } from '@/webview/components/icons';
-import { Loading } from '@/webview/components/loading';
+import { Empty } from '@/webview/components/ui/empty';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { DataGrid } from '@/webview/components/ui/data-grid';
+import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
+import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
 import { formatDateTime, formatSize } from '@/webview/utils/format';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';

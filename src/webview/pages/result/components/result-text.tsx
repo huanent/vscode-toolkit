@@ -1,6 +1,6 @@
 import type { ResultWebviewMessage } from '@/features/result/protocol';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
 import { postToHost } from '@/webview/utils/host-data';
 import type { ReactNode } from 'react';
 

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { DatabaseDocument, DatabaseTable } from '@/features/database/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { Button } from '@/webview/components/button';
-import { Empty } from '@/webview/components/empty';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
-import { Loading } from '@/webview/components/loading';
+import { Button } from '@/webview/components/ui/button';
+import { Empty } from '@/webview/components/ui/empty';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
+import { Loading } from '@/webview/components/ui/loading';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { DatabaseSelector } from './components/database-selector';
 import { TableSchemaDialog } from './components/table-schema-dialog';

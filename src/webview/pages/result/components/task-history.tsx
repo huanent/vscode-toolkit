@@ -1,9 +1,9 @@
 import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
 import type { WebviewReadyMessage } from '@/shared/webview-protocol';
-import { Button } from '@/webview/components/button';
-import { Empty } from '@/webview/components/empty';
-import { Icon } from '@/webview/components/icons';
-import { List, type ListGroup } from '@/webview/components/list';
+import { Button } from '@/webview/components/ui/button';
+import { Empty } from '@/webview/components/ui/empty';
+import { Icon } from '@/webview/components/ui/icons';
+import { List, type ListGroup } from '@/webview/components/ui/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
 import { cn } from 'cn';

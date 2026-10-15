@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TabPanel, Tabs, type Tab } from '@/webview/components/tabs';
-import { Icon } from '@/webview/components/icons';
+import { TabPanel, Tabs, type Tab } from '@/webview/components/ui/tabs';
+import { Icon } from '@/webview/components/ui/icons';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
 import { WorkflowPanel } from '@/webview/pages/dashboard/components/workflow-panel';

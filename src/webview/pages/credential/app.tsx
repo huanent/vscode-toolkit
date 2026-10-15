@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { DataList, type DataListColumn } from '@/webview/components/data-list';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
 import { useHostData, postToHost } from '@/webview/utils/host-data';
 import type { Credential, CredentialHostMessage, CredentialWebviewMessage } from '@/features/credential/protocol';
-import { CredentialDialog } from './components/credential-dialog';
+import { CredentialDialog } from '@/webview/components/credential-dialog';
 import '@/webview/styles.css';
 
 function App() {

@@ -1,9 +1,9 @@
 import { Input as BaseInput, type InputProps as BaseInputProps } from '@base-ui/react/input';
 import { cn } from 'cn';
 import { useImperativeHandle, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { fieldClassName } from '@/webview/components/surface-styles';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { fieldClassName } from '@/webview/components/ui/surface-styles';
 
 export type InputProps = Omit<BaseInputProps, 'prefix'> & {
   prefix?: ReactNode;

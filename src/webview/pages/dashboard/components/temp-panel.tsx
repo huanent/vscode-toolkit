@@ -1,7 +1,7 @@
-import { Empty } from '@/webview/components/empty';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Loading } from '@/webview/components/loading';
-import { Tree, type TreeItem } from '@/webview/components/tree';
+import { Empty } from '@/webview/components/ui/empty';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Loading } from '@/webview/components/ui/loading';
+import { Tree, type TreeItem } from '@/webview/components/ui/tree';
 import type { OpenTempFileRequest, TempTreeEntry } from '@/features/temp/protocol';
 import { postToHost } from '@/webview/utils/host-data';
 

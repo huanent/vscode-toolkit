@@ -1,9 +1,9 @@
 import { Dialog as BaseDialog } from '@base-ui/react/dialog';
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { popupClassName } from '@/webview/components/surface-styles';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { popupClassName } from '@/webview/components/ui/surface-styles';
 
 export type DialogProps = {
   open: boolean;

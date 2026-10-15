@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
-import { Autocomplete } from '@/webview/components/autocomplete';
-import { Button } from '@/webview/components/button';
-import { Checkbox } from '@/webview/components/checkbox';
-import { DataList, type DataListColumn } from '@/webview/components/data-list';
-import { Dialog } from '@/webview/components/dialog';
-import { ErrorMessage } from '@/webview/components/error-message';
-import { Form, FormItem } from '@/webview/components/form';
-import { Icon } from '@/webview/components/icons';
-import { Input } from '@/webview/components/input';
+import { Autocomplete } from '@/webview/components/ui/autocomplete';
+import { Button } from '@/webview/components/ui/button';
+import { Checkbox } from '@/webview/components/ui/checkbox';
+import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
+import { Dialog } from '@/webview/components/ui/dialog';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Icon } from '@/webview/components/ui/icons';
+import { Input } from '@/webview/components/ui/input';
 import { postToHost } from '@/webview/utils/host-data';
 
 interface EditableColumn {

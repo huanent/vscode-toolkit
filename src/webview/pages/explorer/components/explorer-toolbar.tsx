@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Autocomplete } from '@/webview/components/autocomplete';
-import { Button } from '@/webview/components/button';
-import { Icon } from '@/webview/components/icons';
-import { SegmentedControl } from '@/webview/components/segmented-control';
+import { Autocomplete } from '@/webview/components/ui/autocomplete';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
+import { SegmentedControl } from '@/webview/components/ui/segmented-control';
 import { AddressBreadcrumb } from '@/webview/pages/explorer/components/address-breadcrumb';
 import type { AddressSegment } from '@/webview/pages/explorer/explorer-location';
 
