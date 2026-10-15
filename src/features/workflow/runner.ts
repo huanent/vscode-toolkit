@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
 import { CommandOutput } from '@/host/utils/command-output';
-import type { WorkflowDefinition, WorkflowRunOutcome, WorkflowStep } from './protocol';
+import type { WorkflowDefinition, WorkflowEnvironmentValues, WorkflowRunOutcome, WorkflowStep } from './protocol';
 import { resolveWorkflowPlaceholders } from './placeholders';
 import type { SshService } from '@/features/ssh/ssh-service';
+import { isWorkflowDefinition } from './service';
 
 export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshService): Promise<void> {
+  if (!isWorkflowDefinition(workflow))
+    throw new Error(
+      'Invalid workflow. Environment variable names must be unique and use letters, digits, or underscores, starting with a letter or underscore.',
+    );
   if (!workflow.steps.length) throw new Error('Add at least one workflow step.');
   const connections = await ssh.listConnections();
   for (const [index, step] of workflow.steps.entries()) {
@@ -29,8 +34,10 @@ export async function runWorkflow(
   workflow: WorkflowDefinition,
   ssh: SshService,
   signal: AbortSignal,
+  values: WorkflowEnvironmentValues = {},
 ): Promise<WorkflowRunOutcome> {
   const outputs: string[] = [];
+  const environment = { ...process.env, ...values };
   for (const [index, step] of workflow.steps.entries()) {
     if (signal.aborted) {
       return {
@@ -41,7 +48,7 @@ export async function runWorkflow(
     }
     let result: WorkflowRunOutcome;
     try {
-      result = await runStep(step, ssh, signal);
+      result = await runStep(step, ssh, signal, environment);
       signal.throwIfAborted();
     } catch (error) {
       const message = signal.aborted ? 'Task was terminated.' : error instanceof Error ? error.message : String(error);
@@ -68,12 +75,22 @@ export async function runWorkflow(
   };
 }
 
-async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal): Promise<WorkflowRunOutcome> {
+async function runStep(
+  step: WorkflowStep,
+  ssh: SshService,
+  signal: AbortSignal,
+  environment: NodeJS.ProcessEnv,
+): Promise<WorkflowRunOutcome> {
   if (step.type === 'local-command') {
     const cwd = step.cwd?.trim()
-      ? resolveWorkflowPlaceholders(step.cwd.trim())
+      ? resolveWorkflowPlaceholders(step.cwd.trim(), environment)
       : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
-    const result = await runLocalCommand(resolveWorkflowPlaceholders(step.command), cwd, signal);
+    const result = await runLocalCommand(
+      resolveWorkflowPlaceholders(step.command, environment),
+      cwd,
+      signal,
+      environment,
+    );
     return {
       success: result.exitCode === 0,
       message: `Local command exited with code ${result.exitCode ?? 'unknown'}.`,
@@ -85,14 +102,14 @@ async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal)
     await ssh.transferFile(
       step.assetId,
       step.direction,
-      resolveWorkflowPlaceholders(step.localPath),
-      step.remotePath,
+      resolveWorkflowPlaceholders(step.localPath, environment),
+      resolveWorkflowPlaceholders(step.remotePath, environment),
       signal,
     );
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
-  const result = await ssh.runCommand(step.assetId, step.command, signal);
+  const result = await ssh.runCommand(step.assetId, resolveWorkflowPlaceholders(step.command, environment), signal);
   return {
     success: result.exitCode === 0,
     message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,
@@ -104,9 +121,10 @@ function runLocalCommand(
   command: string,
   cwd: string,
   signal: AbortSignal,
+  environment: NodeJS.ProcessEnv,
 ): Promise<{ exitCode: number | null; output: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, { cwd, shell: true, windowsHide: true, signal });
+    const child = spawn(command, { cwd, shell: true, windowsHide: true, signal, env: environment });
     const output = new CommandOutput();
     child.stdout.on('data', (data: Buffer) => output.append(data));
     child.stderr.on('data', (data: Buffer) => output.append(data));

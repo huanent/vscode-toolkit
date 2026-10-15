@@ -3,7 +3,7 @@ import { FormItem } from '@/webview/components/form';
 import { Input } from '@/webview/components/input';
 import { Select } from '@/webview/components/select';
 import { Textarea } from '@/webview/components/textarea';
-import { directionOptions, workflowTypeOptions } from '@/webview/pages/workflow/step-model';
+import { directionOptions, workflowTypeOptions } from '@/webview/pages/workflow/editor/step-model';
 
 type WorkflowStepEditorProps = {
   index: number;

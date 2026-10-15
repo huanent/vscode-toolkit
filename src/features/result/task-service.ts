@@ -39,7 +39,9 @@ export class ResultTaskService {
     await this.getStore();
     const tasks = this.getOrderedTasks();
     const selectedTask = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
-    const state: ResultViewState = { tasks: tasks.map(toSummary) };
+    const state: ResultViewState = {
+      tasks: tasks.map(toSummary),
+    };
     if (selectedTask) state.selectedTask = selectedTask;
     return state;
   }

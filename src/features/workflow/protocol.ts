@@ -5,8 +5,25 @@ export type WorkflowStep =
   | { type: 'sftp'; assetId: string; direction: 'upload' | 'download'; localPath: string; remotePath: string }
   | { type: 'ssh-command'; assetId: string; command: string };
 
+export type WorkflowEnvironmentVariable =
+  | { name: string; label: string; type: 'input'; defaultValue: string }
+  | { name: string; label: string; type: 'checkbox'; defaultValue: boolean }
+  | { name: string; label: string; type: 'select'; defaultValue: string; options: { value: string; label: string }[] };
+
+export type WorkflowEnvironmentValues = Record<string, string>;
+
+export interface WorkflowRunFormData {
+  name: string;
+  environment: WorkflowEnvironmentVariable[];
+}
+
+export type WorkflowRunFormRequest =
+  | { type: 'submitWorkflowRun'; values: WorkflowEnvironmentValues }
+  | { type: 'cancelWorkflowRun' };
+
 export interface WorkflowDefinition {
   steps: WorkflowStep[];
+  environment?: WorkflowEnvironmentVariable[];
 }
 
 export interface WorkflowSshConnection {

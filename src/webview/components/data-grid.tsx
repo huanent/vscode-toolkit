@@ -5,6 +5,7 @@ type DataGridProps<T> = {
   ariaLabel: string;
   entries: readonly T[];
   entryKey: (entry: T) => Key;
+  entryContext?: (entry: T) => Record<string, unknown>;
   label: (entry: T) => ReactNode;
   icon?: (entry: T) => ReactNode;
   title?: (entry: T) => string;
@@ -17,6 +18,7 @@ export function DataGrid<T>({
   ariaLabel,
   entries,
   entryKey,
+  entryContext,
   label,
   icon,
   title,
@@ -30,7 +32,11 @@ export function DataGrid<T>({
       className={cn('flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-auto p-2 select-none', className)}
     >
       {entries.map((entry) => (
-        <li key={entryKey(entry)} className="w-24 max-w-full min-w-0">
+        <li
+          key={entryKey(entry)}
+          data-vscode-context={entryContext ? JSON.stringify(entryContext(entry)) : undefined}
+          className="w-24 max-w-full min-w-0"
+        >
           <button
             type="button"
             title={title?.(entry)}

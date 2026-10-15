@@ -397,8 +397,46 @@ function isWorkflowFolderRecord(value: unknown): value is WorkflowFolderRecord {
 
 export function isWorkflowDefinition(value: unknown): value is WorkflowDefinition {
   if (!value || typeof value !== 'object') return false;
-  const workflow = value as { steps?: unknown };
-  return Array.isArray(workflow.steps) && workflow.steps.every(isWorkflowStep);
+  const workflow = value as { steps?: unknown; environment?: unknown };
+  return (
+    Array.isArray(workflow.steps) &&
+    workflow.steps.every(isWorkflowStep) &&
+    (workflow.environment === undefined ||
+      (Array.isArray(workflow.environment) &&
+        workflow.environment.every(isWorkflowEnvironmentVariable) &&
+        new Set(workflow.environment.map((variable) => variable.name.toUpperCase())).size ===
+          workflow.environment.length))
+  );
+}
+
+function isWorkflowEnvironmentVariable(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const variable = value as Record<string, unknown>;
+  return (
+    typeof variable.name === 'string' &&
+    /^[A-Za-z_][A-Za-z0-9_]*$/.test(variable.name) &&
+    typeof variable.label === 'string' &&
+    ((variable.type === 'input' &&
+      typeof variable.defaultValue === 'string' &&
+      !variable.defaultValue.includes('\0')) ||
+      (variable.type === 'checkbox' && typeof variable.defaultValue === 'boolean') ||
+      (variable.type === 'select' &&
+        typeof variable.defaultValue === 'string' &&
+        Array.isArray(variable.options) &&
+        variable.options.length > 0 &&
+        variable.options.every(
+          (option) =>
+            option &&
+            typeof option === 'object' &&
+            typeof option.value === 'string' &&
+            option.value.trim().length > 0 &&
+            !option.value.includes('\0') &&
+            typeof option.label === 'string' &&
+            option.label.trim().length > 0,
+        ) &&
+        new Set(variable.options.map((option) => option.value)).size === variable.options.length &&
+        variable.options.some((option) => option.value === variable.defaultValue)))
+  );
 }
 
 function isWorkflowStep(value: unknown): boolean {

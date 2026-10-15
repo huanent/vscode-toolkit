@@ -43,7 +43,7 @@ export function registerWorkflowTools(
         const existing = input.id === undefined ? undefined : await readWorkflowRecord(roots, input.id);
         if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
         const steps = await Promise.all(input.steps.map((step, index) => toWorkflowStep(step, index, ssh)));
-        const workflow: WorkflowDefinition = { steps };
+        const workflow: WorkflowDefinition = { steps, environment: existing?.workflow.environment };
         await validateWorkflow(workflow, ssh);
         const record = await saveWorkflowRecord(
           roots,

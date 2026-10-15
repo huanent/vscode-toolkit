@@ -7,8 +7,8 @@ import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { postToHost } from '@/webview/utils/host-data';
-import { DataTable } from '@/webview/pages/database/data/data-table';
-import { RowEditor } from '@/webview/pages/database/data/row-editor';
+import { DataTable } from '@/webview/pages/database/data/components/data-table';
+import { RowEditor } from '@/webview/pages/database/data/components/row-editor';
 import { useTableData } from '@/webview/pages/database/data/use-table-data';
 import '@/webview/styles.css';
 

@@ -1,17 +1,29 @@
 import * as vscode from 'vscode';
 import type { ResultTaskService } from '@/features/result/task-service';
 import type { SshService } from '@/features/ssh/ssh-service';
-import type { WorkflowDefinition, WorkflowRunOutcome } from './protocol';
+import type {
+  WorkflowDefinition,
+  WorkflowEnvironmentValues,
+  WorkflowEnvironmentVariable,
+  WorkflowRunOutcome,
+} from './protocol';
 import { runWorkflow, validateWorkflow } from './runner';
 
 export class WorkflowResultService {
   constructor(
     private readonly tasks: ResultTaskService,
     private readonly ssh: SshService,
+    private readonly requestEnvironment: (
+      name: string,
+      environment: WorkflowEnvironmentVariable[],
+      cancellation?: vscode.CancellationToken,
+    ) => Promise<WorkflowEnvironmentValues | undefined>,
   ) {}
 
   public async runWorkflow(name: string, workflow: WorkflowDefinition): Promise<void> {
-    await this.startWorkflowTask(name, workflow, (signal) => runWorkflow(workflow, this.ssh, signal));
+    const values = await this.prepareEnvironment(name, workflow);
+    if (!values) return;
+    await this.startWorkflowTask(name, workflow, (signal) => runWorkflow(workflow, this.ssh, signal, values));
   }
 
   public async runWorkflowAndWait(
@@ -20,6 +32,8 @@ export class WorkflowResultService {
     cancellation?: vscode.CancellationToken,
   ): Promise<WorkflowRunOutcome> {
     if (cancellation?.isCancellationRequested) throw new Error('Workflow was cancelled.');
+    const values = await this.prepareEnvironment(name, workflow, cancellation);
+    if (!values || cancellation?.isCancellationRequested) return { success: false, message: 'Workflow was cancelled.' };
     let resolveOutcome!: (outcome: WorkflowRunOutcome) => void;
     let rejectOutcome!: (error: unknown) => void;
     const outcome = new Promise<WorkflowRunOutcome>((resolve, reject) => {
@@ -28,7 +42,7 @@ export class WorkflowResultService {
     });
     const taskId = await this.startWorkflowTask(name, workflow, async (signal) => {
       try {
-        const result = await runWorkflow(workflow, this.ssh, signal);
+        const result = await runWorkflow(workflow, this.ssh, signal, values);
         resolveOutcome(result);
         return result;
       } catch (error) {
@@ -45,12 +59,22 @@ export class WorkflowResultService {
     }
   }
 
+  private async prepareEnvironment(
+    name: string,
+    workflow: WorkflowDefinition,
+    cancellation?: vscode.CancellationToken,
+  ): Promise<WorkflowEnvironmentValues | undefined> {
+    await validateWorkflow(workflow, this.ssh);
+    if (!workflow.environment?.length) return {};
+    if (cancellation?.isCancellationRequested) return undefined;
+    return this.requestEnvironment(name, workflow.environment, cancellation);
+  }
+
   private async startWorkflowTask(
     name: string,
     workflow: WorkflowDefinition,
     run: (signal: AbortSignal) => Promise<WorkflowRunOutcome>,
   ): Promise<string> {
-    await validateWorkflow(workflow, this.ssh);
     await vscode.commands.executeCommand('toolkit.result.focus');
     return this.tasks.startTask<{ name: string; workflow: WorkflowDefinition }, WorkflowRunOutcome>({
       kind: 'workflow',

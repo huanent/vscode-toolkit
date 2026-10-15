@@ -502,6 +502,26 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.explorer.createFile",
+        "title": "New File...",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.createFolder",
+        "title": "New Folder...",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.delete",
+        "title": "Delete",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.copyPath",
+        "title": "Copy Path",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.generateGitignore",
         "title": "Generate .gitignore",
         "category": "Toolkit"
@@ -808,6 +828,22 @@
       ],
       "commandPalette": [
         {
+          "command": "toolkit.explorer.createFile",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.createFolder",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.copyPath",
+          "when": "false"
+        },
+        {
           "command": "toolkit.dashboard.refresh",
           "when": "false"
         },
@@ -921,6 +957,26 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.explorer.createFile",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "1_create@1"
+        },
+        {
+          "command": "toolkit.explorer.createFolder",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "1_create@2"
+        },
+        {
+          "command": "toolkit.explorer.copyPath",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
+          "group": "2_actions@1"
+        },
+        {
+          "command": "toolkit.explorer.delete",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
+          "group": "9_delete@1"
+        },
         {
           "command": "toolkit.assets.createFolder",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",

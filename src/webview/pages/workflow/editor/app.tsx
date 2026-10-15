@@ -15,7 +15,8 @@ import { Input } from '@/webview/components/input';
 import { Loading } from '@/webview/components/loading';
 import { Popover } from '@/webview/components/popover';
 import { StorageScopeSelector } from '@/webview/components/storage-scope-selector';
-import { WorkflowStepEditor } from '@/webview/pages/workflow/components/workflow-step-editor';
+import { WorkflowStepEditor } from '@/webview/pages/workflow/editor/components/workflow-step-editor';
+import { WorkflowEnvironmentEditor } from '@/webview/pages/workflow/editor/components/workflow-environment-editor';
 import {
   convertStep,
   createStepItem,
@@ -23,7 +24,7 @@ import {
   getStepTypeLabel,
   isStepComplete,
   workflowTypeOptions,
-} from '@/webview/pages/workflow/step-model';
+} from '@/webview/pages/workflow/editor/step-model';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
@@ -49,6 +50,22 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const [name, setName] = useState(data.name);
   const [storageScope, setStorageScope] = useState(data.storageScope);
   const [addStepOpen, setAddStepOpen] = useState(false);
+  const [environment, setEnvironment] = useState(data.workflow.environment ?? []);
+  const validEnvironment = environment.every(
+    (variable, index) =>
+      /^[A-Za-z_][A-Za-z0-9_]*$/.test(variable.name) &&
+      (variable.type !== 'select' ||
+        (variable.options.length > 0 &&
+          variable.options.every(
+            (option) =>
+              option.value.trim().length > 0 && !option.value.includes('\0') && option.label.trim().length > 0,
+          ) &&
+          new Set(variable.options.map((option) => option.value)).size === variable.options.length &&
+          variable.options.some((option) => option.value === variable.defaultValue))) &&
+      !environment.some(
+        (other, otherIndex) => otherIndex !== index && other.name.toUpperCase() === variable.name.toUpperCase(),
+      ),
+  );
   const [steps, setSteps] = useState(() =>
     (data.workflow.steps.length ? data.workflow.steps : [convertStep(undefined, 'local-command', '')]).map((step) =>
       createStepItem(step),
@@ -87,11 +104,12 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
     setSelectedId(steps[selectedIndex + 1]?.id ?? steps[selectedIndex - 1].id);
   };
   const save = () => {
+    if (!validEnvironment) return;
     postToHost({
       type: 'saveWorkflow',
       name,
       storageScope,
-      workflow: { steps: steps.map((item) => item.step) },
+      workflow: { steps: steps.map((item) => item.step), environment },
     } satisfies WorkflowEditorRequest);
   };
 
@@ -116,7 +134,21 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                 onValueChange={setStorageScope}
               />
             </FormItem>
-            <Button type="submit" prefix={<Icon name="save" />} disabled={!name.trim()}>
+            <Button
+              variant="secondary"
+              prefix={<Icon name="play" />}
+              disabled={!name.trim() || !validEnvironment || completeCount !== steps.length}
+              onClick={() =>
+                postToHost({
+                  type: 'runWorkflow',
+                  name,
+                  workflow: { steps: steps.map((item) => item.step), environment },
+                } satisfies WorkflowEditorRequest)
+              }
+            >
+              Run
+            </Button>
+            <Button type="submit" prefix={<Icon name="save" />} disabled={!name.trim() || !validEnvironment}>
               Save
             </Button>
           </div>
@@ -127,6 +159,8 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
             <ErrorMessage message={error} />
           </div>
         )}
+
+        <WorkflowEnvironmentEditor environment={environment} onChange={setEnvironment} />
 
         <div className="grid flex-1 md:grid-cols-3">
           <aside

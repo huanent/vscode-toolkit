@@ -13,6 +13,7 @@ import { registerDatabaseTools } from '@/features/database/tools';
 import { registerAssetTools } from '@/features/assets/tools';
 import { createWorkflowEditorUri, registerWorkflowEditor, workflowEditorViewType } from '@/features/workflow/editor';
 import { WorkflowResultService } from '@/features/workflow/result-service';
+import { requestWorkflowEnvironment } from '@/features/workflow/run-form';
 import { registerWorkflowTools } from '@/features/workflow/tools';
 import { createResultViewHandler } from '@/features/result/view-handler';
 import type { ResultTaskService } from '@/features/result/task-service';
@@ -41,7 +42,9 @@ export function registerWebviews(
   const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
   const databases = [mysql, postgresql];
   const ssh = new SshService(assets, credentials, context.globalState);
-  const workflowResults = new WorkflowResultService(tasks, ssh);
+  const workflowResults = new WorkflowResultService(tasks, ssh, (name, environment, cancellation) =>
+    requestWorkflowEnvironment(context, name, environment, cancellation),
+  );
   context.subscriptions.push(
     registerAssetTools(assets),
     registerDatabaseTools(assets, databases),

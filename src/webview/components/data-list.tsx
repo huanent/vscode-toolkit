@@ -15,6 +15,7 @@ type DataListProps<T> = {
   entries: readonly T[];
   columns: readonly DataListColumn<T>[];
   entryKey: (entry: T) => Key;
+  entryContext?: (entry: T) => Record<string, unknown>;
   onOpen?: (entry: T) => void;
   emptyMessage?: ReactNode;
   className?: string;
@@ -31,6 +32,7 @@ export function DataList<T>({
   entries,
   columns,
   entryKey,
+  entryContext,
   onOpen,
   emptyMessage = 'No items.',
   className,
@@ -70,6 +72,7 @@ export function DataList<T>({
           <div
             key={entryKey(entry)}
             role="row"
+            data-vscode-context={entryContext ? JSON.stringify(entryContext(entry)) : undefined}
             tabIndex={onOpen ? 0 : undefined}
             className={cn(
               'mx-1 flex items-center gap-3 rounded px-3 py-1 text-sm outline-none transition-colors hover:bg-(--vscode-list-hoverBackground) focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',

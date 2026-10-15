@@ -77,6 +77,10 @@ function describeEntry(entry: ExplorerEntry): string {
     .join('\n');
 }
 
+function entryContext(entry: ExplorerEntry): Record<string, unknown> {
+  return { explorerEntryUri: entry.uri, explorerEntryType: entry.type };
+}
+
 function App() {
   const [viewMode, setViewMode] = useState<ExplorerViewMode>(() =>
     getRootData('viewMode') === 'grid' ? 'grid' : 'list',
@@ -144,7 +148,15 @@ function App() {
         }}
       />
       {state.error && <ErrorMessage message={state.error} />}
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden" aria-label="Files">
+      <section
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        aria-label="Files"
+        data-vscode-context={JSON.stringify({
+          webviewSection: 'explorer',
+          preventDefaultContextMenuItems: true,
+          explorerDirectoryUri: location,
+        })}
+      >
         {children.length === 0 ? (
           <Empty title="Empty folder" description="This folder has no files." icon="folder" />
         ) : viewMode === 'list' ? (
@@ -153,6 +165,7 @@ function App() {
             entries={children}
             columns={columns}
             entryKey={(entry) => entry.id}
+            entryContext={entryContext}
             onOpen={openEntry}
           />
         ) : (
@@ -160,6 +173,7 @@ function App() {
             ariaLabel="Files"
             entries={children}
             entryKey={(entry) => entry.id}
+            entryContext={entryContext}
             label={(entry) => entry.name}
             icon={(entry) => <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="3xl" />}
             title={describeEntry}

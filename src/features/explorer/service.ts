@@ -5,10 +5,12 @@ import type { ExplorerDirectory, ExplorerEntry } from './protocol';
 export async function listDirectory(location: string | null): Promise<ExplorerDirectory> {
   const uri = location === null ? getSystemRoot() : vscode.Uri.parse(location);
   const children = await vscode.workspace.fs.readDirectory(uri);
-  const entries = children.map(([name, type]): ExplorerEntry => {
-    const childUri = vscode.Uri.joinPath(uri, name).toString();
-    return { id: childUri, uri: childUri, name, type: type & vscode.FileType.Directory ? 'directory' : 'file' };
-  });
+  const entries = children
+    .filter(([name]) => name !== '.DS_Store')
+    .map(([name, type]): ExplorerEntry => {
+      const childUri = vscode.Uri.joinPath(uri, name).toString();
+      return { id: childUri, uri: childUri, name, type: type & vscode.FileType.Directory ? 'directory' : 'file' };
+    });
   await Promise.all(entries.map(addStats));
   const root = getSystemRoot(uri);
   const ancestors = [directoryEntry(root, '/')];

@@ -4,11 +4,16 @@ import { getWebviewHtml } from '@/host/webview-html';
 import type { WebviewLoadedMessage } from '@/shared/webview-protocol';
 import type { ExplorerDirectory, ExplorerWebviewMessage } from './protocol';
 import { listDirectory, openExplorerFile, resolveDirectoryAddress } from './service';
+import { registerExplorerContextCommands } from './context-commands';
 
 export function registerExplorerCommands(context: vscode.ExtensionContext): void {
   let panel: vscode.WebviewPanel | undefined;
   let refresh: (() => Promise<void>) | undefined;
   let navigate: ((location: string) => Promise<void>) | undefined;
+
+  registerExplorerContextCommands(context, async () => {
+    await refresh?.();
+  });
 
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.explorer.open', async (uri?: vscode.Uri) => {
