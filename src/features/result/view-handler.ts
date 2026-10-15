@@ -12,10 +12,10 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
       subscription?.dispose();
       subscription = resultTaskService.subscribe(() => {
         void Promise.resolve()
-          .then(() =>
+          .then(async () =>
             webview.postMessage({
               type: 'resultStateUpdated',
-              state: resultTaskService.getState(),
+              state: await resultTaskService.getState(),
             } satisfies ResultHostMessage),
           )
           .catch(() => undefined);

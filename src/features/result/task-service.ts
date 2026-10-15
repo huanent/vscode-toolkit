@@ -35,7 +35,8 @@ export class ResultTaskService {
     return this.initialization;
   }
 
-  public getState(): ResultViewState {
+  public async getState(): Promise<ResultViewState> {
+    await this.getStore();
     const tasks = this.getOrderedTasks();
     const selectedTask = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
     const state: ResultViewState = { tasks: tasks.map(toSummary) };

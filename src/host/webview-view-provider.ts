@@ -12,13 +12,12 @@ export interface WebviewViewHandler {
 export function composeWebviewHandlers(handlers: Record<string, WebviewViewHandler>): WebviewViewHandler {
   return {
     load: async () => {
-      const result: Record<string, unknown> = {};
-      for (const [key, handler] of Object.entries(handlers)) {
-        if (handler.load) {
-          result[key] = await handler.load();
-        }
-      }
-      return result;
+      const entries = await Promise.all(
+        Object.entries(handlers)
+          .filter(([, handler]) => handler.load)
+          .map(async ([key, handler]) => [key, await handler.load!()] as const),
+      );
+      return Object.fromEntries(entries);
     },
     onResolve: (webview) => Object.values(handlers).forEach((h) => h.onResolve?.(webview)),
     onMessage: async (message, webview) => {

@@ -43,11 +43,27 @@ function emitWebviewHtml(): Plugin {
         const page = relative(webviewPagesRoot, resolve(output.facadeModuleId, '..')).split(sep).join('/');
         if (!page || page.startsWith('../')) continue;
 
+        const dependencies = new Set<string>([output.fileName]);
+        const collectDependencies = (fileName: string): void => {
+          const chunk = bundle[fileName];
+          if (chunk?.type !== 'chunk') return;
+          for (const dependency of chunk.imports) {
+            if (dependencies.has(dependency) || bundle[dependency]?.type !== 'chunk') continue;
+            dependencies.add(dependency);
+            collectDependencies(dependency);
+          }
+        };
+        collectDependencies(output.fileName);
+        dependencies.delete(output.fileName);
+        const preloads = [...dependencies]
+          .map((fileName) => `<link rel="modulepreload" crossorigin href="/${fileName}">`)
+          .join('\n    ');
+
         const html = template
           .replace('<title>SQLite Table</title>', `<title>${page}</title>`)
           .replace(
             '</head>',
-            `${stylesheets ? `\n    ${stylesheets}` : ''}\n    <script type="module" crossorigin src="/${output.fileName}"></script>\n  </head>`,
+            `${stylesheets ? `\n    ${stylesheets}` : ''}${preloads ? `\n    ${preloads}` : ''}\n    <script type="module" crossorigin src="/${output.fileName}"></script>\n  </head>`,
           );
 
         this.emitFile({

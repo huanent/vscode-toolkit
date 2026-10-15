@@ -19,14 +19,12 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   context.subscriptions.push({ dispose: disposeSqliteProcesses });
   const tasks = new ResultTaskService();
   context.subscriptions.push(tasks);
-  try {
-    await tasks.initialize(resolveStorageDirectory(context, 'results'));
-  } catch (error) {
+  void tasks.initialize(resolveStorageDirectory(context, 'results')).catch((error: unknown) => {
     tasks.dispose();
     void vscode.window.showErrorMessage(
       `Failed to initialize ResultTaskService: ${error instanceof Error ? error.message : String(error)}`,
     );
-  }
+  });
   const httpResults = new HttpResultService(tasks);
   const tempFiles = createTempFilesView(context);
   const workflowFiles = createWorkflowFilesView(context);
