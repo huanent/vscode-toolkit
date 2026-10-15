@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@/webview/components/button';
 import { Dialog } from '@/webview/components/dialog';
 import { Form, FormItem } from '@/webview/components/form';
 import { Input } from '@/webview/components/input';
 import { Select, type SelectOption } from '@/webview/components/select';
 import { Textarea } from '@/webview/components/textarea';
 import type { Credential } from '@/features/credential/protocol';
-import { Icon } from '@/webview/components/icons';
 
 const credentialTypeOptions: readonly SelectOption[] = [
   { value: 'password', label: 'Password' },
@@ -57,16 +55,7 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
       open={open}
       onOpenChange={onOpenChange}
       title={credential ? 'Edit Credential' : 'Add Credential'}
-      footer={
-        <>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button prefix={<Icon name="save" />} type="submit" form="credential-form">
-            Save
-          </Button>
-        </>
-      }
+      form="credential-form"
     >
       <Form id="credential-form" onFormSubmit={handleSave} className="flex flex-col gap-3 py-2">
         <FormItem name="type" label="Type">

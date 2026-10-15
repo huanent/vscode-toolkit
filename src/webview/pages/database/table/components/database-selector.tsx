@@ -167,23 +167,12 @@ export function DatabaseSelector({
           }}
           title="Delete Database"
           description={`Are you sure you want to delete database "${deletingDatabase}"? This will permanently delete the database and all of its tables.`}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setDeletingDatabase(null)}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  const target = deletingDatabase;
-                  setDeletingDatabase(null);
-                  onDeleteDatabase(target);
-                }}
-              >
-                Delete
-              </Button>
-            </>
-          }
+          saveLabel="Delete"
+          onSave={() => {
+            const target = deletingDatabase;
+            setDeletingDatabase(null);
+            onDeleteDatabase(target);
+          }}
         >
           <div />
         </Dialog>
@@ -199,16 +188,8 @@ export function DatabaseSelector({
             }
           }}
           title="Create Database"
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setCreatingDatabase(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" type="submit" form="create-database-form">
-                Create
-              </Button>
-            </>
-          }
+          form="create-database-form"
+          saveLabel="Create"
         >
           <Form id="create-database-form" onFormSubmit={handleCreateSubmit} className="flex flex-col gap-2 py-2">
             <FormItem name="databaseName" label="Database Name" error="Database name is required." match="valueMissing">

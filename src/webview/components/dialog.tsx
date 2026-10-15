@@ -12,12 +12,36 @@ export type DialogProps = {
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  onSave?: () => void;
+  form?: string;
+  saveLabel?: string;
+  saveDisabled?: boolean;
+  pending?: boolean;
   className?: string;
 };
 
-export function Dialog({ open, onOpenChange, title, description, children, footer, className }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+  onSave,
+  form,
+  saveLabel = 'Save',
+  saveDisabled = false,
+  pending = false,
+  className,
+}: DialogProps) {
   return (
-    <BaseDialog.Root open={open} onOpenChange={onOpenChange} disablePointerDismissal>
+    <BaseDialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!pending) onOpenChange(nextOpen);
+      }}
+      disablePointerDismissal
+    >
       <BaseDialog.Portal>
         <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-(--vscode-editor-background) opacity-60" />
         <BaseDialog.Popup
@@ -37,15 +61,37 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
               )}
             </div>
             <BaseDialog.Close
-              render={<Button variant="ghost" size="sm" prefix={<Icon name="close" />} aria-label="Close" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  prefix={<Icon name="close" />}
+                  aria-label="Close"
+                  disabled={pending}
+                />
+              }
             />
           </div>
-          <div className="min-h-0 min-w-0 overflow-auto">{children}</div>
-          {footer != null && (
-            <div className="mt-3 flex shrink-0 items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
-              {footer}
-            </div>
-          )}
+          <div className="-mx-3 min-h-0 overflow-auto px-3">{children}</div>
+          <div className="mt-3 flex shrink-0 items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
+            {footer != null && <div className="mr-auto min-w-0">{footer}</div>}
+            <BaseDialog.Close
+              render={
+                <Button variant="secondary" disabled={pending}>
+                  Cancel
+                </Button>
+              }
+            />
+            <Button
+              type={form ? 'submit' : 'button'}
+              form={form}
+              onClick={onSave}
+              disabled={pending || saveDisabled || (!form && !onSave)}
+              prefix={<Icon name={pending ? 'loading' : 'save'} className={pending ? 'animate-spin' : undefined} />}
+            >
+              {pending ? 'Saving...' : saveLabel}
+            </Button>
+          </div>
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>

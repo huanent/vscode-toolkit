@@ -266,22 +266,10 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       }}
       title={table ? `Edit Schema: ${table.name}` : 'Create Table'}
       className="w-176 max-w-full max-h-full"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            prefix={<Icon name="save" />}
-            form="table-schema-form"
-            disabled={isSubmitting || Boolean(validationError)}
-          >
-            {isSubmitting ? (table ? 'Saving...' : 'Creating...') : table ? 'Save' : 'Create Table'}
-          </Button>
-        </>
-      }
+      form="table-schema-form"
+      pending={isSubmitting}
+      saveDisabled={Boolean(validationError)}
+      saveLabel={table ? 'Save' : 'Create Table'}
     >
       <Form id="table-schema-form" onFormSubmit={handleSubmit}>
         <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
