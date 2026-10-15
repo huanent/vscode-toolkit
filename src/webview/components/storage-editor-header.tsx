@@ -55,7 +55,7 @@ export function StorageEditorHeader({
   saveDisabled,
 }: StorageEditorHeaderProps) {
   return (
-    <div className="grid gap-4 border-b border-(--vscode-panel-border) px-4 py-4 md:grid-cols-2">
+    <div className="grid gap-4 border-b border-(--vscode-panel-border) p-2 md:grid-cols-2">
       <FormItem name="name" label={nameLabel} error={`${nameLabel} is required.`} match="valueMissing">
         <Input
           value={name}

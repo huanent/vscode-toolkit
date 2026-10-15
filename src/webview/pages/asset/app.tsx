@@ -77,10 +77,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           )}
           <section aria-label="Connection settings" className="min-w-0 flex-1 p-4 md:p-6">
             <div className="mx-auto grid w-full max-w-3xl gap-5">
-              <header className="flex min-w-0 items-center gap-2 border-b border-(--vscode-panel-border) pb-4">
-                <Icon name={data.icon} size="lg" />
-                <h1 className="min-w-0 break-words text-xl font-semibold">{data.label} Connection</h1>
-              </header>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <FormItem
                   name="host"
@@ -150,11 +146,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               <FormItem name="enableAI" label="Allow AI tool access" className="flex flex-row items-center gap-2">
                 <Checkbox checked={values.enableAI} onCheckedChange={(checked) => update('enableAI', checked)} />
               </FormItem>
-              <footer className="flex gap-2 border-t border-(--vscode-panel-border) pt-4">
-                <Button variant="secondary" disabled={saving} onClick={() => postToHost({ type: 'cancel' })}>
-                  Cancel
-                </Button>
-              </footer>
             </div>
           </section>
         </fieldset>
