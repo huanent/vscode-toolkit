@@ -1,15 +1,15 @@
-# VSCode Toolkit
+<p align="center">
+	<img src="resource/logo.png" alt="Toolkit icon" width="128" height="128">
+</p>
 
 <p align="center">
-	<img src="resource/logo.png" alt="Toolkit icon" width="64" height="64">
+	<a href="https://marketplace.visualstudio.com/items?itemName=huanent.toolkit"><img src="https://vsmarketplacebadges.dev/version/huanent.toolkit.svg" alt="Marketplace Version"></a>
+	<a href="https://marketplace.visualstudio.com/items?itemName=huanent.toolkit"><img src="https://vsmarketplacebadges.dev/installs/huanent.toolkit.svg" alt="Marketplace Installs"></a>
+	<a href="https://github.com/huanent/vscode-toolkit/actions/workflows/publish.yml"><img src="https://github.com/huanent/vscode-toolkit/actions/workflows/publish.yml/badge.svg" alt="Build &amp; Publish"></a>
+	<a href="LICENSE.txt"><img src="https://img.shields.io/github/license/huanent/vscode-toolkit" alt="License"></a>
 </p>
 
 Keep your everyday development tasks in VS Code. Send HTTP requests, query databases, manage remote hosts, and automate workflows with Copilot integration, all without leaving your editor.
-
-[![Marketplace Version](https://vsmarketplacebadges.dev/version/huanent.toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=huanent.toolkit)
-[![Marketplace Installs](https://vsmarketplacebadges.dev/installs/huanent.toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=huanent.toolkit)
-[![Build & Publish](https://github.com/huanent/vscode-toolkit/actions/workflows/publish.yml/badge.svg)](https://github.com/huanent/vscode-toolkit/actions/workflows/publish.yml)
-[![License](https://img.shields.io/github/license/huanent/vscode-toolkit)](LICENSE.txt)
 
 ## Features
 
