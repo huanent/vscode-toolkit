@@ -18,6 +18,7 @@ export class SshService implements AssetProvider {
   readonly type = 'ssh';
   readonly label = 'SSH';
   readonly icon = 'terminal';
+  readonly capabilities = { proxyTunnel: true };
   private readonly terminals = new Map<string, Set<vscode.Terminal>>();
   private readonly closed: vscode.Disposable;
 

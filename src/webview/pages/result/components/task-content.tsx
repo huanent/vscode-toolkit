@@ -15,6 +15,7 @@ const taskRenderers = new Map<string, ResultTaskRenderer>();
 registerResultTaskRenderer('http', HttpTaskResult);
 registerResultTaskRenderer('sqlite', SqliteQueryResultView);
 registerResultTaskRenderer('mysql', SqliteQueryResultView);
+registerResultTaskRenderer('postgresql', SqliteQueryResultView);
 registerResultTaskRenderer('workflow', WorkflowTaskResult);
 
 export function registerResultTaskRenderer(kind: string, renderer: ResultTaskRenderer): void {

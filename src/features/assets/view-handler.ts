@@ -36,6 +36,7 @@ export function createAssetsView(
         path: asset.folder ? `${asset.folder}/${entry.path}` : entry.path,
         context: {
           ...entry.context,
+          assetCanQuery: provider.capabilities.query === true,
           ...(asset.folder ? { assetFolderPath: asset.folder } : {}),
           ...(isAiEnabled(asset) ? { assetAiEnabled: true } : {}),
           ...hostContext,

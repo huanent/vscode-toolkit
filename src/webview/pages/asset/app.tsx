@@ -24,8 +24,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   const [credentials, setCredentials] = useState(data.credentials);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const mysql = data.assetType === 'mysql';
-  const ssh = data.assetType === 'ssh';
   const update = <TKey extends keyof AssetFormValues>(key: TKey, value: AssetFormValues[TKey]) => {
     setValues((previous) => ({ ...previous, [key]: value }));
   };
@@ -48,7 +46,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   return (
     <main className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <header className="mb-6 flex items-center gap-2 border-b border-(--vscode-panel-border) pb-3">
-        <Icon name={mysql ? 'database' : 'remote'} size="lg" />
+        <Icon name={data.icon} size="lg" />
         <h1 className="text-lg font-semibold">
           {data.editing ? 'Edit' : 'New'} {data.label} Connection
         </h1>
@@ -121,7 +119,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               }}
             />
           </FormItem>
-          {ssh && (
+          {data.capabilities.proxyTunnel && (
             <FormItem name="proxyAssetId" label="Proxy tunnel (optional)" className="">
               <Select
                 ariaLabel="Proxy tunnel"
@@ -137,15 +135,15 @@ function AssetForm({ data }: { data: AssetEditorData }) {
               />
             </FormItem>
           )}
-          {mysql && (
-            <>
-              <FormItem name="database" label="Default database (optional)" className="">
-                <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
-              </FormItem>
-              <FormItem name="tls" label="TLS certificate verification" className="flex flex-row items-center gap-2 ">
-                <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
-              </FormItem>
-            </>
+          {data.capabilities.database && (
+            <FormItem name="database" label="Default database (optional)" className="">
+              <Input value={values.database} onChange={(event) => update('database', event.target.value)} />
+            </FormItem>
+          )}
+          {data.capabilities.tls && (
+            <FormItem name="tls" label="TLS certificate verification" className="flex flex-row items-center gap-2 ">
+              <Checkbox checked={values.tls} onCheckedChange={(checked) => update('tls', checked)} />
+            </FormItem>
           )}
           <FormItem name="enableAI" label="Allow AI tool access" className="flex flex-row items-center gap-2 ">
             <Checkbox checked={values.enableAI} onCheckedChange={(checked) => update('enableAI', checked)} />

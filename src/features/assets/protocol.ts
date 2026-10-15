@@ -13,8 +13,17 @@ export interface AssetFormValues {
   proxyAssetId?: string;
 }
 
+export interface AssetCapabilities {
+  database?: boolean;
+  tls?: boolean;
+  proxyTunnel?: boolean;
+  query?: boolean;
+}
+
 export interface AssetEditorData {
   assetType: string;
+  icon: string;
+  capabilities: AssetCapabilities;
   label: string;
   editing: boolean;
   workspaceStorageAvailable: boolean;

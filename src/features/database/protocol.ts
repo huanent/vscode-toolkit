@@ -1,8 +1,8 @@
 export type DatabaseCellValue = string | number | null;
 
-export interface MysqlConnectionConfiguration {
+export interface DatabaseConnectionConfiguration<TType extends string = string> {
   id: string;
-  type: 'mysql';
+  type: TType;
   name: string;
   host: string;
   port: number;
@@ -10,6 +10,10 @@ export interface MysqlConnectionConfiguration {
   database?: string;
   tls: boolean;
 }
+
+export type PostgresqlConnectionConfiguration = DatabaseConnectionConfiguration<'postgresql'>;
+
+export type MysqlConnectionConfiguration = DatabaseConnectionConfiguration<'mysql'>;
 
 export interface DatabaseSchema {
   name: string;

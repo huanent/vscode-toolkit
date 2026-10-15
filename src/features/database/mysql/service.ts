@@ -14,27 +14,26 @@ import {
   type DatabaseTableFilters,
   type DatabaseTableCounts,
   type UpdateTableSchemaMessage,
-} from './protocol';
+} from '@/features/database/protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
-import type { AssetProvider } from '@/features/assets/asset-provider';
-import type { ResultTaskService } from '@/features/result/task-service';
-import { createMysqlUri, mysqlEditorViewType } from './mysql/editor';
-import { buildMysqlCreateTableStatement, isSystemDatabase } from './mysql/schema';
+import type { DatabaseProvider } from '@/features/database/database-provider';
+import { createMysqlUri, mysqlEditorViewType } from '@/features/database/mysql/editor';
+import { buildMysqlCreateTableStatement, isSystemDatabase } from '@/features/database/mysql/schema';
 import type { CredentialService } from '@/features/credential/service';
 import { buildRowMutation } from '@/features/database/row-mutation';
 
-export class MysqlService implements AssetProvider {
+export class MysqlService implements DatabaseProvider {
   readonly type = 'mysql';
   readonly label = 'MySQL';
   readonly icon = 'database';
+  readonly capabilities = { database: true, tls: true, query: true };
   private readonly connections = new Set<Connection>();
   private readonly queryConnections = new WeakMap<Connection, CoreConnection>();
   private disposed = false;
 
   constructor(
     private readonly assets: AssetService,
-    private readonly tasks: ResultTaskService,
     private readonly credentials: CredentialService,
   ) {}
 
@@ -113,6 +112,15 @@ export class MysqlService implements AssetProvider {
 
   async requireAiAsset(id: string): Promise<MysqlConnectionConfiguration> {
     return requireMysqlConfiguration(await this.assets.requireAiAsset(id));
+  }
+
+  async executeAiQuery(
+    id: string,
+    database: string | undefined,
+    sql: string,
+    signal: AbortSignal,
+  ): Promise<DatabaseQueryResult> {
+    return this.query(await this.requireAiAsset(id), database, sql, signal);
   }
 
   async readDatabaseDocument(assetId: string, databaseName?: string): Promise<DatabaseDocument> {

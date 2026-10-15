@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "HTTP requests, databases, SSH, file previews, and workflow automation, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
@@ -31,6 +31,7 @@
     "@base-ui/react": "^1.8.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "24.x",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ssh2": "^1.15.6",
@@ -45,6 +46,7 @@
     "mysql2": "^3.24.5",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
+    "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "ssh2": "^1.17.0",
@@ -216,7 +218,7 @@
         "displayName": "Search Assets",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "assetsSearch",
-        "modelDescription": "Search saved Toolkit connection assets by keyword. Asset types: 'ssh' (SSH hosts, used by sshExecute, sftpTransfer, and SSH workflow steps) and 'mysql' (MySQL databases, used by sqlExecute). Returns matching assets with id, type, name, folder, host, port, and database. Secrets are never returned.",
+        "modelDescription": "Search saved Toolkit connection assets by keyword. Types: 'ssh' (sshExecute, sftpTransfer, SSH workflow steps), 'mysql' and 'postgresql' (sqlExecute). Returns id, type, name, folder, host, port, and database. Secrets are never returned.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -297,7 +299,7 @@
         "displayName": "Execute SQL",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "sqlExecute",
-        "modelDescription": "Execute one SQL statement against a database asset by its ID. Requires user confirmation.",
+        "modelDescription": "Execute one SQL statement against a MySQL or PostgreSQL database asset by its ID.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -662,6 +664,12 @@
         "category": "SQLite"
       },
       {
+        "command": "toolkit.postgresql.executeQuery",
+        "title": "Run PostgreSQL Query",
+        "icon": "$(play)",
+        "category": "PostgreSQL"
+      },
+      {
         "command": "toolkit.mysql.executeQuery",
         "title": "Run MySQL Query",
         "icon": "$(play)",
@@ -680,6 +688,12 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "toolkit.postgresql.executeQuery",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "toolkit.postgresqlQueryEditor"
+      },
       {
         "command": "toolkit.explorer.open",
         "key": "ctrl+shift+;",
@@ -749,6 +763,11 @@
           "group": "navigation@3"
         },
         {
+          "command": "toolkit.postgresql.executeQuery",
+          "when": "editorLangId == sql && toolkit.postgresqlQueryEditor",
+          "group": "navigation@3"
+        },
+        {
           "command": "toolkit.credential.add",
           "when": "activeWebviewPanelId == toolkit.credential",
           "group": "navigation@1"
@@ -773,6 +792,11 @@
         {
           "command": "toolkit.mysql.executeQuery",
           "when": "editorLangId == sql && toolkit.mysqlQueryEditor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.postgresql.executeQuery",
+          "when": "editorLangId == sql && toolkit.postgresqlQueryEditor",
           "group": "navigation@2"
         }
       ],
@@ -854,6 +878,10 @@
           "when": "toolkit.mysqlQueryEditor"
         },
         {
+          "command": "toolkit.postgresql.executeQuery",
+          "when": "toolkit.postgresqlQueryEditor"
+        },
+        {
           "command": "toolkit.mysql.openTable",
           "when": "false"
         },
@@ -899,7 +927,7 @@
         },
         {
           "command": "toolkit.assets.query",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetType == mysql",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetId && assetCanQuery",
           "group": "2_actions@5"
         },
         {

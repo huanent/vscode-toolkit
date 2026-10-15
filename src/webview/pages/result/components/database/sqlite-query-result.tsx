@@ -3,10 +3,10 @@ import type { ResultTask } from '@/features/result/protocol';
 import { Empty } from '@/webview/components/empty';
 import { Loading } from '@/webview/components/loading';
 import { ResultText } from '../result-text';
-import { taskStatusPresentation } from '../../task-presentation';
+import { formatTaskKind, taskStatusPresentation } from '../../task-presentation';
 
 export function SqliteQueryResultView({ task }: { task: ResultTask }) {
-  const engine = task.kind === 'mysql' ? 'MySQL' : 'SQLite';
+  const engine = formatTaskKind(task.kind);
   const input = isDatabaseQueryInput(task.input) ? task.input : undefined;
 
   if (task.status === 'running') {

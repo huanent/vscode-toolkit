@@ -11,7 +11,7 @@ import type {
   UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
 import { registerTableDataHandler } from '@/features/database/table-data-handler';
-import type { MysqlService } from '@/features/database/mysql-service';
+import type { MysqlService } from '@/features/database/mysql/service';
 import { formatTabTitle } from '@/shared/tab-title';
 import { registerMysqlQueryEditor } from './query-editor';
 

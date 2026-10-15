@@ -33,24 +33,25 @@ export function openAssetEditor(
   const storageDirectory = resolveStorageDirectory(context, 'assets');
   const bridge = serveWebviewData(panel.webview, async () => {
     const creds = await credentials.list();
-    const sshConnections =
-      provider.type === 'ssh'
-        ? (await service.list()).flatMap((record) => {
-            if (
-              record.id === previous?.id ||
-              record.type !== 'ssh' ||
-              !('host' in record) ||
-              typeof record.host !== 'string' ||
-              !('port' in record) ||
-              typeof record.port !== 'number'
-            ) {
-              return [];
-            }
-            return [{ id: record.id, name: record.name, host: record.host, port: record.port }];
-          })
-        : [];
+    const sshConnections = provider.capabilities.proxyTunnel
+      ? (await service.list()).flatMap((record) => {
+          if (
+            record.id === previous?.id ||
+            record.type !== 'ssh' ||
+            !('host' in record) ||
+            typeof record.host !== 'string' ||
+            !('port' in record) ||
+            typeof record.port !== 'number'
+          ) {
+            return [];
+          }
+          return [{ id: record.id, name: record.name, host: record.host, port: record.port }];
+        })
+      : [];
     return {
       assetType: provider.type,
+      icon: provider.icon,
+      capabilities: provider.capabilities,
       label: provider.label,
       editing: Boolean(previous),
       workspaceStorageAvailable: isWorkspaceStorageAvailable(),

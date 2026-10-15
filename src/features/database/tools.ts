@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import type { MysqlService } from './mysql-service';
+import type { DatabaseProvider } from '@/features/database/database-provider';
+import type { AssetService } from '@/features/assets/service';
 
 interface ExecuteSqlInput {
   id: string;
@@ -7,11 +8,11 @@ interface ExecuteSqlInput {
   sql: string;
 }
 
-export function registerDatabaseTools(mysql: MysqlService): vscode.Disposable {
+export function registerDatabaseTools(assets: AssetService, providers: readonly DatabaseProvider[]): vscode.Disposable {
   return vscode.lm.registerTool<ExecuteSqlInput>('sqlExecute', {
     prepareInvocation({ input }) {
       return {
-        invocationMessage: `Executing SQL on MySQL asset ${input.id}`,
+        invocationMessage: `Executing SQL on database asset ${input.id}`,
         confirmationMessages: {
           title: 'Execute SQL statement?',
           message: `Asset: ${input.id}${input.database ? `\nDatabase: ${input.database}` : ''}\nSQL: ${input.sql}`,
@@ -22,8 +23,11 @@ export function registerDatabaseTools(mysql: MysqlService): vscode.Disposable {
       const controller = new AbortController();
       const cancellation = token.onCancellationRequested(() => controller.abort());
       try {
-        const asset = await mysql.requireAiAsset(input.id);
-        const result = await mysql.query(asset, input.database, input.sql, controller.signal);
+        if (token.isCancellationRequested) controller.abort();
+        const asset = await assets.requireAiAsset(input.id);
+        const provider = providers.find((candidate) => candidate.type === asset.type);
+        if (!provider) throw new Error(`Unsupported database asset type: ${asset.type}`);
+        const result = await provider.executeAiQuery(asset.id, input.database, input.sql, controller.signal);
         return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
       } finally {
         cancellation.dispose();

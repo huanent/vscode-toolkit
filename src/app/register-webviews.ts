@@ -3,7 +3,9 @@ import type { TempFilesView } from '@/features/temp/view-handler';
 import type { WorkflowFilesView } from '@/features/workflow/view-handler';
 import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
-import { MysqlService } from '@/features/database/mysql-service';
+import { MysqlService } from '@/features/database/mysql/service';
+import { PostgresqlService } from '@/features/database/postgresql/service';
+import { registerPostgresqlQueryEditor } from '@/features/database/postgresql/query-editor';
 import { registerMysqlEditor } from '@/features/database/mysql/editor';
 import { SshService } from '@/features/ssh/ssh-service';
 import { registerSshTools } from '@/features/ssh/tools';
@@ -34,12 +36,15 @@ export function registerWebviews(
   const assetsUri = vscode.Uri.file(__dirname);
   const assets = new AssetService(context);
   const credentials = new CredentialService(context);
-  const mysql = new MysqlService(assets, tasks, credentials);
+  const mysql = new MysqlService(assets, credentials);
+  const postgresql = new PostgresqlService(assets, credentials, (asset) => openPostgresqlQuery(asset));
+  const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
+  const databases = [mysql, postgresql];
   const ssh = new SshService(assets, credentials, context.globalState);
   const workflowResults = new WorkflowResultService(tasks, ssh);
   context.subscriptions.push(
     registerAssetTools(assets),
-    registerDatabaseTools(mysql),
+    registerDatabaseTools(assets, databases),
     ...registerSshTools(ssh),
     ...registerWorkflowTools(context, ssh, workflowResults, workflowFiles.refresh),
   );
@@ -52,7 +57,7 @@ export function registerWebviews(
   });
   workflowFiles.setRunner((name, workflow) => workflowResults.runWorkflow(name, workflow));
   context.subscriptions.push(
-    mysql,
+    ...databases,
     ssh,
     registerMysqlEditor(context, mysql, tasks),
     registerWorkflowEditor(
@@ -63,7 +68,7 @@ export function registerWebviews(
       workflowFiles.refresh,
     ),
   );
-  const assetsView = createAssetsView(context, assets, [mysql, ssh], credentials);
+  const assetsView = createAssetsView(context, assets, [...databases, ssh], credentials);
   const composedDashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
     workflow: workflowFiles.handler,
