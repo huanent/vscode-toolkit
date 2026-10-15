@@ -1,10 +1,18 @@
+import { cn } from 'cn';
+import type { ReactNode } from 'react';
 import type { DatabaseCellValue, DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/button';
 import { Icon } from '@/webview/components/icons';
 import { Input } from '@/webview/components/input';
-import { Table, type TableColumn } from '@/webview/components/table';
 
-type DatabaseRow = { values: DatabaseCellValue[]; rowIndex: number };
+type DataColumn = {
+  key: string;
+  header: ReactNode;
+  headerClassName: string;
+  className: string;
+  cell: (values: DatabaseCellValue[]) => ReactNode;
+};
+
 type DataTableProps = {
   table: DatabaseTable;
   filters: Record<string, string>;
@@ -33,7 +41,7 @@ export function DataTable({
     table.columnCount === table.columns.length &&
     primaryKeys.length > 0 &&
     primaryKeys.every((column) => !column.readOnly && !/date|time|year|float|double/i.test(column.type));
-  const columns: TableColumn<DatabaseRow>[] = table.columns.map((column, columnIndex) => ({
+  const columns: DataColumn[] = table.columns.map((column, columnIndex) => ({
     key: `column-${columnIndex}`,
     header: (
       <div className="grid gap-1 py-1">
@@ -59,8 +67,8 @@ export function DataTable({
     ),
     headerClassName: 'min-w-44 bg-(--vscode-editor-background) px-3!',
     className: 'h-6 px-3! font-mono hover:bg-(--vscode-list-hoverBackground)',
-    cell: (row) => {
-      const value = row.values[columnIndex] ?? null;
+    cell: (values) => {
+      const value = values[columnIndex] ?? null;
       if (value === null || value === '')
         return (
           <span className="text-xs italic text-(--vscode-descriptionForeground)">
@@ -83,10 +91,8 @@ export function DataTable({
     headerClassName: 'min-w-16! w-16 border-l border-(--vscode-panel-border) bg-(--vscode-editor-background)',
     className:
       'sticky right-0 z-0 min-w-16 w-16 border-l border-(--vscode-panel-border) bg-(--vscode-editor-background) text-center',
-    cell: (row) => {
-      const original = Object.fromEntries(
-        table.columns.map((column, index) => [column.name, row.values[index] ?? null]),
-      );
+    cell: (values) => {
+      const original = Object.fromEntries(table.columns.map((column, index) => [column.name, values[index] ?? null]));
       const canMutate =
         canIdentify &&
         primaryKeys.every((column) => {
@@ -121,24 +127,57 @@ export function DataTable({
     },
   });
   return (
-    <Table
-      ariaLabel={`${table.name} data`}
-      columns={columns}
-      rows={table.rows.map((values, rowIndex) => ({ values, rowIndex }))}
-      rowKey={(row) => row.rowIndex}
-      border
-      className="min-h-0 flex-1 border-y-0"
-      emptyMessage={
-        <div className="flex flex-col items-center gap-2 py-10">
-          <Icon name={hasActiveFilters ? 'search' : 'table'} size="2xl" variant="muted" />
-          <span>{hasActiveFilters ? 'No matching rows' : 'This table is empty'}</span>
-          {hasActiveFilters && (
-            <Button variant="secondary" onClick={onClearFilters}>
-              Clear filters
-            </Button>
+    <div className="min-h-0 min-w-0 flex-1 overflow-auto border border-y-0 border-(--vscode-panel-border) text-sm">
+      <table className="w-max min-w-full border-separate border-spacing-0" aria-label={`${table.name} data`}>
+        <thead className="sticky top-0 z-10">
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                className={cn(
+                  'min-w-36 border-r border-b border-(--vscode-panel-border) px-2 py-1 text-left font-medium text-(--vscode-descriptionForeground)',
+                  column.headerClassName,
+                )}
+                scope="col"
+              >
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((values, rowIndex) => (
+            <tr key={rowIndex}>
+              {columns.map((column) => (
+                <td
+                  key={column.key}
+                  className={cn(
+                    'max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 py-1 text-left text-ellipsis whitespace-nowrap',
+                    column.className,
+                  )}
+                >
+                  {column.cell(values)}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {!table.rows.length && (
+            <tr>
+              <td colSpan={columns.length} className="h-14 px-2 text-center text-(--vscode-descriptionForeground)">
+                <div className="flex flex-col items-center gap-2 py-10">
+                  <Icon name={hasActiveFilters ? 'search' : 'table'} size="2xl" variant="muted" />
+                  <span>{hasActiveFilters ? 'No matching rows' : 'This table is empty'}</span>
+                  {hasActiveFilters && (
+                    <Button variant="secondary" onClick={onClearFilters}>
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </tr>
           )}
-        </div>
-      }
-    />
+        </tbody>
+      </table>
+    </div>
   );
 }
