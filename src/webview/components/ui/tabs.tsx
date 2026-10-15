@@ -15,7 +15,7 @@ type TabsProps = {
   onChange: (tabId: string) => void;
   children: ReactNode;
   ariaLabel?: string;
-  placement?: 'top' | 'bottom';
+  placement?: 'top' | 'bottom' | 'left';
   hideSingleTab?: boolean;
   className?: string;
   contentClassName?: string;
@@ -33,9 +33,11 @@ export function Tabs({
   contentClassName,
 }: TabsProps) {
   const bottom = placement === 'bottom';
+  const vertical = placement === 'left';
   return (
     <BaseTabs.Root
-      className={cn('flex min-w-0 flex-col', className)}
+      className={cn('flex min-w-0', vertical ? 'flex-row' : 'flex-col', className)}
+      orientation={vertical ? 'vertical' : 'horizontal'}
       value={activeTabId}
       onValueChange={(value) => {
         if (typeof value === 'string') onChange(value);
@@ -43,7 +45,7 @@ export function Tabs({
     >
       <div
         className={cn(
-          bottom ? 'order-last border-t' : 'border-b',
+          vertical ? 'w-40 border-r' : bottom ? 'order-last border-t' : 'border-b',
           'shrink-0 border-(--vscode-panel-border)',
           hideSingleTab && tabs.length <= 1 && 'hidden',
         )}
@@ -51,7 +53,7 @@ export function Tabs({
         <BaseTabs.List
           activateOnFocus={false}
           aria-label={ariaLabel}
-          className={cn('flex w-full overflow-x-auto', bottom && 'h-9 items-start px-2')}
+          className={cn('flex w-full', vertical ? 'flex-col' : 'overflow-x-auto', bottom && 'h-9 items-start px-2')}
         >
           {tabs.map((tab) => {
             const isActive = activeTabId === tab.id;
@@ -59,8 +61,12 @@ export function Tabs({
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap px-3',
-                  bottom ? 'border-t-2' : 'flex-1 border-b',
+                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap px-3',
+                  vertical
+                    ? 'justify-end border-r-2 text-right'
+                    : bottom
+                      ? 'justify-center border-t-2'
+                      : 'flex-1 justify-center border-b',
                   isActive
                     ? 'border-(--vscode-panelTitle-activeBorder,var(--vscode-focusBorder)) text-(--vscode-panelTitle-activeForeground,var(--vscode-foreground))'
                     : 'border-transparent text-(--vscode-panelTitle-inactiveForeground,var(--vscode-descriptionForeground)) hover:text-(--vscode-foreground)',
@@ -76,7 +82,7 @@ export function Tabs({
           })}
         </BaseTabs.List>
       </div>
-      <div className={cn('min-w-0', contentClassName)}>{children}</div>
+      <div className={cn('min-w-0', vertical && 'flex-1', contentClassName)}>{children}</div>
     </BaseTabs.Root>
   );
 }
