@@ -549,6 +549,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.statusGitRepository",
+        "title": "Status",
+        "icon": "$(info)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.pullGitRepository",
         "title": "Pull",
         "icon": "$(cloud-download)",
@@ -1084,6 +1090,10 @@
         {
           "command": "toolkit.fetchGitRepository",
           "group": "1_remote@3"
+        },
+        {
+          "command": "toolkit.statusGitRepository",
+          "group": "1_remote@4"
         },
         {
           "command": "toolkit.checkoutGitRepository",

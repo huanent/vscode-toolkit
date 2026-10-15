@@ -7,60 +7,75 @@ const execFileAsync = promisify(execFile);
 const gitTimeout = 15_000;
 
 const gitCommands = {
+  statusGitRepository: 'git status',
   pullGitRepository: 'git pull',
   pushGitRepository: 'git push',
   fetchGitRepository: 'git fetch --all --prune',
 } as const;
 
 export function registerSourceControl(context: vscode.ExtensionContext): void {
-  const gitRepositoryBranches = new Map<string, string>();
+  const folders = new Map<string, { repository: boolean; detection: Promise<undefined> }>();
   const gitDecorationEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
-  let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-  let generation = 0;
+  let contextTimer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
-  let refreshing = false;
 
-  async function refresh(): Promise<void> {
-    if (disposed || refreshing) {
-      return;
-    }
-    refreshing = true;
-    const currentGeneration = generation;
-    try {
-      const repositories = await readGitRepositoryFolders();
-      if (disposed || currentGeneration !== generation) {
-        return;
-      }
-      gitRepositoryBranches.clear();
-      for (const [uri, branch] of repositories) {
-        if (branch) {
-          gitRepositoryBranches.set(uri.fsPath, branch);
-        }
-      }
-      await vscode.commands.executeCommand(
-        'setContext',
-        gitRepositoryFoldersContext,
-        Object.fromEntries(repositories.map(([uri]) => [uri.fsPath, true])),
-      );
-      if (!disposed) {
-        gitDecorationEmitter.fire(undefined);
-      }
-    } catch (error) {
-      console.error('Unable to refresh Git repositories.', error);
-    } finally {
-      refreshing = false;
-      if (!disposed && currentGeneration !== generation) {
-        scheduleRefresh();
-      }
+  function updateContext(): void {
+    clearTimeout(contextTimer);
+    if (!disposed) {
+      contextTimer = setTimeout(() => {
+        void vscode.commands.executeCommand(
+          'setContext',
+          gitRepositoryFoldersContext,
+          Object.fromEntries([...folders].filter(([, folder]) => folder.repository).map(([path]) => [path, true])),
+        );
+      }, 0);
     }
   }
 
-  function scheduleRefresh(): void {
-    generation++;
-    clearTimeout(refreshTimer);
+  function invalidate(uri: vscode.Uri): void {
     if (!disposed) {
-      refreshTimer = setTimeout(() => void refresh(), 200);
+      folders.delete(uri.fsPath);
+      updateContext();
+      gitDecorationEmitter.fire(uri);
     }
+  }
+
+  function reset(): void {
+    folders.clear();
+    updateContext();
+    if (!disposed) {
+      gitDecorationEmitter.fire(undefined);
+    }
+  }
+
+  function detectRepository(uri: vscode.Uri): Promise<undefined> | undefined {
+    if (disposed || uri.scheme !== 'file') {
+      return undefined;
+    }
+    const cached = folders.get(uri.fsPath);
+    if (cached) {
+      return cached.detection;
+    }
+
+    const folder = { repository: false, detection: Promise.resolve<undefined>(undefined) };
+    folders.set(uri.fsPath, folder);
+    folder.detection = (async () => {
+      try {
+        const marker = await vscode.workspace.fs.stat(vscode.Uri.joinPath(uri, '.git'));
+        if (!(marker.type & (vscode.FileType.File | vscode.FileType.Directory))) {
+          return undefined;
+        }
+      } catch {
+        return;
+      }
+      if (disposed || folders.get(uri.fsPath) !== folder) {
+        return undefined;
+      }
+      folder.repository = true;
+      updateContext();
+      return undefined;
+    })();
+    return folder.detection;
   }
 
   for (const [command, gitCommand] of Object.entries(gitCommands)) {
@@ -79,41 +94,36 @@ export function registerSourceControl(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.checkoutGitRepository', async (uri: vscode.Uri | undefined) => {
       if (await checkoutGitRepository(uri)) {
-        scheduleRefresh();
+        invalidate(uri!);
       }
     }),
     vscode.window.registerFileDecorationProvider({
       onDidChangeFileDecorations: gitDecorationEmitter.event,
-      provideFileDecoration(uri) {
-        const branch = gitRepositoryBranches.get(uri.fsPath);
-        return branch ? new vscode.FileDecoration(undefined, `Git branch: ${branch}`) : undefined;
-      },
+      provideFileDecoration: detectRepository,
     }),
   );
 
-  const gitWatcher = vscode.workspace.createFileSystemWatcher('**/.git/HEAD');
-  gitWatcher.onDidCreate(scheduleRefresh, undefined, context.subscriptions);
-  gitWatcher.onDidChange(scheduleRefresh, undefined, context.subscriptions);
-  gitWatcher.onDidDelete(scheduleRefresh, undefined, context.subscriptions);
-
   const gitFileWatcher = vscode.workspace.createFileSystemWatcher('**/.git');
-  gitFileWatcher.onDidCreate(scheduleRefresh, undefined, context.subscriptions);
-  gitFileWatcher.onDidChange(scheduleRefresh, undefined, context.subscriptions);
-  gitFileWatcher.onDidDelete(scheduleRefresh, undefined, context.subscriptions);
+  const invalidateMarker = (uri: vscode.Uri) => invalidate(vscode.Uri.joinPath(uri, '..'));
+  gitFileWatcher.onDidCreate(invalidateMarker, undefined, context.subscriptions);
+  gitFileWatcher.onDidChange(invalidateMarker, undefined, context.subscriptions);
+  gitFileWatcher.onDidDelete(invalidateMarker, undefined, context.subscriptions);
 
   context.subscriptions.push(
     gitDecorationEmitter,
-    gitWatcher,
     gitFileWatcher,
-    vscode.workspace.onDidChangeWorkspaceFolders(scheduleRefresh),
+    vscode.workspace.onDidChangeWorkspaceFolders(reset),
+    vscode.workspace.onDidRenameFiles(reset),
+    vscode.workspace.onDidDeleteFiles(reset),
     {
       dispose() {
         disposed = true;
-        clearTimeout(refreshTimer);
+        clearTimeout(contextTimer);
+        folders.clear();
       },
     },
   );
-  void refresh();
+  updateContext();
 }
 
 async function checkoutGitRepository(folderUri: vscode.Uri | undefined): Promise<boolean> {
@@ -179,36 +189,5 @@ async function checkoutGitRepository(folderUri: vscode.Uri | undefined): Promise
       `Unable to switch Git branch: ${error instanceof Error ? error.message : String(error)}`,
     );
     return false;
-  }
-}
-
-async function readGitRepositoryFolders(): Promise<Array<[vscode.Uri, string | undefined]>> {
-  const [headUris, gitFileUris] = await Promise.all([
-    vscode.workspace.findFiles('**/.git/HEAD', null),
-    vscode.workspace.findFiles('**/.git', null),
-  ]);
-  const repositories = new Map<string, vscode.Uri>();
-
-  for (const markerUri of [...headUris, ...gitFileUris]) {
-    if (markerUri.scheme !== 'file') {
-      continue;
-    }
-    const gitUri = markerUri.path.endsWith('/HEAD') ? vscode.Uri.joinPath(markerUri, '..') : markerUri;
-    const repositoryUri = vscode.Uri.joinPath(gitUri, '..');
-    repositories.set(repositoryUri.fsPath, repositoryUri);
-  }
-
-  return Promise.all([...repositories.values()].map(async (uri) => [uri, await getCurrentBranch(uri)]));
-}
-
-async function getCurrentBranch(repositoryUri: vscode.Uri): Promise<string | undefined> {
-  try {
-    const { stdout } = await execFileAsync('git', ['symbolic-ref', '--short', 'HEAD'], {
-      cwd: repositoryUri.fsPath,
-      timeout: gitTimeout,
-    });
-    return stdout.trim() || undefined;
-  } catch {
-    return undefined;
   }
 }
