@@ -9,11 +9,7 @@ import {
   type DatabaseTableCounts,
   type UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
-import {
-  buildSqliteTableSchemaStatements,
-  quoteIdentifier,
-  sqliteTemporaryTablePrefix,
-} from '@/features/database/sqlite-schema';
+import { quoteIdentifier } from '@/features/database/sqlite-schema';
 import { buildRowMutation } from '@/features/database/row-mutation';
 
 const maxPreviewColumns = 50;
@@ -83,21 +79,67 @@ export function applySqliteTableSchema(databasePath: string, options: UpdateSqli
       if (targetExists) throw new Error(`Table already exists: ${options.newTableName}`);
     }
 
-    const oldColumnRows = database.prepare(`PRAGMA table_info(${quoteIdentifier(options.tableName)})`).all();
-    const oldColumnNames = oldColumnRows.map((row) => String(row.name));
-    const tempName = `${sqliteTemporaryTablePrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const statements = buildSqliteTableSchemaStatements(options, oldColumnNames, tempName);
-
-    database.exec('PRAGMA foreign_keys = OFF');
-    database.exec('BEGIN TRANSACTION');
+    database.exec('PRAGMA foreign_keys = ON');
+    database.exec('PRAGMA legacy_alter_table = OFF');
+    database.exec('BEGIN IMMEDIATE');
     try {
+      const oldColumns = database.prepare(`PRAGMA table_xinfo(${quoteIdentifier(options.tableName)})`).all();
+      if (oldColumns.length > maxPreviewColumns) {
+        throw new Error('Tables with more than 50 columns require an explicit SQL migration.');
+      }
+      const retained = new Set<string>();
+      const statements: string[] = [];
+      const table = quoteIdentifier(options.tableName);
+      let previousIndex = -1;
+      let addedColumn = false;
+      for (const column of options.columns) {
+        const source = column.originalName ?? column.name;
+        const index = oldColumns.findIndex((existing) => existing.name === source);
+        if (index < 0) {
+          if (column.originalName) throw new Error(`Column no longer exists: ${column.originalName}`);
+          if (column.primaryKey) throw new Error('Adding a primary key requires an explicit SQL migration.');
+          let definition = quoteIdentifier(column.name.trim());
+          if (column.type?.trim()) definition += ` ${column.type.trim()}`;
+          if (column.notNull) definition += ' NOT NULL';
+          statements.push(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+          addedColumn = true;
+          continue;
+        }
+        const existing = oldColumns[index];
+        if (retained.has(source)) throw new Error(`Column is used more than once: ${source}`);
+        if (index < previousIndex || addedColumn) {
+          throw new Error('Reordering columns requires an explicit SQL migration.');
+        }
+        if (
+          String(existing.type ?? '')
+            .trim()
+            .toUpperCase() !== (column.type ?? '').trim().toUpperCase() ||
+          (Number(existing.pk) !== 0) !== column.primaryKey ||
+          (Number(existing.notnull) !== 0) !== column.notNull
+        ) {
+          throw new Error('Changing column types, primary keys or nullability requires an explicit SQL migration.');
+        }
+        retained.add(source);
+        previousIndex = index;
+        if (source !== column.name.trim()) {
+          statements.push(
+            `ALTER TABLE ${table} RENAME COLUMN ${quoteIdentifier(source)} TO ${quoteIdentifier(column.name.trim())}`,
+          );
+        }
+      }
+      for (const column of oldColumns) {
+        if (!retained.has(String(column.name))) {
+          statements.push(`ALTER TABLE ${table} DROP COLUMN ${quoteIdentifier(String(column.name))}`);
+        }
+      }
+      if (options.newTableName !== options.tableName) {
+        statements.push(`ALTER TABLE ${table} RENAME TO ${quoteIdentifier(options.newTableName)}`);
+      }
       for (const statement of statements) database.exec(statement);
       database.exec('COMMIT');
     } catch (error) {
       database.exec('ROLLBACK');
       throw error;
-    } finally {
-      database.exec('PRAGMA foreign_keys = ON');
     }
   } finally {
     database.close();
@@ -108,6 +150,7 @@ export function runSqliteQuery(databasePath: string, sql: string): DatabaseQuery
   const database = new DatabaseSync(databasePath);
   try {
     const statement = database.prepare(sql);
+    statement.setReadBigInts(true);
     const columnMetadata = (statement as unknown as { columns?: () => Array<{ name: string }> }).columns;
     const columns =
       typeof columnMetadata === 'function' ? columnMetadata.call(statement).map((column) => column.name) : undefined;
@@ -232,8 +275,9 @@ function readTable(
     : undefined;
   const selectedColumns = columns.length ? columns.map((column) => quoteIdentifier(column.name)).join(', ') : '*';
   const offset = (filters?.page ?? 0) * databaseTablePageSize;
-  const rows = database
-    .prepare(`SELECT ${selectedColumns} FROM ${quotedName}${whereClause} LIMIT ? OFFSET ?`)
+  const statement = database.prepare(`SELECT ${selectedColumns} FROM ${quotedName}${whereClause} LIMIT ? OFFSET ?`);
+  statement.setReadBigInts(true);
+  const rows = statement
     .all(...parameters, databaseTablePageSize, offset)
     .map((row) => columns.map((column) => toDisplayValue(row[column.name])));
   return {
@@ -289,12 +333,15 @@ function toLikePattern(value: string): string {
 
 function toDisplayValue(value: unknown): string | number | null {
   if (value === null || typeof value === 'string' || typeof value === 'number') return value;
-  if (typeof value === 'bigint') return value.toString();
+  if (typeof value === 'bigint') return toQueryCount(value);
   if (value instanceof Uint8Array) return `BLOB (${value.byteLength} bytes)`;
   if (value === undefined) return null;
   return String(value);
 }
 
 function toQueryCount(value: number | bigint): number | string {
-  return typeof value === 'bigint' ? value.toString() : value;
+  if (typeof value !== 'bigint') return value;
+  return value >= BigInt(Number.MIN_SAFE_INTEGER) && value <= BigInt(Number.MAX_SAFE_INTEGER)
+    ? Number(value)
+    : value.toString();
 }
