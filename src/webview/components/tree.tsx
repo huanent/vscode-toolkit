@@ -173,7 +173,7 @@ function TreeRowIndentation({ node, activeIndentKey }: TreeRowIndentationProps) 
     <div className="relative flex shrink-0 items-center self-stretch">
       <TreeIndentGuides itemPath={node.item.path} activeIndentKey={activeIndentKey} />
       {Array.from({ length: node.level - 1 }, (_, index) => (
-        <span key={`indent-${index}`} className="relative z-10 w-5 shrink-0 self-stretch" aria-hidden="true" />
+        <span key={`indent-${index}`} className="relative z-10 w-4 shrink-0 self-stretch" aria-hidden="true" />
       ))}
       {node.item.type === 'directory' && (
         <span className="relative z-10 ml-1 grid shrink-0 cursor-pointer place-items-center self-center py-1">
@@ -192,7 +192,7 @@ type TreeIndentGuidesProps = {
 function TreeIndentGuides({ itemPath, activeIndentKey }: TreeIndentGuidesProps) {
   const pathSegments = itemPath.split('/').filter(Boolean);
   return (
-    <div className="pointer-events-none absolute inset-y-0 left-3 z-0 flex" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-y-0 left-2 z-0 flex" aria-hidden="true">
       {pathSegments.slice(0, -1).map((_, index) => {
         const guideKey = pathSegments.slice(0, index + 1).join('/');
         const active = activeIndentKey === guideKey;
