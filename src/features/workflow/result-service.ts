@@ -19,6 +19,7 @@ export class WorkflowResultService {
     workflow: WorkflowDefinition,
     cancellation?: vscode.CancellationToken,
   ): Promise<WorkflowRunOutcome> {
+    if (cancellation?.isCancellationRequested) throw new Error('Workflow was cancelled.');
     let resolveOutcome!: (outcome: WorkflowRunOutcome) => void;
     let rejectOutcome!: (error: unknown) => void;
     const outcome = new Promise<WorkflowRunOutcome>((resolve, reject) => {
@@ -37,6 +38,7 @@ export class WorkflowResultService {
     });
     const listener = cancellation?.onCancellationRequested(() => void this.tasks.terminateTask(taskId));
     try {
+      if (cancellation?.isCancellationRequested) await this.tasks.terminateTask(taskId);
       return await outcome;
     } finally {
       listener?.dispose();
@@ -55,6 +57,8 @@ export class WorkflowResultService {
       title: name,
       input: { name, workflow },
       run,
+      getCompletion: (result) =>
+        result.success ? { status: 'completed' } : { status: 'failed', error: result.message },
     });
   }
 }

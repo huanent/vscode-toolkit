@@ -7,6 +7,7 @@ import { formatTabTitle } from '@/shared/tab-title';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
+import { CommandOutput } from '@/host/utils/command-output';
 
 interface SshClientSession {
   client: Client;
@@ -61,23 +62,26 @@ export class SshService implements AssetProvider {
     return requireSshConfiguration(await this.assets.get(assetId)).id;
   }
 
-  async runCommand(assetId: string, command: string): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
+  async runCommand(
+    assetId: string,
+    command: string,
+    signal?: AbortSignal,
+  ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
-    const session = await this.connectClient(assetId);
-    return new Promise((resolve, reject) => {
+    return this.withSession(assetId, signal, (session, resolve, reject) => {
       session.client.exec(command, (error, channel) => {
         if (error) {
           session.close();
           reject(error);
           return;
         }
-        let stdout = '';
-        let stderr = '';
-        channel.on('data', (data: Buffer) => (stdout += data.toString('utf8')));
-        channel.stderr.on('data', (data: Buffer) => (stderr += data.toString('utf8')));
+        const stdout = new CommandOutput();
+        const stderr = new CommandOutput();
+        channel.on('data', (data: Buffer) => stdout.append(data));
+        channel.stderr.on('data', (data: Buffer) => stderr.append(data));
+        channel.once('error', reject);
         channel.on('close', (exitCode: number | undefined) => {
-          session.close();
-          resolve({ stdout, stderr, exitCode });
+          resolve({ stdout: stdout.toString(), stderr: stderr.toString(), exitCode });
         });
       });
     });
@@ -88,10 +92,10 @@ export class SshService implements AssetProvider {
     direction: 'upload' | 'download',
     localPath: string,
     remotePath: string,
+    signal?: AbortSignal,
   ): Promise<void> {
     if (!localPath.trim() || !remotePath.trim()) throw new Error('Enter both local and remote file paths.');
-    const session = await this.connectClient(assetId);
-    await new Promise<void>((resolve, reject) => {
+    await this.withSession<void>(assetId, signal, (session, resolve, reject) => {
       session.client.sftp((error, sftp) => {
         if (error) {
           session.close();
@@ -99,17 +103,53 @@ export class SshService implements AssetProvider {
           return;
         }
         const complete = (transferError?: Error | null) => {
-          session.close();
           if (transferError) reject(transferError);
           else resolve();
         };
+        sftp.once('error', reject);
         if (direction === 'upload') sftp.fastPut(localPath, remotePath, complete);
         else sftp.fastGet(remotePath, localPath, complete);
       });
     });
   }
 
-  private async connectClient(assetId: string, proxyChain = new Set<string>()): Promise<SshClientSession> {
+  private async withSession<T>(
+    assetId: string,
+    signal: AbortSignal | undefined,
+    run: (session: SshClientSession, resolve: (value: T) => void, reject: (error: Error) => void) => void,
+  ): Promise<T> {
+    const session = await this.connectClient(assetId, new Set(), signal);
+    let cleanup = () => {};
+    try {
+      return await new Promise<T>((resolve, reject) => {
+        const abort = () => {
+          session.client.destroy();
+          reject(new Error('SSH operation was cancelled. Remote processes may still be running.'));
+        };
+        const closed = () => reject(new Error('SSH connection closed before the operation completed.'));
+        cleanup = () => {
+          signal?.removeEventListener('abort', abort);
+          session.client.removeListener('error', reject);
+          session.client.removeListener('close', closed);
+        };
+        signal?.addEventListener('abort', abort, { once: true });
+        session.client.once('error', reject);
+        session.client.once('close', closed);
+        if (signal?.aborted) return abort();
+        run(session, resolve, reject);
+      });
+    } finally {
+      cleanup();
+      session.close();
+    }
+  }
+
+  private async connectClient(
+    assetId: string,
+    proxyChain = new Set<string>(),
+    signal?: AbortSignal,
+  ): Promise<SshClientSession> {
+    signal?.throwIfAborted();
     if (proxyChain.has(assetId)) throw new Error('SSH proxy chain contains a cycle.');
     const nextProxyChain = new Set(proxyChain).add(assetId);
     const asset = requireSshConfiguration(await this.assets.get(assetId));
@@ -139,9 +179,20 @@ export class SshService implements AssetProvider {
     try {
       if (asset.proxyAssetId) {
         const proxyAsset = requireSshConfiguration(await this.assets.get(asset.proxyAssetId));
-        proxySession = await this.connectClient(proxyAsset.id, nextProxyChain);
+        proxySession = await this.connectClient(proxyAsset.id, nextProxyChain, signal);
         config.sock = await new Promise<ClientChannel>((resolve, reject) => {
+          const abort = () => {
+            proxySession?.close();
+            reject(new Error('SSH connection was cancelled.'));
+          };
+          signal?.addEventListener('abort', abort, { once: true });
+          if (signal?.aborted) {
+            signal.removeEventListener('abort', abort);
+            abort();
+            return;
+          }
           proxySession?.client.forwardOut('127.0.0.1', 0, asset.host, asset.port, (error, channel) => {
+            signal?.removeEventListener('abort', abort);
             if (error) reject(error);
             else resolve(channel);
           });
@@ -152,7 +203,23 @@ export class SshService implements AssetProvider {
       try {
         return await new Promise<SshClientSession>((resolve, reject) => {
           let settled = false;
+          const abort = () => {
+            client.destroy();
+            reject(new Error('SSH connection was cancelled.'));
+          };
+          const cleanup = () => signal?.removeEventListener('abort', abort);
+          signal?.addEventListener('abort', abort, { once: true });
+          if (signal?.aborted) {
+            cleanup();
+            abort();
+            return;
+          }
+          client.once('close', () => {
+            cleanup();
+            if (!settled) reject(new Error('SSH connection closed before it was ready.'));
+          });
           client.on('error', (error) => {
+            cleanup();
             if (settled) {
               proxySession?.close();
               return;
@@ -161,6 +228,7 @@ export class SshService implements AssetProvider {
             reject(error);
           });
           client.once('ready', () => {
+            cleanup();
             if (settled) return;
             settled = true;
             let closed = false;

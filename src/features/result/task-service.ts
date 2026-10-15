@@ -7,6 +7,7 @@ export interface ResultTaskDefinition<TInput, TOutput> {
   title: string;
   input?: TInput;
   run: (signal: AbortSignal) => Promise<TOutput>;
+  getCompletion?: (output: TOutput) => { status: 'completed' | 'failed'; error?: string };
 }
 
 export class ResultTaskService {
@@ -85,7 +86,7 @@ export class ResultTaskService {
     }
     await this.publish();
     if (this.disposed) return task.id;
-    void this.executeTask(task, definition.run, controller);
+    void this.executeTask(task, definition.run, controller, definition.getCompletion);
     return task.id;
   }
 
@@ -163,12 +164,14 @@ export class ResultTaskService {
     task: ResultTask,
     run: (signal: AbortSignal) => Promise<TOutput>,
     controller: AbortController,
+    getCompletion?: ResultTaskDefinition<unknown, TOutput>['getCompletion'],
   ): Promise<void> {
     try {
       const output = await run(controller.signal);
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
-      await this.updateTask({ ...currentTask, status: 'completed', output, updatedAt: Date.now() });
+      const completion = getCompletion?.(output) ?? { status: 'completed' as const };
+      await this.updateTask({ ...currentTask, ...completion, output, updatedAt: Date.now() });
     } catch (error) {
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;

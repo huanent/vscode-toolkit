@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
+import { CommandOutput } from '@/host/utils/command-output';
 import type { WorkflowDefinition, WorkflowRunOutcome, WorkflowStep } from './protocol';
 import { resolveWorkflowPlaceholders } from './placeholders';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -41,8 +42,9 @@ export async function runWorkflow(
     let result: WorkflowRunOutcome;
     try {
       result = await runStep(step, ssh, signal);
+      signal.throwIfAborted();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = signal.aborted ? 'Task was terminated.' : error instanceof Error ? error.message : String(error);
       return {
         success: false,
         message: `Workflow stopped at step ${index + 1}: ${message}`,
@@ -80,11 +82,17 @@ async function runStep(step: WorkflowStep, ssh: SshService, signal: AbortSignal)
   }
 
   if (step.type === 'sftp') {
-    await ssh.transferFile(step.assetId, step.direction, resolveWorkflowPlaceholders(step.localPath), step.remotePath);
+    await ssh.transferFile(
+      step.assetId,
+      step.direction,
+      resolveWorkflowPlaceholders(step.localPath),
+      step.remotePath,
+      signal,
+    );
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
-  const result = await ssh.runCommand(step.assetId, step.command);
+  const result = await ssh.runCommand(step.assetId, step.command, signal);
   return {
     success: result.exitCode === 0,
     message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,
@@ -99,10 +107,10 @@ function runLocalCommand(
 ): Promise<{ exitCode: number | null; output: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, { cwd, shell: true, windowsHide: true, signal });
-    let output = '';
-    child.stdout.on('data', (data: Buffer) => (output += data.toString('utf8')));
-    child.stderr.on('data', (data: Buffer) => (output += data.toString('utf8')));
+    const output = new CommandOutput();
+    child.stdout.on('data', (data: Buffer) => output.append(data));
+    child.stderr.on('data', (data: Buffer) => output.append(data));
     child.once('error', reject);
-    child.once('close', (exitCode) => resolve({ exitCode, output: output.trim() }));
+    child.once('close', (exitCode) => resolve({ exitCode, output: output.toString().trim() }));
   });
 }

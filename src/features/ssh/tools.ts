@@ -25,10 +25,12 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
           },
         };
       },
-      async invoke({ input }) {
+      async invoke({ input }, token) {
         const id = await ssh.requireAiAccess(input.id);
-        const result = await ssh.runCommand(id, input.command);
-        return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
+        return withCancellation(token, async (signal) => {
+          const result = await ssh.runCommand(id, input.command, signal);
+          return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
+        });
       },
     }),
     vscode.lm.registerTool<TransferSftpFileInput>('sftpTransfer', {
@@ -41,9 +43,11 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
           },
         };
       },
-      async invoke({ input }) {
+      async invoke({ input }, token) {
         const id = await ssh.requireAiAccess(input.id);
-        await ssh.transferFile(id, input.direction, input.localPath, input.remotePath);
+        await withCancellation(token, (signal) =>
+          ssh.transferFile(id, input.direction, input.localPath, input.remotePath, signal),
+        );
         return new vscode.LanguageModelToolResult([
           new vscode.LanguageModelTextPart(
             JSON.stringify({
@@ -57,4 +61,18 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
       },
     }),
   ];
+}
+
+async function withCancellation<T>(
+  token: vscode.CancellationToken,
+  run: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  const listener = token.onCancellationRequested(() => controller.abort());
+  try {
+    if (token.isCancellationRequested) controller.abort();
+    return await run(controller.signal);
+  } finally {
+    listener.dispose();
+  }
 }
