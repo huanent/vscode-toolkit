@@ -27,7 +27,7 @@ export function DataGrid<T>({
   return (
     <ul
       aria-label={ariaLabel}
-      className={cn('flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-auto p-2', className)}
+      className={cn('flex min-h-0 flex-1 flex-wrap content-start gap-1 overflow-auto p-2 select-none', className)}
     >
       {entries.map((entry) => (
         <li key={entryKey(entry)} className="w-24 max-w-full min-w-0">

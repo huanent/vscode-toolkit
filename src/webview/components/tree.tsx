@@ -22,6 +22,7 @@ type TreeProps = {
   collapseAllTrigger?: number;
   items: readonly TreeItem[];
   onActivate?: (item: TreeFileItem) => void;
+  onItemDoubleClick?: (item: TreeFileItem) => void;
   renderActions?: (item: TreeFileItem) => ReactNode;
 };
 
@@ -37,7 +38,14 @@ type TreeNodeModel = {
   expanded: boolean;
 };
 
-export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderActions }: TreeProps) {
+export function Tree({
+  ariaLabel,
+  collapseAllTrigger,
+  items,
+  onActivate,
+  onItemDoubleClick,
+  renderActions,
+}: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   useEffect(() => {
@@ -109,7 +117,11 @@ export function Tree({ ariaLabel, collapseAllTrigger, items, onActivate, renderA
       itemRole="treeitem"
       onFocusedKeyChange={setFocusedKey}
       onActivate={activateNode}
-      onItemClick={activateNode}
+      onItemClick={(node, event) => {
+        if (node.item.type === 'file' && onItemDoubleClick) {
+          if (event.detail === 2) onItemDoubleClick(node.item);
+        } else activateNode(node);
+      }}
       onKeyDown={handleKeyDown}
     />
   );

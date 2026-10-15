@@ -30,6 +30,8 @@ export function AssetsPanel({
             ariaLabel="Assets"
             collapseAllTrigger={collapseAllTrigger}
             items={entries}
+            onActivate={activateAsset}
+            onItemDoubleClick={activateAsset}
             renderActions={(item) => {
               const request = toAssetRequest(item);
               if (!request) return null;
@@ -41,7 +43,7 @@ export function AssetsPanel({
                   aria-label={label}
                   title={label}
                   prefix={<Icon name="play" />}
-                  onClick={() => postToHost(request)}
+                  onClick={() => activateAsset(item)}
                 />
               );
             }}
@@ -53,6 +55,11 @@ export function AssetsPanel({
       {error && <ErrorMessage message={error} className="mt-2" />}
     </section>
   );
+}
+
+function activateAsset(item: TreeFileItem) {
+  const request = toAssetRequest(item);
+  if (request) postToHost(request);
 }
 
 function toAssetRequest(item: TreeFileItem): AssetRequest | undefined {

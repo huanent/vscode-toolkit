@@ -29,6 +29,8 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
             ariaLabel="Workflow files"
             collapseAllTrigger={collapseAllTrigger}
             items={toWorkflowTreeItems(entries)}
+            onActivate={activateWorkflow}
+            onItemDoubleClick={activateWorkflow}
             renderActions={renderWorkflowActions}
           />
         </div>
@@ -41,6 +43,11 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
   );
 }
 
+function activateWorkflow(item: TreeFileItem) {
+  const id = item.context?.workflowId;
+  if (typeof id === 'string') postToHost({ type: 'runWorkflowFile', id } satisfies WorkflowRunRequest);
+}
+
 function renderWorkflowActions(item: TreeFileItem) {
   const id = item.context?.workflowId;
   if (typeof id !== 'string') return null;
@@ -51,7 +58,7 @@ function renderWorkflowActions(item: TreeFileItem) {
       aria-label="Run workflow"
       title="Run workflow"
       prefix={<Icon name="play" />}
-      onClick={() => postToHost({ type: 'runWorkflowFile', id } satisfies WorkflowRunRequest)}
+      onClick={() => activateWorkflow(item)}
     />
   );
 }

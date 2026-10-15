@@ -40,7 +40,7 @@ export function DataList<T>({
       role="table"
       aria-label={ariaLabel}
       className={cn(
-        'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-(--vscode-editor-background) text-sm',
+        'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-(--vscode-editor-background) text-sm select-none',
         className,
       )}
     >

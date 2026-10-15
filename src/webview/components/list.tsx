@@ -179,7 +179,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm',
+        'group relative flex h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm select-none',
         getSelectionClassName(selected, listHasFocus),
       )}
       role={itemRole}
