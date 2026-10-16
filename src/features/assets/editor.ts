@@ -129,7 +129,9 @@ function isFormValues(value: unknown): value is AssetFormValues {
   if (!value || typeof value !== 'object') return false;
   const values = value as Partial<AssetFormValues>;
   return (
-    [values.name, values.host, values.database, values.credentialId].every((field) => typeof field === 'string') &&
+    [values.name, values.description, values.host, values.database, values.credentialId].every(
+      (field) => typeof field === 'string',
+    ) &&
     (values.proxyAssetId === undefined || typeof values.proxyAssetId === 'string') &&
     typeof values.tls === 'boolean' &&
     typeof values.enableAI === 'boolean' &&

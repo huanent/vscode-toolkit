@@ -218,17 +218,72 @@
         "displayName": "Search Assets",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "assetsSearch",
-        "modelDescription": "Search saved Toolkit connection assets by keyword. Types: 'ssh' (sshExecute, sftpTransfer, SSH workflow steps), 'mysql' and 'postgresql' (sqlExecute). Returns id, type, name, folder, host, port, and database. Secrets are never returned.",
+        "modelDescription": "Search saved Toolkit assets by keyword. Types: 'ssh' (sshExecute, sftpTransfer), 'mysql' and 'postgresql' (sqlExecute), 'httpClient' (httpClientExecute). Returns id, type, name, description, folder and connection metadata. Secrets are never returned.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "keyword": {
               "type": "string",
-              "description": "Keyword to match against asset names, IDs, types, folders, hosts, ports, and database names."
+              "description": "Keyword to match against asset names, descriptions, IDs, types, folders, hosts, ports, database names, and base URLs."
             }
           },
           "required": [
             "keyword"
+          ]
+        }
+      },
+      {
+        "name": "httpClientExecute",
+        "displayName": "Send HTTP Client Request",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "httpClientExecute",
+        "modelDescription": "Send an HTTP request using a saved httpClient asset's base URL, default headers and authentication. Returns response status, headers, body and timing. Redirects are rejected.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "HTTP client asset ID or unique ID prefix."
+            },
+            "path": {
+              "type": "string",
+              "description": "Relative path appended to the base URL directory, or a root-relative path. Must resolve to the same origin."
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "HEAD",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+              ],
+              "description": "HTTP method. Defaults to GET."
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Additional headers, overriding defaults. Configured authentication takes precedence."
+            },
+            "query": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Query parameters."
+            },
+            "body": {
+              "type": "string",
+              "description": "Request body. Set Content-Type explicitly when sending JSON."
+            }
+          },
+          "required": [
+            "id",
+            "path"
           ]
         }
       },
@@ -1179,6 +1234,7 @@
     "onDebugAdapterProtocolTracker",
     "onFileSystem:toolkit-temp",
     "onLanguageModelTool:assetsSearch",
+    "onLanguageModelTool:httpClientExecute",
     "onLanguageModelTool:sftpTransfer",
     "onLanguageModelTool:sqlExecute",
     "onLanguageModelTool:sshExecute",

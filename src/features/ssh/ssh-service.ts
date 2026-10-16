@@ -39,6 +39,7 @@ export class SshService implements AssetProvider {
     const previous = record ? requireSshConfiguration(record) : undefined;
     return {
       name: previous?.name ?? '',
+      description: record?.description ?? '',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
       credentialId: previous?.credentialId ?? '',
@@ -272,6 +273,7 @@ export class SshService implements AssetProvider {
     await this.validateProxyChain(asset.id, asset.proxyAssetId);
     await this.assets.save({
       ...asset,
+      description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
       scope: values.storageScope,

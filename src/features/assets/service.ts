@@ -9,6 +9,7 @@ export interface AssetRecord {
   id: string;
   type: string;
   name: string;
+  description?: string;
   folder?: string;
   enableAI?: boolean;
   scope?: StorageScope;
@@ -295,6 +296,7 @@ function isAssetRecord(value: unknown): value is AssetRecord {
     typeof asset.type === 'string' &&
     /^[a-zA-Z0-9-]+$/.test(asset.type) &&
     typeof asset.name === 'string' &&
+    (asset.description === undefined || typeof asset.description === 'string') &&
     asset.name.trim().length > 0
   );
 }

@@ -41,6 +41,7 @@ export class MysqlService implements DatabaseProvider {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
     return {
       name: previous?.name ?? '',
+      description: record?.description ?? '',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 3306,
       credentialId: previous?.credentialId ?? '',
@@ -67,6 +68,7 @@ export class MysqlService implements DatabaseProvider {
     if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
     await this.assets.save({
       ...asset,
+      description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
       scope: values.storageScope,

@@ -3,6 +3,7 @@ import type { HttpRequestData, HttpResponseData } from './protocol';
 export interface ExecuteOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
+  redirect?: 'follow' | 'error' | 'manual';
 }
 
 export async function executeHttpRequest(
@@ -25,7 +26,7 @@ export async function executeHttpRequest(
       method,
       headers: request.headers,
       signal: controller.signal,
-      redirect: 'follow',
+      redirect: options.redirect ?? 'follow',
     };
 
     if (canHaveBody && request.body !== undefined) {

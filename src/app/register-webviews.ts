@@ -11,6 +11,8 @@ import { SshService } from '@/features/ssh/ssh-service';
 import { registerSshTools } from '@/features/ssh/tools';
 import { registerDatabaseTools } from '@/features/database/tools';
 import { registerAssetTools } from '@/features/assets/tools';
+import { HttpClientService } from '@/features/http/http-client-service';
+import { registerHttpClientTools } from '@/features/http/tools';
 import { createWorkflowEditorUri, registerWorkflowEditor, workflowEditorViewType } from '@/features/workflow/editor';
 import { WorkflowResultService } from '@/features/workflow/result-service';
 import { requestWorkflowEnvironment } from '@/features/workflow/run-form';
@@ -42,11 +44,13 @@ export function registerWebviews(
   const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
   const databases = [mysql, postgresql];
   const ssh = new SshService(assets, credentials, context.globalState);
+  const httpClients = new HttpClientService(assets, credentials);
   const workflowResults = new WorkflowResultService(tasks, ssh, (name, environment, cancellation) =>
     requestWorkflowEnvironment(context, name, environment, cancellation),
   );
   context.subscriptions.push(
     registerAssetTools(assets),
+    registerHttpClientTools(httpClients),
     registerDatabaseTools(assets, databases),
     ...registerSshTools(ssh),
     ...registerWorkflowTools(context, ssh, workflowResults, workflowFiles.refresh),
@@ -62,6 +66,7 @@ export function registerWebviews(
   context.subscriptions.push(
     ...databases,
     ssh,
+    httpClients,
     registerMysqlEditor(context, mysql, tasks),
     registerWorkflowEditor(
       context,
@@ -71,7 +76,7 @@ export function registerWebviews(
       workflowFiles.refresh,
     ),
   );
-  const assetsView = createAssetsView(context, assets, [...databases, ssh], credentials);
+  const assetsView = createAssetsView(context, assets, [...databases, ssh, httpClients], credentials);
   const composedDashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
     workflow: workflowFiles.handler,

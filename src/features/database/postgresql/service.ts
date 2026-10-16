@@ -24,6 +24,7 @@ export class PostgresqlService implements DatabaseProvider {
     const previous = record ? requirePostgresqlConfiguration(record) : undefined;
     return {
       name: previous?.name ?? '',
+      description: record?.description ?? '',
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 5432,
       database: previous?.database ?? '',
@@ -48,6 +49,7 @@ export class PostgresqlService implements DatabaseProvider {
     });
     await this.assets.save({
       ...asset,
+      description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
       scope: values.storageScope,

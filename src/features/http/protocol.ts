@@ -1,3 +1,21 @@
+export interface HttpClientSettings {
+  baseUrl: string;
+  headers: Record<string, string>;
+  authType: 'none' | 'basic' | 'bearer' | 'apiKey';
+  apiKeyName: string;
+  apiKeyLocation: 'header' | 'query';
+  timeoutMs: number;
+}
+
+export interface HttpClientRequest {
+  id: string;
+  path: string;
+  method?: string;
+  headers?: Record<string, string>;
+  query?: Record<string, string>;
+  body?: string;
+}
+
 export interface HttpRequestData {
   name?: string;
   method: string;
