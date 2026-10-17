@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "HTTP requests, databases, SSH, file previews, and workflow automation, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
@@ -715,6 +715,26 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.sftp.upload",
+        "title": "Upload",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.sftp.download",
+        "title": "Download",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.sftp.rename",
+        "title": "Rename...",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.sftp.delete",
+        "title": "Delete",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.explorer.createFolder",
         "title": "New Folder...",
         "category": "Toolkit"
@@ -1073,6 +1093,22 @@
       ],
       "commandPalette": [
         {
+          "command": "toolkit.sftp.upload",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.sftp.download",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.sftp.rename",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.sftp.delete",
+          "when": "false"
+        },
+        {
           "command": "toolkit.explorer.createFile",
           "when": "false"
         },
@@ -1214,6 +1250,26 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.sftp.upload",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == local && !sftpBusy && !sftpSymbolicLink",
+          "group": "1_transfer@1"
+        },
+        {
+          "command": "toolkit.sftp.download",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == remote && !sftpBusy && !sftpSymbolicLink",
+          "group": "1_transfer@1"
+        },
+        {
+          "command": "toolkit.sftp.rename",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy",
+          "group": "2_actions@1"
+        },
+        {
+          "command": "toolkit.sftp.delete",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy",
+          "group": "9_delete@1"
+        },
         {
           "command": "toolkit.explorer.openInTerminal",
           "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",

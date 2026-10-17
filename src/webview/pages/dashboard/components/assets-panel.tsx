@@ -37,14 +37,26 @@ export function AssetsPanel({
               if (!request) return null;
               const label = request.action === 'preview' ? 'Preview' : 'Connect';
               return (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={label}
-                  title={label}
-                  prefix={<Icon name="play" />}
-                  onClick={() => activateAsset(item)}
-                />
+                <>
+                  {item.context?.assetType === 'ssh' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Open SFTP"
+                      title="Open SFTP"
+                      prefix={<Icon name="folder" />}
+                      onClick={() => postToHost({ ...request, action: 'sftp' } satisfies AssetRequest)}
+                    />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={label}
+                    title={label}
+                    prefix={<Icon name="play" />}
+                    onClick={() => activateAsset(item)}
+                  />
+                </>
               );
             }}
           />

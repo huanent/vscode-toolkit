@@ -72,7 +72,7 @@ export type AssetsMessage =
 
 export interface AssetRequest {
   type: 'assetAction';
-  action: 'add' | 'edit' | 'delete' | 'duplicate' | 'connect' | 'query' | 'preview';
+  action: 'add' | 'edit' | 'delete' | 'duplicate' | 'connect' | 'query' | 'preview' | 'sftp';
   id?: string;
   database?: string;
   table?: string;

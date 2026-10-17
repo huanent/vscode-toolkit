@@ -8,6 +8,7 @@ import { PostgresqlService } from '@/features/database/postgresql/service';
 import { registerPostgresqlQueryEditor } from '@/features/database/postgresql/query-editor';
 import { registerMysqlEditor } from '@/features/database/mysql/editor';
 import { SshService } from '@/features/ssh/ssh-service';
+import { registerSftpEditor } from '@/features/ssh/sftp/editor';
 import { registerSshTools } from '@/features/ssh/tools';
 import { registerDatabaseTools } from '@/features/database/tools';
 import { registerAssetTools } from '@/features/assets/tools';
@@ -44,6 +45,7 @@ export function registerWebviews(
   const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
   const databases = [mysql, postgresql];
   const ssh = new SshService(assets, credentials, context.globalState);
+  registerSftpEditor(context, ssh, assets);
   const httpClients = new HttpClientService(assets, credentials);
   const workflowResults = new WorkflowResultService(tasks, ssh, (name, environment, cancellation) =>
     requestWorkflowEnvironment(context, name, environment, cancellation),

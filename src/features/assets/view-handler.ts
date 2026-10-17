@@ -315,7 +315,7 @@ function isAssetRequest(value: unknown): value is AssetRequest {
   return (
     message.type === 'assetAction' &&
     typeof message.action === 'string' &&
-    ['add', 'edit', 'delete', 'duplicate', 'connect', 'query', 'preview'].includes(message.action) &&
+    ['add', 'edit', 'delete', 'duplicate', 'connect', 'query', 'preview', 'sftp'].includes(message.action) &&
     [message.id, message.database, message.table, message.assetType, message.folder].every(
       (field) => field === undefined || typeof field === 'string',
     )

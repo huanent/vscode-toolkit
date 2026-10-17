@@ -1,0 +1,57 @@
+import type { SftpEditorData } from '@/features/ssh/protocol';
+import { mountWebview } from '@/webview/bootstrap';
+import { Button } from '@/webview/components/ui/button';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
+import { postToHost, useHostData } from '@/webview/utils/host-data';
+import { FilePane } from './components/file-pane';
+import '@/webview/styles.css';
+
+function App() {
+  const state = useHostData<SftpEditorData>();
+  return (
+    <main className="relative flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
+      {state.status === 'loading' ? (
+        <Loading label="Loading files..." className="absolute inset-0 justify-center" />
+      ) : state.status === 'error' ? (
+        <div className="p-2">
+          <ErrorMessage message={state.message} />
+          <Button onClick={() => postToHost({ type: 'ready' })} prefix={<Icon name="refresh" />}>
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <>
+          {(state.data.error || state.error) && (
+            <ErrorMessage message={state.data.error ?? state.error!} className="shrink-0" />
+          )}
+          <div className="relative flex min-h-0 flex-1" aria-busy={state.data.busy}>
+            <div className="flex min-h-0 flex-1 overflow-x-auto" inert={state.data.busy}>
+              <FilePane
+                side="local"
+                directory={state.data.local}
+                busy={state.data.busy}
+                favorites={state.data.favorites.local}
+              />
+              <FilePane
+                side="remote"
+                directory={state.data.remote}
+                busy={state.data.busy}
+                favorites={state.data.favorites.remote}
+              />
+            </div>
+            {state.data.busy && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="absolute inset-0 bg-(--vscode-editor-background) opacity-60" />
+                <Loading label="Loading files..." className="relative" />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </main>
+  );
+}
+
+mountWebview('root', <App />);

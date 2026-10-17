@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
-import { Client, type ClientChannel, type ConnectConfig, type VerifyCallback } from 'ssh2';
+import { Client, type ClientChannel, type ConnectConfig, type SFTPWrapper, type VerifyCallback } from 'ssh2';
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { formatTabTitle } from '@/shared/tab-title';
@@ -120,6 +120,16 @@ export class SshService implements AssetProvider {
         const options = { step: (total: number, _chunk: number, size: number) => onProgress?.(total, size) };
         if (direction === 'upload') sftp.fastPut(localPath, remotePath, options, complete);
         else sftp.fastGet(remotePath, localPath, options, complete);
+      });
+    });
+  }
+
+  async withSftp<T>(assetId: string, signal: AbortSignal, run: (sftp: SFTPWrapper) => Promise<T>): Promise<T> {
+    return this.withSession<T>(assetId, signal, (session, resolve, reject) => {
+      session.client.sftp((error, sftp) => {
+        if (error) return reject(error);
+        sftp.once('error', reject);
+        void run(sftp).then(resolve, reject);
       });
     });
   }
@@ -279,6 +289,7 @@ export class SshService implements AssetProvider {
       port: values.port,
       credentialId: values.credentialId,
       proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
+      sftpFavorites: previous?.sftpFavorites,
     };
     requireSshConfiguration(asset);
     await this.validateProxyChain(asset.id, asset.proxyAssetIds);
@@ -305,6 +316,10 @@ export class SshService implements AssetProvider {
 
   async execute(record: AssetRecord, request: AssetRequest): Promise<void> {
     const asset = requireSshConfiguration(record);
+    if (request.action === 'sftp') {
+      await vscode.commands.executeCommand('toolkit.sftp.open', asset.id);
+      return;
+    }
     if (request.action !== 'connect') throw new Error('Unsupported SSH operation.');
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);

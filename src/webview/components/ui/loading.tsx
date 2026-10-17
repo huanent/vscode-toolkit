@@ -13,7 +13,7 @@ export function Loading({ label, className }: LoadingProps) {
       role="status"
       aria-live="polite"
     >
-      <Icon name="loading" size="md" className="codicon-modifier-spin" />
+      <Icon name="loading" size="lg" className="codicon-modifier-spin" />
       <span className="min-w-0 wrap-break-word">{label}</span>
     </div>
   );

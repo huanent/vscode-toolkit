@@ -1,4 +1,5 @@
 import type { ExplorerEntry } from '@/features/explorer/protocol';
+import type { AddressSegment } from '@/webview/components/address-breadcrumb';
 
 /** URI of the current folder. `null` requests the system root. */
 export type ExplorerLocation = string | null;
@@ -24,11 +25,6 @@ export function formatAddress(index: ReadonlyMap<string, ExplorerEntry>, locatio
   const folder = location === null ? undefined : index.get(location);
   return folder ? getEntryPath(folder) : '';
 }
-
-export type AddressSegment = {
-  name: string;
-  location: ExplorerLocation;
-};
 
 export function getAddressSegments(
   index: ReadonlyMap<string, ExplorerEntry>,

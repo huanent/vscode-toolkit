@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { Autocomplete } from '@/webview/components/ui/autocomplete';
+import { AddressBar } from '@/webview/components/address-bar';
+import type { AddressSegment } from '@/webview/components/address-breadcrumb';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
 import { SegmentedControl } from '@/webview/components/ui/segmented-control';
-import { AddressBreadcrumb } from '@/webview/pages/explorer/components/address-breadcrumb';
-import type { AddressSegment } from '@/webview/pages/explorer/explorer-location';
 
 export type ExplorerViewMode = 'list' | 'grid';
 
@@ -34,37 +32,6 @@ export function ExplorerToolbar({
   onNavigate,
   onViewModeChange,
 }: ExplorerToolbarProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [invalid, setInvalid] = useState(false);
-  const isFavorite = favorites.includes(address);
-  const favoriteLabel = isFavorite ? 'Remove from favorites' : 'Add to favorites';
-  const favoriteButton = (
-    <Button
-      variant="ghost"
-      size="sm"
-      aria-label={favoriteLabel}
-      title={favoriteLabel}
-      aria-pressed={isFavorite}
-      prefix={<Icon name={isFavorite ? 'star-full' : 'star-empty'} />}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={(event) => {
-        event.stopPropagation();
-        onToggleFavorite(address);
-      }}
-    />
-  );
-
-  const startEditing = () => {
-    setDraft(address);
-    setEditing(true);
-  };
-
-  const stopEditing = () => {
-    setEditing(false);
-    setInvalid(false);
-  };
-
   return (
     <header className="flex items-center gap-1 border-b border-(--vscode-panel-border) p-1 shrink-0">
       <Button
@@ -74,61 +41,14 @@ export function ExplorerToolbar({
         onClick={onBack}
         prefix={<Icon name="arrow-left" />}
       />
-      {editing ? (
-        <div className="min-w-0 flex-1">
-          <Autocomplete
-            autoFocus
-            showTrigger={false}
-            defaultOpen={favorites.length > 0}
-            items={favorites}
-            onItemSelect={(value) => {
-              if (onAddressSubmit(value)) stopEditing();
-              else setInvalid(true);
-            }}
-            itemActions={(value) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={`Remove favorite ${value}`}
-                title="Remove from favorites"
-                prefix={<Icon name="trash" />}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleFavorite(value);
-                }}
-              />
-            )}
-            suffix={favoriteButton}
-            aria-label="Address"
-            aria-invalid={invalid || undefined}
-            className="min-w-0"
-            value={draft}
-            onFocus={(event) => event.currentTarget.select()}
-            onValueChange={(value) => {
-              setDraft(value);
-              setInvalid(false);
-            }}
-            onBlur={stopEditing}
-            onKeyDown={(event) => {
-              if (event.defaultPrevented) return;
-              if (event.key === 'Escape') {
-                stopEditing();
-              } else if (event.key === 'Enter') {
-                if (onAddressSubmit(draft)) stopEditing();
-                else setInvalid(true);
-              }
-            }}
-          />
-        </div>
-      ) : (
-        <AddressBreadcrumb
-          segments={addressSegments}
-          onNavigate={onNavigate}
-          onEdit={startEditing}
-          suffix={favoriteButton}
-        />
-      )}
+      <AddressBar
+        address={address}
+        segments={addressSegments}
+        favorites={favorites}
+        onToggleFavorite={onToggleFavorite}
+        onSubmit={onAddressSubmit}
+        onNavigate={onNavigate}
+      />
       <SegmentedControl<ExplorerViewMode>
         ariaLabel="View mode"
         value={viewMode}
