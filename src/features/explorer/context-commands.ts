@@ -24,6 +24,21 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
   context.subscriptions.push(
     register('toolkit.explorer.createFile', (target) => createEntry(target, 'file', refresh)),
     register('toolkit.explorer.createFolder', (target) => createEntry(target, 'directory', refresh)),
+    register('toolkit.explorer.openInTerminal', async (target) => {
+      const terminal = vscode.window.createTerminal({ cwd: resolveTargetDirectory(target) });
+      context.subscriptions.push(terminal);
+      terminal.show();
+    }),
+    register('toolkit.explorer.openInCurrentWindow', async (target) => {
+      await vscode.commands.executeCommand('vscode.openFolder', resolveTargetDirectory(target), {
+        forceReuseWindow: true,
+      });
+    }),
+    register('toolkit.explorer.openInNewWindow', async (target) => {
+      await vscode.commands.executeCommand('vscode.openFolder', resolveTargetDirectory(target), {
+        forceNewWindow: true,
+      });
+    }),
     register('toolkit.explorer.delete', async (target) => {
       if (!target.explorerEntryUri) return;
       const uri = vscode.Uri.parse(target.explorerEntryUri);
@@ -46,16 +61,20 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
   );
 }
 
+function resolveTargetDirectory(target: ExplorerContextTarget): vscode.Uri {
+  return target.explorerEntryUri
+    ? target.explorerEntryType === 'directory'
+      ? vscode.Uri.parse(target.explorerEntryUri)
+      : vscode.Uri.joinPath(vscode.Uri.parse(target.explorerEntryUri), '..')
+    : vscode.Uri.parse(target.explorerDirectoryUri!);
+}
+
 async function createEntry(
   target: ExplorerContextTarget,
   type: 'file' | 'directory',
   refresh: () => Promise<void>,
 ): Promise<void> {
-  const parent = target.explorerEntryUri
-    ? target.explorerEntryType === 'directory'
-      ? vscode.Uri.parse(target.explorerEntryUri)
-      : vscode.Uri.joinPath(vscode.Uri.parse(target.explorerEntryUri), '..')
-    : vscode.Uri.parse(target.explorerDirectoryUri!);
+  const parent = resolveTargetDirectory(target);
   const name = await vscode.window.showInputBox({
     prompt: type === 'file' ? 'New file name' : 'New folder name',
     validateInput: async (value) => {

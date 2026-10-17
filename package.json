@@ -730,6 +730,21 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.explorer.openInTerminal",
+        "title": "Open in Terminal",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.openInCurrentWindow",
+        "title": "Open in Current Window",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.openInNewWindow",
+        "title": "Open in New Window",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.generateGitignore",
         "title": "Generate .gitignore",
         "category": "Toolkit"
@@ -1074,6 +1089,18 @@
           "when": "false"
         },
         {
+          "command": "toolkit.explorer.openInTerminal",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.openInCurrentWindow",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.openInNewWindow",
+          "when": "false"
+        },
+        {
           "command": "toolkit.dashboard.refresh",
           "when": "false"
         },
@@ -1187,6 +1214,21 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.explorer.openInTerminal",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "0_open@1"
+        },
+        {
+          "command": "toolkit.explorer.openInCurrentWindow",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "0_open@2"
+        },
+        {
+          "command": "toolkit.explorer.openInNewWindow",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "0_open@3"
+        },
         {
           "command": "toolkit.explorer.createFile",
           "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
