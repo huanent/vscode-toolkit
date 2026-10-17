@@ -7,7 +7,7 @@ import type {
   WorkflowStep,
 } from '@/features/workflow/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { StorageScopeSelector } from '@/webview/components/storage-editor-header';
+import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
 import { Button } from '@/webview/components/ui/button';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Form, FormItem } from '@/webview/components/ui/form';
@@ -104,7 +104,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   };
 
   return (
-    <main className="flex min-h-screen min-w-0 flex-col text-(--vscode-foreground)">
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl min-w-0 flex-col text-(--vscode-foreground)">
       <Form
         className="flex min-w-0 flex-1 flex-col"
         onSubmit={(event) => {
@@ -118,8 +118,14 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           } satisfies WorkflowEditorRequest);
         }}
       >
-        <header className="flex flex-wrap items-center gap-2 border-b border-(--vscode-panel-border) px-2 py-1.5">
-          <FormItem name="name" className="min-w-32 flex-1">
+        <StorageEditorHeader
+          storageScope={storageScope}
+          onStorageScopeChange={setStorageScope}
+          workspaceStorageAvailable={data.workspaceStorageAvailable}
+          saveDisabled={!name.trim() || !validEnvironment}
+        />
+        <div className="mx-auto w-full max-w-3xl p-2">
+          <FormItem name="name" error="Workflow name is required." match="valueMissing">
             <Input
               aria-label="Workflow name"
               value={name}
@@ -127,20 +133,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
               placeholder="Workflow name"
             />
           </FormItem>
-          <StorageScopeSelector
-            value={storageScope}
-            onValueChange={setStorageScope}
-            workspaceAvailable={data.workspaceStorageAvailable}
-          />
-          <Button
-            type="submit"
-            variant="ghost"
-            title="Save workflow"
-            aria-label="Save workflow"
-            prefix={<Icon name="save" />}
-            disabled={!name.trim() || !validEnvironment}
-          />
-        </header>
+        </div>
         {error && (
           <div role="alert" className="px-2 py-1">
             <ErrorMessage message={error} />

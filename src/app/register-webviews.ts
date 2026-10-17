@@ -53,7 +53,7 @@ export function registerWebviews(
     registerHttpClientTools(httpClients),
     registerDatabaseTools(assets, databases),
     ...registerSshTools(ssh),
-    ...registerWorkflowTools(context, ssh, workflowResults, workflowFiles.refresh),
+    ...registerWorkflowTools(context, ssh, workflowFiles.refresh),
   );
   workflowFiles.setEditorOpener(async (id, name, parentId) => {
     await vscode.commands.executeCommand(

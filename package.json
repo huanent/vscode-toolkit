@@ -454,25 +454,6 @@
             "steps"
           ]
         }
-      },
-      {
-        "name": "workflowRun",
-        "displayName": "Run Workflow",
-        "canBeReferencedInPrompt": true,
-        "toolReferenceName": "workflowRun",
-        "modelDescription": "Run a saved workflow by its ID and return the outcome with each step's output. Stops at the first failed step.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "Workflow ID."
-            }
-          },
-          "required": [
-            "id"
-          ]
-        }
       }
     ],
     "commands": [

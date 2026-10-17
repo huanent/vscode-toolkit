@@ -1,9 +1,10 @@
+import { homedir } from 'node:os';
 import { posix } from 'node:path';
 import * as vscode from 'vscode';
 import type { ExplorerDirectory, ExplorerEntry } from './protocol';
 
 export async function listDirectory(location: string | null): Promise<ExplorerDirectory> {
-  const uri = location === null ? getSystemRoot() : vscode.Uri.parse(location);
+  const uri = location === null ? vscode.Uri.file(homedir()) : vscode.Uri.parse(location);
   const children = await vscode.workspace.fs.readDirectory(uri);
   const entries = children
     .filter(([name]) => name !== '.DS_Store')

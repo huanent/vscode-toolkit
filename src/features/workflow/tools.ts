@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import type { SshService } from '@/features/ssh/ssh-service';
 import type { WorkflowDefinition, WorkflowStep } from './protocol';
-import type { WorkflowResultService } from './result-service';
 import { validateWorkflow } from './runner';
 import { readWorkflowRecord, saveWorkflowRecord } from './service';
 
@@ -24,14 +23,9 @@ interface UpsertWorkflowInput {
   steps: WorkflowStepInput[];
 }
 
-interface RunWorkflowInput {
-  id: string;
-}
-
 export function registerWorkflowTools(
   context: vscode.ExtensionContext,
   ssh: SshService,
-  workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable[] {
   const getRoots = () => resolveStorageRoots(context, 'workflows');
@@ -63,27 +57,6 @@ export function registerWorkflowTools(
         });
       },
     }),
-    vscode.lm.registerTool<RunWorkflowInput>('workflowRun', {
-      async prepareInvocation({ input }) {
-        const record = await readWorkflowRecord(getRoots(), input.id);
-        if (!record) throw new Error('Workflow no longer exists.');
-        return {
-          invocationMessage: `Running workflow ${record.name}`,
-          confirmationMessages: {
-            title: 'Run workflow?',
-            message: `Workflow: ${record.name}\n${record.workflow.steps.map((step, index) => describeStep(step, index)).join('\n')}`,
-          },
-        };
-      },
-      async invoke({ input }, token) {
-        const record = await readWorkflowRecord(getRoots(), input.id);
-        if (!record) throw new Error('Workflow no longer exists.');
-        for (const step of record.workflow.steps) {
-          if (step.type !== 'local-command') await ssh.requireAiAccess(step.assetId);
-        }
-        return jsonResult(await workflowResults.runWorkflowAndWait(record.name, record.workflow, token));
-      },
-    }),
   ];
 }
 
@@ -106,13 +79,6 @@ async function toWorkflowStep(step: WorkflowStepInput, index: number, ssh: SshSe
 
 async function resolveStepAssetId(assetId: string | undefined, ssh: SshService): Promise<string> {
   return assetId ? ssh.resolveConnectionId(assetId) : '';
-}
-
-function describeStep(step: WorkflowStep, index: number): string {
-  const prefix = `${index + 1}.`;
-  if (step.type === 'local-command') return `${prefix} Local command: ${step.command}`;
-  if (step.type === 'ssh-command') return `${prefix} SSH ${step.assetId}: ${step.command}`;
-  return `${prefix} SFTP ${step.direction} ${step.localPath} -> ${step.remotePath} (${step.assetId})`;
 }
 
 function jsonResult(value: unknown): vscode.LanguageModelToolResult {
