@@ -15,7 +15,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
       key: 'name',
       header: 'Name',
       className: 'flex-1',
-      headerClassName: 'pl-5',
+      headerClassName: 'pl-4',
       cell: (table) => (
         <div className="flex min-w-0 items-center gap-1">
           <Icon name="table" />
