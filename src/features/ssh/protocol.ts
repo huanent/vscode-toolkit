@@ -5,5 +5,5 @@ export interface SshConnectionConfiguration {
   host: string;
   port: number;
   credentialId: string;
-  proxyAssetId?: string;
+  proxyAssetIds?: string[];
 }

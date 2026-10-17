@@ -132,7 +132,8 @@ function isFormValues(value: unknown): value is AssetFormValues {
     [values.name, values.description, values.host, values.database, values.credentialId].every(
       (field) => typeof field === 'string',
     ) &&
-    (values.proxyAssetId === undefined || typeof values.proxyAssetId === 'string') &&
+    (values.proxyAssetIds === undefined ||
+      (Array.isArray(values.proxyAssetIds) && values.proxyAssetIds.every((id) => typeof id === 'string'))) &&
     typeof values.tls === 'boolean' &&
     typeof values.enableAI === 'boolean' &&
     isStorageScope(values.storageScope) &&

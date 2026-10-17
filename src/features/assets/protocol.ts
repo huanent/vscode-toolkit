@@ -12,7 +12,7 @@ export interface AssetFormValues {
   enableAI: boolean;
   storageScope: StorageScope;
   credentialId: string;
-  proxyAssetId?: string;
+  proxyAssetIds?: string[];
   httpClient?: HttpClientSettings;
 }
 

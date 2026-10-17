@@ -43,7 +43,7 @@ export class SshService implements AssetProvider {
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
       credentialId: previous?.credentialId ?? '',
-      proxyAssetId: previous?.proxyAssetId ?? '',
+      proxyAssetIds: previous?.proxyAssetIds ?? [],
       database: '',
       tls: false,
       enableAI: record?.enableAI !== false,
@@ -150,6 +150,7 @@ export class SshService implements AssetProvider {
     assetId: string,
     proxyChain = new Set<string>(),
     signal?: AbortSignal,
+    upstreamSession?: SshClientSession,
   ): Promise<SshClientSession> {
     signal?.throwIfAborted();
     if (proxyChain.has(assetId)) throw new Error('SSH proxy chain contains a cycle.');
@@ -177,11 +178,12 @@ export class SshService implements AssetProvider {
       config.passphrase = credential.passphrase;
     }
 
-    let proxySession: SshClientSession | undefined;
+    let proxySession = upstreamSession;
     try {
-      if (asset.proxyAssetId) {
-        const proxyAsset = requireSshConfiguration(await this.assets.get(asset.proxyAssetId));
-        proxySession = await this.connectClient(proxyAsset.id, nextProxyChain, signal);
+      for (const proxyAssetId of asset.proxyAssetIds ?? []) {
+        proxySession = await this.connectClient(proxyAssetId, nextProxyChain, signal, proxySession);
+      }
+      if (proxySession) {
         config.sock = await new Promise<ClientChannel>((resolve, reject) => {
           const abort = () => {
             proxySession?.close();
@@ -267,10 +269,10 @@ export class SshService implements AssetProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
-      proxyAssetId: values.proxyAssetId?.trim() || undefined,
+      proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
     };
     requireSshConfiguration(asset);
-    await this.validateProxyChain(asset.id, asset.proxyAssetId);
+    await this.validateProxyChain(asset.id, asset.proxyAssetIds);
     await this.assets.save({
       ...asset,
       description: values.description.trim() || undefined,
@@ -322,25 +324,25 @@ export class SshService implements AssetProvider {
   }
 
   async requireAiAccess(assetId: string): Promise<string> {
-    const visited = new Set<string>();
-    let asset = requireSshConfiguration(await this.assets.requireAiAsset(assetId));
-    const resolvedId = asset.id;
-    while (asset.proxyAssetId && !visited.has(asset.id)) {
-      visited.add(asset.id);
-      asset = requireSshConfiguration(await this.assets.requireAiAsset(asset.proxyAssetId));
-    }
-    return resolvedId;
+    const visit = async (id: string, ancestors: Set<string>): Promise<void> => {
+      if (ancestors.has(id)) throw new Error('SSH proxy chain contains a cycle.');
+      const asset = requireSshConfiguration(await this.assets.requireAiAsset(id));
+      const next = new Set(ancestors).add(id);
+      for (const proxyId of asset.proxyAssetIds ?? []) await visit(proxyId, next);
+    };
+    await visit(assetId, new Set());
+    return assetId;
   }
 
-  private async validateProxyChain(assetId: string, proxyAssetId?: string): Promise<void> {
-    const visited = new Set([assetId]);
-    let currentId = proxyAssetId;
-    while (currentId) {
-      if (visited.has(currentId)) throw new Error('SSH proxy chain contains a cycle.');
-      visited.add(currentId);
-      const proxy = requireSshConfiguration(await this.assets.get(currentId));
-      currentId = proxy.proxyAssetId;
-    }
+  private async validateProxyChain(assetId: string, proxyAssetIds: string[] = []): Promise<void> {
+    const visit = async (ids: string[], ancestors: Set<string>): Promise<void> => {
+      for (const id of ids) {
+        if (ancestors.has(id)) throw new Error('SSH proxy chain contains a cycle.');
+        const proxy = requireSshConfiguration(await this.assets.get(id));
+        await visit(proxy.proxyAssetIds ?? [], new Set(ancestors).add(id));
+      }
+    };
+    await visit(proxyAssetIds, new Set([assetId]));
   }
 
   dispose(): void {
@@ -455,7 +457,9 @@ function requireSshConfiguration(value: AssetRecord): SshConnectionConfiguration
     asset.port < 1 ||
     asset.port > 65535 ||
     typeof asset.credentialId !== 'string' ||
-    (asset.proxyAssetId !== undefined && typeof asset.proxyAssetId !== 'string')
+    (asset.proxyAssetIds !== undefined &&
+      (!Array.isArray(asset.proxyAssetIds) ||
+        !asset.proxyAssetIds.every((id) => typeof id === 'string' && id.trim().length > 0)))
   )
     throw new Error(`Invalid SSH configuration: ${value.name}`);
   return value as SshConnectionConfiguration;

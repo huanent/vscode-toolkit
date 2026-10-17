@@ -1057,12 +1057,12 @@
         },
         {
           "command": "toolkit.assets.createFolder",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && !assetId",
           "group": "1_create@2"
         },
         {
           "submenu": "toolkit.assets.new",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && !assetId",
           "group": "1_create@1"
         },
         {
@@ -1112,12 +1112,12 @@
         },
         {
           "command": "toolkit.temp.createFile",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType != 'file'",
           "group": "1_create@1"
         },
         {
           "command": "toolkit.temp.createFolder",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType != 'file'",
           "group": "1_create@2"
         },
         {
@@ -1137,12 +1137,12 @@
         },
         {
           "command": "toolkit.workflow.createFile",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && !workflowId",
           "group": "1_create@1"
         },
         {
           "command": "toolkit.workflow.createFolder",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow'",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && !workflowId",
           "group": "1_create@2"
         },
         {

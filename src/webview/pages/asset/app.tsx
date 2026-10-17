@@ -71,9 +71,9 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             label: 'Proxy',
             panel: (
               <ProxyPanel
-                value={values.proxyAssetId}
+                value={values.proxyAssetIds}
                 connections={data.sshConnections}
-                onChange={(proxyAssetId) => update({ proxyAssetId })}
+                onChange={(proxyAssetIds) => update({ proxyAssetIds })}
               />
             ),
           },
