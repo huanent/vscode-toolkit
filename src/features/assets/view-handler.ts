@@ -174,6 +174,20 @@ export function createAssetsView(
       await vscode.window.showErrorMessage(message);
     }
   };
+  for (const provider of providers) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        `toolkit.assets.add.${provider.type}`,
+        (argument?: { assetFolderPath?: string }) =>
+          act({
+            type: 'assetAction',
+            action: 'add',
+            assetType: provider.type,
+            folder: argument?.assetFolderPath,
+          }),
+      ),
+    );
+  }
   for (const action of ['add', 'edit', 'duplicate', 'query'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(

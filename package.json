@@ -463,6 +463,26 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.assets.add.ssh",
+        "title": "SSH",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.add.mysql",
+        "title": "MySQL",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.add.postgresql",
+        "title": "PostgreSQL",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.add.httpClient",
+        "title": "HTTP Client",
+        "category": "Assets"
+      },
+      {
         "command": "toolkit.assets.createFolder",
         "title": "New Folder",
         "category": "Assets"
@@ -776,11 +796,33 @@
     ],
     "submenus": [
       {
+        "id": "toolkit.assets.new",
+        "label": "New Asset"
+      },
+      {
         "id": "toolkit.sourceControl",
         "label": "Source Control"
       }
     ],
     "menus": {
+      "toolkit.assets.new": [
+        {
+          "command": "toolkit.assets.add.ssh",
+          "group": "1_types@1"
+        },
+        {
+          "command": "toolkit.assets.add.mysql",
+          "group": "1_types@2"
+        },
+        {
+          "command": "toolkit.assets.add.postgresql",
+          "group": "1_types@3"
+        },
+        {
+          "command": "toolkit.assets.add.httpClient",
+          "group": "1_types@4"
+        }
+      ],
       "view/title": [
         {
           "command": "toolkit.dashboard.refresh",
@@ -1019,7 +1061,7 @@
           "group": "1_create@2"
         },
         {
-          "command": "toolkit.assets.add",
+          "submenu": "toolkit.assets.new",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets'",
           "group": "1_create@1"
         },
