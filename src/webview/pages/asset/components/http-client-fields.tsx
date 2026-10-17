@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import type { HttpClientSettings } from '@/features/http/protocol';
 import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
+import { KeyValueEditor } from '@/webview/components/ui/key-value-editor';
 import { Select } from '@/webview/components/ui/select';
-import { Textarea } from '@/webview/components/ui/textarea';
 
 export function HttpClientFields({
   value,
@@ -12,7 +11,6 @@ export function HttpClientFields({
   value: HttpClientSettings;
   onChange: (value: HttpClientSettings) => void;
 }) {
-  const [headers, setHeaders] = useState(() => JSON.stringify(value.headers, null, 2));
   const update = <Key extends keyof HttpClientSettings>(key: Key, next: HttpClientSettings[Key]) => {
     onChange({ ...value, [key]: next });
   };
@@ -52,29 +50,12 @@ export function HttpClientFields({
           </FormItem>
         </div>
       )}
-      <FormItem name="headers" label="Default headers (JSON)" error="Enter a JSON object with string values.">
-        <Textarea
-          rows={5}
-          value={headers}
-          onChange={(event) => {
-            const target = event.target;
-            setHeaders(target.value);
-            try {
-              const parsed: unknown = JSON.parse(target.value);
-              if (
-                !parsed ||
-                typeof parsed !== 'object' ||
-                Array.isArray(parsed) ||
-                !Object.values(parsed).every((entry) => typeof entry === 'string')
-              ) {
-                throw new Error('Invalid headers.');
-              }
-              target.setCustomValidity('');
-              update('headers', parsed as Record<string, string>);
-            } catch {
-              target.setCustomValidity('Enter a JSON object with string values.');
-            }
-          }}
+      <FormItem name="headers" label="Default headers">
+        <KeyValueEditor
+          value={value.headers}
+          onChange={(headers) => update('headers', headers)}
+          keyPlaceholder="Header name"
+          valuePlaceholder="Header value"
         />
       </FormItem>
       <FormItem name="timeoutMs" label="Timeout (ms)">
