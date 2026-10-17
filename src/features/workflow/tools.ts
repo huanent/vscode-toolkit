@@ -46,6 +46,7 @@ export function registerWorkflowTools(
           workflow,
           input.folderId,
           existing?.scope ?? 'global',
+          existing?.description,
         );
         await refresh();
         return jsonResult({

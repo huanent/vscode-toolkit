@@ -37,6 +37,7 @@ export interface WorkflowRecord {
   kind: 'workflow';
   id: string;
   name: string;
+  description?: string;
   parentId?: string;
   workflow: WorkflowDefinition;
 }
@@ -61,7 +62,13 @@ export interface WorkflowEditorData extends WorkflowRecord {
 }
 
 export type WorkflowEditorRequest =
-  | { type: 'saveWorkflow'; name: string; workflow: WorkflowDefinition; storageScope: StorageScope }
+  | {
+      type: 'saveWorkflow';
+      name: string;
+      description?: string;
+      workflow: WorkflowDefinition;
+      storageScope: StorageScope;
+    }
   | { type: 'runWorkflow'; name: string; workflow: WorkflowDefinition };
 
 export type WorkflowEditorMessage =

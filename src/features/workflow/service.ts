@@ -56,6 +56,7 @@ export async function saveWorkflowRecord(
   workflow: WorkflowDefinition,
   parentId: string | undefined,
   scope: StorageScope,
+  description?: string,
 ): Promise<StoredWorkflowRecord> {
   validateWorkflowId(id);
   if (!name.trim() || /[\\/\0]/.test(name)) throw new Error('Enter a valid workflow name.');
@@ -71,6 +72,7 @@ export async function saveWorkflowRecord(
     kind: 'workflow',
     id,
     name: name.trim(),
+    description,
     parentId: actualParentId,
     workflow,
   };
@@ -115,7 +117,7 @@ export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: str
   if (entry.type === 'workflow') {
     const record = await readWorkflowRecord(roots, id);
     if (!record) throw new Error('Workflow entry no longer exists.');
-    await saveWorkflowRecord(roots, id, name, record.workflow, record.parentId, record.scope);
+    await saveWorkflowRecord(roots, id, name, record.workflow, record.parentId, record.scope, record.description);
     return;
   }
 
@@ -375,6 +377,7 @@ function isWorkflowRecord(value: unknown): value is WorkflowRecord {
     typeof record.id === 'string' &&
     typeof record.name === 'string' &&
     record.name.trim().length > 0 &&
+    (record.description === undefined || typeof record.description === 'string') &&
     (record.parentId === undefined || typeof record.parentId === 'string') &&
     isWorkflowDefinition(record.workflow)
   );

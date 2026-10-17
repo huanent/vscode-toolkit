@@ -15,7 +15,7 @@ type WorkflowStepEditorProps = {
 
 export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange }: WorkflowStepEditorProps) {
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-5">
       <FormItem name={`steps.${index}.type`} label="Operation">
         <Select
           ariaLabel="Operation"
