@@ -378,6 +378,44 @@
         }
       },
       {
+        "name": "workflowSearch",
+        "displayName": "Search Workflows",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "workflowSearch",
+        "modelDescription": "Search saved workflows by keyword matching name, description, ID, or folder. Returns IDs, descriptions, folders, storage scopes, step counts, and step types. Use an empty keyword to list all workflows.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "keyword": {
+              "type": "string",
+              "description": "Case-insensitive keyword, or empty to list all workflows."
+            }
+          },
+          "required": [
+            "keyword"
+          ]
+        }
+      },
+      {
+        "name": "workflowRun",
+        "displayName": "Run Workflow",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "workflowRun",
+        "modelDescription": "Run a saved workflow by ID and wait for completion. Returns success, message, and output. Steps run in order and stop at the first failure. SSH assets must allow AI access.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Workflow ID returned by workflowSearch or workflowUpsert."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      {
         "name": "workflowUpsert",
         "displayName": "Create or Update Workflow",
         "canBeReferencedInPrompt": true,
@@ -397,6 +435,120 @@
             "folderId": {
               "type": "string",
               "description": "Optional destination folder ID for new workflows. Ignored when updating."
+            },
+            "storageScope": {
+              "type": "string",
+              "enum": [
+                "global",
+                "workspace"
+              ],
+              "description": "Storage location. Omit to use global for new workflows or preserve the existing location when updating. Specifying a different location moves the workflow. Workspace storage requires an open workspace folder."
+            },
+            "description": {
+              "type": "string",
+              "description": "Workflow description. Omit to preserve the existing description; use an empty string to clear it."
+            },
+            "environment": {
+              "type": "array",
+              "description": "Variable definitions for the workflow run form. Omit to preserve existing variables; use [] to clear them. Provided arrays replace all variables. Commands and paths reference values with ${env:NAME}.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                    "description": "Variable name, unique ignoring case."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Display label; may be empty."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "input",
+                      "checkbox",
+                      "select"
+                    ]
+                  },
+                  "defaultValue": {
+                    "type": [
+                      "string",
+                      "boolean"
+                    ],
+                    "description": "Boolean for checkbox; string for input or select. Select defaults must match an option value."
+                  },
+                  "options": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Required for select variables. Values must be unique and non-empty; labels must be non-empty.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "label"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "label",
+                  "type",
+                  "defaultValue"
+                ],
+                "oneOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "input"
+                        ]
+                      },
+                      "defaultValue": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "checkbox"
+                        ]
+                      },
+                      "defaultValue": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "select"
+                        ]
+                      },
+                      "defaultValue": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "options"
+                    ]
+                  }
+                ]
+              }
             },
             "steps": {
               "type": "array",
@@ -1261,6 +1413,8 @@
     "onLanguageModelTool:sftpTransfer",
     "onLanguageModelTool:sqlExecute",
     "onLanguageModelTool:sshExecute",
+    "onLanguageModelTool:workflowRun",
+    "onLanguageModelTool:workflowSearch",
     "onStartupFinished"
   ],
   "extensionKind": [

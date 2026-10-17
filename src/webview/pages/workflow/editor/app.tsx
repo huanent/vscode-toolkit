@@ -134,7 +134,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           onChange={setActiveTabId}
           ariaLabel="Workflow sections"
           placement="left"
-          className="mt-2 min-w-0 flex-1"
+          className="mt-2 min-w-0"
         >
           <TabPanel tabId="general" keepMounted className="p-4 md:p-6">
             <div data-workflow-section="general" className="mx-auto grid w-full max-w-3xl gap-5">
