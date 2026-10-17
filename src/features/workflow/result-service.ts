@@ -23,7 +23,9 @@ export class WorkflowResultService {
   public async runWorkflow(name: string, workflow: WorkflowDefinition): Promise<void> {
     const values = await this.prepareEnvironment(name, workflow);
     if (!values) return;
-    await this.startWorkflowTask(name, workflow, (signal) => runWorkflow(workflow, this.ssh, signal, values));
+    await this.startWorkflowTask(name, workflow, (signal, updateOutput) =>
+      runWorkflow(workflow, this.ssh, signal, values, updateOutput),
+    );
   }
 
   public async runWorkflowAndWait(
@@ -40,9 +42,9 @@ export class WorkflowResultService {
       resolveOutcome = resolve;
       rejectOutcome = reject;
     });
-    const taskId = await this.startWorkflowTask(name, workflow, async (signal) => {
+    const taskId = await this.startWorkflowTask(name, workflow, async (signal, updateOutput) => {
       try {
-        const result = await runWorkflow(workflow, this.ssh, signal, values);
+        const result = await runWorkflow(workflow, this.ssh, signal, values, updateOutput);
         resolveOutcome(result);
         return result;
       } catch (error) {
@@ -73,7 +75,7 @@ export class WorkflowResultService {
   private async startWorkflowTask(
     name: string,
     workflow: WorkflowDefinition,
-    run: (signal: AbortSignal) => Promise<WorkflowRunOutcome>,
+    run: (signal: AbortSignal, updateOutput: (output: WorkflowRunOutcome) => void) => Promise<WorkflowRunOutcome>,
   ): Promise<string> {
     await vscode.commands.executeCommand('toolkit.result.focus');
     return this.tasks.startTask<{ name: string; workflow: WorkflowDefinition }, WorkflowRunOutcome>({

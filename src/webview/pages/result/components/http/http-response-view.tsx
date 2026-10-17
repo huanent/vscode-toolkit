@@ -24,7 +24,7 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
 
   return (
     <div className="flex min-w-0 flex-col h-full">
-      <div className="shrink-0 flex items-center gap-2 px-4">
+      <div className="shrink-0 flex items-center gap-2 px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 ">
           <span className="shrink-0 font-mono font-semibold">{response.request.method}</span>
           <span className="min-w-0 truncate font-mono select-text" title={response.request.url}>

@@ -1,7 +1,13 @@
 import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
 import { CommandOutput } from '@/host/utils/command-output';
-import type { WorkflowDefinition, WorkflowEnvironmentValues, WorkflowRunOutcome, WorkflowStep } from './protocol';
+import type {
+  WorkflowDefinition,
+  WorkflowEnvironmentValues,
+  WorkflowRunOutcome,
+  WorkflowStep,
+  WorkflowStepResult,
+} from './protocol';
 import { resolveWorkflowPlaceholders } from './placeholders';
 import type { SshService } from '@/features/ssh/ssh-service';
 import { isWorkflowDefinition } from './service';
@@ -35,44 +41,72 @@ export async function runWorkflow(
   ssh: SshService,
   signal: AbortSignal,
   values: WorkflowEnvironmentValues = {},
+  onUpdate?: (outcome: WorkflowRunOutcome) => void,
 ): Promise<WorkflowRunOutcome> {
   const outputs: string[] = [];
+  const steps: WorkflowStepResult[] = workflow.steps.map(() => ({ status: 'pending' }));
+  const snapshot = (success: boolean, message: string): WorkflowRunOutcome => ({
+    success,
+    message,
+    output: outputs.join('\n\n'),
+    steps: steps.map((step) => ({ ...step })),
+  });
+  const stop = (index: number, message: string): WorkflowRunOutcome => {
+    for (const step of steps.slice(index + 1)) step.status = 'skipped';
+    return snapshot(false, `Workflow stopped at step ${index + 1}: ${message}`);
+  };
   const environment = { ...process.env, ...values };
+  onUpdate?.(snapshot(false, 'Preparing workflow...'));
   for (const [index, step] of workflow.steps.entries()) {
+    const current = steps[index]!;
     if (signal.aborted) {
-      return {
-        success: false,
-        message: `Workflow stopped at step ${index + 1}: Task was terminated.`,
-        output: outputs.join('\n\n'),
-      };
+      current.status = 'cancelled';
+      return stop(index, 'Task was terminated.');
     }
+    current.status = 'running';
+    current.startedAt = Date.now();
+    const publish = () => onUpdate?.(snapshot(false, `Running step ${index + 1} of ${steps.length}`));
+    publish();
+    const liveOutput = new CommandOutput();
     let result: WorkflowRunOutcome;
     try {
-      result = await runStep(step, ssh, signal, environment);
+      result = await runStep(
+        step,
+        ssh,
+        signal,
+        environment,
+        (data) => {
+          liveOutput.append(data);
+          current.output = liveOutput.toString();
+          publish();
+        },
+        (transferredBytes, totalBytes) => {
+          current.transferredBytes = transferredBytes;
+          current.totalBytes = totalBytes;
+          publish();
+        },
+      );
       signal.throwIfAborted();
     } catch (error) {
       const message = signal.aborted ? 'Task was terminated.' : error instanceof Error ? error.message : String(error);
-      return {
-        success: false,
-        message: `Workflow stopped at step ${index + 1}: ${message}`,
-        output: outputs.join('\n\n'),
-      };
+      current.status = signal.aborted ? 'cancelled' : 'failed';
+      current.message = message;
+      current.finishedAt = Date.now();
+      outputs.push([`Step ${index + 1}: ${message}`, current.output].filter(Boolean).join('\n'));
+      return stop(index, message);
     }
+    current.status = result.success ? 'completed' : 'failed';
+    current.message = result.message;
+    current.output ??= result.output;
+    current.finishedAt = Date.now();
     outputs.push([`Step ${index + 1}: ${result.message}`, result.output].filter(Boolean).join('\n'));
     if (!result.success) {
-      return {
-        success: false,
-        message: `Workflow stopped at step ${index + 1}: ${result.message}`,
-        output: outputs.join('\n\n'),
-      };
+      return stop(index, result.message);
     }
+    publish();
   }
 
-  return {
-    success: true,
-    message: `Workflow completed (${workflow.steps.length} steps).`,
-    output: outputs.join('\n\n'),
-  };
+  return snapshot(true, `Workflow completed (${workflow.steps.length} steps).`);
 }
 
 async function runStep(
@@ -80,6 +114,8 @@ async function runStep(
   ssh: SshService,
   signal: AbortSignal,
   environment: NodeJS.ProcessEnv,
+  onOutput: (data: Buffer) => void,
+  onProgress: (transferredBytes: number, totalBytes: number) => void,
 ): Promise<WorkflowRunOutcome> {
   if (step.type === 'local-command') {
     const cwd = step.cwd?.trim()
@@ -90,6 +126,7 @@ async function runStep(
       cwd,
       signal,
       environment,
+      onOutput,
     );
     return {
       success: result.exitCode === 0,
@@ -105,11 +142,17 @@ async function runStep(
       resolveWorkflowPlaceholders(step.localPath, environment),
       resolveWorkflowPlaceholders(step.remotePath, environment),
       signal,
+      onProgress,
     );
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
-  const result = await ssh.runCommand(step.assetId, resolveWorkflowPlaceholders(step.command, environment), signal);
+  const result = await ssh.runCommand(
+    step.assetId,
+    resolveWorkflowPlaceholders(step.command, environment),
+    signal,
+    onOutput,
+  );
   return {
     success: result.exitCode === 0,
     message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,
@@ -122,12 +165,17 @@ function runLocalCommand(
   cwd: string,
   signal: AbortSignal,
   environment: NodeJS.ProcessEnv,
+  onOutput: (data: Buffer) => void,
 ): Promise<{ exitCode: number | null; output: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, { cwd, shell: true, windowsHide: true, signal, env: environment });
     const output = new CommandOutput();
-    child.stdout.on('data', (data: Buffer) => output.append(data));
-    child.stderr.on('data', (data: Buffer) => output.append(data));
+    const append = (data: Buffer) => {
+      output.append(data);
+      onOutput(data);
+    };
+    child.stdout.on('data', append);
+    child.stderr.on('data', append);
     child.once('error', reject);
     child.once('close', (exitCode) => resolve({ exitCode, output: output.toString().trim() }));
   });

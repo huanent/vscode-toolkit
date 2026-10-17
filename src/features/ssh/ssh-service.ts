@@ -68,6 +68,7 @@ export class SshService implements AssetProvider {
     assetId: string,
     command: string,
     signal?: AbortSignal,
+    onOutput?: (data: Buffer) => void,
   ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
     return this.withSession(assetId, signal, (session, resolve, reject) => {
@@ -79,8 +80,14 @@ export class SshService implements AssetProvider {
         }
         const stdout = new CommandOutput();
         const stderr = new CommandOutput();
-        channel.on('data', (data: Buffer) => stdout.append(data));
-        channel.stderr.on('data', (data: Buffer) => stderr.append(data));
+        channel.on('data', (data: Buffer) => {
+          stdout.append(data);
+          onOutput?.(data);
+        });
+        channel.stderr.on('data', (data: Buffer) => {
+          stderr.append(data);
+          onOutput?.(data);
+        });
         channel.once('error', reject);
         channel.on('close', (exitCode: number | undefined) => {
           resolve({ stdout: stdout.toString(), stderr: stderr.toString(), exitCode });
@@ -95,6 +102,7 @@ export class SshService implements AssetProvider {
     localPath: string,
     remotePath: string,
     signal?: AbortSignal,
+    onProgress?: (transferredBytes: number, totalBytes: number) => void,
   ): Promise<void> {
     if (!localPath.trim() || !remotePath.trim()) throw new Error('Enter both local and remote file paths.');
     await this.withSession<void>(assetId, signal, (session, resolve, reject) => {
@@ -109,8 +117,9 @@ export class SshService implements AssetProvider {
           else resolve();
         };
         sftp.once('error', reject);
-        if (direction === 'upload') sftp.fastPut(localPath, remotePath, complete);
-        else sftp.fastGet(remotePath, localPath, complete);
+        const options = { step: (total: number, _chunk: number, size: number) => onProgress?.(total, size) };
+        if (direction === 'upload') sftp.fastPut(localPath, remotePath, options, complete);
+        else sftp.fastGet(remotePath, localPath, options, complete);
       });
     });
   }

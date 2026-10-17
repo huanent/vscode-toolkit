@@ -6,7 +6,7 @@ export interface ResultTaskDefinition<TInput, TOutput> {
   kind: string;
   title: string;
   input?: TInput;
-  run: (signal: AbortSignal) => Promise<TOutput>;
+  run: (signal: AbortSignal, updateOutput: (output: TOutput) => void) => Promise<TOutput>;
   getCompletion?: (output: TOutput) => { status: 'completed' | 'failed'; error?: string };
 }
 
@@ -165,12 +165,21 @@ export class ResultTaskService {
 
   private async executeTask<TOutput>(
     task: ResultTask,
-    run: (signal: AbortSignal) => Promise<TOutput>,
+    run: ResultTaskDefinition<unknown, TOutput>['run'],
     controller: AbortController,
     getCompletion?: ResultTaskDefinition<unknown, TOutput>['getCompletion'],
   ): Promise<void> {
+    let publishTimer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const output = await run(controller.signal);
+      const output = await run(controller.signal, (output) => {
+        const currentTask = this.tasks.get(task.id);
+        if (this.disposed || !currentTask || currentTask.status !== 'running') return;
+        this.tasks.set(task.id, { ...currentTask, output, updatedAt: Date.now() });
+        publishTimer ??= setTimeout(() => {
+          publishTimer = undefined;
+          if (!this.disposed) void this.publish();
+        }, 80);
+      });
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       const completion = getCompletion?.(output) ?? { status: 'completed' as const };
@@ -185,6 +194,7 @@ export class ResultTaskService {
         updatedAt: Date.now(),
       });
     } finally {
+      clearTimeout(publishTimer);
       this.controllers.delete(task.id);
     }
   }

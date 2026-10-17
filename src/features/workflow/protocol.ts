@@ -42,10 +42,21 @@ export interface WorkflowRecord {
   workflow: WorkflowDefinition;
 }
 
+export interface WorkflowStepResult {
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'skipped';
+  output?: string;
+  message?: string;
+  startedAt?: number;
+  finishedAt?: number;
+  transferredBytes?: number;
+  totalBytes?: number;
+}
+
 export interface WorkflowRunOutcome {
   success: boolean;
   message: string;
   output?: string;
+  steps?: WorkflowStepResult[];
 }
 
 export interface WorkflowFolderRecord {
