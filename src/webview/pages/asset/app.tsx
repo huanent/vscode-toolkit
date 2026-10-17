@@ -82,7 +82,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   ];
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl text-(--vscode-foreground)">
+    <main className="mx-auto min-h-screen w-full max-w-4xl text-(--vscode-foreground)">
       <Form
         className="flex min-h-screen flex-col"
         onInvalidCapture={(event) => {
@@ -118,7 +118,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             onChange={setActiveTabId}
             ariaLabel="Asset settings"
             placement="left"
-            className="min-w-0 flex-1"
+            className="min-w-0 flex-1 mt-2"
           >
             {tabs.map((tab) => (
               <TabPanel key={tab.id} tabId={tab.id} keepMounted className="p-4 md:p-6">
