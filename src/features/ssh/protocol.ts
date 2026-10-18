@@ -31,7 +31,7 @@ export interface SftpEditorData {
   name: string;
   local: SftpDirectory;
   remote?: SftpDirectory;
-  busy: boolean;
+  busy: Record<SftpSide, boolean>;
   favorites: Record<SftpSide, string[]>;
   error?: string;
 }

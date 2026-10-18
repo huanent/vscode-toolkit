@@ -26,27 +26,29 @@ function App() {
           {(state.data.error || state.error) && (
             <ErrorMessage message={state.data.error ?? state.error!} className="shrink-0" />
           )}
-          <div className="relative flex min-h-0 flex-1" aria-busy={state.data.busy}>
-            <div className="flex min-h-0 flex-1 overflow-x-auto" inert={state.data.busy}>
-              <FilePane
-                side="local"
-                directory={state.data.local}
-                busy={state.data.busy}
-                favorites={state.data.favorites.local}
-              />
-              <FilePane
-                side="remote"
-                directory={state.data.remote}
-                busy={state.data.busy}
-                favorites={state.data.favorites.remote}
-              />
-            </div>
-            {state.data.busy && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <div className="absolute inset-0 bg-(--vscode-editor-background) opacity-60" />
-                <Loading label="Loading files..." className="relative" />
+          <div className="flex min-h-0 flex-1 overflow-x-auto">
+            {(['local', 'remote'] as const).map((side) => (
+              <div
+                key={side}
+                className="relative flex min-h-0 min-w-72 flex-1 basis-0 border-r border-(--vscode-panel-border) last:border-r-0"
+                aria-busy={state.data.busy[side]}
+              >
+                <div className="flex min-h-0 min-w-0 flex-1" inert={state.data.busy[side]}>
+                  <FilePane
+                    side={side}
+                    directory={state.data[side]}
+                    busy={state.data.busy[side]}
+                    favorites={state.data.favorites[side]}
+                  />
+                </div>
+                {state.data.busy[side] && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-(--vscode-editor-background) opacity-60" />
+                    <Loading label="Loading files..." className="relative" />
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
         </>
       )}

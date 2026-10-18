@@ -61,7 +61,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       const files = new SftpFileService(ssh, asset.id, cancellation.signal);
       const history: Record<SftpSide, string[]> = { local: [], remote: [] };
       let data: SftpEditorData | undefined;
-      let busy = false;
+      const busy: Record<SftpSide, boolean> = { local: false, remote: false };
       let disposed = false;
       const readFavorites = async () => {
         const current = (await assets.get(asset.id)) as SshConnectionConfiguration;
@@ -76,12 +76,12 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           if (!disposed) await panel.webview.postMessage({ type: 'loaded', data: { ...data, busy } });
         }
       };
-      const refresh = async () => {
+      const refresh = async (sides: SftpSide[]) => {
         if (!data) return;
-        const local = await files.list('local', data.local.path);
-        data.local = { ...local, canGoBack: history.local.length > 0 };
-        const remote = await files.list('remote', data.remote?.path);
-        data.remote = { ...remote, canGoBack: history.remote.length > 0 };
+        for (const side of sides) {
+          const directory = await files.list(side, data[side]?.path);
+          data[side] = { ...directory, canGoBack: history[side].length > 0 };
+        }
       };
       const bridge = serveWebviewData<SftpEditorData>(panel.webview, async () => {
         if (data) return { ...data, busy };
@@ -89,8 +89,8 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           'local',
           vscode.workspace.workspaceFolders?.find((folder) => folder.uri.scheme === 'file')?.uri.fsPath,
         );
-        data = { name: asset.name, local, busy: true, favorites: await readFavorites() };
-        busy = true;
+        busy.remote = true;
+        data = { name: asset.name, local, busy, favorites: await readFavorites() };
         void files
           .list('remote')
           .then((remote) => {
@@ -100,7 +100,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
             if (data) data.error = error instanceof Error ? error.message : String(error);
           })
           .finally(() => {
-            busy = false;
+            busy.remote = false;
             void publish();
           });
         return data;
@@ -108,7 +108,6 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       const handleRequest = async (request: SftpRequest) => {
         if (
           !data ||
-          busy ||
           !request ||
           typeof request !== 'object' ||
           !['toggleFavorite', 'navigate', 'back', 'refresh', 'create', 'rename', 'delete', 'open', 'transfer'].includes(
@@ -117,7 +116,10 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
         )
           return;
         if ('side' in request && request.side !== 'local' && request.side !== 'remote') return;
-        busy = true;
+        const sides: SftpSide[] =
+          request.type === 'refresh' || request.type === 'transfer' ? ['local', 'remote'] : [request.side];
+        if (sides.some((side) => busy[side])) return;
+        for (const side of sides) busy[side] = true;
         data.error = undefined;
         await publish();
         try {
@@ -139,7 +141,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
             return;
           }
           if (request.type === 'refresh') {
-            await refresh();
+            await refresh(sides);
             return;
           }
           const side = request.side;
@@ -205,11 +207,11 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
               );
             }
           }
-          await refresh();
+          await refresh(sides);
         } catch (error) {
           data.error = error instanceof Error ? error.message : String(error);
         } finally {
-          busy = false;
+          for (const side of sides) busy[side] = false;
           await publish();
         }
       };
