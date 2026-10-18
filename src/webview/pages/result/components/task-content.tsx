@@ -1,8 +1,10 @@
 import type { ComponentType } from 'react';
+import { Button } from '@/webview/components/ui/button';
 import { Empty } from '@/webview/components/ui/empty';
 import { Loading } from '@/webview/components/ui/loading';
 import { Icon } from '@/webview/components/ui/icons';
-import type { ResultTask } from '@/features/result/protocol';
+import type { ResultTask, ResultWebviewMessage } from '@/features/result/protocol';
+import { postToHost } from '@/webview/utils/host-data';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
 import { WorkflowTaskResult } from './workflow/workflow-task-result';
@@ -73,6 +75,17 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
           <time dateTime={new Date(task.createdAt).toISOString()}>{new Date(task.createdAt).toLocaleString()}</time>
           {task.status !== 'running' && (
             <span className="font-mono tabular-nums">{formatTaskDuration(task.updatedAt - task.createdAt)}</span>
+          )}
+          {task.status === 'running' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              title="Terminate task"
+              aria-label={`Terminate ${task.title}`}
+              prefix={<Icon name="debug-stop" />}
+              onClick={() => postToHost({ type: 'terminateTask', taskId: task.id } satisfies ResultWebviewMessage)}
+            />
           )}
         </footer>
       </div>
