@@ -1505,6 +1505,7 @@
   },
   "activationEvents": [
     "onDebugAdapterProtocolTracker",
+    "onFileSystem:toolkit-sftp",
     "onFileSystem:toolkit-temp",
     "onLanguageModelTool:assetsSearch",
     "onLanguageModelTool:httpClientExecute",

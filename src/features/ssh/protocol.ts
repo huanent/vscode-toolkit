@@ -16,6 +16,7 @@ export interface SftpEntry {
   name: string;
   type: 'file' | 'directory';
   size?: number;
+  mode?: number;
   modifiedAt: number;
   symbolicLink: boolean;
 }

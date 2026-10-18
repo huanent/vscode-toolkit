@@ -6,6 +6,8 @@ import type { SFTPWrapper } from 'ssh2';
 import * as vscode from 'vscode';
 import type { SshService } from '@/features/ssh/ssh-service';
 import type { SftpDirectory, SftpEntry, SftpSide } from '@/features/ssh/protocol';
+import { createSftpFileUri } from './file-system';
+import { stagedUpload } from './staged-upload';
 
 export class SftpFileService {
   constructor(
@@ -35,6 +37,7 @@ export class SftpFileService {
                 name: entry.name,
                 type: stat.isDirectory() ? 'directory' : 'file',
                 size: stat.isFile() ? stat.size : undefined,
+                mode: stat.mode,
                 modifiedAt: stat.mtimeMs,
                 symbolicLink: entry.isSymbolicLink(),
               } satisfies SftpEntry;
@@ -63,6 +66,7 @@ export class SftpFileService {
               name: entry.filename,
               type: stat.isDirectory() ? 'directory' : 'file',
               size: stat.isFile() ? stat.size : undefined,
+              mode: stat.mode,
               modifiedAt: stat.mtime * 1000,
               symbolicLink,
             };
@@ -125,14 +129,8 @@ export class SftpFileService {
       await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path));
       return;
     }
-    const content = await this.remote(async (sftp) => {
-      const stat = await promisify(sftp.stat.bind(sftp))(path);
-      if (stat.size > 10 * 1024 * 1024) throw new Error('Download files larger than 10 MB to open them locally.');
-      const buffer = await promisify(sftp.readFile.bind(sftp))(path);
-      if (buffer.includes(0)) throw new Error('Download binary files to open them locally.');
-      return buffer.toString('utf8');
-    });
-    const document = await vscode.workspace.openTextDocument({ content });
+    const resolved = await this.remote((sftp) => promisify(sftp.realpath.bind(sftp))(path));
+    const document = await vscode.workspace.openTextDocument(createSftpFileUri(this.assetId, resolved));
     await vscode.window.showTextDocument(document, { preview: true });
   }
 
@@ -181,7 +179,10 @@ export class SftpFileService {
           } catch (error) {
             if (!isMissing(error)) throw error;
           }
-          if (side === 'local') await promisify(sftp.fastPut.bind(sftp))(local, remote);
+          if (side === 'local')
+            await stagedUpload(sftp, remote, (temporaryPath) =>
+              promisify(sftp.fastPut.bind(sftp))(local, temporaryPath),
+            );
           else await promisify(sftp.fastGet.bind(sftp))(remote, local);
         }
       };

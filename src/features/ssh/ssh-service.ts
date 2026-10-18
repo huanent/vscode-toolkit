@@ -8,6 +8,7 @@ import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
 import { CommandOutput } from '@/host/utils/command-output';
+import { stagedUpload } from './sftp/staged-upload';
 
 interface SshClientSession {
   client: Client;
@@ -118,7 +119,17 @@ export class SshService implements AssetProvider {
         };
         sftp.once('error', reject);
         const options = { step: (total: number, _chunk: number, size: number) => onProgress?.(total, size) };
-        if (direction === 'upload') sftp.fastPut(localPath, remotePath, options, complete);
+        if (direction === 'upload')
+          void stagedUpload(
+            sftp,
+            remotePath,
+            (temporaryPath) =>
+              new Promise<void>((resolveUpload, rejectUpload) => {
+                sftp.fastPut(localPath, temporaryPath, options, (uploadError) =>
+                  uploadError ? rejectUpload(uploadError) : resolveUpload(),
+                );
+              }),
+          ).then(() => resolve(), reject);
         else sftp.fastGet(remotePath, localPath, options, complete);
       });
     });

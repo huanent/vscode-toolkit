@@ -6,9 +6,11 @@ import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
 import { formatTabTitle } from '@/shared/tab-title';
 import { SftpFileService } from './file-service';
+import { registerSftpFileSystem } from './file-system';
 import type { SftpEditorData, SftpRequest, SftpSide, SshConnectionConfiguration } from '@/features/ssh/protocol';
 
 export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshService, assets: AssetService): void {
+  registerSftpFileSystem(context, ssh);
   const panels = new Map<string, vscode.WebviewPanel>();
   const handlers = new Map<string, (request: SftpRequest) => Promise<void>>();
   for (const action of ['upload', 'download', 'rename', 'delete'] as const) {
