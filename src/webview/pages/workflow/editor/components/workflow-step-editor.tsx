@@ -18,7 +18,7 @@ type WorkflowStepEditorProps = {
 export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange }: WorkflowStepEditorProps) {
   const sshHosts = hosts.filter((host) => host.type === 'ssh');
   return (
-    <div className="grid gap-5">
+    <div className="grid">
       <FormItem name={`steps.${index}.type`} label="Operation">
         <Select
           ariaLabel="Operation"
@@ -29,7 +29,19 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
       </FormItem>
 
       {step.type !== 'local-command' && (
-        <FormItem name={`steps.${index}.assetId`} label="SSH host">
+        <FormItem
+          name={`steps.${index}.assetId`}
+          label="SSH host"
+          invalid={!sshHosts.some((host) => host.id === step.assetId)}
+          error={
+            !sshHosts.some((host) => host.id === step.assetId)
+              ? sshHosts.length
+                ? 'Select an available SSH host.'
+                : 'No SSH hosts available.'
+              : undefined
+          }
+          match={true}
+        >
           <AssetSelect
             ariaLabel="SSH host"
             value={step.assetId}
@@ -38,11 +50,6 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
             assets={hosts}
             filter={(asset) => asset.type === 'ssh'}
           />
-          {!sshHosts.some((host) => host.id === step.assetId) && (
-            <p role="status" className="text-(--vscode-editorWarning-foreground)">
-              {sshHosts.length ? 'Select an available SSH host.' : 'No SSH hosts available.'}
-            </p>
-          )}
         </FormItem>
       )}
 
@@ -50,7 +57,10 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
         <FormItem
           name={`steps.${index}.command`}
           label={step.type === 'local-command' ? 'Command' : 'Remote command'}
-          control={{ value: step.command, onValueChange: (command) => onChange({ ...step, command }) }}
+          invalid={!step.command.trim()}
+          error={!step.command.trim() ? 'Command is required.' : undefined}
+          match={true}
+          control={{ value: step.command, onValueChange: (command) => onChange({ ...step, command }), required: true }}
         >
           <Textarea
             className="min-h-48 font-mono"
@@ -82,8 +92,15 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
               options={directionOptions}
             />
           </FormItem>
-          <FormItem name={`steps.${index}.localPath`} label="Local file path">
+          <FormItem
+            name={`steps.${index}.localPath`}
+            label="Local file path"
+            invalid={!step.localPath.trim()}
+            error={!step.localPath.trim() ? 'Local file path is required.' : undefined}
+            match={true}
+          >
             <Input
+              required
               value={step.localPath}
               onChange={(event) => onChange({ ...step, localPath: event.target.value })}
               placeholder="/path/to/file"
@@ -91,8 +108,15 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
               spellCheck={false}
             />
           </FormItem>
-          <FormItem name={`steps.${index}.remotePath`} label="Remote file path">
+          <FormItem
+            name={`steps.${index}.remotePath`}
+            label="Remote file path"
+            invalid={!step.remotePath.trim()}
+            error={!step.remotePath.trim() ? 'Remote file path is required.' : undefined}
+            match={true}
+          >
             <Input
+              required
               value={step.remotePath}
               onChange={(event) => onChange({ ...step, remotePath: event.target.value })}
               placeholder="/srv/files/file"

@@ -25,7 +25,7 @@ export function GeneralPanel({ values, onChange }: GeneralPanelProps) {
       <FormItem name="enableAI" label="Allow AI tool access">
         <Checkbox checked={values.enableAI} onCheckedChange={(enableAI) => onChange({ enableAI })} />
       </FormItem>
-      <FormItem name="description" label="Description (optional)">
+      <FormItem name="description" label="Description">
         <Textarea
           rows={3}
           value={values.description}

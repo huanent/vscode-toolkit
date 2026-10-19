@@ -101,7 +101,13 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           if (section?.dataset.workflowSection) setActiveTabId(section.dataset.workflowSection);
         }}
         onFormSubmit={() => {
-          if (!name.trim() || !steps.length || !validEnvironment) return;
+          if (
+            !name.trim() ||
+            !steps.length ||
+            !validEnvironment ||
+            !steps.every((item) => isStepComplete(item.step, sshHosts))
+          )
+            return;
           postToHost({
             type: 'saveWorkflow',
             name,
@@ -138,7 +144,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           className="mt-2 min-w-0"
         >
           <TabPanel tabId="general" keepMounted className="p-4 md:p-6">
-            <div data-workflow-section="general" className="mx-auto grid w-full max-w-3xl gap-5">
+            <div data-workflow-section="general" className="mx-auto grid w-full max-w-3xl">
               <FormItem name="name" label="Name" error="Workflow name is required." match="valueMissing">
                 <Input
                   aria-label="Workflow name"
@@ -149,18 +155,17 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                   autoFocus
                 />
               </FormItem>
-              <FormItem name="description" label="Description (optional)">
+              <FormItem name="description" label="Description">
                 <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
               </FormItem>
             </div>
           </TabPanel>
           <TabPanel tabId="steps" keepMounted className="p-4 md:p-6">
             <div data-workflow-section="steps" className="mx-auto grid w-full max-w-3xl gap-5">
-              <div className="flex min-w-0 flex-col gap-3">
+              <div className="flex min-w-0 flex-col">
                 {steps.map((item, index) => (
                   <Collapsible
                     key={item.id}
-                    defaultOpen
                     title={
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="shrink-0">{index + 1}</span>
@@ -168,15 +173,9 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                         <span className="hidden min-w-0 flex-1 truncate text-xs font-normal text-(--vscode-descriptionForeground) sm:block">
                           {describeStep(item.step, sshHosts)}
                         </span>
-                        {!isStepComplete(item.step, sshHosts) && (
-                          <span title="Incomplete" aria-label="Incomplete">
-                            <Icon name="warning" size="sm" />
-                          </span>
-                        )}
                       </div>
                     }
-                  >
-                    <div className="grid min-w-0 gap-3 pb-3">
+                    actions={
                       <div role="group" aria-label={`Step ${index + 1} actions`} className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
@@ -213,6 +212,9 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                           onClick={() => setSteps(steps.filter((current) => current.id !== item.id))}
                         />
                       </div>
+                    }
+                  >
+                    <div className="grid min-w-0 gap-2 pb-2">
                       <WorkflowStepEditor
                         index={index}
                         step={item.step}

@@ -122,7 +122,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           >
             {tabs.map((tab) => (
               <TabPanel key={tab.id} tabId={tab.id} keepMounted className="p-4 md:p-6">
-                <div data-asset-section={tab.id} className="mx-auto grid w-full max-w-3xl gap-5">
+                <div data-asset-section={tab.id} className="mx-auto grid w-full max-w-3xl">
                   {tab.panel}
                 </div>
               </TabPanel>

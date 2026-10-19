@@ -38,6 +38,7 @@ export function WorkflowEnvironmentFields({
       <FormItem
         name={`environment.${index}.name`}
         label="Variable name"
+        invalid={!validName || duplicate}
         match={true}
         error={
           !validName
@@ -51,7 +52,6 @@ export function WorkflowEnvironmentFields({
           value={draft.name}
           required
           pattern="[A-Za-z_][A-Za-z0-9_]*"
-          aria-invalid={!validName || duplicate}
           onChange={(event) => setDraft({ ...draft, name: event.target.value })}
         />
       </FormItem>
