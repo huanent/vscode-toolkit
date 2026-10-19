@@ -16,11 +16,9 @@ type DataColumn = {
 type DataTableProps = {
   table: DatabaseTable;
   filters: Record<string, string>;
-  hasActiveFilters: boolean;
   disabled: boolean;
   mutationPending: boolean;
   onFilterChange: (name: string, value: string) => void;
-  onClearFilters: () => void;
   onEdit: (original: Record<string, DatabaseCellValue>) => void;
   onDelete: (original: Record<string, DatabaseCellValue>) => void;
 };
@@ -28,11 +26,9 @@ type DataTableProps = {
 export function DataTable({
   table,
   filters,
-  hasActiveFilters,
   disabled,
   mutationPending,
   onFilterChange,
-  onClearFilters,
   onEdit,
   onDelete,
 }: DataTableProps) {
@@ -161,21 +157,6 @@ export function DataTable({
               ))}
             </tr>
           ))}
-          {!table.rows.length && (
-            <tr>
-              <td colSpan={columns.length} className="h-14 px-2 text-center text-(--vscode-descriptionForeground)">
-                <div className="flex flex-col items-center gap-2 py-10">
-                  <Icon name={hasActiveFilters ? 'search' : 'table'} size="2xl" variant="muted" />
-                  <span>{hasActiveFilters ? 'No matching rows' : 'This table is empty'}</span>
-                  {hasActiveFilters && (
-                    <Button variant="secondary" onClick={onClearFilters}>
-                      Clear filters
-                    </Button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>

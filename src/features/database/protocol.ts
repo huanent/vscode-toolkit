@@ -37,9 +37,11 @@ export interface DatabaseTable {
   rows: DatabaseCellValue[][];
   filteredRowCount?: number;
   rowCountKnown?: boolean;
+  rowCountCapped?: boolean;
 }
 
 export const databaseTablePageSize = 100;
+export const sqliteOverviewRowCountLimit = 1000;
 
 export type DatabaseTableCounts = Pick<DatabaseTable, 'rowCount' | 'filteredRowCount'>;
 

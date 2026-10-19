@@ -123,11 +123,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           workspaceStorageAvailable={data.workspaceStorageAvailable}
           saveDisabled={!name.trim() || !steps.length || !validEnvironment}
         />
-        {error && (
-          <div role="alert" className="px-4 py-3">
-            <ErrorMessage message={error} />
-          </div>
-        )}
+        {error && <ErrorMessage message={error} />}
         <Tabs
           tabs={[
             { id: 'general', label: 'General' },

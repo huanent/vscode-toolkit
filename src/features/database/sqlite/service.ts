@@ -2,6 +2,8 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { withSqliteFile } from './file-access';
 import { runSqliteOperation } from './process-client';
+import { RemoteSqliteClient } from './remote-client';
+import type { SshService } from '@/features/ssh/ssh-service';
 import type {
   CreateSqliteTableOptions,
   DatabaseDocument,
@@ -14,6 +16,21 @@ import type {
 } from '@/features/database/protocol';
 import { buildSqliteCreateTableStatement } from '@/features/database/sqlite-schema';
 export const sqliteTableScheme = 'toolkit-sqlite-table';
+let remoteClient: RemoteSqliteClient | undefined;
+
+export function registerRemoteSqlite(ssh: SshService): vscode.Disposable {
+  const client = new RemoteSqliteClient(ssh);
+  remoteClient = client;
+  return new vscode.Disposable(() => {
+    if (remoteClient === client) remoteClient = undefined;
+  });
+}
+
+function remote(uri: vscode.Uri): RemoteSqliteClient | undefined {
+  if (uri.scheme !== 'toolkit-sftp') return undefined;
+  if (!remoteClient) throw new Error('Remote SQLite is not available.');
+  return remoteClient;
+}
 
 export function validateSqliteUri(uri: vscode.Uri): void {
   if (!['.db', '.sqlite'].includes(path.posix.extname(uri.path).toLowerCase())) {
@@ -23,6 +40,8 @@ export function validateSqliteUri(uri: vscode.Uri): void {
 
 export async function readSqliteDatabase(uri: vscode.Uri): Promise<DatabaseDocument> {
   validateSqliteUri(uri);
+  const client = remote(uri);
+  if (client) return client.readDatabase(uri);
   return withSqliteFile(uri, 'read', (databasePath) => runSqliteOperation('readDatabase', [databasePath]));
 }
 
@@ -38,6 +57,8 @@ export async function readSqliteTable(
   counts?: DatabaseTableCounts,
 ): Promise<DatabaseTable> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
+  const client = remote(databaseUri);
+  if (client) return client.readTable(databaseUri, tableName, filters, counts);
   return withSqliteFile(databaseUri, 'read', (databasePath) =>
     runSqliteOperation('readFilteredTable', [databasePath, tableName, filters, counts]),
   );
@@ -45,6 +66,8 @@ export async function readSqliteTable(
 
 export async function mutateSqliteTableRow(uri: vscode.Uri, mutation: DatabaseRowMutation): Promise<void> {
   const { databaseUri, tableName } = parseSqliteTableUri(uri);
+  const client = remote(databaseUri);
+  if (client) return client.mutateRow(databaseUri, tableName, mutation);
   await withSqliteFile(databaseUri, 'write', (databasePath) =>
     runSqliteOperation('mutateSqliteRow', [databasePath, tableName, mutation]),
   );
@@ -61,6 +84,8 @@ export async function executeSqliteQuery(
 ): Promise<DatabaseQueryResult> {
   validateSqliteUri(uri);
   if (!sql.trim()) throw new Error('SQL query is empty.');
+  const client = remote(uri);
+  if (client) return client.query(uri, sql, signal);
   return withSqliteFile(uri, 'write', (databasePath) =>
     runSqliteOperation('runSqliteQuery', [databasePath, sql], signal),
   );
@@ -74,6 +99,8 @@ export async function createSqliteTable(uri: vscode.Uri, options: CreateSqliteTa
 export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {
   validateSqliteUri(uri);
   validateSchemaOptions(options);
+  const client = remote(uri);
+  if (client) return client.updateSchema(uri, options);
   await withSqliteFile(uri, 'write', (databasePath) =>
     runSqliteOperation('applySqliteTableSchema', [databasePath, options]),
   );
@@ -82,6 +109,8 @@ export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSq
 export async function deleteSqliteTable(uri: vscode.Uri, tableName: string): Promise<void> {
   validateSqliteUri(uri);
   if (!tableName.trim()) throw new Error('Table name is required.');
+  const client = remote(uri);
+  if (client) return client.deleteTable(uri, tableName);
   await withSqliteFile(uri, 'write', (databasePath) =>
     runSqliteOperation('applySqliteTableDeletion', [databasePath, tableName]),
   );

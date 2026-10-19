@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import {
   databaseTablePageSize,
+  sqliteOverviewRowCountLimit,
   type DatabaseDocument,
   type DatabaseRowMutation,
   type DatabaseQueryResult,
@@ -259,7 +260,19 @@ function readTable(
   }));
   const columns = allColumns.slice(0, maxPreviewColumns);
   if (schemaOnly) {
-    return { name, rowCount: 0, rowCountKnown: false, columnCount: allColumns.length, columns: allColumns, rows: [] };
+    const rowCount = Number(
+      database
+        .prepare(`SELECT COUNT(*) AS count FROM (SELECT 1 FROM ${quotedName} LIMIT ${sqliteOverviewRowCountLimit})`)
+        .get()?.count ?? 0,
+    );
+    return {
+      name,
+      rowCount,
+      rowCountCapped: rowCount === sqliteOverviewRowCountLimit,
+      columnCount: allColumns.length,
+      columns: allColumns,
+      rows: [],
+    };
   }
   const { where, parameters, active } = buildTableFilter(columns, filters);
   const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';

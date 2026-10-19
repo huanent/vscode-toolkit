@@ -17,7 +17,7 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
       try {
         await action(target);
       } catch (error) {
-        void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+        void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
       }
     });
 

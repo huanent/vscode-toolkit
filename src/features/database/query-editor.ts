@@ -51,6 +51,7 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
       } catch (error) {
         void vscode.window.showErrorMessage(
           `Could not start ${definition.label} query: ${error instanceof Error ? error.message : String(error)}`,
+          { modal: true },
         );
       }
     }),

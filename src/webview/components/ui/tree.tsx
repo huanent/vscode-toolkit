@@ -24,6 +24,7 @@ type TreeProps = {
   onActivate?: (item: TreeFileItem) => void;
   onItemDoubleClick?: (item: TreeFileItem) => void;
   renderActions?: (item: TreeFileItem) => ReactNode;
+  onExpand?: (item: Extract<TreeItem, { type: 'directory' }>) => void;
 };
 
 type TreeNodeModel = {
@@ -45,6 +46,7 @@ export function Tree({
   onActivate,
   onItemDoubleClick,
   renderActions,
+  onExpand,
 }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
@@ -60,6 +62,8 @@ export function Tree({
       : focusedNode.parentKey
     : null;
   const setExpanded = (key: Key, expanded: boolean) => {
+    const item = visibleItems.find((node) => node.key === key)?.item;
+    if (expanded && item?.type === 'directory') onExpand?.(item);
     setExpandedKeys((current) => {
       if (current.has(key) === expanded) return current;
       const next = new Set(current);

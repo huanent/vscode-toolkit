@@ -183,5 +183,5 @@ function validateFolderName(value: string): string | undefined {
 }
 
 function showWorkflowCommandError(error: unknown): void {
-  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
 }

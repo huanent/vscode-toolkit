@@ -23,6 +23,7 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
     tasks.dispose();
     void vscode.window.showErrorMessage(
       `Failed to initialize ResultTaskService: ${error instanceof Error ? error.message : String(error)}`,
+      { modal: true },
     );
   });
   const httpResults = new HttpResultService(tasks);

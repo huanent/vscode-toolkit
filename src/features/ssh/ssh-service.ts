@@ -72,6 +72,7 @@ export class SshService implements AssetProvider {
     command: string,
     signal?: AbortSignal,
     onOutput?: (data: Buffer) => void,
+    input?: string,
   ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
     return this.withSession(assetId, signal, (session, resolve, reject) => {
@@ -95,6 +96,7 @@ export class SshService implements AssetProvider {
         channel.on('close', (exitCode: number | undefined) => {
           resolve({ stdout: stdout.toString(), stderr: stderr.toString(), exitCode });
         });
+        if (input !== undefined) channel.end(input);
       });
     });
   }

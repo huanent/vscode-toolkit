@@ -53,7 +53,9 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
           void Promise.resolve()
             .then(() => onMessage(message, webviewView.webview))
             .catch((error: unknown) => {
-              void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+              void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), {
+                modal: true,
+              });
             });
         }),
       );

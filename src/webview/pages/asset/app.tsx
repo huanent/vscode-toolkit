@@ -107,11 +107,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             saveDisabled={saving}
             saving={saving}
           />
-          {error && (
-            <div role="alert" className="px-4 py-3">
-              <ErrorMessage message={error} />
-            </div>
-          )}
+          {error && <ErrorMessage message={error} />}
           <Tabs
             tabs={tabs}
             activeTabId={activeTabId}

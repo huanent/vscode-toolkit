@@ -68,6 +68,7 @@ export function Dialog({
                   prefix={<Icon name="close" />}
                   aria-label="Close"
                   disabled={pending}
+                  title="Close"
                 />
               }
             />

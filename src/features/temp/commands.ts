@@ -208,5 +208,5 @@ function parseTempTarget(value: unknown): TempContextTarget {
 }
 
 function showTempCommandError(error: unknown): void {
-  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
 }

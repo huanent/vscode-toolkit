@@ -171,7 +171,7 @@ export function createAssetsView(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await activeWebview?.postMessage({ type: 'assetError', message } satisfies AssetsMessage);
-      await vscode.window.showErrorMessage(message);
+      await vscode.window.showErrorMessage(message, { modal: true });
     }
   };
   for (const provider of providers) {
@@ -213,23 +213,23 @@ export function createAssetsView(
     vscode.commands.registerCommand('toolkit.assets.copyAiReference', (argument?: { assetId?: unknown }) => {
       if (typeof argument?.assetId !== 'string') return;
       return copyAiReference(argument.assetId).catch((error: unknown) =>
-        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
       );
     }),
     vscode.commands.registerCommand('toolkit.assets.createFolder', (target: unknown) =>
       createFolder(target).catch((error: unknown) =>
-        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
       ),
     ),
     vscode.commands.registerCommand('toolkit.assets.move', (target: unknown) =>
       moveEntry(target).catch((error: unknown) =>
-        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
       ),
     ),
     vscode.commands.registerCommand('toolkit.assets.rename', (target?: { assetFolderPath?: unknown }) => {
       if (typeof target?.assetFolderPath !== 'string') return;
       return renameFolder(target.assetFolderPath).catch((error: unknown) =>
-        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+        vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
       );
     }),
     vscode.commands.registerCommand(
@@ -246,14 +246,14 @@ export function createAssetsView(
         }
         if (typeof target?.assetFolderPath !== 'string') return;
         return deleteFolder(target.assetFolderPath).catch((error: unknown) =>
-          vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error)),
+          vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
         );
       },
     ),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('toolkit.storagePath')) {
         for (const provider of providers) provider.invalidate();
-        void refresh().catch((error: unknown) => vscode.window.showErrorMessage(String(error)));
+        void refresh().catch((error: unknown) => vscode.window.showErrorMessage(String(error), { modal: true }));
       }
     }),
   );

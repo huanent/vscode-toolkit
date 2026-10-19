@@ -142,7 +142,7 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to switch database: ${errorMessage}`);
+            void vscode.window.showErrorMessage(`Failed to switch database: ${errorMessage}`, { modal: true });
           }
         } else if (isCreateDatabaseMessage(message)) {
           try {
@@ -154,7 +154,7 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: true });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to create database: ${errorMessage}`);
+            void vscode.window.showErrorMessage(`Failed to create database: ${errorMessage}`, { modal: true });
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: false, error: errorMessage });
           }
         } else if (isDeleteDatabaseMessage(message)) {
@@ -170,7 +170,7 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: true });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to delete database: ${errorMessage}`);
+            void vscode.window.showErrorMessage(`Failed to delete database: ${errorMessage}`, { modal: true });
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: false, error: errorMessage });
           }
         } else if (isDeleteTableMessage(message)) {
@@ -189,7 +189,7 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`);
+            void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`, { modal: true });
           }
         } else if (isCreateTableMessage(message)) {
           try {
@@ -216,7 +216,7 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to update schema: ${errorMessage}`);
+            void vscode.window.showErrorMessage(`Failed to update schema: ${errorMessage}`, { modal: true });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
           }
         }

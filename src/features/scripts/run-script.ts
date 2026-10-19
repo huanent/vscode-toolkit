@@ -14,7 +14,7 @@ export async function runScript(
     await runResolvedScript(context, scriptUri, selectedUris);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    void vscode.window.showErrorMessage(message);
+    void vscode.window.showErrorMessage(message, { modal: true });
   }
 }
 
@@ -49,7 +49,7 @@ async function runResolvedScript(
   } else if (extension === '.cs') {
     command = `dotnet run --file ${quoteShellArgument(localScriptUri.fsPath)}`;
   } else {
-    void vscode.window.showErrorMessage('This script type is not supported on the current platform.');
+    void vscode.window.showErrorMessage('This script type is not supported on the current platform.', { modal: true });
     return;
   }
 

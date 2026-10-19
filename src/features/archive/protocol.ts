@@ -4,3 +4,10 @@ export interface ArchiveTreeEntry {
   size: number;
   children?: ArchiveTreeEntry[];
 }
+
+export interface ArchiveChildrenResult {
+  type: 'archiveChildren';
+  path: string;
+  entries?: ArchiveTreeEntry[];
+  error?: string;
+}

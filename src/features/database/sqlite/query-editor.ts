@@ -35,7 +35,7 @@ export function registerSqliteQueryEditor(
     try {
       await submitSqliteQuery(tasks, databaseUri, query);
     } catch (error) {
-      void vscode.window.showErrorMessage(`Could not start SQLite query: ${getErrorMessage(error)}`);
+      void vscode.window.showErrorMessage(`Could not start SQLite query: ${getErrorMessage(error)}`, { modal: true });
     }
   });
   const activeEditorListener = vscode.window.onDidChangeActiveTextEditor((editor) => {

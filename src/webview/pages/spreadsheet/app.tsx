@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { SpreadsheetSheet } from '@/features/spreadsheet/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Loading } from '@/webview/components/ui/loading';
 import { TabPanel, Tabs } from '@/webview/components/ui/tabs';
 import { getRootData, useHostData } from '@/webview/utils/host-data';
@@ -68,9 +69,7 @@ function App() {
       {state.status === 'loading' ? (
         <Loading label="Reading spreadsheet..." />
       ) : (
-        <p className="max-w-lg text-center text-(--vscode-errorForeground)" role="alert">
-          {state.message}
-        </p>
+        <ErrorMessage message={state.message} />
       )}
     </main>
   );

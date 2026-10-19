@@ -2,6 +2,7 @@ import { useState, type ChangeEvent } from 'react';
 import type { DatabaseCellValue, DatabaseRowMutation, DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Dialog } from '@/webview/components/ui/dialog';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Icon } from '@/webview/components/ui/icons';
 import { Input } from '@/webview/components/ui/input';
 import { Select } from '@/webview/components/ui/select';
@@ -64,11 +65,7 @@ export function RowEditor({ table, original, pending, error, onClose, onSave }: 
       }
     >
       <div className="grid gap-4 py-3">
-        {error && (
-          <p role="alert" className="m-0 text-(--vscode-errorForeground)">
-            {error}
-          </p>
-        )}
+        {error && <ErrorMessage message={error} />}
         {table.columns.map((column) => {
           const field = fields[column.name]!;
           const changed = Object.hasOwn(values, column.name);

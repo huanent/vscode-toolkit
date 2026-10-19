@@ -33,12 +33,12 @@ export async function generateGitignore(extensionUri: vscode.Uri): Promise<void>
     () => loadTemplateItems(extensionUri, currentContent, !shouldOverride),
   );
   if (items === undefined) {
-    void vscode.window.showErrorMessage('Unable to load the bundled .gitignore templates.');
+    void vscode.window.showErrorMessage('Unable to load the bundled .gitignore templates.', { modal: true });
     return;
   }
 
   if (items.length === 0) {
-    void vscode.window.showErrorMessage('The .gitignore template service returned an empty list.');
+    void vscode.window.showErrorMessage('The .gitignore template service returned an empty list.', { modal: true });
     return;
   }
 
@@ -57,7 +57,7 @@ export async function generateGitignore(extensionUri: vscode.Uri): Promise<void>
         const selectedTemplates = selected.map((item) => item.label);
         const generated = await generateFromTemplates(extensionUri, selectedTemplates);
         if (generated === undefined) {
-          void vscode.window.showErrorMessage('Unable to read the bundled .gitignore templates.');
+          void vscode.window.showErrorMessage('Unable to read the bundled .gitignore templates.', { modal: true });
           return;
         }
 
@@ -75,7 +75,7 @@ export async function generateGitignore(extensionUri: vscode.Uri): Promise<void>
       },
     );
   } catch {
-    void vscode.window.showErrorMessage(`Unable to save ${fileName}.`);
+    void vscode.window.showErrorMessage(`Unable to save ${fileName}.`, { modal: true });
   }
 }
 

@@ -7,6 +7,8 @@ import { MysqlService } from '@/features/database/mysql/service';
 import { PostgresqlService } from '@/features/database/postgresql/service';
 import { registerPostgresqlQueryEditor } from '@/features/database/postgresql/query-editor';
 import { registerMysqlEditor } from '@/features/database/mysql/editor';
+import { registerRemoteSqlite } from '@/features/database/sqlite/service';
+import { registerRemoteArchive } from '@/features/archive/service';
 import { SshService } from '@/features/ssh/ssh-service';
 import { registerSftpEditor } from '@/features/ssh/sftp/editor';
 import { registerSshTools } from '@/features/ssh/tools';
@@ -41,6 +43,8 @@ export function registerWebviews(
   const assets = new AssetService(context);
   const credentials = new CredentialService(context);
   const ssh = new SshService(assets, credentials, context.globalState);
+  context.subscriptions.push(registerRemoteSqlite(ssh));
+  context.subscriptions.push(registerRemoteArchive(ssh));
   const mysql = new MysqlService(assets, credentials, ssh);
   const postgresql = new PostgresqlService(assets, credentials, ssh, (asset) => openPostgresqlQuery(asset));
   const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
@@ -91,7 +95,7 @@ export function registerWebviews(
       try {
         await Promise.all([assetsView.refresh(), workflowFiles.refresh(), tempFiles.refresh()]);
       } catch (error) {
-        await vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+        await vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
       }
     }),
     vscode.commands.registerCommand('toolkit.dashboard.collapseAll', () => {

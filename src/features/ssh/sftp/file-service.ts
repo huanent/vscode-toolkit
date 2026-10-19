@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { basename, dirname, join, posix, resolve } from 'node:path';
+import { basename, dirname, extname, join, posix, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { SFTPWrapper } from 'ssh2';
 import * as vscode from 'vscode';
@@ -54,7 +54,7 @@ export class SftpFileService {
       const children = await promisify(sftp.readdir.bind(sftp))(path);
       const entries = await Promise.all(
         children
-          .filter((entry) => !['.', '..'].includes(entry.filename))
+          .filter((entry) => !['.', '..', '.DS_Store'].includes(entry.filename))
           .map(async (entry): Promise<SftpEntry> => {
             const child = posix.join(path, entry.filename);
             const symbolicLink = entry.attrs.isSymbolicLink();
@@ -125,6 +125,16 @@ export class SftpFileService {
   }
 
   async open(side: SftpSide, path: string): Promise<void> {
+    if (/\.(zip|vsix)$/i.test(path)) {
+      const uri = side === 'local' ? vscode.Uri.file(path) : createSftpFileUri(this.assetId, path);
+      await vscode.commands.executeCommand('vscode.openWith', uri, 'toolkit.archiveEditor');
+      return;
+    }
+    if (['.db', '.sqlite'].includes(extname(path).toLowerCase())) {
+      const uri = side === 'local' ? vscode.Uri.file(path) : createSftpFileUri(this.assetId, path);
+      await vscode.commands.executeCommand('vscode.openWith', uri, 'toolkit.sqliteEditor');
+      return;
+    }
     if (side === 'local') {
       await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(path));
       return;
@@ -138,6 +148,7 @@ export class SftpFileService {
     await this.remote(async (sftp) => {
       const copy = async (local: string, remote: string): Promise<void> => {
         this.signal.throwIfAborted();
+        if ((side === 'local' ? basename(local) : posix.basename(remote)) === '.DS_Store') return;
         const sourceStat = side === 'local' ? await fs.lstat(local) : await promisify(sftp.lstat.bind(sftp))(remote);
         if (sourceStat.isSymbolicLink()) throw new Error('Symbolic link transfers are not supported.');
         if (!sourceStat.isDirectory() && !sourceStat.isFile())

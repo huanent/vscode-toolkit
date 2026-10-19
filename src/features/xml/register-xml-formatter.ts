@@ -25,7 +25,7 @@ export function registerXmlFormatter(): vscode.Disposable {
         return [vscode.TextEdit.replace(fullDocumentRange, formatted)];
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        void vscode.window.showErrorMessage(`Unable to format XML: ${message}`);
+        void vscode.window.showErrorMessage(`Unable to format XML: ${message}`, { modal: true });
         return [];
       }
     },

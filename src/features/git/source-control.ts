@@ -161,7 +161,7 @@ async function checkoutGitRepository(folderUri: vscode.Uri | undefined): Promise
         ];
       });
   } catch {
-    void vscode.window.showErrorMessage('Unable to read Git branches for this repository.');
+    void vscode.window.showErrorMessage('Unable to read Git branches for this repository.', { modal: true });
     return false;
   }
 
@@ -187,6 +187,7 @@ async function checkoutGitRepository(folderUri: vscode.Uri | undefined): Promise
   } catch (error) {
     void vscode.window.showErrorMessage(
       `Unable to switch Git branch: ${error instanceof Error ? error.message : String(error)}`,
+      { modal: true },
     );
     return false;
   }

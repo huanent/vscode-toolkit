@@ -96,33 +96,15 @@ function App() {
           />
         </div>
       </div>
-      {error && !data.editor && (
-        <div
-          role="alert"
-          className="flex shrink-0 items-start gap-2 border-b border-(--vscode-panel-border) bg-(--vscode-inputValidation-errorBackground) px-4 py-2 text-(--vscode-errorForeground)"
-        >
-          <Icon name="warning" />
-          <span className="min-w-0 flex-1 wrap-break-word">{error}</span>
-          <Button
-            variant="ghost"
-            prefix={<Icon name="refresh" size="sm" />}
-            aria-label="Retry query"
-            title="Retry query"
-            disabled={busy}
-            onClick={data.refresh}
-          />
-        </div>
-      )}
+      {error && !data.editor && <ErrorMessage message={error} />}
       <section className="flex min-h-0 flex-1 flex-col" aria-label="Table data" aria-busy={pending}>
         {table.columns.length ? (
           <DataTable
             table={table}
             filters={columnFilters}
-            hasActiveFilters={hasActiveFilters}
             disabled={busy}
             mutationPending={mutationPending}
             onFilterChange={data.setColumnFilter}
-            onClearFilters={clearFilters}
             onEdit={data.openEditor}
             onDelete={(original) => data.mutate({ operation: 'delete', values: {}, original })}
           />
