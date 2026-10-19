@@ -20,7 +20,7 @@ export function StorageEditorHeader({
   saveDisabled,
 }: StorageEditorHeaderProps) {
   return (
-    <div className="sticky top-0 z-10 flex w-full flex-wrap items-center justify-between gap-3 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) p-2 mt-4">
+    <div className="sticky top-0 z-10 flex w-full flex-wrap items-center justify-between gap-3 border-b border-(--vscode-panel-border) bg-(--vscode-editor-background) mt-5">
       <FormItem name="storageScope" className="min-w-0">
         <div className="justify-self-start">
           <SegmentedControl

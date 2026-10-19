@@ -14,7 +14,7 @@ export function WorkflowEnvironmentEditor({
 }) {
   const [ids, setIds] = useState(() => environment.map(() => crypto.randomUUID()));
   return (
-    <section aria-label="Environment variables" className="flex min-w-0 flex-col gap-3">
+    <section aria-label="Environment variables" className="flex min-w-0 flex-col">
       {environment.map((variable, index) => (
         <Collapsible
           key={ids[index]}
@@ -27,8 +27,7 @@ export function WorkflowEnvironmentEditor({
               </span>
             </div>
           }
-        >
-          <div className="flex justify-end pb-3">
+          actions={
             <Button
               variant="ghost"
               title="Remove variable"
@@ -39,7 +38,8 @@ export function WorkflowEnvironmentEditor({
                 onChange(environment.filter((_, currentIndex) => currentIndex !== index));
               }}
             />
-          </div>
+          }
+        >
           <WorkflowEnvironmentFields
             index={index}
             variable={variable}

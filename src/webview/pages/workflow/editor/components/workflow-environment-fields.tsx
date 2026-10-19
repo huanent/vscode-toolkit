@@ -34,7 +34,7 @@ export function WorkflowEnvironmentFields({
       new Set(draft.options.map((option) => option.value)).size === draft.options.length &&
       draft.options.some((option) => option.value === draft.defaultValue));
   return (
-    <div className="grid min-w-0 gap-5 pb-3">
+    <div className="grid min-w-0">
       <FormItem
         name={`environment.${index}.name`}
         label="Variable name"

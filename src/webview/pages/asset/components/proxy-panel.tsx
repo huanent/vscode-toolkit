@@ -18,9 +18,9 @@ export function ProxyPanel({ value = [], connections, onChange }: ProxyPanelProp
     onChange(next);
   };
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col">
       {value.map((id, index) => (
-        <FormItem key={index} name={`proxyAssetIds.${index}`} label={`Jump host ${index + 1}`} className="min-w-0">
+        <FormItem key={index} name={`proxyAssetIds.${index}`} className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="min-w-0 flex-1">
               <AssetSelect
