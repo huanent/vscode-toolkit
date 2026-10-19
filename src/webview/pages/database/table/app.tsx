@@ -61,6 +61,14 @@ function App() {
             <Button
               variant="ghost"
               size="md"
+              title="Refresh tables"
+              aria-label="Refresh tables"
+              prefix={<Icon name="refresh" />}
+              onClick={() => postToHost({ type: 'ready' })}
+            />
+            <Button
+              variant="ghost"
+              size="md"
               title="Create table"
               aria-label="Create table"
               prefix={<Icon name="add" />}

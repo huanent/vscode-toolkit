@@ -30,14 +30,10 @@ export function DatabaseSelector({
   disabled,
 }: DatabaseSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
   const [creatingDatabase, setCreatingDatabase] = useState(false);
   const [newDatabaseName, setNewDatabaseName] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
   const [deletingDatabase, setDeletingDatabase] = useState<string | null>(null);
-
-  const query = search.trim().toLowerCase();
-  const filteredDatabases = query ? databases.filter((db) => db.toLowerCase().includes(query)) : databases;
 
   const handleCreateSubmit = () => {
     const trimmed = newDatabaseName.trim();
@@ -75,24 +71,11 @@ export function DatabaseSelector({
         }
       >
         <div className="flex w-64 max-h-80 flex-col overflow-hidden">
-          {databases.length > 5 && (
-            <div className="border-b border-(--vscode-panel-border) p-1.5">
-              <Input
-                type="search"
-                placeholder="Filter databases..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                prefix={<Icon name="search" size="sm" variant="muted" />}
-                className="h-6 "
-                autoFocus
-              />
-            </div>
-          )}
           <div className="min-h-0 flex-1 overflow-auto p-1">
-            {filteredDatabases.length === 0 ? (
+            {databases.length === 0 ? (
               <div className="p-2 text-center  text-(--vscode-descriptionForeground)">No databases found</div>
             ) : (
-              filteredDatabases.map((db) => {
+              databases.map((db) => {
                 const isSelected = db === currentDatabase;
                 const isSystem = isSystemDatabase(db);
                 return (
@@ -116,25 +99,25 @@ export function DatabaseSelector({
                       }
                     }}
                   >
-                    <Icon name="database" size="sm" variant={isSelected ? 'default' : 'muted'} />
+                    <Icon name="database" variant={isSelected ? 'default' : 'muted'} />
                     <span className="flex-1 truncate" title={db}>
                       {db}
                     </span>
-                    {isSelected && <Icon name="check" size="sm" className="shrink-0" />}
                     {!isSystem && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
                         title={`Delete database ${db}`}
                         aria-label={`Delete database ${db}`}
-                        className="invisible size-5 shrink-0 items-center justify-center rounded-sm hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-errorForeground) group-hover:inline-flex"
+                        prefix={<Icon name="trash" />}
+                        onKeyDown={(event) => event.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpen(false);
                           setDeletingDatabase(db);
                         }}
-                      >
-                        <Icon name="trash" size="sm" />
-                      </button>
+                      />
                     )}
                   </div>
                 );
