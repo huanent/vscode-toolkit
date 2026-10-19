@@ -1,4 +1,5 @@
-import type { WorkflowSshConnection, WorkflowStep } from '@/features/workflow/protocol';
+import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { AssetSummary } from '@/features/assets/protocol';
 
 export type WorkflowStepItem = {
   id: string;
@@ -41,18 +42,18 @@ export function getStepTypeLabel(type: WorkflowStep['type']): string {
   return workflowTypeOptions.find((option) => option.value === type)?.label ?? type;
 }
 
-export function describeStep(step: WorkflowStep, hosts: readonly WorkflowSshConnection[]): string {
+export function describeStep(step: WorkflowStep, hosts: readonly AssetSummary[]): string {
   if (step.type === 'local-command') return firstLine(step.command) || 'No command';
-  const hostName = hosts.find((host) => host.id === step.assetId)?.name ?? 'No host selected';
+  const hostName = hosts.find((host) => host.type === 'ssh' && host.id === step.assetId)?.name ?? 'No host selected';
   if (step.type === 'ssh-command') return `${hostName} · ${firstLine(step.command) || 'No command'}`;
   const [from, to] =
     step.direction === 'upload' ? [step.localPath, step.remotePath] : [step.remotePath, step.localPath];
   return `${hostName} · ${from || '...'} → ${to || '...'}`;
 }
 
-export function isStepComplete(step: WorkflowStep, hosts: readonly WorkflowSshConnection[]): boolean {
+export function isStepComplete(step: WorkflowStep, hosts: readonly AssetSummary[]): boolean {
   if (step.type === 'local-command') return step.command.trim() !== '';
-  const hasHost = hosts.some((host) => host.id === step.assetId);
+  const hasHost = hosts.some((host) => host.type === 'ssh' && host.id === step.assetId);
   if (step.type === 'ssh-command') return hasHost && step.command.trim() !== '';
   return hasHost && step.localPath.trim() !== '' && step.remotePath.trim() !== '';
 }

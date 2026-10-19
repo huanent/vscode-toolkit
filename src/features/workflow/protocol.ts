@@ -1,4 +1,5 @@
 import type { StorageScope } from '@/shared/storage-scope';
+import type { AssetSummary } from '@/features/assets/protocol';
 
 export type WorkflowStep =
   | { type: 'local-command'; command: string; cwd?: string }
@@ -24,13 +25,6 @@ export type WorkflowRunFormRequest =
 export interface WorkflowDefinition {
   steps: WorkflowStep[];
   environment?: WorkflowEnvironmentVariable[];
-}
-
-export interface WorkflowSshConnection {
-  id: string;
-  name: string;
-  host: string;
-  port: number;
 }
 
 export interface WorkflowRecord {
@@ -67,7 +61,7 @@ export interface WorkflowFolderRecord {
 }
 
 export interface WorkflowEditorData extends WorkflowRecord {
-  sshConnections: WorkflowSshConnection[];
+  assets: AssetSummary[];
   storageScope: StorageScope;
   workspaceStorageAvailable: boolean;
 }

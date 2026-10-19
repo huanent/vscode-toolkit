@@ -2,6 +2,15 @@ import type { Credential, CredentialSummary } from '@/features/credential/protoc
 import type { StorageScope } from '@/shared/storage-scope';
 import type { HttpClientSettings } from '@/features/http/protocol';
 
+export interface AssetSummary {
+  id: string;
+  type: string;
+  name: string;
+  folder?: string;
+  host?: string;
+  port?: number;
+}
+
 export interface AssetFormValues {
   name: string;
   description: string;
@@ -33,7 +42,7 @@ export interface AssetEditorData {
   workspaceStorageAvailable: boolean;
   values: AssetFormValues;
   credentials: CredentialSummary[];
-  sshConnections: { id: string; name: string; host: string; port: number }[];
+  assets: AssetSummary[];
 }
 
 export type AssetEditorMessage =

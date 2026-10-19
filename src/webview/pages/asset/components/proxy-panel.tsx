@@ -1,17 +1,17 @@
 import type { AssetEditorData } from '@/features/assets/protocol';
+import { AssetSelect } from '@/webview/components/asset-select';
 import { Button } from '@/webview/components/ui/button';
 import { FormItem } from '@/webview/components/ui/form';
 import { Icon } from '@/webview/components/ui/icons';
-import { Select } from '@/webview/components/ui/select';
 
 type ProxyPanelProps = {
   value?: string[];
-  connections: AssetEditorData['sshConnections'];
+  connections: AssetEditorData['assets'];
   onChange: (value: string[]) => void;
 };
 
 export function ProxyPanel({ value = [], connections, onChange }: ProxyPanelProps) {
-  const available = connections.filter((connection) => !value.includes(connection.id));
+  const available = connections.filter((connection) => connection.type === 'ssh' && !value.includes(connection.id));
   const move = (index: number, offset: number) => {
     const next = [...value];
     [next[index], next[index + offset]] = [next[index + offset], next[index]];
@@ -23,18 +23,16 @@ export function ProxyPanel({ value = [], connections, onChange }: ProxyPanelProp
         <FormItem key={index} name={`proxyAssetIds.${index}`} label={`Jump host ${index + 1}`} className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="min-w-0 flex-1">
-              <Select
+              <AssetSelect
                 ariaLabel={`Jump host ${index + 1}`}
                 value={id}
                 onValueChange={(next) =>
                   onChange(value.map((current, position) => (position === index ? next : current)))
                 }
-                options={connections
-                  .filter((connection) => connection.id === id || !value.includes(connection.id))
-                  .map((connection) => ({
-                    value: connection.id,
-                    label: `${connection.name} (${connection.host}:${connection.port})`,
-                  }))}
+                assets={connections}
+                filter={(connection) =>
+                  connection.type === 'ssh' && (connection.id === id || !value.includes(connection.id))
+                }
               />
             </div>
             <div className="flex items-center gap-1">

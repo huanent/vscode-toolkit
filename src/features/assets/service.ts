@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import { findStorageRoot, type StorageRoot, type StorageScope } from '@/shared/storage-scope';
+import type { AssetSummary } from './protocol';
 
 export interface AssetRecord {
   id: string;
@@ -17,6 +18,17 @@ export interface AssetRecord {
 
 export class AssetService {
   constructor(private readonly context: vscode.ExtensionContext) {}
+
+  async listSummaries(): Promise<AssetSummary[]> {
+    return (await this.list()).map((record) => ({
+      id: record.id,
+      type: record.type,
+      name: record.name,
+      folder: record.folder,
+      host: 'host' in record && typeof record.host === 'string' ? record.host : undefined,
+      port: 'port' in record && typeof record.port === 'number' ? record.port : undefined,
+    }));
+  }
 
   async list(): Promise<AssetRecord[]> {
     const entries: AssetRecord[] = [];

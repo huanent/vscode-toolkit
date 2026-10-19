@@ -74,6 +74,7 @@ export function registerWebviews(
       context,
       () => resolveStorageRoots(context, 'workflows'),
       ssh,
+      assets,
       workflowResults,
       workflowFiles.refresh,
     ),

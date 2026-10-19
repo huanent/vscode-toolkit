@@ -1,4 +1,6 @@
-import type { WorkflowSshConnection, WorkflowStep } from '@/features/workflow/protocol';
+import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { AssetSummary } from '@/features/assets/protocol';
+import { AssetSelect } from '@/webview/components/asset-select';
 import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
 import { Select } from '@/webview/components/ui/select';
@@ -8,12 +10,13 @@ import { directionOptions, workflowTypeOptions } from '@/webview/pages/workflow/
 type WorkflowStepEditorProps = {
   index: number;
   step: WorkflowStep;
-  hosts: readonly WorkflowSshConnection[];
+  hosts: readonly AssetSummary[];
   onChange: (step: WorkflowStep) => void;
   onTypeChange: (type: WorkflowStep['type']) => void;
 };
 
 export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange }: WorkflowStepEditorProps) {
+  const sshHosts = hosts.filter((host) => host.type === 'ssh');
   return (
     <div className="grid gap-5">
       <FormItem name={`steps.${index}.type`} label="Operation">
@@ -27,16 +30,17 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
 
       {step.type !== 'local-command' && (
         <FormItem name={`steps.${index}.assetId`} label="SSH host">
-          <Select
+          <AssetSelect
             ariaLabel="SSH host"
-            value={hosts.some((host) => host.id === step.assetId) ? step.assetId : undefined}
+            value={step.assetId}
             onValueChange={(assetId) => onChange({ ...step, assetId })}
-            placeholder={hosts.length ? 'Select an SSH host' : 'No SSH hosts available'}
-            options={hosts.map((host) => ({ value: host.id, label: `${host.name} (${host.host}:${host.port})` }))}
+            placeholder={sshHosts.length ? 'Select an SSH host' : 'No SSH hosts available'}
+            assets={hosts}
+            filter={(asset) => asset.type === 'ssh'}
           />
-          {!hosts.some((host) => host.id === step.assetId) && (
+          {!sshHosts.some((host) => host.id === step.assetId) && (
             <p role="status" className="text-(--vscode-editorWarning-foreground)">
-              {hosts.length ? 'Select an available SSH host.' : 'No SSH hosts available.'}
+              {sshHosts.length ? 'Select an available SSH host.' : 'No SSH hosts available.'}
             </p>
           )}
         </FormItem>

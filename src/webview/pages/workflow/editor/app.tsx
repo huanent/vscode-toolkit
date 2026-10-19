@@ -48,6 +48,7 @@ function App() {
 }
 
 function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: string }) {
+  const sshHosts = data.assets.filter((asset) => asset.type === 'ssh');
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? '');
   const [storageScope, setStorageScope] = useState(data.storageScope);
@@ -75,7 +76,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const updateStep = (id: string, step: WorkflowStep) =>
     setSteps(steps.map((item) => (item.id === id ? { ...item, step } : item)));
   const addStep = (type: WorkflowStep['type']) => {
-    const item = createStepItem(convertStep(undefined, type, data.sshConnections[0]?.id ?? ''));
+    const item = createStepItem(convertStep(undefined, type, sshHosts[0]?.id ?? ''));
     setSteps([...steps, item]);
     setAddStepOpen(false);
   };
@@ -165,9 +166,9 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                         <span className="shrink-0">{index + 1}</span>
                         <span className="min-w-0 truncate">{getStepTypeLabel(item.step.type)}</span>
                         <span className="hidden min-w-0 flex-1 truncate text-xs font-normal text-(--vscode-descriptionForeground) sm:block">
-                          {describeStep(item.step, data.sshConnections)}
+                          {describeStep(item.step, sshHosts)}
                         </span>
-                        {!isStepComplete(item.step, data.sshConnections) && (
+                        {!isStepComplete(item.step, sshHosts) && (
                           <span title="Incomplete" aria-label="Incomplete">
                             <Icon name="warning" size="sm" />
                           </span>
@@ -215,10 +216,10 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                       <WorkflowStepEditor
                         index={index}
                         step={item.step}
-                        hosts={data.sshConnections}
+                        hosts={data.assets}
                         onChange={(step) => updateStep(item.id, step)}
                         onTypeChange={(type) =>
-                          updateStep(item.id, convertStep(item.step, type, data.sshConnections[0]?.id ?? ''))
+                          updateStep(item.id, convertStep(item.step, type, sshHosts[0]?.id ?? ''))
                         }
                       />
                     </div>

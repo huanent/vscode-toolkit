@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
-import type { WorkflowSshConnection, WorkflowStep } from '@/features/workflow/protocol';
+import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { AssetSummary } from '@/features/assets/protocol';
 import { Dialog } from '@/webview/components/ui/dialog';
 import { Form } from '@/webview/components/ui/form';
 import { WorkflowStepEditor } from '@/webview/pages/workflow/editor/components/workflow-step-editor';
@@ -15,7 +16,7 @@ export function WorkflowStepDialog({
 }: {
   step: WorkflowStep;
   index: number;
-  hosts: readonly WorkflowSshConnection[];
+  hosts: readonly AssetSummary[];
   editing: boolean;
   onClose: () => void;
   onSave: (step: WorkflowStep) => void;
@@ -48,7 +49,9 @@ export function WorkflowStepDialog({
           step={draft}
           hosts={hosts}
           onChange={setDraft}
-          onTypeChange={(type) => setDraft(convertStep(draft, type, hosts[0]?.id ?? ''))}
+          onTypeChange={(type) =>
+            setDraft(convertStep(draft, type, hosts.find((host) => host.type === 'ssh')?.id ?? ''))
+          }
         />
       </Form>
     </Dialog>

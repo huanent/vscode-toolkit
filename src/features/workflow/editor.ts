@@ -14,6 +14,7 @@ import {
 } from './service';
 import { validateWorkflow } from './runner';
 import type { SshService } from '@/features/ssh/ssh-service';
+import type { AssetService } from '@/features/assets/service';
 import type { WorkflowResultService } from './result-service';
 
 export const workflowEditorViewType = 'toolkit.workflowEditor';
@@ -42,6 +43,7 @@ export function registerWorkflowEditor(
   context: vscode.ExtensionContext,
   getWorkflowRoots: () => StorageRoot[],
   ssh: SshService,
+  assets: AssetService,
   workflowResults: WorkflowResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable {
@@ -70,7 +72,7 @@ export function registerWorkflowEditor(
         ...initial,
         storageScope: scope,
         workspaceStorageAvailable: isWorkspaceStorageAvailable(),
-        sshConnections: await ssh.listConnections(),
+        assets: await assets.listSummaries(),
       };
     },
     onPanelResolved: (_uri, panel) => {
