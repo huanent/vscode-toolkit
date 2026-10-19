@@ -1,22 +1,26 @@
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
+import { checkServerIdentity } from 'node:tls';
 import { Client, type QueryArrayConfig } from 'pg';
 import type { DatabaseProvider } from '@/features/database/database-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import type { AssetRecord, AssetService } from '@/features/assets/service';
 import type { CredentialService } from '@/features/credential/service';
 import type { DatabaseQueryResult, PostgresqlConnectionConfiguration } from '@/features/database/protocol';
+import type { SshService } from '@/features/ssh/ssh-service';
 
 export class PostgresqlService implements DatabaseProvider {
   readonly type = 'postgresql';
   readonly label = 'PostgreSQL';
   readonly icon = 'database';
-  readonly capabilities = { database: true, tls: true, query: true };
+  readonly capabilities = { database: true, tls: true, query: true, proxyTunnel: true };
   private readonly connections = new Set<Client>();
   private disposed = false;
 
   constructor(
     private readonly assets: AssetService,
     private readonly credentials: CredentialService,
+    private readonly ssh: SshService,
     private readonly openQuery: (asset: PostgresqlConnectionConfiguration) => Promise<void>,
   ) {}
 
@@ -29,6 +33,7 @@ export class PostgresqlService implements DatabaseProvider {
       port: previous?.port ?? 5432,
       database: previous?.database ?? '',
       credentialId: previous?.credentialId ?? '',
+      proxyAssetIds: previous?.proxyAssetIds ?? [],
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
       storageScope: record?.scope ?? 'global',
@@ -44,9 +49,11 @@ export class PostgresqlService implements DatabaseProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
+      proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
       database: values.database.trim() || undefined,
       tls: values.tls,
     });
+    await this.ssh.validateProxyChain(asset.id, asset.proxyAssetIds);
     await this.assets.save({
       ...asset,
       description: values.description.trim() || undefined,
@@ -99,58 +106,71 @@ export class PostgresqlService implements DatabaseProvider {
     if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
     const credential = (await this.credentials.list()).find((entry) => entry.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
-    const client = new Client({
-      host: asset.host,
-      port: asset.port,
-      user: credential.username,
-      password: credential.password ?? '',
-      database: database ?? asset.database ?? 'postgres',
-      ssl: asset.tls ? { rejectUnauthorized: true } : false,
-      connectionTimeoutMillis: 10000,
-      statement_timeout: 60000,
-    });
-    const close = () => {
-      void client.end().catch(() => undefined);
-    };
-    client.on('error', close);
-    this.connections.add(client);
-    signal.addEventListener('abort', close, { once: true });
+    const tunnel = asset.proxyAssetIds?.length
+      ? await this.ssh.openTunnel(asset.proxyAssetIds, asset.host, asset.port, signal)
+      : undefined;
     try {
-      if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
-      await client.connect();
-      if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
-      const config: QueryArrayConfig & { queryMode: string } = {
-        text: sql,
-        rowMode: 'array',
-        queryMode: 'extended',
+      const client = new Client({
+        host: tunnel?.host ?? asset.host,
+        port: tunnel?.port ?? asset.port,
+        user: credential.username,
+        password: credential.password ?? '',
+        database: database ?? asset.database ?? 'postgres',
+        ssl: asset.tls
+          ? {
+              rejectUnauthorized: true,
+              servername: isIP(asset.host) ? undefined : asset.host,
+              checkServerIdentity: (_host, certificate) => checkServerIdentity(asset.host, certificate),
+            }
+          : false,
+        connectionTimeoutMillis: 10000,
+        statement_timeout: 60000,
+      });
+      const close = () => {
+        void client.end().catch(() => undefined);
       };
-      const result = await client.query(config);
-      return {
-        hasResultSet: result.fields.length > 0,
-        columns: result.fields.map((field) => field.name),
-        rows: result.rows
-          .slice(0, 1000)
-          .map((row: unknown[]) =>
-            row.map((value) =>
-              value == null
-                ? null
-                : typeof value === 'number' || typeof value === 'string'
-                  ? value
-                  : Buffer.isBuffer(value)
-                    ? value.toString('hex')
-                    : value instanceof Date
-                      ? value.toISOString()
-                      : JSON.stringify(value),
+      client.on('error', close);
+      this.connections.add(client);
+      signal.addEventListener('abort', close, { once: true });
+      try {
+        if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
+        await client.connect();
+        if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
+        const config: QueryArrayConfig & { queryMode: string } = {
+          text: sql,
+          rowMode: 'array',
+          queryMode: 'extended',
+        };
+        const result = await client.query(config);
+        return {
+          hasResultSet: result.fields.length > 0,
+          columns: result.fields.map((field) => field.name),
+          rows: result.rows
+            .slice(0, 1000)
+            .map((row: unknown[]) =>
+              row.map((value) =>
+                value == null
+                  ? null
+                  : typeof value === 'number' || typeof value === 'string'
+                    ? value
+                    : Buffer.isBuffer(value)
+                      ? value.toString('hex')
+                      : value instanceof Date
+                        ? value.toISOString()
+                        : JSON.stringify(value),
+              ),
             ),
-          ),
-        rowCount: result.fields.length ? (result.rowCount ?? result.rows.length) : 0,
-        truncated: result.rows.length > 1000,
-        changes: result.fields.length ? 0 : (result.rowCount ?? 0),
-      };
+          rowCount: result.fields.length ? (result.rowCount ?? result.rows.length) : 0,
+          truncated: result.rows.length > 1000,
+          changes: result.fields.length ? 0 : (result.rowCount ?? 0),
+        };
+      } finally {
+        signal.removeEventListener('abort', close);
+        this.connections.delete(client);
+        await client.end().catch(() => undefined);
+      }
     } finally {
-      signal.removeEventListener('abort', close);
-      this.connections.delete(client);
-      await client.end().catch(() => undefined);
+      tunnel?.close();
     }
   }
 
@@ -183,7 +203,10 @@ function requirePostgresqlConfiguration(value: unknown): PostgresqlConnectionCon
     asset.port < 1 ||
     asset.port > 65535 ||
     typeof asset.tls !== 'boolean' ||
-    (asset.database !== undefined && typeof asset.database !== 'string')
+    (asset.database !== undefined && typeof asset.database !== 'string') ||
+    (asset.proxyAssetIds !== undefined &&
+      (!Array.isArray(asset.proxyAssetIds) ||
+        !asset.proxyAssetIds.every((id) => typeof id === 'string' && id.trim().length > 0)))
   )
     throw new Error('Invalid PostgreSQL configuration. Name, host, port and credential are required.');
   return asset as PostgresqlConnectionConfiguration;

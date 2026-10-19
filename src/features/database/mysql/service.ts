@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { connect } from 'node:net';
 import * as vscode from 'vscode';
 import { createConnection, escapeId, type Connection as CoreConnection } from 'mysql2';
 import { type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -22,12 +23,13 @@ import { createMysqlUri, mysqlEditorViewType } from '@/features/database/mysql/e
 import { buildMysqlCreateTableStatement, isSystemDatabase } from '@/features/database/mysql/schema';
 import type { CredentialService } from '@/features/credential/service';
 import { buildRowMutation } from '@/features/database/row-mutation';
+import type { SshService } from '@/features/ssh/ssh-service';
 
 export class MysqlService implements DatabaseProvider {
   readonly type = 'mysql';
   readonly label = 'MySQL';
   readonly icon = 'database';
-  readonly capabilities = { database: true, tls: true, query: true };
+  readonly capabilities = { database: true, tls: true, query: true, proxyTunnel: true };
   private readonly connections = new Set<Connection>();
   private readonly queryConnections = new WeakMap<Connection, CoreConnection>();
   private disposed = false;
@@ -35,6 +37,7 @@ export class MysqlService implements DatabaseProvider {
   constructor(
     private readonly assets: AssetService,
     private readonly credentials: CredentialService,
+    private readonly ssh: SshService,
   ) {}
 
   getFormValues(record?: AssetRecord): AssetFormValues {
@@ -45,6 +48,7 @@ export class MysqlService implements DatabaseProvider {
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 3306,
       credentialId: previous?.credentialId ?? '',
+      proxyAssetIds: previous?.proxyAssetIds ?? [],
       database: previous?.database ?? '',
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
@@ -61,10 +65,12 @@ export class MysqlService implements DatabaseProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
+      proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
       database: values.database.trim() || undefined,
       tls: values.tls,
     };
     requireMysqlConfiguration(asset);
+    await this.ssh.validateProxyChain(asset.id, asset.proxyAssetIds);
     if (!asset.name || !asset.host || !asset.credentialId) throw new Error('Name, host and credential are required.');
     await this.assets.save({
       ...asset,
@@ -485,40 +491,49 @@ export class MysqlService implements DatabaseProvider {
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
-    const coreConnection = createConnection({
-      host: asset.host,
-      port: asset.port,
-      user: credential.username,
-      password: credential.password ?? '',
-      database: database ?? asset.database,
-      ssl: asset.tls ? { rejectUnauthorized: true } : undefined,
-      connectTimeout: 10000,
-      supportBigNumbers: true,
-      bigNumberStrings: true,
-      dateStrings: true,
-      multipleStatements: false,
-    });
-    const connection = coreConnection.promise();
-    this.queryConnections.set(connection, coreConnection);
+    const tunnel = asset.proxyAssetIds?.length
+      ? await this.ssh.openTunnel(asset.proxyAssetIds, asset.host, asset.port, signal)
+      : undefined;
     try {
-      await connection.connect();
-    } catch (error) {
-      connection.destroy();
-      throw error;
-    }
-    if (this.disposed || signal?.aborted) {
-      connection.destroy();
-      throw new Error('MySQL operation was cancelled.');
-    }
-    this.connections.add(connection);
-    const abort = () => connection.destroy();
-    signal?.addEventListener('abort', abort, { once: true });
-    try {
-      return await run(connection);
+      if (this.disposed || signal?.aborted) throw new Error('MySQL operation was cancelled.');
+      const coreConnection = createConnection({
+        host: asset.host,
+        port: asset.port,
+        stream: tunnel ? () => connect(tunnel.port, tunnel.host) : undefined,
+        user: credential.username,
+        password: credential.password ?? '',
+        database: database ?? asset.database,
+        ssl: asset.tls ? { rejectUnauthorized: true } : undefined,
+        connectTimeout: 10000,
+        supportBigNumbers: true,
+        bigNumberStrings: true,
+        dateStrings: true,
+        multipleStatements: false,
+      });
+      const connection = coreConnection.promise();
+      this.queryConnections.set(connection, coreConnection);
+      try {
+        await connection.connect();
+      } catch (error) {
+        connection.destroy();
+        throw error;
+      }
+      if (this.disposed || signal?.aborted) {
+        connection.destroy();
+        throw new Error('MySQL operation was cancelled.');
+      }
+      this.connections.add(connection);
+      const abort = () => connection.destroy();
+      signal?.addEventListener('abort', abort, { once: true });
+      try {
+        return await run(connection);
+      } finally {
+        signal?.removeEventListener('abort', abort);
+        this.connections.delete(connection);
+        connection.destroy();
+      }
     } finally {
-      signal?.removeEventListener('abort', abort);
-      this.connections.delete(connection);
-      connection.destroy();
+      tunnel?.close();
     }
   }
 }
@@ -579,7 +594,10 @@ function isMysqlAsset(value: unknown): value is MysqlConnectionConfiguration {
     asset.port > 0 &&
     asset.port <= 65535 &&
     typeof asset.tls === 'boolean' &&
-    (asset.database === undefined || typeof asset.database === 'string')
+    (asset.database === undefined || typeof asset.database === 'string') &&
+    (asset.proxyAssetIds === undefined ||
+      (Array.isArray(asset.proxyAssetIds) &&
+        asset.proxyAssetIds.every((id) => typeof id === 'string' && id.trim().length > 0)))
   );
 }
 

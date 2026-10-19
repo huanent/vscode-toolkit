@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { createServer, type Socket } from 'node:net';
 import * as vscode from 'vscode';
 import { Client, type ClientChannel, type ConnectConfig, type SFTPWrapper, type VerifyCallback } from 'ssh2';
 import type { AssetProvider } from '@/features/assets/asset-provider';
@@ -21,6 +22,7 @@ export class SshService implements AssetProvider {
   readonly icon = 'terminal';
   readonly capabilities = { proxyTunnel: true };
   private readonly terminals = new Map<string, Set<vscode.Terminal>>();
+  private readonly tunnels = new Set<() => void>();
   private readonly closed: vscode.Disposable;
 
   constructor(
@@ -143,6 +145,77 @@ export class SshService implements AssetProvider {
         void run(sftp).then(resolve, reject);
       });
     });
+  }
+
+  async openTunnel(
+    proxyAssetIds: string[],
+    host: string,
+    port: number,
+    cancellation?: AbortSignal,
+  ): Promise<{ host: string; port: number; close(): void }> {
+    if (!proxyAssetIds.length) throw new Error('An SSH jump host is required.');
+    const controller = new AbortController();
+    const signal = cancellation ? AbortSignal.any([cancellation, controller.signal]) : controller.signal;
+    let closed = false;
+    let session: SshClientSession | undefined;
+    const sockets = new Set<Socket>();
+    const server = createServer((socket) => {
+      sockets.add(socket);
+      socket.on('error', () => socket.destroy());
+      socket.once('close', () => sockets.delete(socket));
+      session!.client.forwardOut('127.0.0.1', 0, host, port, (error, channel) => {
+        if (error) {
+          socket.destroy(error);
+          return;
+        }
+        channel.on('error', () => socket.destroy());
+        socket.once('close', () => channel.destroy());
+        channel.once('close', () => socket.destroy());
+        if (socket.destroyed) channel.destroy();
+        else socket.pipe(channel).pipe(socket);
+      });
+    });
+    const close = () => {
+      if (closed) {
+        session?.close();
+        return;
+      }
+      closed = true;
+      signal.removeEventListener('abort', close);
+      controller.abort();
+      this.tunnels.delete(close);
+      for (const socket of sockets) socket.destroy();
+      server.close();
+      session?.close();
+    };
+    this.tunnels.add(close);
+    signal.addEventListener('abort', close, { once: true });
+    try {
+      for (const id of proxyAssetIds) {
+        session = await this.connectClient(id, new Set(), signal, session);
+      }
+      session!.client.once('close', close);
+      let cleanup = () => {};
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const abort = () => reject(new Error('SSH tunnel was cancelled.'));
+          signal.addEventListener('abort', abort, { once: true });
+          cleanup = () => signal.removeEventListener('abort', abort);
+          server.once('error', reject);
+          server.listen({ port: 0, host: '127.0.0.1', signal }, resolve);
+          if (signal.aborted) abort();
+        });
+      } finally {
+        cleanup();
+      }
+      signal.throwIfAborted();
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('SSH tunnel failed to listen.');
+      return { host: '127.0.0.1', port: address.port, close };
+    } catch (error) {
+      close();
+      throw error;
+    }
   }
 
   private async withSession<T>(
@@ -359,17 +432,11 @@ export class SshService implements AssetProvider {
   }
 
   async requireAiAccess(assetId: string): Promise<string> {
-    const visit = async (id: string, ancestors: Set<string>): Promise<void> => {
-      if (ancestors.has(id)) throw new Error('SSH proxy chain contains a cycle.');
-      const asset = requireSshConfiguration(await this.assets.requireAiAsset(id));
-      const next = new Set(ancestors).add(id);
-      for (const proxyId of asset.proxyAssetIds ?? []) await visit(proxyId, next);
-    };
-    await visit(assetId, new Set());
+    requireSshConfiguration(await this.assets.requireAiAsset(assetId));
     return assetId;
   }
 
-  private async validateProxyChain(assetId: string, proxyAssetIds: string[] = []): Promise<void> {
+  async validateProxyChain(assetId: string, proxyAssetIds: string[] = []): Promise<void> {
     const visit = async (ids: string[], ancestors: Set<string>): Promise<void> => {
       for (const id of ids) {
         if (ancestors.has(id)) throw new Error('SSH proxy chain contains a cycle.');
@@ -381,6 +448,7 @@ export class SshService implements AssetProvider {
   }
 
   dispose(): void {
+    for (const close of this.tunnels) close();
     this.closed.dispose();
     this.invalidate();
   }

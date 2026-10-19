@@ -40,11 +40,11 @@ export function registerWebviews(
   const assetsUri = vscode.Uri.file(__dirname);
   const assets = new AssetService(context);
   const credentials = new CredentialService(context);
-  const mysql = new MysqlService(assets, credentials);
-  const postgresql = new PostgresqlService(assets, credentials, (asset) => openPostgresqlQuery(asset));
+  const ssh = new SshService(assets, credentials, context.globalState);
+  const mysql = new MysqlService(assets, credentials, ssh);
+  const postgresql = new PostgresqlService(assets, credentials, ssh, (asset) => openPostgresqlQuery(asset));
   const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
   const databases = [mysql, postgresql];
-  const ssh = new SshService(assets, credentials, context.globalState);
   registerSftpEditor(context, ssh, assets);
   const httpClients = new HttpClientService(assets, credentials);
   const workflowResults = new WorkflowResultService(tasks, ssh, (name, environment, cancellation) =>

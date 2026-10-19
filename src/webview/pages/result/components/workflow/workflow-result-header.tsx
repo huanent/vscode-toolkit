@@ -27,7 +27,7 @@ export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHea
         ? 'text-(--vscode-testing-iconPassed)'
         : status === 'failed'
           ? 'text-(--vscode-errorForeground)'
-          : 'text-(--vscode-descriptionForeground)';
+          : 'text-(--vscode-disabledForeground)';
 
   return (
     <header className="relative">
