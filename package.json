@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "HTTP requests, databases, SSH, file previews, and workflow automation, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
@@ -35,6 +35,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ssh2": "^1.15.6",
+    "@types/tar-stream": "^3.1.5",
     "@types/vscode": "^1.125.0",
     "@types/yauzl": "^3.4.0",
     "@vitejs/plugin-react": "^6.1.1",
@@ -51,6 +52,7 @@
     "react-dom": "^19.3.0",
     "ssh2": "^1.17.0",
     "tailwindcss": "^4.3.3",
+    "tar-stream": "^3.2.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "xml-formatter": "^3.7.0",
@@ -107,6 +109,12 @@
           },
           {
             "filenamePattern": "*.vsix"
+          },
+          {
+            "filenamePattern": "*.tar.gz"
+          },
+          {
+            "filenamePattern": "*.tgz"
           }
         ],
         "priority": "default"

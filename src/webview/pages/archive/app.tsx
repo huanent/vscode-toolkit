@@ -26,7 +26,7 @@ function App() {
 
   if (state.status === 'loaded') {
     return (
-      <main className="flex min-h-screen flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
+      <main className="flex h-dvh min-w-0 flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
         <div className="min-h-0 flex-1 overflow-auto p-2">
           <ArchiveTree entries={state.data} name={name} collapseAllTrigger={collapseAllTrigger} />
         </div>

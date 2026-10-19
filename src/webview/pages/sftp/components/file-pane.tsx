@@ -62,6 +62,16 @@ export function FilePane({
       ),
     },
     {
+      key: 'permissions',
+      header: 'Permissions',
+      className: 'w-24 shrink-0',
+      cell: (entry) => (
+        <span className="font-mono text-(--vscode-descriptionForeground)">
+          {entry.mode === undefined ? '-' : (entry.mode & 0o7777).toString(8).padStart(4, '0')}
+        </span>
+      ),
+    },
+    {
       key: 'size',
       header: 'Size',
       className: 'w-16 shrink-0',
@@ -69,16 +79,6 @@ export function FilePane({
       cell: (entry) => (
         <span className="text-(--vscode-descriptionForeground)">
           {entry.size === undefined ? '-' : formatSize(entry.size)}
-        </span>
-      ),
-    },
-    {
-      key: 'permissions',
-      header: 'Permissions',
-      className: 'w-24 shrink-0',
-      cell: (entry) => (
-        <span className="font-mono text-(--vscode-descriptionForeground)">
-          {entry.mode === undefined ? '-' : (entry.mode & 0o7777).toString(8).padStart(4, '0')}
         </span>
       ),
     },

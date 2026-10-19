@@ -125,7 +125,7 @@ export class SftpFileService {
   }
 
   async open(side: SftpSide, path: string): Promise<void> {
-    if (/\.(zip|vsix)$/i.test(path)) {
+    if (/\.(zip|vsix|tar\.gz|tgz)$/i.test(path)) {
       const uri = side === 'local' ? vscode.Uri.file(path) : createSftpFileUri(this.assetId, path);
       await vscode.commands.executeCommand('vscode.openWith', uri, 'toolkit.archiveEditor');
       return;

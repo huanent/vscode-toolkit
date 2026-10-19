@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as yauzl from 'yauzl';
+import { readTarGzipIndex, parseTarListing } from './tar-reader';
 import type { SshService } from '@/features/ssh/ssh-service';
 import type { ArchiveTreeEntry } from './protocol';
 
@@ -13,32 +14,35 @@ export function registerRemoteArchive(ssh: SshService): vscode.Disposable {
 }
 
 export function validateArchiveUri(uri: vscode.Uri): void {
-  if (!/\.(zip|vsix)$/i.test(uri.path)) throw new Error('Only ZIP or VSIX archives can be previewed.');
+  if (!/\.(zip|vsix|tar\.gz|tgz)$/i.test(uri.path))
+    throw new Error('Only ZIP, VSIX, TAR.GZ or TGZ archives can be previewed.');
 }
 
 export type ArchiveIndex = ReadonlyMap<string, readonly ArchiveTreeEntry[]>;
 
 export async function readArchiveIndex(uri: vscode.Uri): Promise<ArchiveIndex> {
   validateArchiveUri(uri);
+  const tarGzip = /\.(tar\.gz|tgz)$/i.test(uri.path);
   if (uri.scheme === 'toolkit-sftp') {
     if (!remoteSsh) throw new Error('Remote archive preview is not available.');
     const argument = `'${uri.path.replace(/'/g, "'\\''")}'`;
     const result = await remoteSsh.runCommand(
       uri.authority,
-      `command -v unzip >/dev/null 2>&1 || { printf '%s\\n' 'Remote ZIP / VSIX preview requires unzip on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec unzip -l ${argument}`,
+      tarGzip
+        ? `command -v tar >/dev/null 2>&1 || { printf '%s\\n' 'Remote TAR.GZ preview requires tar with gzip support on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec tar -tvzf ${argument}`
+        : `command -v unzip >/dev/null 2>&1 || { printf '%s\\n' 'Remote ZIP / VSIX preview requires unzip on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec unzip -l ${argument}`,
       AbortSignal.timeout(60000),
     );
     if (result.exitCode !== 0) throw new Error(result.stderr.trim() || 'Remote archive preview failed.');
     if (result.stdout.includes('[Output truncated at '))
       throw new Error('Remote archive directory exceeds the SSH output limit.');
-    return buildArchiveIndex(parseUnzipListing(result.stdout));
+    return buildArchiveIndex(tarGzip ? parseTarListing(result.stdout) : parseUnzipListing(result.stdout));
   }
   if (uri.scheme !== 'file') {
-    throw new Error(
-      'Remote ZIP or VSIX preview requires a remote directory-reading connection. The archive will not be downloaded.',
-    );
+    throw new Error('Remote archive preview requires an SSH connection. The archive will not be downloaded.');
   }
 
+  if (tarGzip) return readTarGzipIndex(uri.fsPath, buildArchiveIndex);
   const zip = await yauzl.openPromise(uri.fsPath, { validateEntrySizes: true });
   return readZipIndex(zip);
 }
