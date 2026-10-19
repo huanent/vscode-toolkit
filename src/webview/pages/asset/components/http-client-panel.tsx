@@ -1,18 +1,16 @@
 import type { HttpClientSettings } from '@/features/http/protocol';
+import { CredentialSelector } from '@/webview/components/credential-selector';
 import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
 import { KeyValueEditor } from '@/webview/components/ui/key-value-editor';
 import { Select } from '@/webview/components/ui/select';
+import type { ConnectionPanelProps } from '@/webview/pages/asset/components/connection-panel';
 
-export function HttpClientFields({
-  value,
-  onChange,
-}: {
-  value: HttpClientSettings;
-  onChange: (value: HttpClientSettings) => void;
-}) {
+export function HttpClientPanel({ values, credentials, onChange, onCreateCredential }: ConnectionPanelProps) {
+  const value = values.httpClient;
+  if (!value) return null;
   const update = <Key extends keyof HttpClientSettings>(key: Key, next: HttpClientSettings[Key]) => {
-    onChange({ ...value, [key]: next });
+    onChange({ httpClient: { ...value, [key]: next } });
   };
   return (
     <>
@@ -69,6 +67,23 @@ export function HttpClientFields({
           onChange={(event) => update('timeoutMs', Number(event.target.value))}
         />
       </FormItem>
+      {value.authType !== 'none' && (
+        <FormItem
+          name="credentialId"
+          label="Credential"
+          className="min-w-0 flex-1"
+          error="Select a credential."
+          match="valueMissing"
+        >
+          <CredentialSelector
+            required
+            value={values.credentialId}
+            onValueChange={(credentialId) => onChange({ credentialId })}
+            credentials={credentials.filter((credential) => credential.type === 'password')}
+            onCreate={onCreateCredential}
+          />
+        </FormItem>
+      )}
     </>
   );
 }
