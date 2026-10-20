@@ -40,12 +40,21 @@ export async function readWorkflowRecord(
   roots: readonly StorageRoot[],
   id: string,
 ): Promise<StoredWorkflowRecord | undefined> {
-  validateWorkflowId(id);
+  if (!/^[0-9a-f-]+$/i.test(id)) throw new Error('Invalid workflow id.');
   const index = await readWorkflowStorage(roots);
-  const location = index.workflows.get(id);
+  let resolvedId = id;
+  if (!index.workflows.has(id)) {
+    const matches = [...index.workflows.keys()].filter((workflowId) => workflowId.startsWith(id));
+    if (matches.length > 1) {
+      throw new Error(`Workflow ID prefix "${id}" matches multiple workflows. Use a longer ID.`);
+    }
+    if (!matches.length) return undefined;
+    resolvedId = matches[0];
+  }
+  const location = index.workflows.get(resolvedId);
   if (!location) return undefined;
   const value: unknown = JSON.parse(await readFile(location.path, 'utf8'));
-  if (!isWorkflowRecord(value) || value.id !== id) throw new Error('Invalid workflow record.');
+  if (!isWorkflowRecord(value) || value.id !== resolvedId) throw new Error('Invalid workflow record.');
   return { ...value, kind: 'workflow', parentId: location.parentId, scope: location.root.scope };
 }
 

@@ -43,7 +43,21 @@ export function registerTempCommands(context: vscode.ExtensionContext, refresh: 
     vscode.commands.registerCommand('toolkit.temp.move', (target: unknown) =>
       moveTempEntryFromInput(context, refresh, target).catch(showTempCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.temp.copyPath', (target: unknown) =>
+      copyTempEntryPath(context, target).catch(showTempCommandError),
+    ),
   );
+}
+
+async function copyTempEntryPath(context: vscode.ExtensionContext, target: unknown): Promise<void> {
+  const entry = parseTempTarget(target);
+  if (!entry.tempEntryPath || !entry.tempEntryType) return;
+  const directory = resolveStorageDirectory(context, 'temp');
+  const entryPath =
+    entry.tempEntryType === 'directory'
+      ? await resolveTempDirectory(directory, entry.tempEntryPath)
+      : await getTempFilePath(directory, entry.tempEntryPath);
+  await vscode.env.clipboard.writeText(entryPath);
 }
 
 async function moveTempEntryFromInput(

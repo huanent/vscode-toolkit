@@ -415,7 +415,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "Workflow ID returned by workflowSearch or workflowUpsert."
+              "description": "Workflow ID or unique ID prefix."
             }
           },
           "required": [
@@ -434,7 +434,7 @@
           "properties": {
             "id": {
               "type": "string",
-              "description": "Existing workflow ID to update. Omit to create a new workflow."
+              "description": "Existing workflow ID or unique ID prefix to update. Omit to create a new workflow."
             },
             "name": {
               "type": "string",
@@ -898,6 +898,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.workflow.copyAiReference",
+        "title": "Copy AI Reference",
+        "category": "Workflow"
+      },
+      {
         "command": "toolkit.workflow.rename",
         "title": "Rename",
         "category": "Workflow"
@@ -910,6 +915,11 @@
       {
         "command": "toolkit.temp.move",
         "title": "Move to Folder",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.copyPath",
+        "title": "Copy Path",
         "category": "Toolkit"
       },
       {
@@ -1185,6 +1195,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.workflow.copyAiReference",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.delete",
           "when": "false"
         },
@@ -1206,6 +1220,10 @@
         },
         {
           "command": "toolkit.temp.move",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.copyPath",
           "when": "false"
         },
         {
@@ -1394,6 +1412,11 @@
           "group": "2_actions@2"
         },
         {
+          "command": "toolkit.temp.copyPath",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_actions@3"
+        },
+        {
           "command": "toolkit.workflow.createFile",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && !workflowId",
           "group": "1_create@1"
@@ -1407,6 +1430,11 @@
           "command": "toolkit.workflow.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
           "group": "2_actions@1"
+        },
+        {
+          "command": "toolkit.workflow.copyAiReference",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
+          "group": "2_actions@4"
         },
         {
           "command": "toolkit.workflow.rename",

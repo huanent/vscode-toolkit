@@ -30,6 +30,9 @@ export function registerWorkflowCommands(
     vscode.commands.registerCommand('toolkit.workflow.edit', (target: unknown) =>
       openEditor(parseWorkflowId(target)).catch(showWorkflowCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.workflow.copyAiReference', (target: unknown) =>
+      copyWorkflowAiReference(context, target).catch(showWorkflowCommandError),
+    ),
     vscode.commands.registerCommand('toolkit.workflow.rename', (target: unknown) =>
       renameWorkflow(context, refresh, target).catch(showWorkflowCommandError),
     ),
@@ -40,6 +43,21 @@ export function registerWorkflowCommands(
       moveWorkflow(context, refresh, target).catch(showWorkflowCommandError),
     ),
   );
+}
+
+async function copyWorkflowAiReference(context: vscode.ExtensionContext, target: unknown): Promise<void> {
+  const id = parseWorkflowId(target);
+  if (!id) return;
+  const entries = await readWorkflowRecords(resolveStorageRoots(context, 'workflows'));
+  const entry = entries.find((candidate) => candidate.type === 'workflow' && candidate.id === id);
+  if (!entry) throw new Error('Workflow no longer exists.');
+  const shortId = entry.id.slice(0, 8);
+  const conflict = entries.some(
+    (candidate) => candidate.type === 'workflow' && candidate.id !== entry.id && candidate.id.startsWith(shortId),
+  );
+  const path = entry.parentId ? `${entry.parentId}/${entry.name}` : entry.name;
+  await vscode.env.clipboard.writeText(`[Workflow "${path}", id: ${conflict ? entry.id : shortId}]`);
+  void vscode.window.setStatusBarMessage('AI reference copied to clipboard', 2000);
 }
 
 async function moveWorkflow(

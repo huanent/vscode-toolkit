@@ -102,7 +102,7 @@ export function registerWorkflowTools(
         await validateWorkflow(workflow, ssh);
         const record = await saveWorkflowRecord(
           roots,
-          input.id ?? randomUUID(),
+          existing?.id ?? randomUUID(),
           input.name,
           workflow,
           input.folderId,
