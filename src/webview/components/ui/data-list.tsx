@@ -1,5 +1,5 @@
 import { cn } from 'cn';
-import type { Key, ReactNode } from 'react';
+import type { Key, MouseEvent, ReactNode } from 'react';
 
 export type DataListColumn<T> = {
   key: Key;
@@ -16,6 +16,8 @@ type DataListProps<T> = {
   columns: readonly DataListColumn<T>[];
   entryKey: (entry: T) => Key;
   entryContext?: (entry: T) => Record<string, unknown>;
+  isSelected?: (entry: T) => boolean;
+  onSelect?: (entry: T, event: MouseEvent<HTMLElement>) => void;
   onOpen?: (entry: T) => void;
   emptyMessage?: ReactNode;
   className?: string;
@@ -33,14 +35,17 @@ export function DataList<T>({
   columns,
   entryKey,
   entryContext,
+  isSelected,
+  onSelect,
   onOpen,
   emptyMessage = 'No items.',
   className,
 }: DataListProps<T>) {
   return (
     <div
-      role="table"
+      role={onSelect ? 'grid' : 'table'}
       aria-label={ariaLabel}
+      aria-multiselectable={onSelect ? true : undefined}
       className={cn(
         'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-(--vscode-editor-background) text-sm select-none',
         className,
@@ -72,16 +77,33 @@ export function DataList<T>({
           <div
             key={entryKey(entry)}
             role="row"
+            aria-selected={isSelected?.(entry)}
             data-vscode-context={entryContext ? JSON.stringify(entryContext(entry)) : undefined}
             tabIndex={onOpen ? 0 : undefined}
             className={cn(
-              'mx-1 flex items-center gap-3 rounded px-3 py-1 text-sm outline-none transition-colors hover:bg-(--vscode-list-hoverBackground) focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+              'mx-1 flex items-center gap-3 rounded px-3 py-1 text-sm outline-none transition-colors focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+              isSelected?.(entry)
+                ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
+                : 'hover:bg-(--vscode-list-hoverBackground)',
               onOpen && 'cursor-pointer',
             )}
+            onClick={
+              onSelect
+                ? (event) => {
+                    if (!(event.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"]'))
+                      onSelect(entry, event);
+                  }
+                : undefined
+            }
             onDoubleClick={
               onOpen
                 ? (event) => {
-                    if (!(event.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"]'))
+                    if (
+                      !event.shiftKey &&
+                      !event.ctrlKey &&
+                      !event.metaKey &&
+                      !(event.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"]')
+                    )
                       onOpen(entry);
                   }
                 : undefined
@@ -97,12 +119,8 @@ export function DataList<T>({
             {columns.map((column) => (
               <div
                 key={column.key}
-                role="cell"
-                className={cn(
-                  'min-w-0 text-(--vscode-foreground)',
-                  alignmentClasses[column.align ?? 'left'],
-                  column.className,
-                )}
+                role={onSelect ? 'gridcell' : 'cell'}
+                className={cn('min-w-0', alignmentClasses[column.align ?? 'left'], column.className)}
               >
                 {column.cell(entry, entryIndex)}
               </div>

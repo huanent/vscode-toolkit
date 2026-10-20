@@ -86,7 +86,13 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
       const messageListener = panel.webview.onDidReceiveMessage(async (message: ExplorerWebviewMessage) => {
         try {
           if (message.type === 'openFile') await openExplorerFile(message.uri);
-          else if (message.type === 'readDirectory') await publish(message.uri, 'navigate');
+          else if (message.type === 'deleteEntries') {
+            await vscode.commands.executeCommand('toolkit.explorer.delete', {
+              explorerDirectoryUri: location,
+              explorerEntryUri: Array.isArray(message.uris) ? message.uris[0] : undefined,
+              explorerSelectedUris: message.uris,
+            });
+          } else if (message.type === 'readDirectory') await publish(message.uri, 'navigate');
           else if (message.type === 'navigateAddress')
             await publish(resolveDirectoryAddress(message.address, location), 'navigate');
           else if (message.type === 'setViewMode' && (message.mode === 'list' || message.mode === 'grid'))

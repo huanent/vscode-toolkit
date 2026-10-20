@@ -23,6 +23,7 @@ export interface ExplorerDirectory {
 
 export type ExplorerWebviewMessage =
   | { type: 'openFile'; uri: string }
+  | { type: 'deleteEntries'; uris: string[] }
   | { type: 'readDirectory'; uri: string | null }
   | { type: 'navigateAddress'; address: string }
   | { type: 'setViewMode'; mode: 'list' | 'grid' }

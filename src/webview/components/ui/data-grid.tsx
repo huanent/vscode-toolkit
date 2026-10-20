@@ -1,11 +1,13 @@
 import { cn } from 'cn';
-import type { Key, ReactNode } from 'react';
+import type { Key, MouseEvent, ReactNode } from 'react';
 
 type DataGridProps<T> = {
   ariaLabel: string;
   entries: readonly T[];
   entryKey: (entry: T) => Key;
   entryContext?: (entry: T) => Record<string, unknown>;
+  isSelected?: (entry: T) => boolean;
+  onSelect?: (entry: T, event: MouseEvent<HTMLElement>) => void;
   label: (entry: T) => ReactNode;
   icon?: (entry: T) => ReactNode;
   title?: (entry: T) => string;
@@ -19,6 +21,8 @@ export function DataGrid<T>({
   entries,
   entryKey,
   entryContext,
+  isSelected,
+  onSelect,
   label,
   icon,
   title,
@@ -40,8 +44,17 @@ export function DataGrid<T>({
           <button
             type="button"
             title={title?.(entry)}
-            className="flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-2 py-1 transition-colors hover:bg-(--vscode-list-hoverBackground) focus-visible:border-(--vscode-focusBorder) focus-visible:bg-(--vscode-list-hoverBackground)"
-            onDoubleClick={() => onOpen(entry)}
+            aria-pressed={isSelected?.(entry)}
+            className={cn(
+              'flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-2 py-1 transition-colors focus-visible:border-(--vscode-focusBorder)',
+              isSelected?.(entry)
+                ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
+                : 'hover:bg-(--vscode-list-hoverBackground) focus-visible:bg-(--vscode-list-hoverBackground)',
+            )}
+            onClick={onSelect ? (event) => onSelect(entry, event) : undefined}
+            onDoubleClick={(event) => {
+              if (!event.shiftKey && !event.ctrlKey && !event.metaKey) onOpen(entry);
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter') onOpen(entry);
             }}

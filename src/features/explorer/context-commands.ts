@@ -5,6 +5,7 @@ type ExplorerContextTarget = {
   explorerDirectoryUri?: string;
   explorerEntryUri?: string;
   explorerEntryType?: 'file' | 'directory';
+  explorerSelectedUris?: string[];
 };
 
 export function registerExplorerContextCommands(context: vscode.ExtensionContext, refresh: () => Promise<void>): void {
@@ -14,6 +15,12 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
       const target = value as ExplorerContextTarget;
       if (typeof target.explorerDirectoryUri !== 'string') return;
       if (target.explorerEntryUri !== undefined && typeof target.explorerEntryUri !== 'string') return;
+      if (
+        target.explorerSelectedUris !== undefined &&
+        (!Array.isArray(target.explorerSelectedUris) ||
+          !target.explorerSelectedUris.every((uri) => typeof uri === 'string'))
+      )
+        return;
       try {
         await action(target);
       } catch (error) {
@@ -41,18 +48,29 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
     }),
     register('toolkit.explorer.delete', async (target) => {
       if (!target.explorerEntryUri) return;
-      const uri = vscode.Uri.parse(target.explorerEntryUri);
+      const selectedUris = target.explorerSelectedUris?.includes(target.explorerEntryUri)
+        ? target.explorerSelectedUris
+        : [target.explorerEntryUri];
+      const uris = [...new Set(selectedUris)].map((uri) => vscode.Uri.parse(uri));
       const confirmation = await vscode.window.showWarningMessage(
-        `Delete "${posix.basename(uri.path)}"?`,
+        uris.length === 1 ? `Delete "${posix.basename(uris[0]!.path)}"?` : `Delete ${uris.length} selected items?`,
         {
           modal: true,
-          detail: 'Folders and all their contents will be deleted. The trash will be used when available.',
+          detail: [
+            ...(uris.length > 1 ? [uris.map((uri) => posix.basename(uri.path)).join('\n')] : []),
+            'Folders and all their contents will be deleted. The trash will be used when available.',
+          ].join('\n\n'),
         },
         'Delete',
       );
       if (confirmation !== 'Delete') return;
-      await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
-      await refresh();
+      try {
+        for (const uri of uris) {
+          await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
+        }
+      } finally {
+        await refresh();
+      }
     }),
     register('toolkit.explorer.copyPath', async (target) => {
       if (!target.explorerEntryUri) return;
