@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import { useLayoutEffect, useRef, type ComponentType } from 'react';
 import { Button } from '@/webview/components/ui/button';
 import { Empty } from '@/webview/components/ui/empty';
 import { Loading } from '@/webview/components/ui/loading';
@@ -52,11 +52,34 @@ interface ResultPanelProps {
 }
 
 export function TaskContent({ task, loading, error }: ResultPanelProps) {
+  const resultScrollRef = useRef<HTMLDivElement>(null);
+  const shouldFollowOutputRef = useRef(true);
+  const previousTaskIdRef = useRef<string | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const container = resultScrollRef.current;
+    if (!container) return;
+
+    if (previousTaskIdRef.current !== task?.id) {
+      previousTaskIdRef.current = task?.id;
+      shouldFollowOutputRef.current = true;
+    }
+    if (shouldFollowOutputRef.current) container.scrollTop = container.scrollHeight;
+  }, [task]);
+
   if (task) {
     const presentation = taskStatusPresentation[task.status];
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto" aria-busy={task.status === 'running'}>
+        <div
+          ref={resultScrollRef}
+          className="min-h-0 flex-1 overflow-auto"
+          aria-busy={task.status === 'running'}
+          onScroll={(event) => {
+            const container = event.currentTarget;
+            shouldFollowOutputRef.current = container.scrollHeight - container.clientHeight - container.scrollTop <= 24;
+          }}
+        >
           <ResultTaskContent key={task.id} task={task} />
         </div>
         <footer

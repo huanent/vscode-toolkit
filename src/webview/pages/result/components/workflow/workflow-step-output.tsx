@@ -19,11 +19,12 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
       : !running && result.status === 'pending'
         ? 'skipped'
         : result.status;
-  const [open, setOpen] = useState(status === 'running' || status === 'failed');
+  const hasDefinition = definition !== undefined;
+  const [open, setOpen] = useState(hasDefinition && (status === 'running' || status === 'failed'));
   useEffect(() => {
-    if (status === 'running' || status === 'failed') setOpen(true);
+    if (hasDefinition && (status === 'running' || status === 'failed')) setOpen(true);
     else if (status === 'completed') setOpen(false);
-  }, [status]);
+  }, [status, hasDefinition]);
   const label =
     definition?.type === 'sftp'
       ? `SFTP ${definition.direction}`
@@ -73,12 +74,8 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
             </div>
           </div>
         )}
-        {result.output ? (
+        {result.output && (
           <ResultText title={`Step ${index + 1} output`} description={result.message} content={result.output} />
-        ) : (
-          <div className="text-xs text-(--vscode-descriptionForeground)">
-            {status === 'running' ? 'Waiting for output...' : 'No output'}
-          </div>
         )}
       </div>
     </Collapsible>

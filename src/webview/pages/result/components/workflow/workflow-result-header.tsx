@@ -10,6 +10,7 @@ interface WorkflowResultHeaderProps {
 }
 
 export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHeaderProps) {
+  const completedSteps = steps.filter((step) => step.status === 'completed').length;
   const progress =
     status === 'running'
       ? steps.reduce((completed, step) => {
@@ -30,7 +31,7 @@ export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHea
           : 'text-(--vscode-disabledForeground)';
 
   return (
-    <header className="relative">
+    <header className="sticky top-0 z-10 bg-(--vscode-sideBar-background)">
       <Progress
         aria-label={`${title} progress`}
         value={progress}
@@ -41,6 +42,9 @@ export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHea
       <div className="flex min-w-0 items-center gap-2 py-1">
         <WorkflowStatusIcon status={status === 'interrupted' ? 'cancelled' : status} />
         <h2 className="min-w-0 flex-1 text-base font-semibold wrap-break-word">{title}</h2>
+        <span className="shrink-0 text-xs font-normal tabular-nums text-(--vscode-descriptionForeground)">
+          {completedSteps}/{steps.length}
+        </span>
       </div>
     </header>
   );

@@ -130,7 +130,7 @@ async function runStep(
     );
     return {
       success: result.exitCode === 0,
-      message: `Local command exited with code ${result.exitCode ?? 'unknown'}.`,
+      message: `exited with code ${result.exitCode ?? 'unknown'}.`,
       output: result.output,
     };
   }
@@ -155,7 +155,7 @@ async function runStep(
   );
   return {
     success: result.exitCode === 0,
-    message: `SSH command exited with code ${result.exitCode ?? 'unknown'}.`,
+    message: `exited with code ${result.exitCode ?? 'unknown'}.`,
     output: [result.stdout, result.stderr].filter(Boolean).join('\n').trim(),
   };
 }
