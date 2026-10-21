@@ -28,7 +28,7 @@ export function createWorkflowRecord(parentId?: string): WorkflowRecord {
     name: 'New Workflow',
     enableAI: true,
     parentId,
-    workflow: { steps: [{ type: 'local-command', name: '', command: '' }] },
+    workflow: { steps: [] },
   };
 }
 

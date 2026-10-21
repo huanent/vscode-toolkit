@@ -55,6 +55,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const [storageScope, setStorageScope] = useState(data.storageScope);
   const [activeTabId, setActiveTabId] = useState('general');
   const [addStepOpen, setAddStepOpen] = useState(false);
+  const [expandedStepId, setExpandedStepId] = useState<string>();
   const [environment, setEnvironment] = useState(data.workflow.environment ?? []);
   const [steps, setSteps] = useState(() => data.workflow.steps.map((step) => createStepItem(step)));
   const validEnvironment = environment.every(
@@ -82,6 +83,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
       name: `Step ${steps.length + 1}`,
     });
     setSteps([...steps, item]);
+    setExpandedStepId(item.id);
     setAddStepOpen(false);
   };
   const moveStep = (index: number, offset: number) => {
@@ -94,6 +96,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const duplicateStep = (index: number) => {
     const item = createStepItem({ ...steps[index].step, name: `Step ${index + 2}` });
     setSteps([...steps.slice(0, index + 1), item, ...steps.slice(index + 1)]);
+    setExpandedStepId(item.id);
   };
 
   return (
@@ -132,11 +135,8 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
         <Tabs
           tabs={[
             { id: 'general', label: 'General' },
-            { id: 'steps', label: `Steps (${steps.length})` },
-            {
-              id: 'variables',
-              label: `Variables (${environment.length})`,
-            },
+            { id: 'steps', label: 'Steps' },
+            { id: 'variables', label: 'Variables' },
           ]}
           activeTabId={activeTabId}
           onChange={setActiveTabId}
@@ -170,6 +170,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                 {steps.map((item, index) => (
                   <Collapsible
                     key={item.id}
+                    defaultOpen={item.id === expandedStepId}
                     title={
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="shrink-0">{index + 1}</span>
