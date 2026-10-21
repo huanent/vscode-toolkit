@@ -172,6 +172,14 @@ function App() {
           return true;
         }}
         onNavigate={navigate}
+        segmentContext={(segment) => ({
+          webviewSection: 'explorer',
+          preventDefaultContextMenuItems: true,
+          explorerDirectoryUri: segment.location,
+          explorerEntryUri: segment.location,
+          explorerEntryType: 'directory',
+          explorerSelectedUris: segment.location ? [segment.location] : [],
+        })}
         onViewModeChange={(mode) => {
           setViewMode(mode);
           postToHost({ type: 'setViewMode', mode } satisfies ExplorerWebviewMessage);

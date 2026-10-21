@@ -10,10 +10,11 @@ type AddressBreadcrumbProps = {
   segments: AddressSegment[];
   onNavigate: (location: string | null) => void;
   onEdit: () => void;
+  segmentContext?: (segment: AddressSegment) => Record<string, unknown>;
   suffix?: ReactNode;
 };
 
-export function AddressBreadcrumb({ segments, onNavigate, onEdit, suffix }: AddressBreadcrumbProps) {
+export function AddressBreadcrumb({ segments, onNavigate, onEdit, segmentContext, suffix }: AddressBreadcrumbProps) {
   const currentIndex = segments.length - 1;
   return (
     <nav
@@ -40,6 +41,7 @@ export function AddressBreadcrumb({ segments, onNavigate, onEdit, suffix }: Addr
               aria-label={index === 0 ? 'System root' : undefined}
               aria-current={index === currentIndex ? 'page' : undefined}
               title={index === 0 ? 'System root' : segment.name}
+              data-vscode-context={segmentContext ? JSON.stringify(segmentContext(segment)) : undefined}
               onClick={(event) => {
                 event.stopPropagation();
                 onNavigate(segment.location);

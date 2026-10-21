@@ -17,6 +17,7 @@ type ExplorerToolbarProps = {
   /** Returns whether the address navigation request was accepted. */
   onAddressSubmit: (address: string) => boolean;
   onNavigate: (location: string | null) => void;
+  segmentContext: (segment: AddressSegment) => Record<string, unknown>;
   onViewModeChange: (mode: ExplorerViewMode) => void;
 };
 
@@ -30,6 +31,7 @@ export function ExplorerToolbar({
   onBack,
   onAddressSubmit,
   onNavigate,
+  segmentContext,
   onViewModeChange,
 }: ExplorerToolbarProps) {
   return (
@@ -48,6 +50,7 @@ export function ExplorerToolbar({
         onToggleFavorite={onToggleFavorite}
         onSubmit={onAddressSubmit}
         onNavigate={onNavigate}
+        segmentContext={segmentContext}
       />
       <SegmentedControl<ExplorerViewMode>
         ariaLabel="View mode"

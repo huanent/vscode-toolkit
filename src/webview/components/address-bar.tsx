@@ -11,6 +11,7 @@ export function AddressBar({
   onToggleFavorite,
   onSubmit,
   onNavigate,
+  segmentContext,
   disabled = false,
 }: {
   address: string;
@@ -19,6 +20,7 @@ export function AddressBar({
   onToggleFavorite: (address: string) => void;
   onSubmit: (address: string) => boolean;
   onNavigate: (location: string | null) => void;
+  segmentContext?: (segment: AddressSegment) => Record<string, unknown>;
   disabled?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -97,6 +99,7 @@ export function AddressBar({
   ) : (
     <AddressBreadcrumb
       segments={segments}
+      segmentContext={segmentContext}
       onNavigate={(location) => {
         if (!disabled) onNavigate(location);
       }}
