@@ -3,7 +3,14 @@ import { registerPackageScriptWatcher, runPackageScript } from './package-script
 import { runScript } from './run-script';
 import { registerScriptRuntimeWatcher } from './script-runtime';
 
-const scriptCommands = ['runDotnetScript', 'runShScript', 'runBatScript', 'runNodeScript', 'runBunScript'];
+const scriptCommands = [
+  'runDotnetScript',
+  'runShScript',
+  'runBatScript',
+  'runNodeScript',
+  'runBunScript',
+  'runPythonScript',
+];
 
 export function registerScripts(context: vscode.ExtensionContext): void {
   const refreshPackageScripts = registerPackageScriptWatcher(context);

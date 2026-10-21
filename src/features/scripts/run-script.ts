@@ -24,7 +24,11 @@ async function runResolvedScript(
   selectedUris: readonly vscode.Uri[] | undefined,
 ): Promise<void> {
   const contextualUri = scriptUri && isSupportedScript(scriptUri) ? scriptUri : selectedUris?.find(isSupportedScript);
-  const nodeDocument = await resolveNodeDocument(contextualUri);
+  const nodeDocument = contextualUri
+    ? isNodeScriptUri(contextualUri)
+      ? await resolveNodeDocument(contextualUri)
+      : undefined
+    : await resolveNodeDocument(undefined);
   if (nodeDocument) {
     await runNodeDocument(context, nodeDocument);
     return;
@@ -48,6 +52,9 @@ async function runResolvedScript(
     command = `/bin/bash ${quoteShellArgument(localScriptUri.fsPath)}`;
   } else if (extension === '.cs') {
     command = `dotnet run --file ${quoteShellArgument(localScriptUri.fsPath)}`;
+  } else if (extension === '.py') {
+    const runtime = process.platform === 'win32' ? 'python' : 'python3';
+    command = `${runtime} ${quoteShellArgument(localScriptUri.fsPath)}`;
   } else {
     void vscode.window.showErrorMessage('This script type is not supported on the current platform.', { modal: true });
     return;
@@ -91,8 +98,8 @@ async function resolveScriptUri(contextualUri: vscode.Uri | undefined): Promise<
 
   const extensions =
     process.platform === 'win32'
-      ? ['bat', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts']
-      : ['sh', 'cs', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts'];
+      ? ['bat', 'cs', 'py', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts']
+      : ['sh', 'cs', 'py', 'js', 'mjs', 'cjs', 'ts', 'mts', 'cts'];
   const pickedUris = await vscode.window.showOpenDialog({
     canSelectFiles: true,
     canSelectFolders: false,
@@ -113,5 +120,9 @@ function isLocalScriptUri(uri: vscode.Uri): boolean {
   }
 
   const extension = path.extname(uri.fsPath).toLowerCase();
-  return extension === '.cs' || (process.platform === 'win32' ? extension === '.bat' : extension === '.sh');
+  return (
+    extension === '.cs' ||
+    extension === '.py' ||
+    (process.platform === 'win32' ? extension === '.bat' : extension === '.sh')
+  );
 }

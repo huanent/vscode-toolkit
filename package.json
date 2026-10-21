@@ -813,6 +813,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.runPythonScript",
+        "title": "Run Python Script",
+        "icon": "$(play)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.runNpmScript",
         "title": "Run package.json Script",
         "icon": "$(terminal)",
@@ -1499,6 +1505,11 @@
         {
           "command": "toolkit.runBunScript",
           "when": "(resourceLangId == javascript || resourceLangId == typescript) && toolkit.bunAvailable && toolkit.bunWorkspace",
+          "group": "navigation@10"
+        },
+        {
+          "command": "toolkit.runPythonScript",
+          "when": "resourceExtname == .py",
           "group": "navigation@10"
         },
         {
