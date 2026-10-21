@@ -73,14 +73,11 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
           </div>
         )}
         {result.output ? (
-          <ResultText title={`Step ${index + 1} output`} content={result.output} />
+          <ResultText title={`Step ${index + 1} output`} description={result.message} content={result.output} />
         ) : (
           <div className="text-xs text-(--vscode-descriptionForeground)">
             {status === 'running' ? 'Waiting for output...' : 'No output'}
           </div>
-        )}
-        {result.message && (
-          <p className="text-xs wrap-break-word text-(--vscode-descriptionForeground)">{result.message}</p>
         )}
       </div>
     </Collapsible>

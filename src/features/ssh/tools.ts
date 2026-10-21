@@ -28,7 +28,7 @@ export function registerSshTools(ssh: SshService): vscode.Disposable[] {
       async invoke({ input }, token) {
         const id = await ssh.requireAiAccess(input.id);
         return withCancellation(token, async (signal) => {
-          const result = await ssh.runCommand(id, input.command, signal);
+          const result = await ssh.runLoginCommand(id, input.command, signal);
           return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result))]);
         });
       },

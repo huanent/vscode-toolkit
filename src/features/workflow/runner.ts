@@ -147,7 +147,7 @@ async function runStep(
     return { success: true, message: `SFTP ${step.direction} completed.` };
   }
 
-  const result = await ssh.runCommand(
+  const result = await ssh.runLoginCommand(
     step.assetId,
     resolveWorkflowPlaceholders(step.command, environment),
     signal,

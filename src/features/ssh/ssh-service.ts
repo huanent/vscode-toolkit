@@ -10,6 +10,7 @@ import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
 import { CommandOutput } from '@/host/utils/command-output';
 import { stagedUpload } from './sftp/staged-upload';
+import { buildLoginShellCommand } from './login-shell-command';
 
 interface SshClientSession {
   client: Client;
@@ -74,9 +75,29 @@ export class SshService implements AssetProvider {
     onOutput?: (data: Buffer) => void,
     input?: string,
   ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
+    return this.runSessionCommand(assetId, command, false, signal, onOutput, input);
+  }
+
+  async runLoginCommand(
+    assetId: string,
+    command: string,
+    signal?: AbortSignal,
+    onOutput?: (data: Buffer) => void,
+  ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
+    return this.runSessionCommand(assetId, command, true, signal, onOutput);
+  }
+
+  private async runSessionCommand(
+    assetId: string,
+    command: string,
+    loginShell: boolean,
+    signal?: AbortSignal,
+    onOutput?: (data: Buffer) => void,
+    input?: string,
+  ): Promise<{ stdout: string; stderr: string; exitCode?: number }> {
     if (!command.trim()) throw new Error('Enter an SSH command.');
     return this.withSession(assetId, signal, (session, resolve, reject) => {
-      session.client.exec(command, (error, channel) => {
+      const onChannel = (error: Error | undefined, channel: ClientChannel) => {
         if (error) {
           session.close();
           reject(error);
@@ -97,6 +118,28 @@ export class SshService implements AssetProvider {
           resolve({ stdout: stdout.toString(), stderr: stderr.toString(), exitCode });
         });
         if (input !== undefined) channel.end(input);
+      };
+      if (!loginShell) {
+        session.client.exec(command, onChannel);
+        return;
+      }
+      session.client.exec('echo "$SHELL"', (error, channel) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        const output = new CommandOutput();
+        let failed = false;
+        channel.on('data', (data: Buffer) => output.append(data));
+        channel.stderr.resume();
+        channel.once('error', (channelError: Error) => {
+          failed = true;
+          reject(channelError);
+        });
+        channel.once('close', (exitCode: number | undefined) => {
+          if (failed || signal?.aborted) return;
+          session.client.exec(buildLoginShellCommand(command, exitCode === 0 ? output.toString() : ''), onChannel);
+        });
       });
     });
   }
