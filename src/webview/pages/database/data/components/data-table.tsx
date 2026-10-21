@@ -84,9 +84,9 @@ export function DataTable({
   columns.push({
     key: 'actions',
     header: <span className="sr-only">Row actions</span>,
-    headerClassName: 'min-w-16! w-16 border-l border-(--vscode-panel-border) bg-(--vscode-editor-background)',
+    headerClassName: 'min-w-16! w-16 border-(--vscode-panel-border) bg-(--vscode-editor-background)',
     className:
-      'sticky right-0 z-0 min-w-16 w-16 border-l border-(--vscode-panel-border) bg-(--vscode-editor-background) text-center',
+      'sticky right-0 z-0 min-w-16 w-16 border-(--vscode-panel-border) bg-(--vscode-editor-background) text-center',
     cell: (values) => {
       const original = Object.fromEntries(table.columns.map((column, index) => [column.name, values[index] ?? null]));
       const canMutate =
@@ -123,7 +123,7 @@ export function DataTable({
     },
   });
   return (
-    <div className="min-h-0 min-w-0 flex-1 overflow-auto border border-y-0 border-(--vscode-panel-border) text-sm">
+    <div className="min-h-0 min-w-0 flex-1 overflow-auto -mb-px text-sm">
       <table className="w-max min-w-full border-separate border-spacing-0" aria-label={`${table.name} data`}>
         <thead className="sticky top-0 z-10">
           <tr>
