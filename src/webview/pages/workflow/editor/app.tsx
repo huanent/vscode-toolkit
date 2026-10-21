@@ -24,7 +24,6 @@ import {
   convertStep,
   createStepItem,
   describeStep,
-  getStepTypeLabel,
   isStepComplete,
   workflowTypeOptions,
 } from '@/webview/pages/workflow/editor/step-model';
@@ -78,7 +77,10 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const updateStep = (id: string, step: WorkflowStep) =>
     setSteps(steps.map((item) => (item.id === id ? { ...item, step } : item)));
   const addStep = (type: WorkflowStep['type']) => {
-    const item = createStepItem(convertStep(undefined, type, sshHosts[0]?.id ?? ''));
+    const item = createStepItem({
+      ...convertStep(undefined, type, sshHosts[0]?.id ?? ''),
+      name: `Step ${steps.length + 1}`,
+    });
     setSteps([...steps, item]);
     setAddStepOpen(false);
   };
@@ -90,7 +92,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
     setSteps(next);
   };
   const duplicateStep = (index: number) => {
-    const item = createStepItem({ ...steps[index].step });
+    const item = createStepItem({ ...steps[index].step, name: `Step ${index + 2}` });
     setSteps([...steps.slice(0, index + 1), item, ...steps.slice(index + 1)]);
   };
 
@@ -171,7 +173,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                     title={
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="shrink-0">{index + 1}</span>
-                        <span className="min-w-0 truncate">{getStepTypeLabel(item.step.type)}</span>
+                        <span className="min-w-0 truncate">{item.step.name}</span>
                         <span className="hidden min-w-0 flex-1 truncate text-xs font-normal text-(--vscode-descriptionForeground) sm:block">
                           {describeStep(item.step, sshHosts)}
                         </span>

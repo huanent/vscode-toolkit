@@ -2,9 +2,16 @@ import type { StorageScope } from '@/shared/storage-scope';
 import type { AssetSummary } from '@/features/assets/protocol';
 
 export type WorkflowStep =
-  | { type: 'local-command'; command: string; cwd?: string }
-  | { type: 'sftp'; assetId: string; direction: 'upload' | 'download'; localPath: string; remotePath: string }
-  | { type: 'ssh-command'; assetId: string; command: string };
+  | { type: 'local-command'; name: string; command: string; cwd?: string }
+  | {
+      type: 'sftp';
+      name: string;
+      assetId: string;
+      direction: 'upload' | 'download';
+      localPath: string;
+      remotePath: string;
+    }
+  | { type: 'ssh-command'; name: string; assetId: string; command: string };
 
 export type WorkflowEnvironmentVariable =
   | { name: string; label: string; type: 'input'; defaultValue: string }

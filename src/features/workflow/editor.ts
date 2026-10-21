@@ -56,7 +56,7 @@ export function registerWorkflowEditor(
         id,
         name: 'New Workflow',
         parentId: getWorkflowEditorParentId(uri),
-        workflow: { steps: [{ type: 'local-command', command: '' }] },
+        workflow: { steps: [{ type: 'local-command', name: '', command: '' }] },
         scope: 'global',
       }
     );

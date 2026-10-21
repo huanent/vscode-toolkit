@@ -10,6 +10,7 @@ import type { WorkflowResultService } from './result-service';
 
 interface WorkflowStepInput {
   type: 'local-command' | 'ssh-command' | 'sftp';
+  name: string;
   command?: string;
   cwd?: string;
   assetId?: string;
@@ -127,20 +128,32 @@ export function registerWorkflowTools(
 }
 
 async function toWorkflowStep(step: WorkflowStepInput, index: number, ssh: SshService): Promise<WorkflowStep> {
+  if (!step.name.trim()) throw new Error(`Enter a name for step ${index + 1}.`);
   if (step.type === 'local-command') {
-    return { type: 'local-command', command: step.command ?? '', ...(step.cwd ? { cwd: step.cwd } : {}) };
+    return {
+      type: 'local-command',
+      name: step.name.trim(),
+      command: step.command ?? '',
+      ...(step.cwd ? { cwd: step.cwd } : {}),
+    };
   }
   if (step.type === 'sftp') {
     if (!step.direction) throw new Error(`Enter the SFTP direction for step ${index + 1}.`);
     return {
       type: 'sftp',
+      name: step.name.trim(),
       assetId: await resolveStepAssetId(step.assetId, ssh),
       direction: step.direction,
       localPath: step.localPath ?? '',
       remotePath: step.remotePath ?? '',
     };
   }
-  return { type: 'ssh-command', assetId: await resolveStepAssetId(step.assetId, ssh), command: step.command ?? '' };
+  return {
+    type: 'ssh-command',
+    name: step.name.trim(),
+    assetId: await resolveStepAssetId(step.assetId, ssh),
+    command: step.command ?? '',
+  };
 }
 
 async function resolveStepAssetId(assetId: string | undefined, ssh: SshService): Promise<string> {

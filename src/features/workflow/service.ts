@@ -28,7 +28,7 @@ export function createWorkflowRecord(parentId?: string): WorkflowRecord {
     name: 'New Workflow',
     enableAI: true,
     parentId,
-    workflow: { steps: [{ type: 'local-command', command: '' }] },
+    workflow: { steps: [{ type: 'local-command', name: '', command: '' }] },
   };
 }
 
@@ -54,7 +54,7 @@ export async function readWorkflowRecord(
   }
   const location = index.workflows.get(resolvedId);
   if (!location) return undefined;
-  const value: unknown = JSON.parse(await readFile(location.path, 'utf8'));
+  const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(location.path, 'utf8')));
   if (!isWorkflowRecord(value) || value.id !== resolvedId) throw new Error('Invalid workflow record.');
   return { ...value, kind: 'workflow', parentId: location.parentId, scope: location.root.scope };
 }
@@ -268,7 +268,7 @@ async function readWorkflowStorage(roots: readonly StorageRoot[]): Promise<Workf
       if (!child.isFile() || !child.name.endsWith('.json')) continue;
       const recordPath = path.join(currentDirectory, child.name);
       try {
-        const value: unknown = JSON.parse(await readFile(recordPath, 'utf8'));
+        const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(recordPath, 'utf8')));
         if (!isWorkflowRecord(value) || child.name !== `${value.id}.json`) continue;
         if (index.workflows.has(value.id)) throw new Error('Duplicate workflow id.');
         index.workflows.set(value.id, { path: recordPath, root, parentId });
@@ -300,7 +300,7 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
   for (const file of rootFiles) {
     if (!file.isFile() || !file.name.endsWith('.json')) continue;
     try {
-      const value: unknown = JSON.parse(await readFile(path.join(directory, file.name), 'utf8'));
+      const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(path.join(directory, file.name), 'utf8')));
       if (isWorkflowFolderRecord(value) && file.name === `${value.id}.json`) {
         legacyFolders.set(value.id, value);
       } else if (isWorkflowRecord(value) && file.name === `${value.id}.json`) {
@@ -467,6 +467,7 @@ function isWorkflowEnvironmentVariable(value: unknown): boolean {
 function isWorkflowStep(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const step = value as Record<string, unknown>;
+  if (typeof step.name !== 'string' || !step.name.trim()) return false;
   if (step.type === 'local-command') {
     return typeof step.command === 'string' && (step.cwd === undefined || typeof step.cwd === 'string');
   }
@@ -479,4 +480,21 @@ function isWorkflowStep(value: unknown): boolean {
     );
   }
   return step.type === 'ssh-command' && typeof step.assetId === 'string' && typeof step.command === 'string';
+}
+
+function addLegacyWorkflowStepNames(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const record = value as { workflow?: unknown };
+  if (!record.workflow || typeof record.workflow !== 'object') return value;
+  const workflow = record.workflow as { steps?: unknown };
+  if (!Array.isArray(workflow.steps)) return value;
+  return {
+    ...record,
+    workflow: {
+      ...workflow,
+      steps: workflow.steps.map((step, index) =>
+        step && typeof step === 'object' && !('name' in step) ? { ...step, name: `Step ${index + 1}` } : step,
+      ),
+    },
+  };
 }

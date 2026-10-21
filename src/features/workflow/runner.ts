@@ -15,7 +15,7 @@ import { isWorkflowDefinition } from './service';
 export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshService): Promise<void> {
   if (!isWorkflowDefinition(workflow))
     throw new Error(
-      'Invalid workflow. Environment variable names must be unique and use letters, digits, or underscores, starting with a letter or underscore.',
+      'Invalid workflow. Step names are required, and environment variable names must be unique and use letters, digits, or underscores, starting with a letter or underscore.',
     );
   if (!workflow.steps.length) throw new Error('Add at least one workflow step.');
   const connections = await ssh.listConnections();

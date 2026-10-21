@@ -31,11 +31,12 @@ export function convertStep(
   defaultAssetId: string,
 ): WorkflowStep {
   if (step?.type === type) return step;
+  const name = step?.name ?? 'Step 1';
   const command = step && 'command' in step ? step.command : '';
   const assetId = step && 'assetId' in step && step.assetId ? step.assetId : defaultAssetId;
-  if (type === 'local-command') return { type, command };
-  if (type === 'ssh-command') return { type, assetId, command };
-  return { type, assetId, direction: 'upload', localPath: '', remotePath: '' };
+  if (type === 'local-command') return { type, name, command };
+  if (type === 'ssh-command') return { type, name, assetId, command };
+  return { type, name, assetId, direction: 'upload', localPath: '', remotePath: '' };
 }
 
 export function getStepTypeLabel(type: WorkflowStep['type']): string {
@@ -43,15 +44,16 @@ export function getStepTypeLabel(type: WorkflowStep['type']): string {
 }
 
 export function describeStep(step: WorkflowStep, hosts: readonly AssetSummary[]): string {
-  if (step.type === 'local-command') return firstLine(step.command) || 'No command';
+  if (step.type === 'local-command') return `${step.name} · ${firstLine(step.command) || 'No command'}`;
   const hostName = hosts.find((host) => host.type === 'ssh' && host.id === step.assetId)?.name ?? 'No host selected';
-  if (step.type === 'ssh-command') return `${hostName} · ${firstLine(step.command) || 'No command'}`;
+  if (step.type === 'ssh-command') return `${step.name} · ${hostName} · ${firstLine(step.command) || 'No command'}`;
   const [from, to] =
     step.direction === 'upload' ? [step.localPath, step.remotePath] : [step.remotePath, step.localPath];
-  return `${hostName} · ${from || '...'} → ${to || '...'}`;
+  return `${step.name} · ${hostName} · ${from || '...'} → ${to || '...'}`;
 }
 
 export function isStepComplete(step: WorkflowStep, hosts: readonly AssetSummary[]): boolean {
+  if (!step.name.trim()) return false;
   if (step.type === 'local-command') return step.command.trim() !== '';
   const hasHost = hosts.some((host) => host.type === 'ssh' && host.id === step.assetId);
   if (step.type === 'ssh-command') return hasHost && step.command.trim() !== '';

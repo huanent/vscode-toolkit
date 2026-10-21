@@ -30,6 +30,7 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
       : definition?.type === 'ssh-command'
         ? 'SSH command'
         : 'Local command';
+  const title = definition?.name || label;
   const duration =
     result.startedAt && result.finishedAt
       ? `${((result.finishedAt - result.startedAt) / 1000).toFixed(1)}s`
@@ -43,7 +44,7 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-1">
           <WorkflowStatusIcon status={status} />
           <div className="min-w-0 flex-1 wrap-break-word">
-            {index + 1}. {label}
+            {index + 1}. {title}
           </div>
           <div className="flex shrink-0 items-center gap-2 text-xs font-normal text-(--vscode-descriptionForeground)">
             {duration && <span>{duration}</span>}

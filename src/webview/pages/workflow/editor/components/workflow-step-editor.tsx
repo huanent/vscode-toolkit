@@ -19,6 +19,16 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
   const sshHosts = hosts.filter((host) => host.type === 'ssh');
   return (
     <div className="grid">
+      <FormItem
+        name={`steps.${index}.name`}
+        label="Name"
+        invalid={!step.name.trim()}
+        error={!step.name.trim() ? 'Step name is required.' : undefined}
+        match={true}
+        control={{ value: step.name, onValueChange: (name) => onChange({ ...step, name }), required: true }}
+      >
+        <Input placeholder={`Step ${index + 1}`} />
+      </FormItem>
       <FormItem name={`steps.${index}.type`} label="Operation">
         <Select
           ariaLabel="Operation"
