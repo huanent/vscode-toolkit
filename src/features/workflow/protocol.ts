@@ -32,6 +32,7 @@ export interface WorkflowRecord {
   id: string;
   name: string;
   description?: string;
+  enableAI?: boolean;
   parentId?: string;
   workflow: WorkflowDefinition;
 }
@@ -73,6 +74,7 @@ export type WorkflowEditorRequest =
       description?: string;
       workflow: WorkflowDefinition;
       storageScope: StorageScope;
+      enableAI: boolean;
     }
   | { type: 'runWorkflow'; name: string; workflow: WorkflowDefinition };
 

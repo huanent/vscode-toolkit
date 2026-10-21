@@ -47,7 +47,7 @@ export function registerWorkflowTools(
           if (token.isCancellationRequested) throw new Error('Workflow search was cancelled.');
           if (entry.type !== 'workflow') continue;
           const record = await readWorkflowRecord(roots, entry.id);
-          if (!record) continue;
+          if (!record || record.enableAI === false) continue;
           if (
             ![record.id, record.name, record.description ?? '', record.parentId ?? ''].some((value) =>
               value.toLowerCase().includes(keyword),
@@ -71,6 +71,7 @@ export function registerWorkflowTools(
       async prepareInvocation({ input }) {
         const record = await readWorkflowRecord(getRoots(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
+        if (record.enableAI === false) throw new Error('AI tool access is disabled for this workflow.');
         return {
           invocationMessage: `Running workflow ${record.name}`,
           confirmationMessages: {
@@ -82,6 +83,7 @@ export function registerWorkflowTools(
       async invoke({ input }, token) {
         const record = await readWorkflowRecord(getRoots(), input.id);
         if (!record) throw new Error('Workflow no longer exists.');
+        if (record.enableAI === false) throw new Error('AI tool access is disabled for this workflow.');
         if (token.isCancellationRequested) throw new Error('Workflow was cancelled.');
         for (const step of record.workflow.steps) {
           if (step.type !== 'local-command') await ssh.requireAiAccess(step.assetId);
@@ -108,6 +110,7 @@ export function registerWorkflowTools(
           input.folderId,
           input.storageScope ?? existing?.scope ?? 'global',
           input.description ?? existing?.description,
+          existing?.enableAI !== false,
         );
         await refresh();
         return jsonResult({

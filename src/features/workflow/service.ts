@@ -26,6 +26,7 @@ export function createWorkflowRecord(parentId?: string): WorkflowRecord {
     kind: 'workflow',
     id: randomUUID(),
     name: 'New Workflow',
+    enableAI: true,
     parentId,
     workflow: { steps: [{ type: 'local-command', command: '' }] },
   };
@@ -66,6 +67,7 @@ export async function saveWorkflowRecord(
   parentId: string | undefined,
   scope: StorageScope,
   description?: string,
+  enableAI?: boolean,
 ): Promise<StoredWorkflowRecord> {
   validateWorkflowId(id);
   if (!name.trim() || /[\\/\0]/.test(name)) throw new Error('Enter a valid workflow name.');
@@ -82,6 +84,7 @@ export async function saveWorkflowRecord(
     id,
     name: name.trim(),
     description,
+    enableAI: enableAI !== false,
     parentId: actualParentId,
     workflow,
   };
@@ -126,7 +129,16 @@ export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: str
   if (entry.type === 'workflow') {
     const record = await readWorkflowRecord(roots, id);
     if (!record) throw new Error('Workflow entry no longer exists.');
-    await saveWorkflowRecord(roots, id, name, record.workflow, record.parentId, record.scope, record.description);
+    await saveWorkflowRecord(
+      roots,
+      id,
+      name,
+      record.workflow,
+      record.parentId,
+      record.scope,
+      record.description,
+      record.enableAI,
+    );
     return;
   }
 
@@ -387,6 +399,7 @@ function isWorkflowRecord(value: unknown): value is WorkflowRecord {
     typeof record.name === 'string' &&
     record.name.trim().length > 0 &&
     (record.description === undefined || typeof record.description === 'string') &&
+    (record.enableAI === undefined || typeof record.enableAI === 'boolean') &&
     (record.parentId === undefined || typeof record.parentId === 'string') &&
     isWorkflowDefinition(record.workflow)
   );

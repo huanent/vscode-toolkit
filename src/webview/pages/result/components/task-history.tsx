@@ -21,12 +21,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
       className="flex h-48 w-full shrink-0 flex-col border-t border-(--vscode-panel-border) bg-(--vscode-sideBar-background) md:h-full md:w-72 md:border-l md:border-t-0"
     >
       <header className="flex min-h-8 shrink-0 items-center justify-between gap-2 px-2 py-1">
-        <h2 className="flex min-w-0 items-center gap-2 wrap-break-word  font-semibold">
-          Tasks
-          <span className="rounded-sm bg-(--vscode-badge-background) px-1 text-(--vscode-badge-foreground)">
-            {tasks.length}
-          </span>
-        </h2>
+        <h2 className="flex min-w-0 items-center gap-2 wrap-break-word  font-semibold">Tasks</h2>
         <div className="flex shrink-0 items-center gap-1  tabular-nums text-(--vscode-descriptionForeground)">
           <Button
             variant="ghost"

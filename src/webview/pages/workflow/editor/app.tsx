@@ -8,6 +8,7 @@ import type {
 import { mountWebview } from '@/webview/bootstrap';
 import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
 import { Button } from '@/webview/components/ui/button';
+import { Checkbox } from '@/webview/components/ui/checkbox';
 import { Collapsible } from '@/webview/components/ui/collapsible';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Form, FormItem } from '@/webview/components/ui/form';
@@ -51,6 +52,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const sshHosts = data.assets.filter((asset) => asset.type === 'ssh');
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? '');
+  const [enableAI, setEnableAI] = useState(data.enableAI !== false);
   const [storageScope, setStorageScope] = useState(data.storageScope);
   const [activeTabId, setActiveTabId] = useState('general');
   const [addStepOpen, setAddStepOpen] = useState(false);
@@ -114,6 +116,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
             description,
             storageScope,
             workflow: { steps: steps.map((item) => item.step), environment },
+            enableAI,
           } satisfies WorkflowEditorRequest);
         }}
       >
@@ -150,6 +153,9 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                   required
                   autoFocus
                 />
+              </FormItem>
+              <FormItem name="enableAI" label="Allow AI tool access">
+                <Checkbox checked={enableAI} onCheckedChange={(checked) => setEnableAI(checked === true)} />
               </FormItem>
               <FormItem name="description" label="Description">
                 <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />

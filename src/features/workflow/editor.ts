@@ -95,6 +95,7 @@ export function registerWorkflowEditor(
               getWorkflowEditorParentId(_uri),
               message.storageScope,
               message.description,
+              message.enableAI,
             );
             await refresh();
             panel.dispose();
@@ -122,13 +123,18 @@ function getWorkflowEditorParentId(uri: vscode.Uri): string | undefined {
 
 function isWorkflowEditorRequest(value: unknown): value is WorkflowEditorRequest {
   if (!value || typeof value !== 'object') return false;
-  const request = value as Partial<WorkflowEditorRequest> & { storageScope?: unknown; description?: unknown };
+  const request = value as Partial<WorkflowEditorRequest> & {
+    storageScope?: unknown;
+    description?: unknown;
+    enableAI?: unknown;
+  };
   return (
     (request.type === 'saveWorkflow' || request.type === 'runWorkflow') &&
     typeof request.name === 'string' &&
     isWorkflowDefinition(request.workflow) &&
     (request.type === 'runWorkflow' ||
       (isStorageScope(request.storageScope) &&
+        typeof request.enableAI === 'boolean' &&
         (request.description === undefined || typeof request.description === 'string')))
   );
 }
