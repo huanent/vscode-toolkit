@@ -31,6 +31,27 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
   context.subscriptions.push(
     register('toolkit.explorer.createFile', (target) => createEntry(target, 'file', refresh)),
     register('toolkit.explorer.createFolder', (target) => createEntry(target, 'directory', refresh)),
+    register('toolkit.explorer.rename', async (target) => {
+      if (!target.explorerEntryUri) return;
+      if (target.explorerSelectedUris?.includes(target.explorerEntryUri) && target.explorerSelectedUris.length !== 1)
+        return;
+      const source = vscode.Uri.parse(target.explorerEntryUri);
+      const parent = vscode.Uri.joinPath(source, '..');
+      if (parent.path === source.path) return;
+      const currentName = posix.basename(source.path);
+      const extension = target.explorerEntryType === 'file' ? posix.extname(currentName) : '';
+      const name = await vscode.window.showInputBox({
+        prompt: 'New name',
+        value: currentName,
+        valueSelection: [0, currentName.length - extension.length],
+        validateInput: (value) => validateEntryName(parent, value, currentName),
+      });
+      if (name === undefined || name.trim() === currentName) return;
+      const edit = new vscode.WorkspaceEdit();
+      edit.renameFile(source, vscode.Uri.joinPath(parent, name.trim()), { overwrite: false });
+      if (!(await vscode.workspace.applyEdit(edit))) throw new Error('Unable to rename the file or folder.');
+      await refresh();
+    }),
     register('toolkit.explorer.openInTerminal', async (target) => {
       const terminal = vscode.window.createTerminal({ cwd: resolveTargetDirectory(target) });
       context.subscriptions.push(terminal);
@@ -95,24 +116,7 @@ async function createEntry(
   const parent = resolveTargetDirectory(target);
   const name = await vscode.window.showInputBox({
     prompt: type === 'file' ? 'New file name' : 'New folder name',
-    validateInput: async (value) => {
-      const name = value.trim();
-      if (
-        !name ||
-        name === '.' ||
-        name === '..' ||
-        /[\\/]/.test(name) ||
-        Array.from(name).some((character) => character.charCodeAt(0) < 32)
-      )
-        return 'Enter a valid name without path separators.';
-      try {
-        await vscode.workspace.fs.stat(vscode.Uri.joinPath(parent, name));
-        return 'A file or folder with this name already exists.';
-      } catch (error) {
-        if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') return undefined;
-        return error instanceof Error ? error.message : String(error);
-      }
-    },
+    validateInput: (value) => validateEntryName(parent, value),
   });
   if (name === undefined) return;
   const uri = vscode.Uri.joinPath(parent, name.trim());
@@ -124,4 +128,24 @@ async function createEntry(
     await vscode.workspace.fs.createDirectory(uri);
   }
   await refresh();
+}
+
+async function validateEntryName(parent: vscode.Uri, value: string, currentName?: string): Promise<string | undefined> {
+  const name = value.trim();
+  if (
+    !name ||
+    name === '.' ||
+    name === '..' ||
+    /[\\/]/.test(name) ||
+    Array.from(name).some((character) => character.charCodeAt(0) < 32)
+  )
+    return 'Enter a valid name without path separators.';
+  if (name === currentName) return undefined;
+  try {
+    await vscode.workspace.fs.stat(vscode.Uri.joinPath(parent, name));
+    return 'A file or folder with this name already exists.';
+  } catch (error) {
+    if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') return undefined;
+    return error instanceof Error ? error.message : String(error);
+  }
 }

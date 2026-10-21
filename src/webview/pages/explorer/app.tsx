@@ -128,6 +128,7 @@ function App() {
     explorerEntryUri: entry.uri,
     explorerEntryType: entry.type,
     explorerSelectedUris: selectedKeys.has(entry.id) ? selectedUris : [entry.uri],
+    explorerSelectionCount: selectedKeys.has(entry.id) ? selectedUris.length : 1,
   });
   const selectEntry = (entry: ExplorerEntry, event: MouseEvent<HTMLElement>) => {
     if (event.detail > 1) return;
@@ -179,6 +180,7 @@ function App() {
           explorerEntryUri: segment.location,
           explorerEntryType: 'directory',
           explorerSelectedUris: segment.location ? [segment.location] : [],
+          explorerSelectionCount: segment.location ? 1 : 0,
         })}
         onViewModeChange={(mode) => {
           setViewMode(mode);

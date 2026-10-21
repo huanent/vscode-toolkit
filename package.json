@@ -748,6 +748,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.explorer.rename",
+        "title": "Rename...",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.explorer.delete",
         "title": "Delete",
         "category": "Toolkit"
@@ -1135,6 +1140,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.explorer.rename",
+          "when": "false"
+        },
+        {
           "command": "toolkit.explorer.delete",
           "when": "false"
         },
@@ -1325,6 +1334,11 @@
           "command": "toolkit.explorer.copyPath",
           "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
           "group": "2_actions@1"
+        },
+        {
+          "command": "toolkit.explorer.rename",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri && explorerSelectionCount == 1",
+          "group": "2_actions@2"
         },
         {
           "command": "toolkit.explorer.delete",
