@@ -23,7 +23,6 @@ interface UpsertWorkflowInput {
   id?: string;
   name: string;
   description?: string;
-  folderId?: string;
   storageScope?: StorageScope;
   steps: WorkflowStepInput[];
   environment?: WorkflowEnvironmentVariable[];
@@ -94,6 +93,9 @@ export function registerWorkflowTools(
     }),
     vscode.lm.registerTool<UpsertWorkflowInput>('workflowUpsert', {
       async invoke({ input }) {
+        if (typeof input.name !== 'string' || !input.name.trim()) {
+          throw new Error('Enter a valid workflow name.');
+        }
         const roots = getRoots();
         const existing = input.id === undefined ? undefined : await readWorkflowRecord(roots, input.id);
         if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
@@ -108,7 +110,7 @@ export function registerWorkflowTools(
           existing?.id ?? randomUUID(),
           input.name,
           workflow,
-          input.folderId,
+          undefined,
           input.storageScope ?? existing?.scope ?? 'global',
           input.description ?? existing?.description,
           existing?.enableAI !== false,
@@ -128,7 +130,9 @@ export function registerWorkflowTools(
 }
 
 async function toWorkflowStep(step: WorkflowStepInput, index: number, ssh: SshService): Promise<WorkflowStep> {
-  if (!step.name.trim()) throw new Error(`Enter a name for step ${index + 1}.`);
+  if (typeof step?.name !== 'string' || !step.name.trim()) {
+    throw new Error(`Enter a name for step ${index + 1}.`);
+  }
   if (step.type === 'local-command') {
     return {
       type: 'local-command',

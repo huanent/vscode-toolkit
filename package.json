@@ -440,10 +440,6 @@
               "type": "string",
               "description": "Workflow name."
             },
-            "folderId": {
-              "type": "string",
-              "description": "Optional destination folder ID for new workflows. Ignored when updating."
-            },
             "storageScope": {
               "type": "string",
               "enum": [
@@ -565,6 +561,11 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Required non-empty step name."
+                  },
                   "type": {
                     "type": "string",
                     "enum": [
@@ -604,6 +605,7 @@
                   }
                 },
                 "required": [
+                  "name",
                   "type"
                 ]
               }
