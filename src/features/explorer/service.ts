@@ -40,6 +40,81 @@ export async function openExplorerFile(value: string): Promise<void> {
   await vscode.commands.executeCommand('vscode.open', uri);
 }
 
+export async function transferEntries(
+  values: readonly string[],
+  destinationValue: string,
+  move: boolean,
+): Promise<void> {
+  const destination = vscode.Uri.parse(destinationValue);
+  const destinationStat = await vscode.workspace.fs.stat(destination);
+  if (!(destinationStat.type & vscode.FileType.Directory))
+    throw new Error('The paste destination is not a folder.');
+
+  for (const value of values) {
+    const source = vscode.Uri.parse(value);
+    const sourceStat = await vscode.workspace.fs.stat(source);
+    const name = posix.basename(source.path);
+    if (!name || name === '.' || name === '/') throw new Error(`Cannot transfer "${source.toString()}".`);
+    if (
+      source.scheme === destination.scheme &&
+      source.authority === destination.authority &&
+      sourceStat.type & vscode.FileType.Directory
+    ) {
+      const relative = posix.relative(source.path, destination.path);
+      if (relative === '' || (relative !== '..' && !relative.startsWith('../') && !posix.isAbsolute(relative)))
+        throw new Error(`Cannot paste a folder into itself: "${source.toString()}".`);
+    }
+
+    const target = vscode.Uri.joinPath(destination, name);
+    if (source.toString() === target.toString()) {
+      if (move) continue;
+      const extension = sourceStat.type & vscode.FileType.Directory ? '' : posix.extname(name);
+      const stem = name.slice(0, name.length - extension.length);
+      for (let suffix = 1; ; suffix++) {
+        const copyTarget = vscode.Uri.joinPath(destination, `${stem} ${suffix}${extension}`);
+        try {
+          await vscode.workspace.fs.copy(source, copyTarget, { overwrite: false });
+          break;
+        } catch (error) {
+          if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileExists') throw error;
+        }
+      }
+      continue;
+    }
+    try {
+      await vscode.workspace.fs.stat(target);
+      throw new vscode.FileSystemError(`A file or folder named "${name}" already exists.`);
+    } catch (error) {
+      if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') throw error;
+    }
+
+    if (move) await vscode.workspace.fs.rename(source, target, { overwrite: false });
+    else await vscode.workspace.fs.copy(source, target, { overwrite: false });
+  }
+}
+
+export type ExplorerClipboard = { uris: string[]; move: boolean };
+export type ExplorerClipboardState = { value?: ExplorerClipboard };
+
+export async function pasteEntries(
+  clipboard: ExplorerClipboardState,
+  destination: string,
+  refresh: () => Promise<void>,
+): Promise<void> {
+  const pending = clipboard.value;
+  if (!pending?.uris.length) return;
+  try {
+    for (const uri of pending.uris) {
+      await transferEntries([uri], destination, pending.move);
+      if (pending.move)
+        clipboard.value = { ...pending, uris: pending.uris.filter((pendingUri) => pendingUri !== uri) };
+    }
+    if (pending.move) clipboard.value = undefined;
+  } finally {
+    await refresh();
+  }
+}
+
 function directoryEntry(uri: vscode.Uri, name: string): ExplorerEntry {
   return { id: uri.toString(), name, type: 'directory', uri: uri.toString() };
 }

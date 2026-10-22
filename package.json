@@ -760,6 +760,21 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.explorer.copy",
+        "title": "Copy",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.cut",
+        "title": "Cut",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.explorer.paste",
+        "title": "Paste",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.explorer.copyPath",
         "title": "Copy Path",
         "category": "Toolkit"
@@ -1093,11 +1108,6 @@
           "command": "toolkit.credential.add",
           "when": "activeWebviewPanelId == toolkit.credential",
           "group": "navigation@1"
-        },
-        {
-          "command": "toolkit.explorer.refresh",
-          "when": "activeWebviewPanelId == toolkit.explorer",
-          "group": "navigation@1"
         }
       ],
       "editor/context": [
@@ -1153,6 +1163,18 @@
         },
         {
           "command": "toolkit.explorer.delete",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.copy",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.cut",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.explorer.paste",
           "when": "false"
         },
         {
@@ -1339,14 +1361,29 @@
           "group": "1_create@2"
         },
         {
-          "command": "toolkit.explorer.copyPath",
+          "command": "toolkit.explorer.copy",
           "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
           "group": "2_actions@1"
         },
         {
+          "command": "toolkit.explorer.cut",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
+          "group": "2_actions@2"
+        },
+        {
+          "command": "toolkit.explorer.copyPath",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri",
+          "group": "2_actions@3"
+        },
+        {
           "command": "toolkit.explorer.rename",
           "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerEntryUri && explorerSelectionCount == 1",
-          "group": "2_actions@2"
+          "group": "2_actions@4"
+        },
+        {
+          "command": "toolkit.explorer.paste",
+          "when": "webviewId == 'toolkit.explorer' && webviewSection == 'explorer' && explorerDirectoryUri",
+          "group": "2_actions@5"
         },
         {
           "command": "toolkit.explorer.delete",

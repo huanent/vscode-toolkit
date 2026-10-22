@@ -159,7 +159,55 @@ function App() {
   };
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
+    <main
+      className="flex h-dvh flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)"
+      onKeyDownCapture={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+        const selectAllKey =
+          event.key.toLowerCase() === 'a' &&
+          (event.metaKey || event.ctrlKey) &&
+          !event.altKey &&
+          !event.shiftKey;
+        if (selectAllKey && children.length) {
+          event.preventDefault();
+          event.stopPropagation();
+          setSelection({
+            location,
+            keys: new Set(children.map((entry) => entry.id)),
+            anchor: children[0]?.id ?? null,
+          });
+          return;
+        }
+        const transferKey =
+          (event.metaKey || event.ctrlKey) &&
+          !event.altKey &&
+          !event.shiftKey &&
+          ['c', 'x', 'v'].includes(event.key.toLowerCase());
+        if (transferKey) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.repeat) return;
+          if (event.key.toLowerCase() === 'v') {
+            postToHost({ type: 'pasteEntries' } satisfies ExplorerWebviewMessage);
+          } else if (selectedUris.length) {
+            postToHost({
+              type: event.key.toLowerCase() === 'x' ? 'cutEntries' : 'copyEntries',
+              uris: selectedUris,
+            } satisfies ExplorerWebviewMessage);
+          }
+          return;
+        }
+        const deleteKey =
+          event.key === 'Delete' && !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey;
+        const macDeleteKey =
+          event.key === 'Backspace' && event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey;
+        if ((!deleteKey && !macDeleteKey) || !selectedUris.length) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) postToHost({ type: 'deleteEntries', uris: selectedUris } satisfies ExplorerWebviewMessage);
+      }}
+    >
       <ExplorerToolbar
         address={formatAddress(index, location)}
         addressSegments={getAddressSegments(index, location)}
@@ -168,6 +216,7 @@ function App() {
         onToggleFavorite={(address) => postToHost({ type: 'toggleFavorite', address } satisfies ExplorerWebviewMessage)}
         viewMode={viewMode}
         onBack={() => postToHost({ type: 'goBack' } satisfies ExplorerWebviewMessage)}
+        onRefresh={() => postToHost({ type: 'refresh' } satisfies ExplorerWebviewMessage)}
         onAddressSubmit={(address) => {
           postToHost({ type: 'navigateAddress', address } satisfies ExplorerWebviewMessage);
           return true;
@@ -189,19 +238,14 @@ function App() {
       />
       {state.error && <ErrorMessage message={state.error} />}
       <section
-        className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        className="flex min-h-0 flex-1 flex-col overflow-hidden outline-none"
         aria-label="Files"
-        onKeyDown={(event) => {
+        tabIndex={0}
+        onMouseDown={(event) => {
           const target = event.target as HTMLElement;
-          if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
-          const deleteKey =
-            event.key === 'Delete' && !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey;
-          const macDeleteKey =
-            event.key === 'Backspace' && event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey;
-          if ((!deleteKey && !macDeleteKey) || !selectedUris.length) return;
-          event.preventDefault();
-          event.stopPropagation();
-          if (!event.repeat) postToHost({ type: 'deleteEntries', uris: selectedUris } satisfies ExplorerWebviewMessage);
+          if (!target.closest('[role="row"], button, [role="button"], input, textarea, select, [contenteditable]')) {
+            event.currentTarget.focus();
+          }
         }}
         data-vscode-context={JSON.stringify({
           webviewSection: 'explorer',
@@ -219,6 +263,7 @@ function App() {
             entryKey={(entry) => entry.id}
             entryContext={entryContext}
             isSelected={(entry) => selectedKeys.has(entry.id)}
+            isCut={(entry) => (state.data.cutUris ?? []).includes(entry.uri)}
             onSelect={selectEntry}
             onOpen={openEntry}
           />
@@ -229,6 +274,7 @@ function App() {
             entryKey={(entry) => entry.id}
             entryContext={entryContext}
             isSelected={(entry) => selectedKeys.has(entry.id)}
+            isCut={(entry) => (state.data.cutUris ?? []).includes(entry.uri)}
             onSelect={selectEntry}
             label={(entry) => entry.name}
             icon={(entry) => <Icon name={entry.type === 'directory' ? 'folder' : 'file'} size="3xl" />}

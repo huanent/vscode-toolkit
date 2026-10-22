@@ -1,5 +1,7 @@
 import { posix } from 'node:path';
 import * as vscode from 'vscode';
+import { pasteEntries } from './service';
+import type { ExplorerClipboardState } from './service';
 
 type ExplorerContextTarget = {
   explorerDirectoryUri?: string;
@@ -8,7 +10,11 @@ type ExplorerContextTarget = {
   explorerSelectedUris?: string[];
 };
 
-export function registerExplorerContextCommands(context: vscode.ExtensionContext, refresh: () => Promise<void>): void {
+export function registerExplorerContextCommands(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  clipboard: ExplorerClipboardState,
+): void {
   const register = (command: string, action: (target: ExplorerContextTarget) => Promise<void>) =>
     vscode.commands.registerCommand(command, async (value: unknown) => {
       if (typeof value !== 'object' || value === null) return;
@@ -67,6 +73,17 @@ export function registerExplorerContextCommands(context: vscode.ExtensionContext
         forceNewWindow: true,
       });
     }),
+    register('toolkit.explorer.copy', async (target) => {
+      clipboard.value = { uris: getSelectedEntryUris(target), move: false };
+      await refresh();
+    }),
+    register('toolkit.explorer.cut', async (target) => {
+      clipboard.value = { uris: getSelectedEntryUris(target), move: true };
+      await refresh();
+    }),
+    register('toolkit.explorer.paste', (target) =>
+      pasteEntries(clipboard, resolveTargetDirectory(target).toString(), refresh),
+    ),
     register('toolkit.explorer.delete', async (target) => {
       if (!target.explorerEntryUri) return;
       const selectedUris = target.explorerSelectedUris?.includes(target.explorerEntryUri)
@@ -106,6 +123,14 @@ function resolveTargetDirectory(target: ExplorerContextTarget): vscode.Uri {
       ? vscode.Uri.parse(target.explorerEntryUri)
       : vscode.Uri.joinPath(vscode.Uri.parse(target.explorerEntryUri), '..')
     : vscode.Uri.parse(target.explorerDirectoryUri!);
+}
+
+function getSelectedEntryUris(target: ExplorerContextTarget): string[] {
+  if (!target.explorerEntryUri) return [];
+  const selected = target.explorerSelectedUris?.includes(target.explorerEntryUri)
+    ? target.explorerSelectedUris
+    : [target.explorerEntryUri];
+  return [...new Set(selected)];
 }
 
 async function createEntry(

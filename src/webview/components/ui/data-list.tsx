@@ -17,6 +17,7 @@ type DataListProps<T> = {
   entryKey: (entry: T) => Key;
   entryContext?: (entry: T) => Record<string, unknown>;
   isSelected?: (entry: T) => boolean;
+  isCut?: (entry: T) => boolean;
   onSelect?: (entry: T, event: MouseEvent<HTMLElement>) => void;
   onOpen?: (entry: T) => void;
   emptyMessage?: ReactNode;
@@ -36,6 +37,7 @@ export function DataList<T>({
   entryKey,
   entryContext,
   isSelected,
+  isCut,
   onSelect,
   onOpen,
   emptyMessage = 'No items.',
@@ -85,6 +87,7 @@ export function DataList<T>({
               isSelected?.(entry)
                 ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
                 : 'hover:bg-(--vscode-list-hoverBackground)',
+              isCut?.(entry) && 'opacity-50',
               onOpen && 'cursor-pointer',
             )}
             onClick={

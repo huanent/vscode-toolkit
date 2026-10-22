@@ -14,6 +14,7 @@ type ExplorerToolbarProps = {
   onToggleFavorite: (address: string) => void;
   viewMode: ExplorerViewMode;
   onBack: () => void;
+  onRefresh: () => void;
   /** Returns whether the address navigation request was accepted. */
   onAddressSubmit: (address: string) => boolean;
   onNavigate: (location: string | null) => void;
@@ -29,6 +30,7 @@ export function ExplorerToolbar({
   onToggleFavorite,
   viewMode,
   onBack,
+  onRefresh,
   onAddressSubmit,
   onNavigate,
   segmentContext,
@@ -42,6 +44,13 @@ export function ExplorerToolbar({
         disabled={!canGoBack}
         onClick={onBack}
         prefix={<Icon name="arrow-left" />}
+      />
+      <Button
+        variant="ghost"
+        aria-label="Refresh"
+        title="Refresh"
+        onClick={onRefresh}
+        prefix={<Icon name="refresh" />}
       />
       <AddressBar
         address={address}

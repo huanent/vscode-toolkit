@@ -7,6 +7,7 @@ type DataGridProps<T> = {
   entryKey: (entry: T) => Key;
   entryContext?: (entry: T) => Record<string, unknown>;
   isSelected?: (entry: T) => boolean;
+  isCut?: (entry: T) => boolean;
   onSelect?: (entry: T, event: MouseEvent<HTMLElement>) => void;
   label: (entry: T) => ReactNode;
   icon?: (entry: T) => ReactNode;
@@ -22,6 +23,7 @@ export function DataGrid<T>({
   entryKey,
   entryContext,
   isSelected,
+  isCut,
   onSelect,
   label,
   icon,
@@ -50,6 +52,7 @@ export function DataGrid<T>({
               isSelected?.(entry)
                 ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
                 : 'hover:bg-(--vscode-list-hoverBackground) focus-visible:bg-(--vscode-list-hoverBackground)',
+              isCut?.(entry) && 'opacity-50',
             )}
             onClick={onSelect ? (event) => onSelect(entry, event) : undefined}
             onDoubleClick={(event) => {
