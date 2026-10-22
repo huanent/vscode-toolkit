@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "version": "2.2.3",
-  "description": "HTTP requests, databases, SSH, file previews, and workflow automation, with Copilot integration. All in VS Code.",
+  "description": "Databases, SSH, HTTP requests and workflow automation, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
   ],

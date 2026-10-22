@@ -13,13 +13,13 @@ Keep your everyday development tasks in VS Code. Send HTTP requests, query datab
 
 ## Features
 
-- **HTTP Requests**: Edit and send requests from `.http` and `.rest` files, and inspect responses.
 - **Databases**: Browse SQLite and MySQL databases and tables, and run SQL queries.
 - **SSH & SFTP**: Connect to remote hosts, execute commands, and upload or download files.
-- **Connections & Credentials**: Manage SSH and MySQL connection assets and credentials, organized into folders.
+- **Connections & Credentials**: Manage SSH and Database connection assets and credentials, organized into folders.
 - **Workflows**: Build and run sequences of local commands, SSH commands, and SFTP transfers.
+- **HTTP Requests**: Edit and send requests from `.http` and `.rest` files, and inspect responses.
 - **File Previews**: Browse ZIP and VSIX archives, and view XLSX and CSV spreadsheets.
-- **Script Runner**: Run .NET, Shell, Batch, Node.js, and Bun scripts, plus npm and Bun package scripts.
+- **Script Runner**: Run .NET, Python, Shell, Batch, Node.js, and Bun scripts, plus npm and Bun package scripts.
 - **Git Tools**: Generate `.gitignore` files, pull, push, fetch, and switch branches.
 - **Temporary Files**: Create and manage temporary files, organized into folders.
 - **AI Tools**: Use Copilot to search connection assets, run remote commands and SQL, transfer files, and create or run workflows.
