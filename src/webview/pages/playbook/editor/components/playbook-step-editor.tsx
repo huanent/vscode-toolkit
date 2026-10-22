@@ -1,21 +1,21 @@
-import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { PlaybookStep } from '@/features/playbook/protocol';
 import type { AssetSummary } from '@/features/assets/protocol';
 import { AssetSelect } from '@/webview/components/asset-select';
 import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
 import { Select } from '@/webview/components/ui/select';
 import { Textarea } from '@/webview/components/ui/textarea';
-import { directionOptions, workflowTypeOptions } from '@/webview/pages/workflow/editor/step-model';
+import { directionOptions, playbookTypeOptions } from '@/webview/pages/playbook/editor/step-model';
 
-type WorkflowStepEditorProps = {
+type PlaybookStepEditorProps = {
   index: number;
-  step: WorkflowStep;
+  step: PlaybookStep;
   hosts: readonly AssetSummary[];
-  onChange: (step: WorkflowStep) => void;
-  onTypeChange: (type: WorkflowStep['type']) => void;
+  onChange: (step: PlaybookStep) => void;
+  onTypeChange: (type: PlaybookStep['type']) => void;
 };
 
-export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange }: WorkflowStepEditorProps) {
+export function PlaybookStepEditor({ index, step, hosts, onChange, onTypeChange }: PlaybookStepEditorProps) {
   const sshHosts = hosts.filter((host) => host.type === 'ssh');
   return (
     <div className="grid">
@@ -33,8 +33,8 @@ export function WorkflowStepEditor({ index, step, hosts, onChange, onTypeChange 
         <Select
           ariaLabel="Operation"
           value={step.type}
-          onValueChange={(value) => onTypeChange(value as WorkflowStep['type'])}
-          options={workflowTypeOptions}
+          onValueChange={(value) => onTypeChange(value as PlaybookStep['type'])}
+          options={playbookTypeOptions}
         />
       </FormItem>
 

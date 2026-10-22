@@ -1,7 +1,7 @@
 import type { StorageScope } from '@/shared/storage-scope';
 import type { AssetSummary } from '@/features/assets/protocol';
 
-export type WorkflowStep =
+export type PlaybookStep =
   | { type: 'local-command'; name: string; command: string; cwd?: string }
   | {
       type: 'sftp';
@@ -13,38 +13,38 @@ export type WorkflowStep =
     }
   | { type: 'ssh-command'; name: string; assetId: string; command: string };
 
-export type WorkflowEnvironmentVariable =
+export type PlaybookEnvironmentVariable =
   | { name: string; label: string; type: 'input'; defaultValue: string }
   | { name: string; label: string; type: 'checkbox'; defaultValue: boolean }
   | { name: string; label: string; type: 'select'; defaultValue: string; options: { value: string; label: string }[] };
 
-export type WorkflowEnvironmentValues = Record<string, string>;
+export type PlaybookEnvironmentValues = Record<string, string>;
 
-export interface WorkflowRunFormData {
+export interface PlaybookRunFormData {
   name: string;
-  environment: WorkflowEnvironmentVariable[];
+  environment: PlaybookEnvironmentVariable[];
 }
 
-export type WorkflowRunFormRequest =
-  | { type: 'submitWorkflowRun'; values: WorkflowEnvironmentValues }
-  | { type: 'cancelWorkflowRun' };
+export type PlaybookRunFormRequest =
+  | { type: 'submitPlaybookRun'; values: PlaybookEnvironmentValues }
+  | { type: 'cancelPlaybookRun' };
 
-export interface WorkflowDefinition {
-  steps: WorkflowStep[];
-  environment?: WorkflowEnvironmentVariable[];
+export interface PlaybookDefinition {
+  steps: PlaybookStep[];
+  environment?: PlaybookEnvironmentVariable[];
 }
 
-export interface WorkflowRecord {
-  kind: 'workflow';
+export interface PlaybookRecord {
+  kind: 'playbook';
   id: string;
   name: string;
   description?: string;
   enableAI?: boolean;
   parentId?: string;
-  workflow: WorkflowDefinition;
+  playbook: PlaybookDefinition;
 }
 
-export interface WorkflowStepResult {
+export interface PlaybookStepResult {
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'skipped';
   output?: string;
   message?: string;
@@ -54,59 +54,59 @@ export interface WorkflowStepResult {
   totalBytes?: number;
 }
 
-export interface WorkflowRunOutcome {
+export interface PlaybookRunOutcome {
   success: boolean;
   message: string;
   output?: string;
-  steps?: WorkflowStepResult[];
+  steps?: PlaybookStepResult[];
 }
 
-export interface WorkflowFolderRecord {
+export interface PlaybookFolderRecord {
   kind: 'folder';
   id: string;
   name: string;
   parentId?: string;
 }
 
-export interface WorkflowEditorData extends WorkflowRecord {
+export interface PlaybookEditorData extends PlaybookRecord {
   assets: AssetSummary[];
   storageScope: StorageScope;
   workspaceStorageAvailable: boolean;
 }
 
-export type WorkflowEditorRequest =
+export type PlaybookEditorRequest =
   | {
-      type: 'saveWorkflow';
+      type: 'savePlaybook';
       name: string;
       description?: string;
-      workflow: WorkflowDefinition;
+      playbook: PlaybookDefinition;
       storageScope: StorageScope;
       enableAI: boolean;
     }
-  | { type: 'runWorkflow'; name: string; workflow: WorkflowDefinition };
+  | { type: 'runPlaybook'; name: string; playbook: PlaybookDefinition };
 
-export type WorkflowEditorMessage =
-  | { type: 'workflowSaved'; name: string }
-  | { type: 'workflowEditorError'; message: string };
+export type PlaybookEditorMessage =
+  | { type: 'playbookSaved'; name: string }
+  | { type: 'playbookEditorError'; message: string };
 
-export interface WorkflowEditorOpenRequest {
-  type: 'openWorkflowEditor';
+export interface PlaybookEditorOpenRequest {
+  type: 'openPlaybookEditor';
   id?: string;
   parentId?: string;
 }
 
-export interface WorkflowRunRequest {
-  type: 'runWorkflowFile';
+export interface PlaybookRunRequest {
+  type: 'runPlaybookFile';
   id: string;
 }
 
-export interface WorkflowRecordEntry {
+export interface PlaybookRecordEntry {
   id: string;
   name: string;
-  type: 'workflow' | 'folder';
+  type: 'playbook' | 'folder';
   parentId?: string;
 }
 
-export type WorkflowFilesWebviewMessage =
-  | { type: 'workflowFilesUpdated'; entries: WorkflowRecordEntry[] }
-  | { type: 'workflowFileError'; message: string };
+export type PlaybookFilesWebviewMessage =
+  | { type: 'playbookFilesUpdated'; entries: PlaybookRecordEntry[] }
+  | { type: 'playbookFileError'; message: string };

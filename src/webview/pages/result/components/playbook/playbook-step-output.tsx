@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import type { WorkflowStep, WorkflowStepResult } from '@/features/workflow/protocol';
+import type { PlaybookStep, PlaybookStepResult } from '@/features/playbook/protocol';
 import { Collapsible } from '@/webview/components/ui/collapsible';
 import { Progress } from '@/webview/components/ui/progress';
 import { ResultText } from '../result-text';
-import { WorkflowStatusIcon } from './workflow-status-icon';
+import { PlaybookStatusIcon } from './playbook-status-icon';
 
-interface WorkflowStepOutputProps {
+interface PlaybookStepOutputProps {
   index: number;
-  definition?: WorkflowStep;
-  result: WorkflowStepResult;
+  definition?: PlaybookStep;
+  result: PlaybookStepResult;
   running: boolean;
 }
 
-export function WorkflowStepOutput({ index, definition, result, running }: WorkflowStepOutputProps) {
+export function PlaybookStepOutput({ index, definition, result, running }: PlaybookStepOutputProps) {
   const status =
     !running && result.status === 'running'
       ? 'cancelled'
@@ -43,7 +43,7 @@ export function WorkflowStepOutput({ index, definition, result, running }: Workf
       onOpenChange={setOpen}
       title={
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-1">
-          <WorkflowStatusIcon status={status} />
+          <PlaybookStatusIcon status={status} />
           <div className="min-w-0 flex-1 wrap-break-word">
             {index + 1}. {title}
           </div>

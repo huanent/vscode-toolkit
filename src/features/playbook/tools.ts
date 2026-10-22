@@ -3,12 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import type { StorageScope } from '@/shared/storage-scope';
 import type { SshService } from '@/features/ssh/ssh-service';
-import type { WorkflowDefinition, WorkflowEnvironmentVariable, WorkflowStep } from './protocol';
-import { validateWorkflow } from './runner';
-import { readWorkflowRecord, readWorkflowRecords, saveWorkflowRecord } from './service';
-import type { WorkflowResultService } from './result-service';
+import type { PlaybookDefinition, PlaybookEnvironmentVariable, PlaybookStep } from './protocol';
+import { validatePlaybook } from './runner';
+import { readPlaybookRecord, readPlaybookRecords, savePlaybookRecord } from './service';
+import type { PlaybookResultService } from './result-service';
 
-interface WorkflowStepInput {
+interface PlaybookStepInput {
   type: 'local-command' | 'ssh-command' | 'sftp';
   name: string;
   command?: string;
@@ -19,34 +19,34 @@ interface WorkflowStepInput {
   remotePath?: string;
 }
 
-interface UpsertWorkflowInput {
+interface UpsertPlaybookInput {
   id?: string;
   name: string;
   description?: string;
   storageScope?: StorageScope;
-  steps: WorkflowStepInput[];
-  environment?: WorkflowEnvironmentVariable[];
+  steps: PlaybookStepInput[];
+  environment?: PlaybookEnvironmentVariable[];
 }
 
-export function registerWorkflowTools(
+export function registerPlaybookTools(
   context: vscode.ExtensionContext,
   ssh: SshService,
-  workflowResults: WorkflowResultService,
+  playbookResults: PlaybookResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable[] {
-  const getRoots = () => resolveStorageRoots(context, 'workflows');
+  const getRoots = () => resolveStorageRoots(context, 'playbooks');
 
   return [
-    vscode.lm.registerTool<{ keyword: string }>('workflowSearch', {
+    vscode.lm.registerTool<{ keyword: string }>('playbookSearch', {
       async invoke({ input }, token) {
         const roots = getRoots();
-        const entries = await readWorkflowRecords(roots);
+        const entries = await readPlaybookRecords(roots);
         const keyword = input.keyword.toLowerCase();
         const matches = [];
         for (const entry of entries) {
-          if (token.isCancellationRequested) throw new Error('Workflow search was cancelled.');
-          if (entry.type !== 'workflow') continue;
-          const record = await readWorkflowRecord(roots, entry.id);
+          if (token.isCancellationRequested) throw new Error('Playbook search was cancelled.');
+          if (entry.type !== 'playbook') continue;
+          const record = await readPlaybookRecord(roots, entry.id);
           if (!record || record.enableAI === false) continue;
           if (
             ![record.id, record.name, record.description ?? '', record.parentId ?? ''].some((value) =>
@@ -60,56 +60,56 @@ export function registerWorkflowTools(
             description: record.description,
             folderId: record.parentId,
             storageScope: record.scope,
-            stepCount: record.workflow.steps.length,
-            stepTypes: record.workflow.steps.map((step) => step.type),
+            stepCount: record.playbook.steps.length,
+            stepTypes: record.playbook.steps.map((step) => step.type),
           });
         }
         return jsonResult(matches);
       },
     }),
-    vscode.lm.registerTool<{ id: string }>('workflowRun', {
+    vscode.lm.registerTool<{ id: string }>('playbookRun', {
       async prepareInvocation({ input }) {
-        const record = await readWorkflowRecord(getRoots(), input.id);
-        if (!record) throw new Error('Workflow no longer exists.');
-        if (record.enableAI === false) throw new Error('AI tool access is disabled for this workflow.');
+        const record = await readPlaybookRecord(getRoots(), input.id);
+        if (!record) throw new Error('Playbook no longer exists.');
+        if (record.enableAI === false) throw new Error('AI tool access is disabled for this playbook.');
         return {
-          invocationMessage: `Running workflow ${record.name}`,
+          invocationMessage: `Running playbook ${record.name}`,
           confirmationMessages: {
-            title: 'Run workflow?',
-            message: `${record.name}\n${record.description ?? ''}\n${JSON.stringify(record.workflow, null, 2)}`,
+            title: 'Run playbook?',
+            message: `${record.name}\n${record.description ?? ''}\n${JSON.stringify(record.playbook, null, 2)}`,
           },
         };
       },
       async invoke({ input }, token) {
-        const record = await readWorkflowRecord(getRoots(), input.id);
-        if (!record) throw new Error('Workflow no longer exists.');
-        if (record.enableAI === false) throw new Error('AI tool access is disabled for this workflow.');
-        if (token.isCancellationRequested) throw new Error('Workflow was cancelled.');
-        for (const step of record.workflow.steps) {
+        const record = await readPlaybookRecord(getRoots(), input.id);
+        if (!record) throw new Error('Playbook no longer exists.');
+        if (record.enableAI === false) throw new Error('AI tool access is disabled for this playbook.');
+        if (token.isCancellationRequested) throw new Error('Playbook was cancelled.');
+        for (const step of record.playbook.steps) {
           if (step.type !== 'local-command') await ssh.requireAiAccess(step.assetId);
         }
-        return jsonResult(await workflowResults.runWorkflowAndWait(record.name, record.workflow, token));
+        return jsonResult(await playbookResults.runPlaybookAndWait(record.name, record.playbook, token));
       },
     }),
-    vscode.lm.registerTool<UpsertWorkflowInput>('workflowUpsert', {
+    vscode.lm.registerTool<UpsertPlaybookInput>('playbookUpsert', {
       async invoke({ input }) {
         if (typeof input.name !== 'string' || !input.name.trim()) {
-          throw new Error('Enter a valid workflow name.');
+          throw new Error('Enter a valid playbook name.');
         }
         const roots = getRoots();
-        const existing = input.id === undefined ? undefined : await readWorkflowRecord(roots, input.id);
-        if (input.id !== undefined && !existing) throw new Error('Workflow no longer exists.');
-        const steps = await Promise.all(input.steps.map((step, index) => toWorkflowStep(step, index, ssh)));
-        const workflow: WorkflowDefinition = {
+        const existing = input.id === undefined ? undefined : await readPlaybookRecord(roots, input.id);
+        if (input.id !== undefined && !existing) throw new Error('Playbook no longer exists.');
+        const steps = await Promise.all(input.steps.map((step, index) => toPlaybookStep(step, index, ssh)));
+        const playbook: PlaybookDefinition = {
           steps,
-          environment: input.environment ?? existing?.workflow.environment,
+          environment: input.environment ?? existing?.playbook.environment,
         };
-        await validateWorkflow(workflow, ssh);
-        const record = await saveWorkflowRecord(
+        await validatePlaybook(playbook, ssh);
+        const record = await savePlaybookRecord(
           roots,
           existing?.id ?? randomUUID(),
           input.name,
-          workflow,
+          playbook,
           undefined,
           input.storageScope ?? existing?.scope ?? 'global',
           input.description ?? existing?.description,
@@ -121,7 +121,7 @@ export function registerWorkflowTools(
           name: record.name,
           ...(record.parentId ? { folderId: record.parentId } : {}),
           storageScope: record.scope,
-          stepCount: workflow.steps.length,
+          stepCount: playbook.steps.length,
           action: existing ? 'updated' : 'created',
         });
       },
@@ -129,7 +129,7 @@ export function registerWorkflowTools(
   ];
 }
 
-async function toWorkflowStep(step: WorkflowStepInput, index: number, ssh: SshService): Promise<WorkflowStep> {
+async function toPlaybookStep(step: PlaybookStepInput, index: number, ssh: SshService): Promise<PlaybookStep> {
   if (typeof step?.name !== 'string' || !step.name.trim()) {
     throw new Error(`Enter a name for step ${index + 1}.`);
   }

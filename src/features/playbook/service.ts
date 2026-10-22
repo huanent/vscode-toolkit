@@ -2,91 +2,91 @@ import { randomUUID } from 'node:crypto';
 import { access, lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { readFile } from 'node:fs/promises';
-import type { WorkflowDefinition, WorkflowFolderRecord, WorkflowRecord, WorkflowRecordEntry } from './protocol';
+import type { PlaybookDefinition, PlaybookFolderRecord, PlaybookRecord, PlaybookRecordEntry } from './protocol';
 import { findStorageRoot, type StorageRoot, type StorageScope } from '@/shared/storage-scope';
 
 const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 
-export type StoredWorkflowRecord = WorkflowRecord & { scope: StorageScope };
+export type StoredPlaybookRecord = PlaybookRecord & { scope: StorageScope };
 
-interface StoredWorkflowLocation {
+interface StoredPlaybookLocation {
   path: string;
   root: StorageRoot;
   parentId?: string;
 }
 
-interface WorkflowStorageIndex {
-  entries: WorkflowRecordEntry[];
-  workflows: Map<string, StoredWorkflowLocation>;
+interface PlaybookStorageIndex {
+  entries: PlaybookRecordEntry[];
+  playbooks: Map<string, StoredPlaybookLocation>;
   folders: Map<string, StorageRoot[]>;
 }
 
-export function createWorkflowRecord(parentId?: string): WorkflowRecord {
+export function createPlaybookRecord(parentId?: string): PlaybookRecord {
   return {
-    kind: 'workflow',
+    kind: 'playbook',
     id: randomUUID(),
-    name: 'New Workflow',
+    name: 'New Playbook',
     enableAI: true,
     parentId,
-    workflow: { steps: [] },
+    playbook: { steps: [] },
   };
 }
 
-export async function readWorkflowRecords(roots: readonly StorageRoot[]): Promise<WorkflowRecordEntry[]> {
-  const index = await readWorkflowStorage(roots);
+export async function readPlaybookRecords(roots: readonly StorageRoot[]): Promise<PlaybookRecordEntry[]> {
+  const index = await readPlaybookStorage(roots);
   return index.entries.sort((first, second) => entryNameCollator.compare(first.name, second.name));
 }
 
-export async function readWorkflowRecord(
+export async function readPlaybookRecord(
   roots: readonly StorageRoot[],
   id: string,
-): Promise<StoredWorkflowRecord | undefined> {
-  if (!/^[0-9a-f-]+$/i.test(id)) throw new Error('Invalid workflow id.');
-  const index = await readWorkflowStorage(roots);
+): Promise<StoredPlaybookRecord | undefined> {
+  if (!/^[0-9a-f-]+$/i.test(id)) throw new Error('Invalid playbook id.');
+  const index = await readPlaybookStorage(roots);
   let resolvedId = id;
-  if (!index.workflows.has(id)) {
-    const matches = [...index.workflows.keys()].filter((workflowId) => workflowId.startsWith(id));
+  if (!index.playbooks.has(id)) {
+    const matches = [...index.playbooks.keys()].filter((playbookId) => playbookId.startsWith(id));
     if (matches.length > 1) {
-      throw new Error(`Workflow ID prefix "${id}" matches multiple workflows. Use a longer ID.`);
+      throw new Error(`Playbook ID prefix "${id}" matches multiple playbooks. Use a longer ID.`);
     }
     if (!matches.length) return undefined;
     resolvedId = matches[0];
   }
-  const location = index.workflows.get(resolvedId);
+  const location = index.playbooks.get(resolvedId);
   if (!location) return undefined;
-  const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(location.path, 'utf8')));
-  if (!isWorkflowRecord(value) || value.id !== resolvedId) throw new Error('Invalid workflow record.');
-  return { ...value, kind: 'workflow', parentId: location.parentId, scope: location.root.scope };
+  const value = addLegacyPlaybookStepNames(JSON.parse(await readFile(location.path, 'utf8')));
+  if (!isPlaybookRecord(value) || value.id !== resolvedId) throw new Error('Invalid playbook record.');
+  return { ...value, kind: 'playbook', parentId: location.parentId, scope: location.root.scope };
 }
 
-export async function saveWorkflowRecord(
+export async function savePlaybookRecord(
   roots: readonly StorageRoot[],
   id: string,
   name: string,
-  workflow: WorkflowDefinition,
+  playbook: PlaybookDefinition,
   parentId: string | undefined,
   scope: StorageScope,
   description?: string,
   enableAI?: boolean,
-): Promise<StoredWorkflowRecord> {
-  validateWorkflowId(id);
-  if (!name.trim() || /[\\/\0]/.test(name)) throw new Error('Enter a valid workflow name.');
-  if (!isWorkflowDefinition(workflow)) throw new Error('Invalid workflow definition.');
-  if (parentId) validateWorkflowFolderId(parentId);
-  const index = await readWorkflowStorage(roots);
-  const existing = index.workflows.get(id);
+): Promise<StoredPlaybookRecord> {
+  validatePlaybookId(id);
+  if (!name.trim() || /[\\/\0]/.test(name)) throw new Error('Enter a valid playbook name.');
+  if (!isPlaybookDefinition(playbook)) throw new Error('Invalid playbook definition.');
+  if (parentId) validatePlaybookFolderId(parentId);
+  const index = await readPlaybookStorage(roots);
+  const existing = index.playbooks.get(id);
   const actualParentId = existing ? existing.parentId : parentId;
   if (actualParentId && !index.folders.has(actualParentId)) throw new Error('The parent folder no longer exists.');
   const root = findStorageRoot(roots, scope);
-  const targetDirectory = actualParentId ? workflowFolderPath(root, actualParentId) : root.directory;
-  const record: WorkflowRecord = {
-    kind: 'workflow',
+  const targetDirectory = actualParentId ? playbookFolderPath(root, actualParentId) : root.directory;
+  const record: PlaybookRecord = {
+    kind: 'playbook',
     id,
     name: name.trim(),
     description,
     enableAI: enableAI !== false,
     parentId: actualParentId,
-    workflow,
+    playbook,
   };
   const target = path.join(targetDirectory, `${id}.json`);
   await writeJsonFile(target, record);
@@ -94,16 +94,16 @@ export async function saveWorkflowRecord(
   return { ...record, scope: root.scope };
 }
 
-export async function saveWorkflowFolder(
+export async function savePlaybookFolder(
   roots: readonly StorageRoot[],
   name: string,
   parentId?: string,
-): Promise<WorkflowFolderRecord> {
+): Promise<PlaybookFolderRecord> {
   const trimmedName = name.trim();
   if (!trimmedName || trimmedName === '.' || trimmedName === '..' || /[\\/\0]/.test(trimmedName)) {
     throw new Error('Enter a valid folder name.');
   }
-  const index = await readWorkflowStorage(roots);
+  const index = await readPlaybookStorage(roots);
   const root = parentId ? index.folders.get(parentId)?.[0] : findStorageRoot(roots, 'global');
   if (!root) throw new Error('The parent folder no longer exists.');
   if (index.entries.some((record) => record.parentId === parentId && record.name === trimmedName)) {
@@ -111,29 +111,29 @@ export async function saveWorkflowFolder(
   }
   await mkdir(root.directory, { recursive: true });
   const id = parentId ? `${parentId}/${trimmedName}` : trimmedName;
-  await mkdir(workflowFolderPath(root, id));
+  await mkdir(playbookFolderPath(root, id));
   return { kind: 'folder', id, name: trimmedName, parentId };
 }
 
-export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: string, rawName: string): Promise<void> {
+export async function renamePlaybookEntry(roots: readonly StorageRoot[], id: string, rawName: string): Promise<void> {
   const name = rawName.trim();
   if (!name || name === '.' || name === '..' || /[\\/\0]/.test(name)) {
-    throw new Error('Enter a valid workflow name.');
+    throw new Error('Enter a valid playbook name.');
   }
 
-  const index = await readWorkflowStorage(roots);
+  const index = await readPlaybookStorage(roots);
   const entry = index.entries.find((candidate) => candidate.id === id);
-  if (!entry) throw new Error('Workflow entry no longer exists.');
+  if (!entry) throw new Error('Playbook entry no longer exists.');
   if (entry.name === name) return;
 
-  if (entry.type === 'workflow') {
-    const record = await readWorkflowRecord(roots, id);
-    if (!record) throw new Error('Workflow entry no longer exists.');
-    await saveWorkflowRecord(
+  if (entry.type === 'playbook') {
+    const record = await readPlaybookRecord(roots, id);
+    if (!record) throw new Error('Playbook entry no longer exists.');
+    await savePlaybookRecord(
       roots,
       id,
       name,
-      record.workflow,
+      record.playbook,
       record.parentId,
       record.scope,
       record.description,
@@ -150,9 +150,9 @@ export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: str
     throw new Error(`"${name}" already exists in this folder.`);
   }
   const folderRoots = index.folders.get(id);
-  if (!folderRoots) throw new Error('Workflow folder no longer exists.');
+  if (!folderRoots) throw new Error('Playbook folder no longer exists.');
   const moves = folderRoots.map((root) => {
-    const source = workflowFolderPath(root, id);
+    const source = playbookFolderPath(root, id);
     return { source, target: path.join(path.dirname(source), name) };
   });
   for (const move of moves) {
@@ -166,11 +166,11 @@ export async function renameWorkflowEntry(roots: readonly StorageRoot[], id: str
   for (const move of moves) await rename(move.source, move.target);
 }
 
-export async function moveWorkflowEntry(roots: readonly StorageRoot[], id: string, parentId?: string): Promise<void> {
-  const index = await readWorkflowStorage(roots);
+export async function movePlaybookEntry(roots: readonly StorageRoot[], id: string, parentId?: string): Promise<void> {
+  const index = await readPlaybookStorage(roots);
   const entry = index.entries.find((candidate) => candidate.id === id);
-  if (!entry) throw new Error('Workflow entry no longer exists.');
-  if (parentId) validateWorkflowFolderId(parentId);
+  if (!entry) throw new Error('Playbook entry no longer exists.');
+  if (parentId) validatePlaybookFolderId(parentId);
   if (parentId && !index.folders.has(parentId)) throw new Error('The destination folder no longer exists.');
 
   if (entry.type === 'folder' && parentId && (parentId === id || parentId.startsWith(`${id}/`))) {
@@ -180,8 +180,8 @@ export async function moveWorkflowEntry(roots: readonly StorageRoot[], id: strin
 
   if (entry.type === 'folder') {
     const moves = (index.folders.get(id) ?? []).map((root) => {
-      const destination = parentId ? workflowFolderPath(root, parentId) : root.directory;
-      return { source: workflowFolderPath(root, id), destination, target: path.join(destination, entry.name) };
+      const destination = parentId ? playbookFolderPath(root, parentId) : root.directory;
+      return { source: playbookFolderPath(root, id), destination, target: path.join(destination, entry.name) };
     });
     for (const move of moves) {
       if (await pathExists(move.target)) throw new Error(`"${entry.name}" already exists in that folder.`);
@@ -193,21 +193,21 @@ export async function moveWorkflowEntry(roots: readonly StorageRoot[], id: strin
     return;
   }
 
-  const location = index.workflows.get(id);
-  if (!location) throw new Error('Workflow entry no longer exists.');
-  const destination = parentId ? workflowFolderPath(location.root, parentId) : location.root.directory;
+  const location = index.playbooks.get(id);
+  if (!location) throw new Error('Playbook entry no longer exists.');
+  const destination = parentId ? playbookFolderPath(location.root, parentId) : location.root.directory;
   const target = path.join(destination, `${id}.json`);
   if (await pathExists(target)) throw new Error(`"${entry.name}" already exists in that folder.`);
   await mkdir(destination, { recursive: true });
   await rename(location.path, target);
 }
 
-export async function deleteWorkflowEntry(roots: readonly StorageRoot[], id: string): Promise<string[]> {
-  const index = await readWorkflowStorage(roots);
+export async function deletePlaybookEntry(roots: readonly StorageRoot[], id: string): Promise<string[]> {
+  const index = await readPlaybookStorage(roots);
   const entry = index.entries.find((record) => record.id === id);
-  if (!entry) throw new Error('Workflow entry no longer exists.');
-  if (entry.type === 'workflow') {
-    const location = index.workflows.get(id);
+  if (!entry) throw new Error('Playbook entry no longer exists.');
+  if (entry.type === 'playbook') {
+    const location = index.playbooks.get(id);
     if (location) await rm(location.path, { force: true });
     return [id];
   }
@@ -224,18 +224,18 @@ export async function deleteWorkflowEntry(roots: readonly StorageRoot[], id: str
     }
   }
   const folderRoots = index.folders.get(id);
-  if (!folderRoots) throw new Error('Workflow folder no longer exists.');
-  for (const root of folderRoots) await rm(workflowFolderPath(root, id), { recursive: true, force: true });
+  if (!folderRoots) throw new Error('Playbook folder no longer exists.');
+  for (const root of folderRoots) await rm(playbookFolderPath(root, id), { recursive: true, force: true });
   return [...ids];
 }
 
-export function validateWorkflowId(id: string): void {
+export function validatePlaybookId(id: string): void {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-    throw new Error('Invalid workflow id.');
+    throw new Error('Invalid playbook id.');
   }
 }
 
-export function validateWorkflowFolderId(id: string): void {
+export function validatePlaybookFolderId(id: string): void {
   if (
     !id ||
     id.startsWith('/') ||
@@ -246,13 +246,13 @@ export function validateWorkflowFolderId(id: string): void {
           !segment || segment === '.' || segment === '..' || segment.includes('\\') || segment.includes('\0'),
       )
   ) {
-    throw new Error('Invalid workflow folder id.');
+    throw new Error('Invalid playbook folder id.');
   }
 }
 
-async function readWorkflowStorage(roots: readonly StorageRoot[]): Promise<WorkflowStorageIndex> {
-  const index: WorkflowStorageIndex = { entries: [], workflows: new Map(), folders: new Map() };
-  const folderEntries = new Map<string, WorkflowRecordEntry>();
+async function readPlaybookStorage(roots: readonly StorageRoot[]): Promise<PlaybookStorageIndex> {
+  const index: PlaybookStorageIndex = { entries: [], playbooks: new Map(), folders: new Map() };
+  const folderEntries = new Map<string, PlaybookRecordEntry>();
 
   const visit = async (root: StorageRoot, currentDirectory: string, parentId?: string): Promise<void> => {
     const children = await readdir(currentDirectory, { withFileTypes: true });
@@ -268,43 +268,43 @@ async function readWorkflowStorage(roots: readonly StorageRoot[]): Promise<Workf
       if (!child.isFile() || !child.name.endsWith('.json')) continue;
       const recordPath = path.join(currentDirectory, child.name);
       try {
-        const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(recordPath, 'utf8')));
-        if (!isWorkflowRecord(value) || child.name !== `${value.id}.json`) continue;
-        if (index.workflows.has(value.id)) throw new Error('Duplicate workflow id.');
-        index.workflows.set(value.id, { path: recordPath, root, parentId });
-        index.entries.push({ id: value.id, name: value.name, type: 'workflow', parentId });
+        const value = addLegacyPlaybookStepNames(JSON.parse(await readFile(recordPath, 'utf8')));
+        if (!isPlaybookRecord(value) || child.name !== `${value.id}.json`) continue;
+        if (index.playbooks.has(value.id)) throw new Error('Duplicate playbook id.');
+        index.playbooks.set(value.id, { path: recordPath, root, parentId });
+        index.entries.push({ id: value.id, name: value.name, type: 'playbook', parentId });
       } catch (error) {
-        if (error instanceof Error && error.message === 'Duplicate workflow id.') throw error;
+        if (error instanceof Error && error.message === 'Duplicate playbook id.') throw error;
       }
     }
   };
 
   for (const root of roots) {
     if (!(await pathExists(root.directory))) continue;
-    await migrateLegacyWorkflowStorage(root.directory);
+    await migrateLegacyPlaybookStorage(root.directory);
     await visit(root, root.directory);
   }
   index.entries.push(...folderEntries.values());
   return index;
 }
 
-function workflowFolderPath(root: StorageRoot, folderId: string): string {
+function playbookFolderPath(root: StorageRoot, folderId: string): string {
   return path.join(root.directory, ...folderId.split('/'));
 }
 
-async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
+async function migrateLegacyPlaybookStorage(directory: string): Promise<void> {
   const rootFiles = await readdir(directory, { withFileTypes: true });
-  const legacyFolders = new Map<string, WorkflowFolderRecord>();
-  const legacyWorkflows = new Map<string, WorkflowRecord>();
+  const legacyFolders = new Map<string, PlaybookFolderRecord>();
+  const legacyPlaybooks = new Map<string, PlaybookRecord>();
 
   for (const file of rootFiles) {
     if (!file.isFile() || !file.name.endsWith('.json')) continue;
     try {
-      const value = addLegacyWorkflowStepNames(JSON.parse(await readFile(path.join(directory, file.name), 'utf8')));
-      if (isWorkflowFolderRecord(value) && file.name === `${value.id}.json`) {
+      const value = addLegacyPlaybookStepNames(JSON.parse(await readFile(path.join(directory, file.name), 'utf8')));
+      if (isPlaybookFolderRecord(value) && file.name === `${value.id}.json`) {
         legacyFolders.set(value.id, value);
-      } else if (isWorkflowRecord(value) && file.name === `${value.id}.json`) {
-        legacyWorkflows.set(value.id, value);
+      } else if (isPlaybookRecord(value) && file.name === `${value.id}.json`) {
+        legacyPlaybooks.set(value.id, value);
       }
     } catch {
       // Ignore records that are invalid or no longer supported.
@@ -318,7 +318,7 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
     if (cached) return cached;
     const folder = legacyFolders.get(id);
     if (!folder) return undefined;
-    if (resolving.has(id)) throw new Error('Workflow folder hierarchy contains a cycle.');
+    if (resolving.has(id)) throw new Error('Playbook folder hierarchy contains a cycle.');
     resolving.add(id);
     const parentPath = folder.parentId ? await resolveFolderPath(folder.parentId) : directory;
     resolving.delete(id);
@@ -326,7 +326,7 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
     const folderPath = path.join(parentPath, folder.name);
     const existingFolder = [...folderPaths.entries()].find(([, existingPath]) => existingPath === folderPath);
     if (existingFolder && existingFolder[0] !== id)
-      throw new Error(`Duplicate legacy workflow folder path: ${folderPath}`);
+      throw new Error(`Duplicate legacy playbook folder path: ${folderPath}`);
     folderPaths.set(id, folderPath);
     return folderPath;
   };
@@ -336,9 +336,9 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
     if (folderPath) await mkdir(folderPath, { recursive: true });
   }
 
-  for (const [id, workflow] of legacyWorkflows) {
-    if (!workflow.parentId) continue;
-    const targetDirectory = await resolveFolderPath(workflow.parentId);
+  for (const [id, playbook] of legacyPlaybooks) {
+    if (!playbook.parentId) continue;
+    const targetDirectory = await resolveFolderPath(playbook.parentId);
     if (!targetDirectory) continue;
     const source = path.join(directory, `${id}.json`);
     const target = path.join(targetDirectory, `${id}.json`);
@@ -347,7 +347,7 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
     if (await pathExists(target)) {
       const existing = await readFile(target, 'utf8');
       const sourceContents = await readFile(source, 'utf8');
-      if (existing !== sourceContents) throw new Error(`Conflicting workflow records for "${id}".`);
+      if (existing !== sourceContents) throw new Error(`Conflicting playbook records for "${id}".`);
       await rm(source);
     } else {
       await rename(source, target);
@@ -357,15 +357,15 @@ async function migrateLegacyWorkflowStorage(directory: string): Promise<void> {
   for (const id of legacyFolders.keys()) {
     if (folderPaths.has(id)) await rm(path.join(directory, `${id}.json`), { force: true });
   }
-  await removeObsoleteWorkflowFolderMarkers(directory);
+  await removeObsoletePlaybookFolderMarkers(directory);
 }
 
-async function removeObsoleteWorkflowFolderMarkers(directory: string): Promise<void> {
+async function removeObsoletePlaybookFolderMarkers(directory: string): Promise<void> {
   for (const child of await readdir(directory, { withFileTypes: true })) {
     if (!child.isDirectory()) continue;
     const childPath = path.join(directory, child.name);
-    await rm(path.join(childPath, '.workflow-folder.json'), { force: true });
-    await removeObsoleteWorkflowFolderMarkers(childPath);
+    await rm(path.join(childPath, '.playbook-folder.json'), { force: true });
+    await removeObsoletePlaybookFolderMarkers(childPath);
   }
 }
 
@@ -390,24 +390,24 @@ async function pathExists(target: string): Promise<boolean> {
   }
 }
 
-function isWorkflowRecord(value: unknown): value is WorkflowRecord {
+function isPlaybookRecord(value: unknown): value is PlaybookRecord {
   if (!value || typeof value !== 'object') return false;
-  const record = value as Partial<WorkflowRecord>;
+  const record = value as Partial<PlaybookRecord>;
   return (
-    (record.kind === undefined || record.kind === 'workflow') &&
+    (record.kind === undefined || record.kind === 'playbook') &&
     typeof record.id === 'string' &&
     typeof record.name === 'string' &&
     record.name.trim().length > 0 &&
     (record.description === undefined || typeof record.description === 'string') &&
     (record.enableAI === undefined || typeof record.enableAI === 'boolean') &&
     (record.parentId === undefined || typeof record.parentId === 'string') &&
-    isWorkflowDefinition(record.workflow)
+    isPlaybookDefinition(record.playbook)
   );
 }
 
-function isWorkflowFolderRecord(value: unknown): value is WorkflowFolderRecord {
+function isPlaybookFolderRecord(value: unknown): value is PlaybookFolderRecord {
   if (!value || typeof value !== 'object') return false;
-  const record = value as Partial<WorkflowFolderRecord>;
+  const record = value as Partial<PlaybookFolderRecord>;
   return (
     record.kind === 'folder' &&
     typeof record.id === 'string' &&
@@ -420,21 +420,21 @@ function isWorkflowFolderRecord(value: unknown): value is WorkflowFolderRecord {
   );
 }
 
-export function isWorkflowDefinition(value: unknown): value is WorkflowDefinition {
+export function isPlaybookDefinition(value: unknown): value is PlaybookDefinition {
   if (!value || typeof value !== 'object') return false;
-  const workflow = value as { steps?: unknown; environment?: unknown };
+  const playbook = value as { steps?: unknown; environment?: unknown };
   return (
-    Array.isArray(workflow.steps) &&
-    workflow.steps.every(isWorkflowStep) &&
-    (workflow.environment === undefined ||
-      (Array.isArray(workflow.environment) &&
-        workflow.environment.every(isWorkflowEnvironmentVariable) &&
-        new Set(workflow.environment.map((variable) => variable.name.toUpperCase())).size ===
-          workflow.environment.length))
+    Array.isArray(playbook.steps) &&
+    playbook.steps.every(isPlaybookStep) &&
+    (playbook.environment === undefined ||
+      (Array.isArray(playbook.environment) &&
+        playbook.environment.every(isPlaybookEnvironmentVariable) &&
+        new Set(playbook.environment.map((variable) => variable.name.toUpperCase())).size ===
+          playbook.environment.length))
   );
 }
 
-function isWorkflowEnvironmentVariable(value: unknown): boolean {
+function isPlaybookEnvironmentVariable(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const variable = value as Record<string, unknown>;
   return (
@@ -464,7 +464,7 @@ function isWorkflowEnvironmentVariable(value: unknown): boolean {
   );
 }
 
-function isWorkflowStep(value: unknown): boolean {
+function isPlaybookStep(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const step = value as Record<string, unknown>;
   if (typeof step.name !== 'string' || !step.name.trim()) return false;
@@ -482,17 +482,17 @@ function isWorkflowStep(value: unknown): boolean {
   return step.type === 'ssh-command' && typeof step.assetId === 'string' && typeof step.command === 'string';
 }
 
-function addLegacyWorkflowStepNames(value: unknown): unknown {
+function addLegacyPlaybookStepNames(value: unknown): unknown {
   if (!value || typeof value !== 'object') return value;
-  const record = value as { workflow?: unknown };
-  if (!record.workflow || typeof record.workflow !== 'object') return value;
-  const workflow = record.workflow as { steps?: unknown };
-  if (!Array.isArray(workflow.steps)) return value;
+  const record = value as { playbook?: unknown };
+  if (!record.playbook || typeof record.playbook !== 'object') return value;
+  const playbook = record.playbook as { steps?: unknown };
+  if (!Array.isArray(playbook.steps)) return value;
   return {
     ...record,
-    workflow: {
-      ...workflow,
-      steps: workflow.steps.map((step, index) =>
+    playbook: {
+      ...playbook,
+      steps: playbook.steps.map((step, index) =>
         step && typeof step === 'object' && !('name' in step) ? { ...step, name: `Step ${index + 1}` } : step,
       ),
     },

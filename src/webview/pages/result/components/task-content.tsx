@@ -7,7 +7,7 @@ import type { ResultTask, ResultWebviewMessage } from '@/features/result/protoco
 import { postToHost } from '@/webview/utils/host-data';
 import { HttpTaskResult } from './http/http-task-result';
 import { SqliteQueryResultView } from './database/sqlite-query-result';
-import { WorkflowTaskResult } from './workflow/workflow-task-result';
+import { PlaybookTaskResult } from './playbook/playbook-task-result';
 import { ResultText } from './result-text';
 import { formatTaskDuration, formatTaskKind, taskStatusPresentation } from '../task-presentation';
 
@@ -18,7 +18,7 @@ registerResultTaskRenderer('http', HttpTaskResult);
 registerResultTaskRenderer('sqlite', SqliteQueryResultView);
 registerResultTaskRenderer('mysql', SqliteQueryResultView);
 registerResultTaskRenderer('postgresql', SqliteQueryResultView);
-registerResultTaskRenderer('workflow', WorkflowTaskResult);
+registerResultTaskRenderer('playbook', PlaybookTaskResult);
 
 export function registerResultTaskRenderer(kind: string, renderer: ResultTaskRenderer): void {
   taskRenderers.set(kind, renderer);

@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 
 const placeholderPattern = /\$\{(workspaceFolderBasename|workspaceFolder|userHome|pathSeparator|env:[^}]+)\}/g;
 
-export function resolveWorkflowPlaceholders(value: string, environment: NodeJS.ProcessEnv = process.env): string {
+export function resolvePlaybookPlaceholders(value: string, environment: NodeJS.ProcessEnv = process.env): string {
   return value.replace(placeholderPattern, (_match, name: string) => resolvePlaceholder(name, environment));
 }
 

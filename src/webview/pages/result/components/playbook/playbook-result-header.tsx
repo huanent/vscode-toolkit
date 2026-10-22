@@ -1,15 +1,15 @@
 import type { ResultTask } from '@/features/result/protocol';
-import type { WorkflowStepResult } from '@/features/workflow/protocol';
+import type { PlaybookStepResult } from '@/features/playbook/protocol';
 import { Progress } from '@/webview/components/ui/progress';
-import { WorkflowStatusIcon } from './workflow-status-icon';
+import { PlaybookStatusIcon } from './playbook-status-icon';
 
-interface WorkflowResultHeaderProps {
+interface PlaybookResultHeaderProps {
   title: string;
   status: ResultTask['status'];
-  steps: WorkflowStepResult[];
+  steps: PlaybookStepResult[];
 }
 
-export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHeaderProps) {
+export function PlaybookResultHeader({ title, status, steps }: PlaybookResultHeaderProps) {
   const completedSteps = steps.filter((step) => step.status === 'completed').length;
   const progress =
     status === 'running'
@@ -40,7 +40,7 @@ export function WorkflowResultHeader({ title, status, steps }: WorkflowResultHea
         className={`absolute inset-x-0 bottom-0 ${progressColor}`}
       />
       <div className="flex min-w-0 items-center gap-2 py-1">
-        <WorkflowStatusIcon status={status === 'interrupted' ? 'cancelled' : status} />
+        <PlaybookStatusIcon status={status === 'interrupted' ? 'cancelled' : status} />
         <h2 className="min-w-0 flex-1 text-base font-semibold wrap-break-word">{title}</h2>
         <span className="shrink-0 text-xs font-normal tabular-nums text-(--vscode-descriptionForeground)">
           {completedSteps}/{steps.length}

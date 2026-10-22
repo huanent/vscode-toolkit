@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WorkflowRunFormData, WorkflowRunFormRequest } from '@/features/workflow/protocol';
+import type { PlaybookRunFormData, PlaybookRunFormRequest } from '@/features/playbook/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/ui/button';
 import { Checkbox } from '@/webview/components/ui/checkbox';
@@ -13,13 +13,13 @@ import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 function App() {
-  const state = useHostData<WorkflowRunFormData>();
+  const state = useHostData<PlaybookRunFormData>();
   if (state.status === 'error') return <ErrorMessage message={state.message} />;
-  if (state.status !== 'loaded') return <Loading label="Loading workflow..." />;
-  return <WorkflowRunForm data={state.data} />;
+  if (state.status !== 'loaded') return <Loading label="Loading playbook..." />;
+  return <PlaybookRunForm data={state.data} />;
 }
 
-function WorkflowRunForm({ data }: { data: WorkflowRunFormData }) {
+function PlaybookRunForm({ data }: { data: PlaybookRunFormData }) {
   const [values, setValues] = useState(() =>
     Object.fromEntries(data.environment.map((variable) => [variable.name, String(variable.defaultValue)])),
   );
@@ -33,7 +33,7 @@ function WorkflowRunForm({ data }: { data: WorkflowRunFormData }) {
           event.preventDefault();
           if (submitting) return;
           setSubmitting(true);
-          postToHost({ type: 'submitWorkflowRun', values } satisfies WorkflowRunFormRequest);
+          postToHost({ type: 'submitPlaybookRun', values } satisfies PlaybookRunFormRequest);
         }}
       >
         {data.environment.map((variable) => (
@@ -71,7 +71,7 @@ function WorkflowRunForm({ data }: { data: WorkflowRunFormData }) {
             disabled={submitting}
             onClick={() => {
               setSubmitting(true);
-              postToHost({ type: 'cancelWorkflowRun' } satisfies WorkflowRunFormRequest);
+              postToHost({ type: 'cancelPlaybookRun' } satisfies PlaybookRunFormRequest);
             }}
           >
             Cancel

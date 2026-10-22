@@ -13,7 +13,7 @@ const taskKindLabels: Record<string, string> = {
   sqlite: 'SQLite',
   mysql: 'MySQL',
   postgresql: 'PostgreSQL',
-  workflow: 'Workflow',
+  playbook: 'Playbook',
 };
 
 export function formatTaskKind(kind: string): string {

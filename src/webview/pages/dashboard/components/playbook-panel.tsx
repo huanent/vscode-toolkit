@@ -1,4 +1,4 @@
-import type { WorkflowRecordEntry, WorkflowRunRequest } from '@/features/workflow/protocol';
+import type { PlaybookRecordEntry, PlaybookRunRequest } from '@/features/playbook/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Empty } from '@/webview/components/ui/empty';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
@@ -7,35 +7,35 @@ import { Loading } from '@/webview/components/ui/loading';
 import { Tree, type TreeFileItem, type TreeItem } from '@/webview/components/ui/tree';
 import { postToHost } from '@/webview/utils/host-data';
 
-type WorkflowPanelProps = {
-  entries: WorkflowRecordEntry[] | undefined;
+type PlaybookPanelProps = {
+  entries: PlaybookRecordEntry[] | undefined;
   error: string | undefined;
   loading: boolean;
   collapseAllTrigger: number;
 };
 
-const panelContext = JSON.stringify({ webviewSection: 'workflow', preventDefaultContextMenuItems: true });
+const panelContext = JSON.stringify({ webviewSection: 'playbook', preventDefaultContextMenuItems: true });
 
-export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: WorkflowPanelProps) {
+export function PlaybookPanel({ entries, error, loading, collapseAllTrigger }: PlaybookPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
         <ErrorMessage message={error} />
       ) : loading ? (
-        <Loading label="Reading workflow files..." />
+        <Loading label="Reading playbook files..." />
       ) : entries?.length ? (
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
-            ariaLabel="Workflow files"
+            ariaLabel="Playbook files"
             collapseAllTrigger={collapseAllTrigger}
-            items={toWorkflowTreeItems(entries)}
-            onActivate={activateWorkflow}
-            onItemDoubleClick={activateWorkflow}
-            renderActions={renderWorkflowActions}
+            items={toPlaybookTreeItems(entries)}
+            onActivate={activatePlaybook}
+            onItemDoubleClick={activatePlaybook}
+            renderActions={renderPlaybookActions}
           />
         </div>
       ) : (
-        <Empty title="No workflows" description="The workflow directory is empty." icon="github-action" />
+        <Empty title="No playbooks" description="The playbook directory is empty." icon="run-coverage" />
       )}
 
       {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
@@ -43,28 +43,28 @@ export function WorkflowPanel({ entries, error, loading, collapseAllTrigger }: W
   );
 }
 
-function activateWorkflow(item: TreeFileItem) {
-  const id = item.context?.workflowId;
-  if (typeof id === 'string') postToHost({ type: 'runWorkflowFile', id } satisfies WorkflowRunRequest);
+function activatePlaybook(item: TreeFileItem) {
+  const id = item.context?.playbookId;
+  if (typeof id === 'string') postToHost({ type: 'runPlaybookFile', id } satisfies PlaybookRunRequest);
 }
 
-function renderWorkflowActions(item: TreeFileItem) {
-  const id = item.context?.workflowId;
+function renderPlaybookActions(item: TreeFileItem) {
+  const id = item.context?.playbookId;
   if (typeof id !== 'string') return null;
   return (
     <Button
       variant="ghost"
       size="sm"
-      aria-label="Run workflow"
-      title="Run workflow"
+      aria-label="Run playbook"
+      title="Run playbook"
       prefix={<Icon name="play" />}
-      onClick={() => activateWorkflow(item)}
+      onClick={() => activatePlaybook(item)}
     />
   );
 }
 
-function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[] {
-  const entriesByParent = new Map<string | undefined, WorkflowRecordEntry[]>();
+function toPlaybookTreeItems(entries: readonly PlaybookRecordEntry[]): TreeItem[] {
+  const entriesByParent = new Map<string | undefined, PlaybookRecordEntry[]>();
   const folderIds = new Set(entries.filter((entry) => entry.type === 'folder').map((entry) => entry.id));
   for (const entry of entries) {
     const parentId = entry.parentId && folderIds.has(entry.parentId) ? entry.parentId : undefined;
@@ -80,16 +80,16 @@ function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[
       if (visited.has(entry.id) || ancestors.has(entry.id)) continue;
       visited.add(entry.id);
       const itemPath = entry.type === 'folder' ? entry.id : `${parentId ? `${parentId}/` : ''}${entry.id}.json`;
-      if (entry.type === 'workflow') {
+      if (entry.type === 'playbook') {
         items.push({
           path: itemPath,
           name: entry.name,
           type: 'file',
-          icon: 'github-action',
+          icon: 'run-coverage',
           context: {
-            workflowId: entry.id,
-            workflowName: entry.name,
-            ...(entry.parentId ? { workflowParentId: entry.parentId } : {}),
+            playbookId: entry.id,
+            playbookName: entry.name,
+            ...(entry.parentId ? { playbookParentId: entry.parentId } : {}),
           },
         });
       } else {
@@ -98,7 +98,7 @@ function toWorkflowTreeItems(entries: readonly WorkflowRecordEntry[]): TreeItem[
           path: itemPath,
           name: entry.name,
           type: 'directory',
-          context: { workflowFolderId: entry.id, workflowName: entry.name },
+          context: { playbookFolderId: entry.id, playbookName: entry.name },
           children: buildItems(entry.id, nextAncestors),
         });
       }

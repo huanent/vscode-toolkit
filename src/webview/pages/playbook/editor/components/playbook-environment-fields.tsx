@@ -1,4 +1,4 @@
-import type { WorkflowEnvironmentVariable } from '@/features/workflow/protocol';
+import type { PlaybookEnvironmentVariable } from '@/features/playbook/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Checkbox } from '@/webview/components/ui/checkbox';
 import { FormItem } from '@/webview/components/ui/form';
@@ -12,16 +12,16 @@ const controlOptions = [
   { value: 'checkbox', label: 'Checkbox' },
 ];
 
-export function WorkflowEnvironmentFields({
+export function PlaybookEnvironmentFields({
   variable,
   existingNames,
   index,
   onChange,
 }: {
-  variable: WorkflowEnvironmentVariable;
+  variable: PlaybookEnvironmentVariable;
   existingNames: string[];
   index: number;
-  onChange: (variable: WorkflowEnvironmentVariable) => void;
+  onChange: (variable: PlaybookEnvironmentVariable) => void;
 }) {
   const draft = variable;
   const setDraft = onChange;

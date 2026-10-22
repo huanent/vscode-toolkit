@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import type { WorkflowEnvironmentVariable } from '@/features/workflow/protocol';
+import type { PlaybookEnvironmentVariable } from '@/features/playbook/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Collapsible } from '@/webview/components/ui/collapsible';
 import { Icon } from '@/webview/components/ui/icons';
-import { WorkflowEnvironmentFields } from './workflow-environment-fields';
+import { PlaybookEnvironmentFields } from './playbook-environment-fields';
 
-export function WorkflowEnvironmentEditor({
+export function PlaybookEnvironmentEditor({
   environment,
   onChange,
 }: {
-  environment: WorkflowEnvironmentVariable[];
-  onChange: (environment: WorkflowEnvironmentVariable[]) => void;
+  environment: PlaybookEnvironmentVariable[];
+  onChange: (environment: PlaybookEnvironmentVariable[]) => void;
 }) {
   const [ids, setIds] = useState(() => environment.map(() => crypto.randomUUID()));
   return (
@@ -40,7 +40,7 @@ export function WorkflowEnvironmentEditor({
             />
           }
         >
-          <WorkflowEnvironmentFields
+          <PlaybookEnvironmentFields
             index={index}
             variable={variable}
             existingNames={environment

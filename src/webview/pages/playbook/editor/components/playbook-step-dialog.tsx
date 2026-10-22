@@ -1,12 +1,12 @@
 import { useId, useState } from 'react';
-import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { PlaybookStep } from '@/features/playbook/protocol';
 import type { AssetSummary } from '@/features/assets/protocol';
 import { Dialog } from '@/webview/components/ui/dialog';
 import { Form } from '@/webview/components/ui/form';
-import { WorkflowStepEditor } from '@/webview/pages/workflow/editor/components/workflow-step-editor';
-import { convertStep, isStepComplete } from '@/webview/pages/workflow/editor/step-model';
+import { PlaybookStepEditor } from '@/webview/pages/playbook/editor/components/playbook-step-editor';
+import { convertStep, isStepComplete } from '@/webview/pages/playbook/editor/step-model';
 
-export function WorkflowStepDialog({
+export function PlaybookStepDialog({
   step,
   index,
   hosts,
@@ -14,12 +14,12 @@ export function WorkflowStepDialog({
   onClose,
   onSave,
 }: {
-  step: WorkflowStep;
+  step: PlaybookStep;
   index: number;
   hosts: readonly AssetSummary[];
   editing: boolean;
   onClose: () => void;
-  onSave: (step: WorkflowStep) => void;
+  onSave: (step: PlaybookStep) => void;
 }) {
   const formId = useId();
   const [draft, setDraft] = useState(step);
@@ -44,7 +44,7 @@ export function WorkflowStepDialog({
           if (valid) onSave(draft);
         }}
       >
-        <WorkflowStepEditor
+        <PlaybookStepEditor
           index={index}
           step={draft}
           hosts={hosts}

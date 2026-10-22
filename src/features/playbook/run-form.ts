@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
-import type { WorkflowEnvironmentValues, WorkflowEnvironmentVariable, WorkflowRunFormData } from './protocol';
+import type { PlaybookEnvironmentValues, PlaybookEnvironmentVariable, PlaybookRunFormData } from './protocol';
 
-export function requestWorkflowEnvironment(
+export function requestPlaybookEnvironment(
   context: vscode.ExtensionContext,
   name: string,
-  environment: WorkflowEnvironmentVariable[],
+  environment: PlaybookEnvironmentVariable[],
   cancellation?: vscode.CancellationToken,
-): Promise<WorkflowEnvironmentValues | undefined> {
+): Promise<PlaybookEnvironmentValues | undefined> {
   if (cancellation?.isCancellationRequested) return Promise.resolve(undefined);
   const assetsUri = vscode.Uri.file(__dirname);
-  const panel = vscode.window.createWebviewPanel('toolkit.workflowRun', `Run ${name}`, vscode.ViewColumn.Active, {
+  const panel = vscode.window.createWebviewPanel('toolkit.playbookRun', `Run ${name}`, vscode.ViewColumn.Active, {
     enableScripts: true,
     retainContextWhenHidden: true,
     localResourceRoots: [assetsUri],
@@ -19,17 +19,17 @@ export function requestWorkflowEnvironment(
   context.subscriptions.push(panel);
   return new Promise((resolve, reject) => {
     let settled = false;
-    const finish = (values?: WorkflowEnvironmentValues) => {
+    const finish = (values?: PlaybookEnvironmentValues) => {
       if (settled) return;
       settled = true;
       resolve(values);
       panel.dispose();
     };
-    const bridge = serveWebviewData(panel.webview, async () => ({ name, environment }) satisfies WorkflowRunFormData);
+    const bridge = serveWebviewData(panel.webview, async () => ({ name, environment }) satisfies PlaybookRunFormData);
     const listener = panel.webview.onDidReceiveMessage((message: unknown) => {
       if (!message || typeof message !== 'object' || !('type' in message)) return;
-      if (message.type === 'cancelWorkflowRun') finish();
-      if (message.type !== 'submitWorkflowRun' || !('values' in message)) return;
+      if (message.type === 'cancelPlaybookRun') finish();
+      if (message.type !== 'submitPlaybookRun' || !('values' in message)) return;
       const values = message.values;
       if (!values || typeof values !== 'object') return;
       const entries: [string, string][] = [];
@@ -52,7 +52,7 @@ export function requestWorkflowEnvironment(
       finish();
     });
     try {
-      panel.webview.html = getWebviewHtml(panel.webview, assetsUri, { page: 'workflow/run' });
+      panel.webview.html = getWebviewHtml(panel.webview, assetsUri, { page: 'playbook/run' });
       if (cancellation?.isCancellationRequested) finish();
     } catch (error) {
       settled = true;

@@ -2,7 +2,7 @@
   "name": "toolkit",
   "displayName": "Toolkit",
   "version": "2.2.3",
-  "description": "Databases, SSH, HTTP requests and workflow automation, with Copilot integration. All in VS Code.",
+  "description": "Databases, SSH, HTTP requests and reusable Playbooks, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
   ],
@@ -176,11 +176,11 @@
         "priority": "default"
       },
       {
-        "viewType": "toolkit.workflowEditor",
-        "displayName": "Workflow",
+        "viewType": "toolkit.playbookEditor",
+        "displayName": "Playbook",
         "selector": [
           {
-            "filenamePattern": "*.workflow"
+            "filenamePattern": "*.playbook"
           }
         ],
         "priority": "default"
@@ -386,17 +386,17 @@
         }
       },
       {
-        "name": "workflowSearch",
-        "displayName": "Search Workflows",
+        "name": "playbookSearch",
+        "displayName": "Search Playbooks",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "workflowSearch",
-        "modelDescription": "Search saved workflows by keyword matching name, description, ID, or folder. Returns IDs, descriptions, folders, storage scopes, step counts, and step types. Use an empty keyword to list all workflows.",
+        "toolReferenceName": "playbookSearch",
+        "modelDescription": "Search saved playbooks by keyword matching name, description, ID, or folder. Returns IDs, descriptions, folders, storage scopes, step counts, and step types. Use an empty keyword to list all playbooks.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "keyword": {
               "type": "string",
-              "description": "Case-insensitive keyword, or empty to list all workflows."
+              "description": "Case-insensitive keyword, or empty to list all playbooks."
             }
           },
           "required": [
@@ -405,17 +405,17 @@
         }
       },
       {
-        "name": "workflowRun",
-        "displayName": "Run Workflow",
+        "name": "playbookRun",
+        "displayName": "Run Playbook",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "workflowRun",
-        "modelDescription": "Run a saved workflow by ID and wait for completion. Returns success, message, and output. Steps run in order and stop at the first failure. SSH assets must allow AI access.",
+        "toolReferenceName": "playbookRun",
+        "modelDescription": "Run a saved playbook by ID and wait for completion. Returns success, message, and output. Steps run in order and stop at the first failure. SSH assets must allow AI access.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "Workflow ID or unique ID prefix."
+              "description": "Playbook ID or unique ID prefix."
             }
           },
           "required": [
@@ -424,21 +424,21 @@
         }
       },
       {
-        "name": "workflowUpsert",
-        "displayName": "Create or Update Workflow",
+        "name": "playbookUpsert",
+        "displayName": "Create or Update Playbook",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "workflowUpsert",
-        "modelDescription": "Create a saved workflow from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Local command cwd and command, and sftp localPath, support placeholders: ${workspaceFolder}, ${workspaceFolderBasename}, ${userHome}, ${pathSeparator}, ${env:NAME}. Returns the workflow ID and whether it was created or updated.",
+        "toolReferenceName": "playbookUpsert",
+        "modelDescription": "Create a saved playbook from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Local command cwd and command, and sftp localPath, support placeholders: ${workspaceFolder}, ${workspaceFolderBasename}, ${userHome}, ${pathSeparator}, ${env:NAME}. Returns the playbook ID and whether it was created or updated.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "id": {
               "type": "string",
-              "description": "Existing workflow ID or unique ID prefix to update. Omit to create a new workflow."
+              "description": "Existing playbook ID or unique ID prefix to update. Omit to create a new playbook."
             },
             "name": {
               "type": "string",
-              "description": "Workflow name."
+              "description": "Playbook name."
             },
             "storageScope": {
               "type": "string",
@@ -446,15 +446,15 @@
                 "global",
                 "workspace"
               ],
-              "description": "Storage location. Omit to use global for new workflows or preserve the existing location when updating. Specifying a different location moves the workflow. Workspace storage requires an open workspace folder."
+              "description": "Storage location. Omit to use global for new playbooks or preserve the existing location when updating. Specifying a different location moves the playbook. Workspace storage requires an open workspace folder."
             },
             "description": {
               "type": "string",
-              "description": "Workflow description. Omit to preserve the existing description; use an empty string to clear it."
+              "description": "Playbook description. Omit to preserve the existing description; use an empty string to clear it."
             },
             "environment": {
               "type": "array",
-              "description": "Variable definitions for the workflow run form. Omit to preserve existing variables; use [] to clear them. Provided arrays replace all variables. Commands and paths reference values with ${env:NAME}.",
+              "description": "Variable definitions for the playbook run form. Omit to preserve existing variables; use [] to clear them. Provided arrays replace all variables. Commands and paths reference values with ${env:NAME}.",
               "items": {
                 "type": "object",
                 "properties": {
@@ -557,7 +557,7 @@
             "steps": {
               "type": "array",
               "minItems": 1,
-              "description": "Workflow steps, executed in order.",
+              "description": "Playbook steps, executed in order.",
               "items": {
                 "type": "object",
                 "properties": {
@@ -886,14 +886,14 @@
         "category": "Toolkit"
       },
       {
-        "command": "toolkit.workflow.createFile",
-        "title": "New Workflow",
-        "category": "Workflow"
+        "command": "toolkit.playbook.createFile",
+        "title": "New Playbook",
+        "category": "Playbook"
       },
       {
-        "command": "toolkit.workflow.createFolder",
+        "command": "toolkit.playbook.createFolder",
         "title": "New Folder",
-        "category": "Workflow"
+        "category": "Playbook"
       },
       {
         "command": "toolkit.temp.createFolder",
@@ -906,19 +906,19 @@
         "category": "Toolkit"
       },
       {
-        "command": "toolkit.workflow.edit",
+        "command": "toolkit.playbook.edit",
         "title": "Edit",
         "category": "Toolkit"
       },
       {
-        "command": "toolkit.workflow.copyAiReference",
+        "command": "toolkit.playbook.copyAiReference",
         "title": "Copy AI Reference",
-        "category": "Workflow"
+        "category": "Playbook"
       },
       {
-        "command": "toolkit.workflow.rename",
+        "command": "toolkit.playbook.rename",
         "title": "Rename",
-        "category": "Workflow"
+        "category": "Playbook"
       },
       {
         "command": "toolkit.temp.delete",
@@ -936,14 +936,14 @@
         "category": "Toolkit"
       },
       {
-        "command": "toolkit.workflow.delete",
+        "command": "toolkit.playbook.delete",
         "title": "Delete",
         "category": "Toolkit"
       },
       {
-        "command": "toolkit.workflow.move",
+        "command": "toolkit.playbook.move",
         "title": "Move to Folder",
-        "category": "Workflow"
+        "category": "Playbook"
       },
       {
         "command": "toolkit.http.sendRequest",
@@ -1208,11 +1208,11 @@
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.edit",
+          "command": "toolkit.playbook.edit",
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.copyAiReference",
+          "command": "toolkit.playbook.copyAiReference",
           "when": "false"
         },
         {
@@ -1220,15 +1220,15 @@
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.delete",
+          "command": "toolkit.playbook.delete",
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.rename",
+          "command": "toolkit.playbook.rename",
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.createFolder",
+          "command": "toolkit.playbook.createFolder",
           "when": "false"
         },
         {
@@ -1244,7 +1244,7 @@
           "when": "false"
         },
         {
-          "command": "toolkit.workflow.move",
+          "command": "toolkit.playbook.move",
           "when": "false"
         },
         {
@@ -1439,38 +1439,38 @@
           "group": "2_actions@3"
         },
         {
-          "command": "toolkit.workflow.createFile",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && !workflowId",
+          "command": "toolkit.playbook.createFile",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && !playbookId",
           "group": "1_create@1"
         },
         {
-          "command": "toolkit.workflow.createFolder",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && !workflowId",
+          "command": "toolkit.playbook.createFolder",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && !playbookId",
           "group": "1_create@2"
         },
         {
-          "command": "toolkit.workflow.edit",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
+          "command": "toolkit.playbook.edit",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && playbookId",
           "group": "2_actions@1"
         },
         {
-          "command": "toolkit.workflow.copyAiReference",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && workflowId",
+          "command": "toolkit.playbook.copyAiReference",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && playbookId",
           "group": "2_actions@4"
         },
         {
-          "command": "toolkit.workflow.rename",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
+          "command": "toolkit.playbook.rename",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && (playbookId || playbookFolderId)",
           "group": "2_actions@2"
         },
         {
-          "command": "toolkit.workflow.delete",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
+          "command": "toolkit.playbook.delete",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && (playbookId || playbookFolderId)",
           "group": "9_delete@1"
         },
         {
-          "command": "toolkit.workflow.move",
-          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'workflow' && (workflowId || workflowFolderId)",
+          "command": "toolkit.playbook.move",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && (playbookId || playbookFolderId)",
           "group": "2_actions@3"
         }
       ],
@@ -1572,11 +1572,11 @@
     "onFileSystem:toolkit-temp",
     "onLanguageModelTool:assetsSearch",
     "onLanguageModelTool:httpClientExecute",
+    "onLanguageModelTool:playbookRun",
+    "onLanguageModelTool:playbookSearch",
     "onLanguageModelTool:sftpTransfer",
     "onLanguageModelTool:sqlExecute",
     "onLanguageModelTool:sshExecute",
-    "onLanguageModelTool:workflowRun",
-    "onLanguageModelTool:workflowSearch",
     "onStartupFinished"
   ],
   "extensionKind": [

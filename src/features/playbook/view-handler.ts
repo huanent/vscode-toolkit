@@ -2,64 +2,64 @@ import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import type {
-  WorkflowDefinition,
-  WorkflowEditorOpenRequest,
-  WorkflowFilesWebviewMessage,
-  WorkflowRunRequest,
+  PlaybookDefinition,
+  PlaybookEditorOpenRequest,
+  PlaybookFilesWebviewMessage,
+  PlaybookRunRequest,
 } from './protocol';
-import { createWorkflowRecord, readWorkflowRecord, readWorkflowRecords } from './service';
+import { createPlaybookRecord, readPlaybookRecord, readPlaybookRecords } from './service';
 
-export type WorkflowRunner = (name: string, workflow: WorkflowDefinition) => Promise<void>;
+export type PlaybookRunner = (name: string, playbook: PlaybookDefinition) => Promise<void>;
 
-export interface WorkflowFilesView extends vscode.Disposable {
+export interface PlaybookFilesView extends vscode.Disposable {
   handler: WebviewViewHandler;
   refresh(): Promise<void>;
   setEditorOpener(opener: (id: string, name: string, parentId?: string) => Promise<void>): void;
-  setRunner(runner: WorkflowRunner): void;
+  setRunner(runner: PlaybookRunner): void;
   openEditor(id?: string, parentId?: string): Promise<void>;
 }
 
-export function createWorkflowFilesView(context: vscode.ExtensionContext): WorkflowFilesView {
+export function createPlaybookFilesView(context: vscode.ExtensionContext): PlaybookFilesView {
   let activeWebview: vscode.Webview | undefined;
   let disposed = false;
   let editorOpener: ((id: string, name: string, parentId?: string) => Promise<void>) | undefined;
-  let runner: WorkflowRunner | undefined;
-  const getWorkflowRoots = () => resolveStorageRoots(context, 'workflows');
+  let runner: PlaybookRunner | undefined;
+  const getPlaybookRoots = () => resolveStorageRoots(context, 'playbooks');
   const refresh = async () => {
     const webview = activeWebview;
     if (!webview || disposed) return;
-    const entries = await readWorkflowRecords(getWorkflowRoots());
+    const entries = await readPlaybookRecords(getPlaybookRoots());
     if (disposed || activeWebview !== webview) return;
-    await webview.postMessage({ type: 'workflowFilesUpdated', entries } satisfies WorkflowFilesWebviewMessage);
+    await webview.postMessage({ type: 'playbookFilesUpdated', entries } satisfies PlaybookFilesWebviewMessage);
   };
   const openEditor = async (requestedId?: string, parentId?: string) => {
     if (disposed) return;
     const record = requestedId
-      ? await readWorkflowRecord(getWorkflowRoots(), requestedId)
-      : createWorkflowRecord(parentId);
-    if (requestedId && !record) throw new Error('Workflow no longer exists.');
-    if (!record) throw new Error('Could not create workflow.');
-    if (!editorOpener) throw new Error('Workflow editor is not available.');
+      ? await readPlaybookRecord(getPlaybookRoots(), requestedId)
+      : createPlaybookRecord(parentId);
+    if (requestedId && !record) throw new Error('Playbook no longer exists.');
+    if (!record) throw new Error('Could not create playbook.');
+    if (!editorOpener) throw new Error('Playbook editor is not available.');
     await editorOpener(record.id, record.name, record.parentId);
   };
   const runFile = async (id: string) => {
-    const record = await readWorkflowRecord(getWorkflowRoots(), id);
-    if (!record) throw new Error('Workflow no longer exists.');
-    if (!runner) throw new Error('Workflow runner is not available.');
-    await runner(record.name, record.workflow);
+    const record = await readPlaybookRecord(getPlaybookRoots(), id);
+    if (!record) throw new Error('Playbook no longer exists.');
+    if (!runner) throw new Error('Playbook runner is not available.');
+    await runner(record.name, record.playbook);
   };
 
   const handler: WebviewViewHandler = {
-    load: () => readWorkflowRecords(getWorkflowRoots()),
+    load: () => readPlaybookRecords(getPlaybookRoots()),
     onResolve: (webview) => {
       if (!disposed) activeWebview = webview;
     },
     onMessage: async (message, webview) => {
       try {
-        if (isWorkflowEditorOpenRequest(message)) await openEditor(message.id, message.parentId);
-        else if (isWorkflowRunRequest(message)) await runFile(message.id);
+        if (isPlaybookEditorOpenRequest(message)) await openEditor(message.id, message.parentId);
+        else if (isPlaybookRunRequest(message)) await runFile(message.id);
       } catch (error) {
-        await postWorkflowFileError(webview, error);
+        await postPlaybookFileError(webview, error);
       }
     },
     onDispose: () => {
@@ -84,23 +84,23 @@ export function createWorkflowFilesView(context: vscode.ExtensionContext): Workf
   };
 }
 
-function isWorkflowRunRequest(message: unknown): message is WorkflowRunRequest {
+function isPlaybookRunRequest(message: unknown): message is PlaybookRunRequest {
   return (
     typeof message === 'object' &&
     message !== null &&
     'type' in message &&
-    message.type === 'runWorkflowFile' &&
+    message.type === 'runPlaybookFile' &&
     'id' in message &&
     typeof message.id === 'string'
   );
 }
 
-function isWorkflowEditorOpenRequest(message: unknown): message is WorkflowEditorOpenRequest {
+function isPlaybookEditorOpenRequest(message: unknown): message is PlaybookEditorOpenRequest {
   if (
     typeof message !== 'object' ||
     message === null ||
     !('type' in message) ||
-    message.type !== 'openWorkflowEditor'
+    message.type !== 'openPlaybookEditor'
   ) {
     return false;
   }
@@ -110,9 +110,9 @@ function isWorkflowEditorOpenRequest(message: unknown): message is WorkflowEdito
   );
 }
 
-async function postWorkflowFileError(webview: vscode.Webview, error: unknown): Promise<void> {
+async function postPlaybookFileError(webview: vscode.Webview, error: unknown): Promise<void> {
   await webview.postMessage({
-    type: 'workflowFileError',
+    type: 'playbookFileError',
     message: error instanceof Error ? error.message : String(error),
-  } satisfies WorkflowFilesWebviewMessage);
+  } satisfies PlaybookFilesWebviewMessage);
 }

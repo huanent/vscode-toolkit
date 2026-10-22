@@ -1,12 +1,12 @@
-import type { WorkflowStep } from '@/features/workflow/protocol';
+import type { PlaybookStep } from '@/features/playbook/protocol';
 import type { AssetSummary } from '@/features/assets/protocol';
 
-export type WorkflowStepItem = {
+export type PlaybookStepItem = {
   id: string;
-  step: WorkflowStep;
+  step: PlaybookStep;
 };
 
-export const workflowTypeOptions = [
+export const playbookTypeOptions = [
   { value: 'local-command', label: 'Local command' },
   { value: 'sftp', label: 'SFTP transfer' },
   { value: 'ssh-command', label: 'SSH command' },
@@ -19,17 +19,17 @@ export const directionOptions = [
 
 let nextStepId = 0;
 
-export function createStepItem(step: WorkflowStep): WorkflowStepItem {
+export function createStepItem(step: PlaybookStep): PlaybookStepItem {
   nextStepId += 1;
   return { id: `step-${nextStepId}`, step };
 }
 
 // Carries over fields the new operation shares with the previous one, so switching type keeps input.
 export function convertStep(
-  step: WorkflowStep | undefined,
-  type: WorkflowStep['type'],
+  step: PlaybookStep | undefined,
+  type: PlaybookStep['type'],
   defaultAssetId: string,
-): WorkflowStep {
+): PlaybookStep {
   if (step?.type === type) return step;
   const name = step?.name ?? 'Step 1';
   const command = step && 'command' in step ? step.command : '';
@@ -39,11 +39,11 @@ export function convertStep(
   return { type, name, assetId, direction: 'upload', localPath: '', remotePath: '' };
 }
 
-export function getStepTypeLabel(type: WorkflowStep['type']): string {
-  return workflowTypeOptions.find((option) => option.value === type)?.label ?? type;
+export function getStepTypeLabel(type: PlaybookStep['type']): string {
+  return playbookTypeOptions.find((option) => option.value === type)?.label ?? type;
 }
 
-export function describeStep(step: WorkflowStep, hosts: readonly AssetSummary[]): string {
+export function describeStep(step: PlaybookStep, hosts: readonly AssetSummary[]): string {
   if (step.type === 'local-command') return `${step.name} · ${firstLine(step.command) || 'No command'}`;
   const hostName = hosts.find((host) => host.type === 'ssh' && host.id === step.assetId)?.name ?? 'No host selected';
   if (step.type === 'ssh-command') return `${step.name} · ${hostName} · ${firstLine(step.command) || 'No command'}`;
@@ -52,7 +52,7 @@ export function describeStep(step: WorkflowStep, hosts: readonly AssetSummary[])
   return `${step.name} · ${hostName} · ${from || '...'} → ${to || '...'}`;
 }
 
-export function isStepComplete(step: WorkflowStep, hosts: readonly AssetSummary[]): boolean {
+export function isStepComplete(step: PlaybookStep, hosts: readonly AssetSummary[]): boolean {
   if (!step.name.trim()) return false;
   if (step.type === 'local-command') return step.command.trim() !== '';
   const hasHost = hosts.some((host) => host.type === 'ssh' && host.id === step.assetId);

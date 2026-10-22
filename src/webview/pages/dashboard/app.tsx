@@ -3,17 +3,17 @@ import { TabPanel, Tabs, type Tab } from '@/webview/components/ui/tabs';
 import { Icon } from '@/webview/components/ui/icons';
 import { mountWebview } from '@/webview/bootstrap';
 import { TempPanel } from '@/webview/pages/dashboard/components/temp-panel';
-import { WorkflowPanel } from '@/webview/pages/dashboard/components/workflow-panel';
+import { PlaybookPanel } from '@/webview/pages/dashboard/components/playbook-panel';
 import { AssetsPanel } from '@/webview/pages/dashboard/components/assets-panel';
 import { useDashboardState } from './use-dashboard-state';
 import '@/webview/styles.css';
 
 const tabs: Tab[] = [
   {
-    id: 'workflow',
-    label: 'Workflow',
-    icon: <Icon name="github-action" size="lg" />,
-    context: { webviewSection: 'workflow', preventDefaultContextMenuItems: true },
+    id: 'playbook',
+    label: 'Playbooks',
+    icon: <Icon name="run-coverage" size="lg" />,
+    context: { webviewSection: 'playbook', preventDefaultContextMenuItems: true },
   },
   {
     id: 'assets',
@@ -30,7 +30,7 @@ const tabs: Tab[] = [
 ];
 
 function App() {
-  const [activeTabId, setActiveTabId] = useState('workflow');
+  const [activeTabId, setActiveTabId] = useState('playbook');
   const dashboardState = useDashboardState(activeTabId);
 
   return (
@@ -43,12 +43,12 @@ function App() {
         contentClassName="min-h-0 flex-1"
       >
         <div className="h-full overflow-auto py-2">
-          <TabPanel tabId="workflow" className="h-full" keepMounted>
-            <WorkflowPanel
-              entries={dashboardState.workflowEntries}
+          <TabPanel tabId="playbook" className="h-full" keepMounted>
+            <PlaybookPanel
+              entries={dashboardState.playbookEntries}
               error={dashboardState.error}
               loading={dashboardState.loading}
-              collapseAllTrigger={dashboardState.collapseAllTriggers.workflow ?? 0}
+              collapseAllTrigger={dashboardState.collapseAllTriggers.playbook ?? 0}
             />
           </TabPanel>
 

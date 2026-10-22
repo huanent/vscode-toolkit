@@ -1,11 +1,11 @@
-import type { WorkflowStepResult } from '@/features/workflow/protocol';
+import type { PlaybookStepResult } from '@/features/playbook/protocol';
 import { Icon } from '@/webview/components/ui/icons';
 
-interface WorkflowStatusIconProps {
-  status: WorkflowStepResult['status'];
+interface PlaybookStatusIconProps {
+  status: PlaybookStepResult['status'];
 }
 
-export function WorkflowStatusIcon({ status }: WorkflowStatusIconProps) {
+export function PlaybookStatusIcon({ status }: PlaybookStatusIconProps) {
   const icons = {
     pending: 'circle-outline',
     running: 'loading',

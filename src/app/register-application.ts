@@ -12,7 +12,7 @@ import { registerHttpLanguage } from '@/features/http/register-http';
 import { HttpResultService } from '@/features/http/result-service';
 import { ResultTaskService } from '@/features/result/task-service';
 import { createTempFilesView } from '@/features/temp/view-handler';
-import { createWorkflowFilesView } from '@/features/workflow/view-handler';
+import { createPlaybookFilesView } from '@/features/playbook/view-handler';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 
 export async function registerApplication(context: vscode.ExtensionContext): Promise<void> {
@@ -28,15 +28,15 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   });
   const httpResults = new HttpResultService(tasks);
   const tempFiles = createTempFilesView(context);
-  const workflowFiles = createWorkflowFilesView(context);
+  const playbookFiles = createPlaybookFilesView(context);
   context.subscriptions.push(tempFiles);
-  context.subscriptions.push(workflowFiles);
+  context.subscriptions.push(playbookFiles);
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.result.focus', () =>
       vscode.commands.executeCommand('workbench.view.extension.toolkit_result'),
     ),
   );
-  registerCommands(context, tempFiles.refresh, workflowFiles.refresh, workflowFiles.openEditor);
+  registerCommands(context, tempFiles.refresh, playbookFiles.refresh, playbookFiles.openEditor);
   context.subscriptions.push(registerXmlFormatter());
   context.subscriptions.push(registerHttpLanguage(httpResults));
   context.subscriptions.push(registerArchiveEditor(context));
@@ -50,5 +50,5 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
       },
     }),
   );
-  registerWebviews(context, tasks, tempFiles, workflowFiles);
+  registerWebviews(context, tasks, tempFiles, playbookFiles);
 }

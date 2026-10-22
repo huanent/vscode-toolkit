@@ -2,24 +2,24 @@ import * as vscode from 'vscode';
 import { spawn } from 'node:child_process';
 import { CommandOutput } from '@/host/utils/command-output';
 import type {
-  WorkflowDefinition,
-  WorkflowEnvironmentValues,
-  WorkflowRunOutcome,
-  WorkflowStep,
-  WorkflowStepResult,
+  PlaybookDefinition,
+  PlaybookEnvironmentValues,
+  PlaybookRunOutcome,
+  PlaybookStep,
+  PlaybookStepResult,
 } from './protocol';
-import { resolveWorkflowPlaceholders } from './placeholders';
+import { resolvePlaybookPlaceholders } from './placeholders';
 import type { SshService } from '@/features/ssh/ssh-service';
-import { isWorkflowDefinition } from './service';
+import { isPlaybookDefinition } from './service';
 
-export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshService): Promise<void> {
-  if (!isWorkflowDefinition(workflow))
+export async function validatePlaybook(playbook: PlaybookDefinition, ssh: SshService): Promise<void> {
+  if (!isPlaybookDefinition(playbook))
     throw new Error(
-      'Invalid workflow. Step names are required, and environment variable names must be unique and use letters, digits, or underscores, starting with a letter or underscore.',
+      'Invalid playbook. Step names are required, and environment variable names must be unique and use letters, digits, or underscores, starting with a letter or underscore.',
     );
-  if (!workflow.steps.length) throw new Error('Add at least one workflow step.');
+  if (!playbook.steps.length) throw new Error('Add at least one playbook step.');
   const connections = await ssh.listConnections();
-  for (const [index, step] of workflow.steps.entries()) {
+  for (const [index, step] of playbook.steps.entries()) {
     if (step.type === 'local-command') {
       if (!step.command.trim()) throw new Error(`Enter the command for step ${index + 1}.`);
     } else {
@@ -36,28 +36,28 @@ export async function validateWorkflow(workflow: WorkflowDefinition, ssh: SshSer
   }
 }
 
-export async function runWorkflow(
-  workflow: WorkflowDefinition,
+export async function runPlaybook(
+  playbook: PlaybookDefinition,
   ssh: SshService,
   signal: AbortSignal,
-  values: WorkflowEnvironmentValues = {},
-  onUpdate?: (outcome: WorkflowRunOutcome) => void,
-): Promise<WorkflowRunOutcome> {
+  values: PlaybookEnvironmentValues = {},
+  onUpdate?: (outcome: PlaybookRunOutcome) => void,
+): Promise<PlaybookRunOutcome> {
   const outputs: string[] = [];
-  const steps: WorkflowStepResult[] = workflow.steps.map(() => ({ status: 'pending' }));
-  const snapshot = (success: boolean, message: string): WorkflowRunOutcome => ({
+  const steps: PlaybookStepResult[] = playbook.steps.map(() => ({ status: 'pending' }));
+  const snapshot = (success: boolean, message: string): PlaybookRunOutcome => ({
     success,
     message,
     output: outputs.join('\n\n'),
     steps: steps.map((step) => ({ ...step })),
   });
-  const stop = (index: number, message: string): WorkflowRunOutcome => {
+  const stop = (index: number, message: string): PlaybookRunOutcome => {
     for (const step of steps.slice(index + 1)) step.status = 'skipped';
-    return snapshot(false, `Workflow stopped at step ${index + 1}: ${message}`);
+    return snapshot(false, `Playbook stopped at step ${index + 1}: ${message}`);
   };
   const environment = { ...process.env, ...values };
-  onUpdate?.(snapshot(false, 'Preparing workflow...'));
-  for (const [index, step] of workflow.steps.entries()) {
+  onUpdate?.(snapshot(false, 'Preparing playbook...'));
+  for (const [index, step] of playbook.steps.entries()) {
     const current = steps[index]!;
     if (signal.aborted) {
       current.status = 'cancelled';
@@ -68,7 +68,7 @@ export async function runWorkflow(
     const publish = () => onUpdate?.(snapshot(false, `Running step ${index + 1} of ${steps.length}`));
     publish();
     const liveOutput = new CommandOutput();
-    let result: WorkflowRunOutcome;
+    let result: PlaybookRunOutcome;
     try {
       result = await runStep(
         step,
@@ -106,23 +106,23 @@ export async function runWorkflow(
     publish();
   }
 
-  return snapshot(true, `Workflow completed (${workflow.steps.length} steps).`);
+  return snapshot(true, `Playbook completed (${playbook.steps.length} steps).`);
 }
 
 async function runStep(
-  step: WorkflowStep,
+  step: PlaybookStep,
   ssh: SshService,
   signal: AbortSignal,
   environment: NodeJS.ProcessEnv,
   onOutput: (data: Buffer) => void,
   onProgress: (transferredBytes: number, totalBytes: number) => void,
-): Promise<WorkflowRunOutcome> {
+): Promise<PlaybookRunOutcome> {
   if (step.type === 'local-command') {
     const cwd = step.cwd?.trim()
-      ? resolveWorkflowPlaceholders(step.cwd.trim(), environment)
+      ? resolvePlaybookPlaceholders(step.cwd.trim(), environment)
       : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
     const result = await runLocalCommand(
-      resolveWorkflowPlaceholders(step.command, environment),
+      resolvePlaybookPlaceholders(step.command, environment),
       cwd,
       signal,
       environment,
@@ -139,8 +139,8 @@ async function runStep(
     await ssh.transferFile(
       step.assetId,
       step.direction,
-      resolveWorkflowPlaceholders(step.localPath, environment),
-      resolveWorkflowPlaceholders(step.remotePath, environment),
+      resolvePlaybookPlaceholders(step.localPath, environment),
+      resolvePlaybookPlaceholders(step.remotePath, environment),
       signal,
       onProgress,
     );
@@ -149,7 +149,7 @@ async function runStep(
 
   const result = await ssh.runLoginCommand(
     step.assetId,
-    resolveWorkflowPlaceholders(step.command, environment),
+    resolvePlaybookPlaceholders(step.command, environment),
     signal,
     onOutput,
   );

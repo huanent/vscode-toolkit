@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type {
-  WorkflowEditorData,
-  WorkflowEditorMessage,
-  WorkflowEditorRequest,
-  WorkflowStep,
-} from '@/features/workflow/protocol';
+  PlaybookEditorData,
+  PlaybookEditorMessage,
+  PlaybookEditorRequest,
+  PlaybookStep,
+} from '@/features/playbook/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
 import { Button } from '@/webview/components/ui/button';
@@ -18,24 +18,24 @@ import { Loading } from '@/webview/components/ui/loading';
 import { Popover } from '@/webview/components/ui/popover';
 import { TabPanel, Tabs } from '@/webview/components/ui/tabs';
 import { Textarea } from '@/webview/components/ui/textarea';
-import { WorkflowEnvironmentEditor } from '@/webview/pages/workflow/editor/components/workflow-environment-editor';
-import { WorkflowStepEditor } from '@/webview/pages/workflow/editor/components/workflow-step-editor';
+import { PlaybookEnvironmentEditor } from '@/webview/pages/playbook/editor/components/playbook-environment-editor';
+import { PlaybookStepEditor } from '@/webview/pages/playbook/editor/components/playbook-step-editor';
 import {
   convertStep,
   createStepItem,
   describeStep,
   isStepComplete,
-  workflowTypeOptions,
-} from '@/webview/pages/workflow/editor/step-model';
+  playbookTypeOptions,
+} from '@/webview/pages/playbook/editor/step-model';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
 
 function App() {
-  const state = useHostData<WorkflowEditorData, WorkflowEditorMessage>((message, previous) => {
-    if (message.type === 'workflowSaved' && previous.status === 'loaded') {
+  const state = useHostData<PlaybookEditorData, PlaybookEditorMessage>((message, previous) => {
+    if (message.type === 'playbookSaved' && previous.status === 'loaded') {
       return { status: 'loaded', data: { ...previous.data, name: message.name } };
     }
-    if (message.type === 'workflowEditorError') {
+    if (message.type === 'playbookEditorError') {
       return previous.status === 'loaded'
         ? { ...previous, error: message.message }
         : { status: 'error', message: message.message };
@@ -43,11 +43,11 @@ function App() {
     return undefined;
   });
   if (state.status === 'error') return <ErrorMessage message={state.message} />;
-  if (state.status !== 'loaded') return <Loading label="Loading workflow..." />;
-  return <WorkflowEditor data={state.data} error={state.error} />;
+  if (state.status !== 'loaded') return <Loading label="Loading playbook..." />;
+  return <PlaybookEditor data={state.data} error={state.error} />;
 }
 
-function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: string }) {
+function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: string }) {
   const sshHosts = data.assets.filter((asset) => asset.type === 'ssh');
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? '');
@@ -56,8 +56,8 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
   const [activeTabId, setActiveTabId] = useState('general');
   const [addStepOpen, setAddStepOpen] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string>();
-  const [environment, setEnvironment] = useState(data.workflow.environment ?? []);
-  const [steps, setSteps] = useState(() => data.workflow.steps.map((step) => createStepItem(step)));
+  const [environment, setEnvironment] = useState(data.playbook.environment ?? []);
+  const [steps, setSteps] = useState(() => data.playbook.steps.map((step) => createStepItem(step)));
   const validEnvironment = environment.every(
     (variable, index) =>
       /^[A-Za-z_][A-Za-z0-9_]*$/.test(variable.name) &&
@@ -75,9 +75,9 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
       ),
   );
 
-  const updateStep = (id: string, step: WorkflowStep) =>
+  const updateStep = (id: string, step: PlaybookStep) =>
     setSteps(steps.map((item) => (item.id === id ? { ...item, step } : item)));
-  const addStep = (type: WorkflowStep['type']) => {
+  const addStep = (type: PlaybookStep['type']) => {
     const item = createStepItem({
       ...convertStep(undefined, type, sshHosts[0]?.id ?? ''),
       name: `Step ${steps.length + 1}`,
@@ -104,8 +104,8 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
       <Form
         className="flex min-h-screen min-w-0 flex-col"
         onInvalidCapture={(event) => {
-          const section = (event.target as HTMLElement).closest<HTMLElement>('[data-workflow-section]');
-          if (section?.dataset.workflowSection) setActiveTabId(section.dataset.workflowSection);
+          const section = (event.target as HTMLElement).closest<HTMLElement>('[data-playbook-section]');
+          if (section?.dataset.playbookSection) setActiveTabId(section.dataset.playbookSection);
         }}
         onFormSubmit={() => {
           if (
@@ -116,13 +116,13 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           )
             return;
           postToHost({
-            type: 'saveWorkflow',
+            type: 'savePlaybook',
             name,
             description,
             storageScope,
-            workflow: { steps: steps.map((item) => item.step), environment },
+            playbook: { steps: steps.map((item) => item.step), environment },
             enableAI,
-          } satisfies WorkflowEditorRequest);
+          } satisfies PlaybookEditorRequest);
         }}
       >
         <StorageEditorHeader
@@ -140,18 +140,18 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
           ]}
           activeTabId={activeTabId}
           onChange={setActiveTabId}
-          ariaLabel="Workflow sections"
+          ariaLabel="Playbook sections"
           placement="left"
           className="mt-2 min-w-0"
         >
           <TabPanel tabId="general" keepMounted className="p-4 md:p-6">
-            <div data-workflow-section="general" className="mx-auto grid w-full max-w-3xl">
-              <FormItem name="name" label="Name" error="Workflow name is required." match="valueMissing">
+            <div data-playbook-section="general" className="mx-auto grid w-full max-w-3xl">
+              <FormItem name="name" label="Name" error="Playbook name is required." match="valueMissing">
                 <Input
-                  aria-label="Workflow name"
+                  aria-label="Playbook name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="Workflow name"
+                  placeholder="Playbook name"
                   required
                   autoFocus
                 />
@@ -165,7 +165,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
             </div>
           </TabPanel>
           <TabPanel tabId="steps" keepMounted className="p-4 md:p-6">
-            <div data-workflow-section="steps" className="mx-auto grid w-full max-w-3xl gap-5">
+            <div data-playbook-section="steps" className="mx-auto grid w-full max-w-3xl gap-5">
               <div className="flex min-w-0 flex-col">
                 {steps.map((item, index) => (
                   <Collapsible
@@ -220,7 +220,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                     }
                   >
                     <div className="grid min-w-0 gap-2 pb-2">
-                      <WorkflowStepEditor
+                      <PlaybookStepEditor
                         index={index}
                         step={item.step}
                         hosts={data.assets}
@@ -243,7 +243,7 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
                     }
                   >
                     <div role="group" aria-label="Step type" className="grid p-1">
-                      {workflowTypeOptions.map((option) => (
+                      {playbookTypeOptions.map((option) => (
                         <Button
                           key={option.value}
                           variant="ghost"
@@ -260,8 +260,8 @@ function WorkflowEditor({ data, error }: { data: WorkflowEditorData; error?: str
             </div>
           </TabPanel>
           <TabPanel tabId="variables" keepMounted className="p-4 md:p-6">
-            <div data-workflow-section="variables" className="mx-auto grid w-full max-w-3xl gap-5">
-              <WorkflowEnvironmentEditor environment={environment} onChange={setEnvironment} />
+            <div data-playbook-section="variables" className="mx-auto grid w-full max-w-3xl gap-5">
+              <PlaybookEnvironmentEditor environment={environment} onChange={setEnvironment} />
             </div>
           </TabPanel>
         </Tabs>
