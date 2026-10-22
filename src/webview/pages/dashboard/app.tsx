@@ -10,17 +10,18 @@ import '@/webview/styles.css';
 
 const tabs: Tab[] = [
   {
-    id: 'playbook',
-    label: 'Playbooks',
-    icon: <Icon name="run-coverage" size="lg" />,
-    context: { webviewSection: 'playbook', preventDefaultContextMenuItems: true },
-  },
-  {
     id: 'assets',
     label: 'Assets',
     icon: <Icon name="layers" size="lg" />,
     context: { webviewSection: 'assets', preventDefaultContextMenuItems: true },
   },
+  {
+    id: 'playbook',
+    label: 'Playbooks',
+    icon: <Icon name="run-coverage" size="lg" />,
+    context: { webviewSection: 'playbook', preventDefaultContextMenuItems: true },
+  },
+
   {
     id: 'temp',
     label: 'Temp',
@@ -30,7 +31,7 @@ const tabs: Tab[] = [
 ];
 
 function App() {
-  const [activeTabId, setActiveTabId] = useState('playbook');
+  const [activeTabId, setActiveTabId] = useState('assets');
   const dashboardState = useDashboardState(activeTabId);
 
   return (

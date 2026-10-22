@@ -55,6 +55,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         if (mode === 'back') history = history.slice(0, -1);
         else if (mode === 'navigate' && data.location !== location) history.push(location);
         location = data.location;
+        target.title = data.ancestors.at(-1)?.name ?? 'Explorer';
         return {
           ...data,
           cutUris: clipboard.value?.move ? clipboard.value.uris : [],
