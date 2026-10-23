@@ -123,7 +123,7 @@ export function DataTable({
     },
   });
   return (
-    <div className="min-h-0 min-w-0 flex-1 overflow-auto -mb-px text-sm">
+    <div tabIndex={0} className="min-h-0 min-w-0 flex-1 overflow-auto -mb-px text-sm">
       <table className="w-max min-w-full border-separate border-spacing-0" aria-label={`${table.name} data`}>
         <thead className="sticky top-0 z-10">
           <tr>
