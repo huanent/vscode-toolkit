@@ -115,7 +115,7 @@ export function registerWebviews(
   };
   const views: WebviewRegistration[] = [
     { id: 'toolkit.dashboard', page: 'dashboard', handler: dashboardHandler },
-    { id: 'toolkit.result', page: 'result', handler: createResultViewHandler(tasks) },
+    { id: 'toolkit.results', page: 'result', handler: createResultViewHandler(tasks) },
   ];
 
   for (const view of views) {

@@ -77,7 +77,7 @@ export class PlaybookResultService {
     playbook: PlaybookDefinition,
     run: (signal: AbortSignal, updateOutput: (output: PlaybookRunOutcome) => void) => Promise<PlaybookRunOutcome>,
   ): Promise<string> {
-    await vscode.commands.executeCommand('toolkit.result.focus');
+    await vscode.commands.executeCommand('toolkit.results.focus');
     return this.tasks.startTask<{ name: string; playbook: PlaybookDefinition }, PlaybookRunOutcome>({
       kind: 'playbook',
       title: name,

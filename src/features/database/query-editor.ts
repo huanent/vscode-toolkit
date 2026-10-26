@@ -41,7 +41,7 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
       }
       try {
         const asset = await definition.requireAsset(target.assetId);
-        await vscode.commands.executeCommand('toolkit.result.focus');
+        await vscode.commands.executeCommand('toolkit.results.focus');
         await tasks.startTask({
           kind: definition.type,
           title: `${asset.name}: ${sql.replace(/\s+/g, ' ').slice(0, 64)}`,

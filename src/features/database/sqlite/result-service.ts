@@ -9,7 +9,7 @@ export async function submitSqliteQuery(
   databaseUri: vscode.Uri,
   sql: string,
 ): Promise<void> {
-  await vscode.commands.executeCommand('toolkit.result.focus');
+  await vscode.commands.executeCommand('toolkit.results.focus');
   const databaseName = path.posix.basename(databaseUri.path) || 'SQLite database';
   const querySummary = sql.replace(/\s+/g, ' ').trim();
 

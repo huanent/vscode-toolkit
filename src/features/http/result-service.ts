@@ -8,7 +8,7 @@ export class HttpResultService {
 
   public async focusResultView(): Promise<void> {
     try {
-      await vscode.commands.executeCommand('toolkit.result.focus');
+      await vscode.commands.executeCommand('toolkit.results.focus');
     } catch {
       // View might not be registered yet in some tests
     }

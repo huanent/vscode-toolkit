@@ -179,7 +179,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       id={getListItemId(listId, listItem.key)}
       data-vscode-context={listItem.context ? JSON.stringify(listItem.context) : undefined}
       className={cn(
-        'group relative flex h-6 w-full cursor-pointer items-center gap-1 px-1 rounded-sm select-none',
+        'group relative flex h-6 w-full cursor-pointer items-center px-1 rounded-sm select-none',
         getSelectionClassName(selected, listHasFocus),
       )}
       role={itemRole}
@@ -190,14 +190,16 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       aria-setsize={listItem.setSize}
       onClick={onClick}
     >
-      {icon}
-      <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
-        <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
-        {listItem.description !== undefined && (
-          <div className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
-            {listItem.description}
-          </div>
-        )}
+      <div className="flex items-center gap-1 flex-1 truncate">
+        {icon}
+        <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
+          <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
+          {listItem.description !== undefined && (
+            <div className="min-w-0 shrink truncate text-sm text-(--vscode-descriptionForeground)">
+              {listItem.description}
+            </div>
+          )}
+        </div>
       </div>
       {listItem.actions && (
         <div

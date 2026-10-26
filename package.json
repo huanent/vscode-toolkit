@@ -196,8 +196,8 @@
       ],
       "panel": [
         {
-          "id": "toolkit_result",
-          "title": "Result",
+          "id": "toolkit_results",
+          "title": "Results",
           "icon": "$(run-with-deps)"
         }
       ]
@@ -211,11 +211,11 @@
           "icon": "resource/logo.svg"
         }
       ],
-      "toolkit_result": [
+      "toolkit_results": [
         {
           "type": "webview",
-          "id": "toolkit.result",
-          "name": "Result",
+          "id": "toolkit.results",
+          "name": "Results",
           "icon": "$(run-with-deps)"
         }
       ]

@@ -32,8 +32,8 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   context.subscriptions.push(tempFiles);
   context.subscriptions.push(playbookFiles);
   context.subscriptions.push(
-    vscode.commands.registerCommand('toolkit.result.focus', () =>
-      vscode.commands.executeCommand('workbench.view.extension.toolkit_result'),
+    vscode.commands.registerCommand('toolkit.results.focus', () =>
+      vscode.commands.executeCommand('workbench.view.extension.toolkit_results'),
     ),
   );
   registerCommands(context, tempFiles.refresh, playbookFiles.refresh, playbookFiles.openEditor);
