@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChatData } from '@/features/chat/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
@@ -6,6 +6,7 @@ import { Textarea } from '@/webview/components/ui/textarea';
 import { ModelSelector } from '@/webview/pages/chat/components/model-selector';
 
 interface ChatInputProps {
+  chatId: string;
   models: ChatData['models'];
   modelId: string;
   busy: boolean;
@@ -14,8 +15,13 @@ interface ChatInputProps {
   onStop: () => void;
 }
 
-export function ChatInput({ models, modelId, busy, onModelChange, onSend, onStop }: ChatInputProps) {
+export function ChatInput({ chatId, models, modelId, busy, onModelChange, onSend, onStop }: ChatInputProps) {
   const [draft, setDraft] = useState('');
+  const previousChatId = useRef(chatId);
+  useEffect(() => {
+    if (previousChatId.current && previousChatId.current !== chatId) setDraft('');
+    previousChatId.current = chatId;
+  }, [chatId]);
   const canSend = !busy && !!draft.trim() && !!modelId;
 
   function send(): void {

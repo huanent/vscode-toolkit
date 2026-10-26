@@ -3,7 +3,6 @@ import type { ChatData, ChatRequest, ChatUpdate } from '@/features/chat/protocol
 import { mountWebview } from '@/webview/bootstrap';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Icon } from '@/webview/components/ui/icons';
-import { Loading } from '@/webview/components/ui/loading';
 import { ChatHistory } from '@/webview/pages/chat/components/chat-history';
 import { ChatInput } from '@/webview/pages/chat/components/chat-input';
 import { ChatMessage } from '@/webview/pages/chat/components/chat-message';
@@ -15,14 +14,24 @@ function request(message: ChatRequest): void {
 }
 
 function App() {
+  const [initialData] = useState<ChatData>(() => ({
+    chat: { id: '', modelId: '', messages: [] },
+    history: [],
+    models: [],
+    busy: false,
+  }));
   const state = useHostData<ChatData, ChatUpdate>((message, previous) =>
     message.type === 'chatUpdated' && previous.status === 'loaded'
       ? { status: 'loaded', data: message.data }
       : undefined,
   );
   if (state.status === 'error') return <ErrorMessage message={state.message} />;
-  if (state.status !== 'loaded') return <Loading label="Loading chat..." />;
-  return <Chat data={state.data} error={state.error} />;
+  return (
+    <Chat
+      data={state.status === 'loaded' ? state.data : initialData}
+      error={state.status === 'loaded' ? state.error : undefined}
+    />
+  );
 }
 
 function Chat({ data, error }: { data: ChatData; error?: string }) {
@@ -56,39 +65,46 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   }
 
   return (
-    <main className="flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
-      <div className="shrink-0 self-start px-3 pt-2">
+    <main className="relative flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
+      <div className="absolute left-3 top-2 z-20">
         <ChatHistory
           history={data.history}
           activeId={data.chat.id}
           disabled={busy}
           onSelect={(id) => request({ type: 'open', id })}
+          onDelete={(id) => request({ type: 'delete', id })}
         />
       </div>
-      <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 overflow-y-auto"
-        onScroll={(event) => {
-          const target = event.currentTarget;
-          followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
-        }}
-      >
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">
-          {data.chat.messages.map((message, index) => (
-            <ChatMessage
-              key={`${data.chat.id}-${index}`}
-              message={message}
-              generating={data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1}
-              onCopy={() => request({ type: 'copy', index })}
-            />
-          ))}
-          {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
-            <div role="status" className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
-              <Icon name="loading" className="animate-spin" />
-              Responding...
-            </div>
-          )}
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scrollRef}
+          className="h-full overflow-y-auto"
+          onScroll={(event) => {
+            const target = event.currentTarget;
+            followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
+          }}
+        >
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-6 pt-14">
+            {data.chat.messages.map((message, index) => (
+              <ChatMessage
+                key={`${data.chat.id}-${index}`}
+                message={message}
+                generating={data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1}
+                onCopy={() => request({ type: 'copy', index })}
+              />
+            ))}
+            {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
+              <div role="status" className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
+                <Icon name="loading" className="animate-spin" />
+                Responding...
+              </div>
+            )}
+          </div>
         </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-(--vscode-editor-background) to-transparent"
+        />
       </div>
       <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 pt-2">
         {(error || data.error) && (
@@ -97,7 +113,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           </div>
         )}
         <ChatInput
-          key={data.chat.id}
+          chatId={data.chat.id}
           models={data.models}
           modelId={modelId}
           busy={busy}

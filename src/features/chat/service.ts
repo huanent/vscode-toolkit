@@ -4,6 +4,9 @@ import type { ChatData, ChatDocument, ChatMessage } from '@/features/chat/protoc
 export class ChatService {
   private chat: ChatDocument = this.createChat();
   private models: vscode.LanguageModelChat[] = [];
+  private modelOptions: ChatData['models'];
+  private modelRefresh?: Promise<void>;
+  private historyLoad?: Promise<void>;
   private history: ChatData['history'] = [];
   private cancellation?: vscode.CancellationTokenSource;
   private error?: string;
@@ -12,7 +15,10 @@ export class ChatService {
   constructor(
     private readonly root: vscode.Uri,
     private readonly update: (data: ChatData) => void,
-  ) {}
+    private readonly cache: vscode.Memento,
+  ) {
+    this.modelOptions = cache.get<ChatData['models']>('chat.models', []);
+  }
 
   private createChat(): ChatDocument {
     return { id: String(Date.now()), modelId: '', messages: [] };
@@ -55,7 +61,7 @@ export class ChatService {
     return {
       chat: this.chat,
       history: this.history,
-      models: this.models.map((model) => ({ value: model.id, label: model.name, vendor: model.vendor })),
+      models: this.modelOptions,
       busy: !!this.cancellation,
       error: this.error,
     };
@@ -65,7 +71,16 @@ export class ChatService {
     if (!this.disposed) this.update(this.data);
   }
 
-  async initialize(): Promise<ChatData> {
+  initialize(): ChatData {
+    this.historyLoad = this.loadHistory().catch((error: unknown) => {
+      this.error = error instanceof Error ? error.message : String(error);
+      this.emit();
+    });
+    void this.refreshModels();
+    return this.data;
+  }
+
+  private async loadHistory(): Promise<void> {
     await vscode.workspace.fs.createDirectory(this.root);
     const entries = await vscode.workspace.fs.readDirectory(this.root);
     this.history = (
@@ -88,16 +103,29 @@ export class ChatService {
     )
       .filter((entry) => entry !== undefined)
       .sort((first, second) => Number(second.id) - Number(first.id));
-    await this.refreshModels();
-    return this.data;
+    this.emit();
   }
 
-  async refreshModels(): Promise<void> {
+  refreshModels(): Promise<void> {
+    if (!this.modelRefresh) {
+      this.modelRefresh = this.loadModels().finally(() => {
+        this.modelRefresh = undefined;
+      });
+    }
+    return this.modelRefresh;
+  }
+
+  private async loadModels(): Promise<void> {
     try {
-      this.models = await vscode.lm.selectChatModels();
+      const models = await vscode.lm.selectChatModels();
+      if (this.disposed) return;
+      this.models = models;
+      this.modelOptions = models.map((model) => ({ value: model.id, label: model.name, vendor: model.vendor }));
       this.error = this.models.length
         ? undefined
         : 'No language models available. Sign in to GitHub Copilot or configure a model provider in VS Code.';
+      this.emit();
+      await this.cache.update('chat.models', this.modelOptions);
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
@@ -105,6 +133,7 @@ export class ChatService {
   }
 
   async open(id?: string): Promise<void> {
+    await this.historyLoad;
     if (this.cancellation) return;
     this.chat = id ? await this.read(id) : this.createChat();
     if (!id) {
@@ -116,8 +145,23 @@ export class ChatService {
     this.emit();
   }
 
+  async delete(id: string): Promise<void> {
+    await this.historyLoad;
+    if (this.disposed || this.cancellation) return;
+    await vscode.workspace.fs.delete(this.uri(id));
+    this.history = this.history.filter((entry) => entry.id !== id);
+    if (this.chat.id === id) {
+      await this.open();
+      return;
+    }
+    this.emit();
+  }
+
   async send(content: string, modelId: string): Promise<void> {
     if (this.cancellation || !content.trim()) return;
+    await this.historyLoad;
+    if (this.modelRefresh) await this.modelRefresh;
+    if (this.disposed || this.cancellation) return;
     const model = this.models.find((item) => item.id === modelId);
     if (!model) throw new Error('Select an available language model.');
     const cancellation = new vscode.CancellationTokenSource();

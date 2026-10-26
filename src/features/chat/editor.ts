@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { resolveStorageDirectory } from '@/host/utils/storage';
 import { ChatService } from '@/features/chat/service';
 import type { ChatRequest, ChatUpdate } from '@/features/chat/protocol';
 
@@ -16,10 +17,13 @@ export function registerChat(context: vscode.ExtensionContext): void {
         return service.initialize();
       },
       onPanelResolved: (_uri, panel) => {
-        if (!context.storageUri) throw new Error('Open a folder or workspace to store chats.');
-        const current = new ChatService(vscode.Uri.joinPath(context.storageUri, 'chats'), (data) => {
-          void panel.webview.postMessage({ type: 'chatUpdated', data } satisfies ChatUpdate);
-        });
+        const current = new ChatService(
+          vscode.Uri.file(resolveStorageDirectory(context, 'chats')),
+          (data) => {
+            void panel.webview.postMessage({ type: 'chatUpdated', data } satisfies ChatUpdate);
+          },
+          context.globalState,
+        );
         service = current;
         const listener = panel.webview.onDidReceiveMessage(async (message: ChatRequest) => {
           try {
@@ -33,6 +37,9 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 break;
               case 'open':
                 if (typeof message.id === 'string') await current.open(message.id);
+                break;
+              case 'delete':
+                if (typeof message.id === 'string') await current.delete(message.id);
                 break;
               case 'stop':
                 current.stop();
@@ -56,10 +63,6 @@ export function registerChat(context: vscode.ExtensionContext): void {
       },
     }),
     vscode.commands.registerCommand('toolkit.chat.open', async () => {
-      if (!context.storageUri) {
-        await vscode.window.showErrorMessage('Open a folder or workspace to store chats.');
-        return;
-      }
       await vscode.commands.executeCommand(
         'vscode.openWith',
         vscode.Uri.parse('toolkit-chat:/chat.toolkit-chat'),
