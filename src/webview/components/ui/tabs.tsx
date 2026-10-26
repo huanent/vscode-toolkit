@@ -16,6 +16,7 @@ type TabsProps = {
   children: ReactNode;
   ariaLabel?: string;
   placement?: 'top' | 'bottom' | 'left';
+  size?: 'sm' | 'md';
   hideSingleTab?: boolean;
   className?: string;
   contentClassName?: string;
@@ -28,6 +29,7 @@ export function Tabs({
   children,
   ariaLabel = 'Sections',
   placement = 'top',
+  size = 'md',
   hideSingleTab = false,
   className,
   contentClassName,
@@ -53,7 +55,12 @@ export function Tabs({
         <BaseTabs.List
           activateOnFocus={false}
           aria-label={ariaLabel}
-          className={cn('flex w-full', vertical ? 'flex-col' : 'overflow-x-auto', bottom && 'h-9 items-start px-2')}
+          className={cn(
+            'flex w-full',
+            vertical ? 'flex-col' : 'overflow-x-auto',
+            bottom && 'items-start',
+            bottom && (size === 'sm' ? 'h-7 px-1' : 'h-9 px-2'),
+          )}
         >
           {tabs.map((tab) => {
             const isActive = activeTabId === tab.id;
@@ -61,7 +68,8 @@ export function Tabs({
             return (
               <BaseTabs.Tab
                 className={cn(
-                  'relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap px-3',
+                  'relative inline-flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap',
+                  size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3',
                   vertical
                     ? 'justify-end border-r-2 text-right'
                     : bottom

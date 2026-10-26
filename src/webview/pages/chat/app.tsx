@@ -1,0 +1,113 @@
+import { useEffect, useRef, useState } from 'react';
+import type { ChatData, ChatRequest, ChatUpdate } from '@/features/chat/protocol';
+import { mountWebview } from '@/webview/bootstrap';
+import { ErrorMessage } from '@/webview/components/ui/error-message';
+import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
+import { ChatHistory } from '@/webview/pages/chat/components/chat-history';
+import { ChatInput } from '@/webview/pages/chat/components/chat-input';
+import { ChatMessage } from '@/webview/pages/chat/components/chat-message';
+import { postToHost, useHostData } from '@/webview/utils/host-data';
+import '@/webview/styles.css';
+
+function request(message: ChatRequest): void {
+  postToHost(message);
+}
+
+function App() {
+  const state = useHostData<ChatData, ChatUpdate>((message, previous) =>
+    message.type === 'chatUpdated' && previous.status === 'loaded'
+      ? { status: 'loaded', data: message.data }
+      : undefined,
+  );
+  if (state.status === 'error') return <ErrorMessage message={state.message} />;
+  if (state.status !== 'loaded') return <Loading label="Loading chat..." />;
+  return <Chat data={state.data} error={state.error} />;
+}
+
+function Chat({ data, error }: { data: ChatData; error?: string }) {
+  const [selectedModel, setSelectedModel] = useState('');
+  const [pending, setPending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const followRef = useRef(true);
+  const modelId =
+    [selectedModel, data.chat.modelId, data.models[0]?.value].find((id) =>
+      data.models.some((model) => model.value === id),
+    ) || '';
+  const busy = data.busy || pending;
+
+  useEffect(() => {
+    setPending(false);
+  }, [data, error]);
+
+  useEffect(() => {
+    if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [data.chat.messages]);
+
+  useEffect(() => {
+    followRef.current = true;
+  }, [data.chat.id]);
+
+  function send(content: string): void {
+    if (busy || !content.trim() || !modelId) return;
+    followRef.current = true;
+    setPending(true);
+    request({ type: 'send', content, modelId });
+  }
+
+  return (
+    <main className="flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
+      <div className="shrink-0 self-start px-3 pt-2">
+        <ChatHistory
+          history={data.history}
+          activeId={data.chat.id}
+          disabled={busy}
+          onSelect={(id) => request({ type: 'open', id })}
+        />
+      </div>
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto"
+        onScroll={(event) => {
+          const target = event.currentTarget;
+          followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
+        }}
+      >
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">
+          {data.chat.messages.map((message, index) => (
+            <ChatMessage
+              key={`${data.chat.id}-${index}`}
+              message={message}
+              generating={data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1}
+              onCopy={() => request({ type: 'copy', index })}
+            />
+          ))}
+          {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
+            <div role="status" className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
+              <Icon name="loading" className="animate-spin" />
+              Responding...
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 pt-2">
+        {(error || data.error) && (
+          <div className="mb-2" role="alert">
+            <ErrorMessage message={error || data.error || ''} />
+          </div>
+        )}
+        <ChatInput
+          key={data.chat.id}
+          models={data.models}
+          modelId={modelId}
+          busy={busy}
+          onModelChange={setSelectedModel}
+          onSend={send}
+          onStop={() => request({ type: 'stop' })}
+        />
+      </div>
+    </main>
+  );
+}
+
+mountWebview('root', <App />);

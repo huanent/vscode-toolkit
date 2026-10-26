@@ -101,6 +101,16 @@
     ],
     "customEditors": [
       {
+        "viewType": "toolkit.chatEditor",
+        "displayName": "Chat",
+        "selector": [
+          {
+            "filenamePattern": "*.toolkit-chat"
+          }
+        ],
+        "priority": "option"
+      },
+      {
         "viewType": "toolkit.archiveEditor",
         "displayName": "Archive",
         "selector": [
@@ -896,6 +906,12 @@
         "category": "Dashboard"
       },
       {
+        "command": "toolkit.chat.open",
+        "title": "Chat",
+        "icon": "$(comment-discussion)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.createFile",
         "title": "New File",
         "category": "Toolkit"
@@ -1004,6 +1020,11 @@
     ],
     "keybindings": [
       {
+        "command": "toolkit.chat.open",
+        "key": "ctrl+shift+[Backslash]",
+        "mac": "cmd+shift+[Backslash]"
+      },
+      {
         "command": "toolkit.postgresql.executeQuery",
         "key": "ctrl+enter",
         "mac": "cmd+enter",
@@ -1057,6 +1078,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "toolkit.chat.open",
+          "when": "view == toolkit.dashboard",
+          "group": "1_more@3"
+        },
         {
           "command": "toolkit.dashboard.refresh",
           "when": "view == toolkit.dashboard",

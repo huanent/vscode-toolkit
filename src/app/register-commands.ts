@@ -5,6 +5,7 @@ import { registerTempCommands } from '@/features/temp/commands';
 import { registerPlaybookCommands } from '@/features/playbook/commands';
 import { registerCredentialCommands } from '@/features/credential/commands';
 import { registerExplorerCommands } from '@/features/explorer/commands';
+import { registerChat } from '@/features/chat/editor';
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -19,5 +20,6 @@ export function registerCommands(
   registerPlaybookCommands(context, refreshPlaybookFiles, openPlaybookEditor);
   registerCredentialCommands(context);
   registerExplorerCommands(context);
+  registerChat(context);
   registerScripts(context);
 }

@@ -11,6 +11,7 @@ export type PopoverProps = {
   className?: string;
   sideOffset?: number;
   align?: 'start' | 'center' | 'end';
+  side?: 'top' | 'bottom';
 };
 
 export function Popover({
@@ -21,12 +22,13 @@ export function Popover({
   className,
   sideOffset = 4,
   align = 'start',
+  side = 'bottom',
 }: PopoverProps) {
   return (
     <BasePopover.Root open={open} onOpenChange={onOpenChange}>
       <BasePopover.Trigger render={trigger} />
       <BasePopover.Portal>
-        <BasePopover.Positioner sideOffset={sideOffset} align={align} className="z-50">
+        <BasePopover.Positioner side={side} sideOffset={sideOffset} align={align} className="z-50">
           <BasePopover.Popup className={cn(popupClassName, 'overflow-hidden', className)}>{children}</BasePopover.Popup>
         </BasePopover.Positioner>
       </BasePopover.Portal>
