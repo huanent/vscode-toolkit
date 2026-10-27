@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
 import { Input, type InputProps } from '@/webview/components/ui/input';
-import { popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
+import { glassPopupClassName, popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
 
 export type AutocompleteProps = Omit<InputProps, 'value' | 'onChange' | 'list'> & {
   items: readonly string[];
@@ -71,8 +71,10 @@ export function Autocomplete({
       </BaseAutocomplete.InputGroup>
       <BaseAutocomplete.Portal>
         <BaseAutocomplete.Positioner align="start" sideOffset={4} className="z-50 w-(--anchor-width)">
-          <BaseAutocomplete.Popup className={cn(popupClassName, 'max-h-64 w-full overflow-auto')}>
-            <BaseAutocomplete.List>
+          <BaseAutocomplete.Popup
+            className={cn(popupClassName, glassPopupClassName, 'relative w-full overflow-hidden')}
+          >
+            <BaseAutocomplete.List className="max-h-64 overflow-auto">
               {(item: string) => (
                 <div
                   key={item}

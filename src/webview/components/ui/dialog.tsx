@@ -3,7 +3,7 @@ import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
-import { popupClassName } from '@/webview/components/ui/surface-styles';
+import { glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
 
 export type DialogProps = {
   open: boolean;
@@ -47,11 +47,12 @@ export function Dialog({
         <BaseDialog.Popup
           className={cn(
             popupClassName,
+            glassPopupClassName,
             'fixed top-1/2 left-1/2 z-50 flex max-h-full w-160 max-w-full -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden p-3',
             className,
           )}
         >
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-(--vscode-panel-border) pb-3">
+          <div className="flex shrink-0 items-start justify-between gap-3 pb-3">
             <div className="min-w-0 flex-1">
               <BaseDialog.Title className="wrap-break-word font-semibold">{title}</BaseDialog.Title>
               {description != null && (
@@ -74,7 +75,7 @@ export function Dialog({
             />
           </div>
           <div className="-mx-3 min-h-0 overflow-auto px-3">{children}</div>
-          <div className="mt-3 flex shrink-0 items-center justify-end gap-2 border-t border-(--vscode-panel-border) pt-3">
+          <div className="mt-3 flex shrink-0 items-center justify-end gap-2 pt-3">
             {footer != null && <div className="mr-auto min-w-0">{footer}</div>}
             <BaseDialog.Close
               render={

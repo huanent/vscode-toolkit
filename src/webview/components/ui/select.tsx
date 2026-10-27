@@ -2,7 +2,13 @@ import { Select as BaseSelect, type SelectRootProps } from '@base-ui/react/selec
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import { Icon } from '@/webview/components/ui/icons';
-import { fieldClassName, popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
+import {
+  fieldClassName,
+  glassPopupClassName,
+  glassScrimClassName,
+  popupClassName,
+  popupItemClassName,
+} from '@/webview/components/ui/surface-styles';
 
 export type SelectOption = {
   value: string;
@@ -23,8 +29,10 @@ export type SelectProps = Omit<SelectRootProps<string>, 'children' | 'items' | '
   side?: 'top' | 'bottom';
 };
 
-const scrollArrowClassName =
-  'z-10 flex w-full items-center justify-center bg-(--vscode-editorWidget-background,var(--vscode-editor-background)) text-(--vscode-descriptionForeground)';
+const scrollArrowClassName = cn(
+  'z-10 flex w-full items-center justify-center text-(--vscode-descriptionForeground)',
+  glassScrimClassName,
+);
 
 export function Select({
   options,
@@ -85,6 +93,7 @@ export function Select({
           <BaseSelect.Popup
             className={cn(
               popupClassName,
+              glassPopupClassName,
               'relative w-max min-w-(--anchor-width) max-w-(--available-width) overflow-hidden',
             )}
           >

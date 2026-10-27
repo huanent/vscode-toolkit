@@ -29,7 +29,7 @@ export function Popover({
       <BasePopover.Trigger render={trigger} />
       <BasePopover.Portal>
         <BasePopover.Positioner side={side} sideOffset={sideOffset} align={align} className="z-50">
-          <BasePopover.Popup className={cn(popupClassName, glassPopupClassName, 'overflow-hidden', className)}>
+          <BasePopover.Popup className={cn(popupClassName, glassPopupClassName, 'relative overflow-hidden', className)}>
             {children}
           </BasePopover.Popup>
         </BasePopover.Positioner>

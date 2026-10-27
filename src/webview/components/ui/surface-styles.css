@@ -8,6 +8,10 @@
  * These rules are intentionally unlayered: Tailwind utilities live in
  * `@layer utilities`, so unlayered declarations win and can reset the solid
  * `bg-*` and `border-*` colors that the shared popup class applies.
+ *
+ * `position` is deliberately not set here: unlayered declarations also beat
+ * utilities, so a `relative` here would override a caller's `fixed` and knock
+ * centered dialogs out of position. Callers opt into `relative` themselves.
  */
 .ui-glass-surface {
   --ui-glass-tint: var(--vscode-editorWidget-background, var(--vscode-editor-background));
@@ -17,7 +21,6 @@
      rim in dark themes and a soft shadow in light ones. */
   --ui-glass-border: color-mix(in srgb, var(--vscode-foreground) 10%, transparent);
 
-  position: relative;
   isolation: isolate;
   background-color: transparent;
   border-color: var(--ui-glass-border);
@@ -35,7 +38,7 @@
   backdrop-filter: blur(12px);
 }
 
-/* Keep the solid theme surface where blur or color mixing is unavailable. */
+/* Keep the solid theme surface where blur is unavailable. */
 @supports not ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
   .ui-glass-surface {
     background-color: var(--ui-glass-tint);
@@ -47,6 +50,7 @@
   }
 }
 
+/* ...and where color mixing is unavailable, since the tint uses it. */
 @supports not (background-color: color-mix(in srgb, black 80%, transparent)) {
   .ui-glass-surface {
     background-color: var(--ui-glass-tint);
@@ -58,6 +62,20 @@
   }
 }
 
+/*
+ * Almost-opaque scrim for controls layered over a glass surface, such as the
+ * scroll arrows of a dropdown. The second declaration is intentionally a
+ * color-mix so unsupporting browsers fall back to the solid first value.
+ */
+.ui-glass-scrim {
+  background-color: var(--ui-glass-tint, var(--vscode-editorWidget-background, var(--vscode-editor-background)));
+  background-color: color-mix(
+    in srgb,
+    var(--ui-glass-tint, var(--vscode-editorWidget-background, var(--vscode-editor-background))) 92%,
+    transparent
+  );
+}
+
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   .ui-glass-surface {
     background-color: var(--ui-glass-tint);
@@ -66,5 +84,9 @@
 
   .ui-glass-surface::before {
     display: none;
+  }
+
+  .ui-glass-scrim {
+    background-color: var(--ui-glass-tint);
   }
 }
