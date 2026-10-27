@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ChatData } from '@/features/chat/protocol';
 import { Button } from '@/webview/components/ui/button';
+import { Empty } from '@/webview/components/ui/empty';
 import { Icon } from '@/webview/components/ui/icons';
-import { List, type ListGroup } from '@/webview/components/ui/list';
+import { Input } from '@/webview/components/ui/input';
+import { List, type ListGroup, type ListItem } from '@/webview/components/ui/list';
 import { Popover } from '@/webview/components/ui/popover';
 import { getDateGroup } from '@/webview/utils/date-groups';
+
+type ChatHistoryEntry = ChatData['history'][number];
 
 interface ChatHistoryProps {
   history: ChatData['history'];
@@ -14,62 +18,123 @@ interface ChatHistoryProps {
   onDelete: (id: string) => void;
 }
 
-export function ChatHistory({ history, activeId, disabled, onSelect, onDelete }: ChatHistoryProps) {
-  const [open, setOpen] = useState(false);
-  const groups = new Map<string, ListGroup<ChatData['history'][number]>>();
+function toChatHistoryGroups(
+  history: readonly ChatHistoryEntry[],
+  disabled: boolean | undefined,
+  onDelete: (id: string) => void,
+): ListGroup<ChatHistoryEntry>[] {
+  const groups = new Map<string, { label: string; items: ListItem<ChatHistoryEntry>[] }>();
+
   for (const entry of history) {
-    const dateGroup = getDateGroup(Number(entry.id));
-    const group = groups.get(dateGroup.key) ?? { ...dateGroup, items: [] };
-    group.items = [
-      ...group.items,
-      {
-        key: entry.id,
-        data: entry,
-        label: <span title={entry.title}>{entry.title}</span>,
-        actions: (
-          <Button
-            variant="ghost"
-            size="sm"
-            title="Delete chat"
-            aria-label={`Delete ${entry.title}`}
-            disabled={disabled}
-            onClick={() => onDelete(entry.id)}
-            prefix={<Icon name="trash" />}
-          />
-        ),
-      },
-    ];
-    groups.set(dateGroup.key, group);
+    const timestamp = Number(entry.id);
+    const validTimestamp = Number.isFinite(timestamp);
+    const dateGroup = getDateGroup(validTimestamp ? timestamp : Date.now());
+    let group = groups.get(dateGroup.key);
+    if (!group) {
+      group = { label: dateGroup.label, items: [] };
+      groups.set(dateGroup.key, group);
+    }
+
+    group.items.push({
+      key: entry.id,
+      data: entry,
+      label: (
+        <span title={entry.title} className="truncate">
+          {entry.title}
+        </span>
+      ),
+      actions: (
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Delete chat"
+          aria-label={`Delete ${entry.title}`}
+          disabled={disabled}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!disabled) onDelete(entry.id);
+          }}
+          prefix={<Icon name="trash" />}
+        />
+      ),
+    });
   }
 
-  function select(entry: ChatData['history'][number]): void {
-    if (disabled) return;
-    onSelect(entry.id);
-    setOpen(false);
-  }
+  return Array.from(groups, ([key, group]) => ({
+    key,
+    label: group.label,
+    items: group.items,
+  }));
+}
+
+export function ChatHistory({ history, activeId, disabled, onSelect, onDelete }: ChatHistoryProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const filteredHistory = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return history;
+    return history.filter((entry) => entry.title.toLowerCase().includes(term));
+  }, [history, query]);
+
+  const groups = useMemo(
+    () => toChatHistoryGroups(filteredHistory, disabled, onDelete),
+    [filteredHistory, disabled, onDelete],
+  );
+
+  const handleSelect = useCallback(
+    (entry: ChatHistoryEntry) => {
+      if (disabled) return;
+      onSelect(entry.id);
+      setOpen(false);
+    },
+    [disabled, onSelect],
+  );
 
   return (
     <Popover
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setQuery('');
+      }}
       trigger={
-        <Button size="lg" variant="ghost" title="Recent chats" aria-label="Recent chats">
+        <Button size="lg" variant="ghost" title="Chat history" aria-label="Chat history">
           <Icon name="menu" />
         </Button>
       }
-      className="w-72 max-w-(--available-width)"
+      className="w-64 max-w-(--available-width) text-xs p-1"
     >
-      <div className="border-b border-(--vscode-panel-border) px-3 py-2 font-semibold">Recent chats</div>
-      <div className="max-h-80 overflow-y-auto p-1">
-        {history.length === 0 && <div className="p-2 text-(--vscode-descriptionForeground)">No chats yet</div>}
-        <List
-          ariaLabel="Chat history"
-          groups={Array.from(groups.values())}
-          selectedKey={activeId}
-          onActivate={select}
-          onItemClick={select}
+      <div className="border-b border-(--vscode-panel-border) p-1">
+        <Input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search chats"
+          aria-label="Search chats"
+          prefix={<Icon name="search" size="sm" variant="muted" />}
+          autoFocus
         />
       </div>
+      {history.length === 0 ? (
+        <div className="text-sm">
+          <Empty title="No chats yet" description="Chats you start will appear here." icon="history" />
+        </div>
+      ) : filteredHistory.length === 0 ? (
+        <div className="text-sm">
+          <Empty title="No matching chats" description="Try a different search term." icon="search" />
+        </div>
+      ) : (
+        <div className="max-h-80 overflow-y-auto overscroll-contain p-1">
+          <List
+            ariaLabel="Chat history"
+            groups={groups}
+            selectedKey={activeId}
+            onActivate={handleSelect}
+            onItemClick={handleSelect}
+          />
+        </div>
+      )}
     </Popover>
   );
 }

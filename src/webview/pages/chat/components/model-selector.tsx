@@ -39,7 +39,7 @@ export function ModelSelector({ models, value, disabled, onValueChange }: ModelS
       }}
       side="top"
       sideOffset={6}
-      className="w-max min-w-(--anchor-width) max-w-(--available-width) rounded-md text-xs"
+      className="w-max min-w-(--anchor-width) max-w-(--available-width) rounded-md text-xs p-1"
       trigger={
         <Button
           variant="ghost"
