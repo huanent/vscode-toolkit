@@ -1,7 +1,7 @@
 import { Popover as BasePopover } from '@base-ui/react/popover';
 import { cn } from 'cn';
 import type { ReactElement, ReactNode } from 'react';
-import { popupClassName } from '@/webview/components/ui/surface-styles';
+import { glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
 
 export type PopoverProps = {
   open?: boolean;
@@ -29,7 +29,9 @@ export function Popover({
       <BasePopover.Trigger render={trigger} />
       <BasePopover.Portal>
         <BasePopover.Positioner side={side} sideOffset={sideOffset} align={align} className="z-50">
-          <BasePopover.Popup className={cn(popupClassName, 'overflow-hidden', className)}>{children}</BasePopover.Popup>
+          <BasePopover.Popup className={cn(popupClassName, glassPopupClassName, 'overflow-hidden', className)}>
+            {children}
+          </BasePopover.Popup>
         </BasePopover.Positioner>
       </BasePopover.Portal>
     </BasePopover.Root>

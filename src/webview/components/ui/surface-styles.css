@@ -1,0 +1,70 @@
+/*
+ * Frosted-glass popup surface, modeled on VS Code's Modern UI overlays.
+ *
+ * The blur lives on a decorative ::before layer so the interactive element
+ * itself never gets `backdrop-filter`, which would turn it into a containing
+ * block for fixed-position descendants and break nested popups.
+ *
+ * These rules are intentionally unlayered: Tailwind utilities live in
+ * `@layer utilities`, so unlayered declarations win and can reset the solid
+ * `bg-*` and `border-*` colors that the shared popup class applies.
+ */
+.ui-glass-surface {
+  --ui-glass-tint: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  --ui-glass-opacity: 80%;
+  /* Opaque hover borders look heavy over a blurred backdrop. VS Code derives
+     its Modern UI borders from the foreground instead, which reads as a soft
+     rim in dark themes and a soft shadow in light ones. */
+  --ui-glass-border: color-mix(in srgb, var(--vscode-foreground) 10%, transparent);
+
+  position: relative;
+  isolation: isolate;
+  background-color: transparent;
+  border-color: var(--ui-glass-border);
+}
+
+.ui-glass-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: color-mix(in srgb, var(--ui-glass-tint) var(--ui-glass-opacity), transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Keep the solid theme surface where blur or color mixing is unavailable. */
+@supports not ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .ui-glass-surface {
+    background-color: var(--ui-glass-tint);
+    border-color: var(--vscode-widget-border, var(--vscode-panel-border));
+  }
+
+  .ui-glass-surface::before {
+    display: none;
+  }
+}
+
+@supports not (background-color: color-mix(in srgb, black 80%, transparent)) {
+  .ui-glass-surface {
+    background-color: var(--ui-glass-tint);
+    border-color: var(--vscode-widget-border, var(--vscode-panel-border));
+  }
+
+  .ui-glass-surface::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .ui-glass-surface {
+    background-color: var(--ui-glass-tint);
+    border-color: var(--vscode-widget-border, var(--vscode-panel-border));
+  }
+
+  .ui-glass-surface::before {
+    display: none;
+  }
+}
