@@ -138,7 +138,11 @@ export class SshService implements AssetProvider {
         });
         channel.once('close', (exitCode: number | undefined) => {
           if (failed || signal?.aborted) return;
-          session.client.exec(buildLoginShellCommand(command, exitCode === 0 ? output.toString() : ''), onChannel);
+          session.client.exec(
+            buildLoginShellCommand(command, exitCode === 0 ? output.toString() : ''),
+            { pty: true },
+            onChannel,
+          );
         });
       });
     });

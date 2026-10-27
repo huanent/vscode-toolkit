@@ -5,7 +5,8 @@ export function buildLoginShellCommand(command: string, shellOutput: string): st
     .find((line) => /^\/(?:[^\r\n\0]*\/)?(?:bash|zsh|fish|ksh|ksh93|mksh|sh|ash|dash)$/.test(line));
   if (!shell) return command;
 
-  const options = '-lc';
+  const name = shell.slice(shell.lastIndexOf('/') + 1);
+  const options = ['sh', 'ash', 'dash'].includes(name) ? '-lc' : '-lic';
   const argument = `'${command.replace(/'/g, "'\\''")}'`;
-  return `if [ -t 0 ] && [ -t 1 ]; then '${shell.replace(/'/g, "'\\''")}' -lic ${argument}; else '${shell.replace(/'/g, "'\\''")}' ${options} ${argument}; fi`;
+  return `'${shell.replace(/'/g, "'\\''")}' ${options} ${argument}`;
 }
