@@ -8,6 +8,7 @@ export interface ChatDocument {
   id: string;
   modelId: string;
   messages: ChatMessage[];
+  title?: string;
 }
 
 export interface ChatData {

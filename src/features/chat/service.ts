@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import type { ChatData, ChatDocument, ChatMessage } from '@/features/chat/protocol';
 
+const maxTabTitleDisplayWidth = 24;
+
 export class ChatService {
   private chat: ChatDocument = this.createChat();
   private models: vscode.LanguageModelChat[] = [];
@@ -9,6 +11,7 @@ export class ChatService {
   private historyLoad?: Promise<void>;
   private history: ChatData['history'] = [];
   private cancellation?: vscode.CancellationTokenSource;
+  private titleGenerationChatId?: string;
   private error?: string;
   private disposed = false;
 
@@ -16,12 +19,44 @@ export class ChatService {
     private readonly root: vscode.Uri,
     private readonly update: (data: ChatData) => void,
     private readonly cache: vscode.Memento,
+    private readonly setTabTitle: (title: string) => void,
   ) {
     this.modelOptions = cache.get<ChatData['models']>('chat.models', []);
   }
 
   private createChat(): ChatDocument {
     return { id: String(Date.now()), modelId: '', messages: [] };
+  }
+
+  private titleFor(chat: ChatDocument): string {
+    return (
+      chat.title ||
+      this.titleFromMessage(chat.messages.find((message) => message.role === 'user')?.content) ||
+      'New chat'
+    );
+  }
+
+  private titleFromMessage(content: string | undefined): string {
+    return content?.replace(/\s+/g, ' ').trim().slice(0, 80) || '';
+  }
+
+  private updateTabTitle(title: string): void {
+    const normalized = title.replace(/\s+/g, ' ').trim();
+    if (!normalized) {
+      this.setTabTitle('Chat');
+      return;
+    }
+
+    let displayWidth = 0;
+    let truncated = '';
+    for (const character of normalized) {
+      const characterWidth = character.charCodeAt(0) <= 0xff ? 1 : 2;
+      if (displayWidth + characterWidth + 3 > maxTabTitleDisplayWidth) break;
+      truncated += character;
+      displayWidth += characterWidth;
+    }
+
+    this.setTabTitle(truncated.length < normalized.length ? `${truncated.trimEnd()}...` : normalized);
   }
 
   private uri(id: string): vscode.Uri {
@@ -36,6 +71,7 @@ export class ChatService {
     if (
       chat.id !== id ||
       typeof chat.modelId !== 'string' ||
+      (chat.title !== undefined && typeof chat.title !== 'string') ||
       !Array.isArray(chat.messages) ||
       !chat.messages.every(
         (message) =>
@@ -51,7 +87,7 @@ export class ChatService {
     this.history = [
       {
         id: this.chat.id,
-        title: this.chat.messages.find((message) => message.role === 'user')?.content.slice(0, 80) || 'New chat',
+        title: this.titleFor(this.chat),
       },
       ...this.history.filter((entry) => entry.id !== this.chat.id),
     ].sort((first, second) => Number(second.id) - Number(first.id));
@@ -93,7 +129,7 @@ export class ChatService {
               const chat = await this.read(id);
               return {
                 id,
-                title: chat.messages.find((message) => message.role === 'user')?.content.slice(0, 80) || 'New chat',
+                title: this.titleFor(chat),
               };
             } catch {
               return undefined;
@@ -136,12 +172,14 @@ export class ChatService {
     await this.historyLoad;
     if (this.cancellation) return;
     this.chat = id ? await this.read(id) : this.createChat();
+    this.titleGenerationChatId = undefined;
     if (!id) {
       while (this.history.some((entry) => entry.id === this.chat.id)) {
         this.chat.id = String(Number(this.chat.id) + 1);
       }
     }
     this.error = undefined;
+    this.updateTabTitle(this.titleFor(this.chat));
     this.emit();
   }
 
@@ -168,7 +206,12 @@ export class ChatService {
     this.cancellation = cancellation;
     this.error = undefined;
     this.chat.modelId = model.id;
+    const isFirstMessage = !this.chat.messages.some((message) => message.role === 'user');
     this.chat.messages.push({ role: 'user', content: content.trim() });
+    if (isFirstMessage) {
+      this.chat.title = this.titleFromMessage(content);
+      this.updateTabTitle(this.chat.title);
+    }
     this.emit();
     try {
       await this.save();
@@ -188,6 +231,7 @@ export class ChatService {
           reply.content += fragment;
           this.emit();
         }
+        if (isFirstMessage && !cancellation.token.isCancellationRequested) void this.generateTitle(model, this.chat.id);
       } finally {
         if (reply.content) {
           try {
@@ -209,6 +253,50 @@ export class ChatService {
       this.cancellation = undefined;
       cancellation.dispose();
       this.emit();
+    }
+  }
+
+  private async generateTitle(model: vscode.LanguageModelChat, chatId: string): Promise<void> {
+    if (this.titleGenerationChatId === chatId || this.disposed) return;
+    this.titleGenerationChatId = chatId;
+    const cancellation = new vscode.CancellationTokenSource();
+    try {
+      const messages = this.chat.messages
+        .filter((message) => message.content)
+        .map((message) =>
+          message.role === 'user'
+            ? vscode.LanguageModelChatMessage.User(message.content)
+            : vscode.LanguageModelChatMessage.Assistant(message.content),
+        );
+      const response = await model.sendRequest(
+        [
+          vscode.LanguageModelChatMessage.User(
+            'Create a concise title for this conversation. Return only the title, without quotes, markdown, or punctuation at the end. Use no more than eight words.',
+          ),
+          ...messages,
+        ],
+        {},
+        cancellation.token,
+      );
+      let title = '';
+      for await (const fragment of response.text) {
+        if (cancellation.token.isCancellationRequested) return;
+        title += fragment;
+      }
+      title = title
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/^['"`]+|['"`]+$/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!title || this.disposed || this.chat.id !== chatId) return;
+      this.chat.title = title.slice(0, 80);
+      await this.save();
+      this.updateTabTitle(this.chat.title);
+      this.emit();
+    } catch {
+      // The message-derived title remains available when summarization fails.
+    } finally {
+      cancellation.dispose();
     }
   }
 

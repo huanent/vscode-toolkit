@@ -78,13 +78,13 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
-          className="h-full overflow-y-auto"
+          className="mx-auto h-full w-full max-w-3xl px-3 overflow-y-auto"
           onScroll={(event) => {
             const target = event.currentTarget;
             followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
           }}
         >
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-6 pt-14">
+          <div className="flex w-full flex-col gap-6 pb-6">
             {data.chat.messages.map((message, index) => (
               <ChatMessage
                 key={`${data.chat.id}-${index}`}
@@ -101,12 +101,8 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
             )}
           </div>
         </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-(--vscode-editor-background) to-transparent"
-        />
       </div>
-      <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 pt-2">
+      <div className="mx-auto w-full max-w-3xl px-3 shrink-0 py-2">
         {(error || data.error) && (
           <div className="mb-2" role="alert">
             <ErrorMessage message={error || data.error || ''} />

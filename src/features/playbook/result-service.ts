@@ -21,7 +21,9 @@ export class PlaybookResultService {
   ) {}
 
   public async runPlaybook(name: string, playbook: PlaybookDefinition): Promise<void> {
-    const values = await this.prepareEnvironment(name, playbook);
+    await validatePlaybook(playbook, this.ssh);
+    if (!(await confirmPlaybookRun(name, playbook))) return;
+    const values = await this.resolveEnvironment(name, playbook);
     if (!values) return;
     await this.startPlaybookTask(name, playbook, (signal, updateOutput) =>
       runPlaybook(playbook, this.ssh, signal, values, updateOutput),
@@ -67,6 +69,14 @@ export class PlaybookResultService {
     cancellation?: vscode.CancellationToken,
   ): Promise<PlaybookEnvironmentValues | undefined> {
     await validatePlaybook(playbook, this.ssh);
+    return this.resolveEnvironment(name, playbook, cancellation);
+  }
+
+  private async resolveEnvironment(
+    name: string,
+    playbook: PlaybookDefinition,
+    cancellation?: vscode.CancellationToken,
+  ): Promise<PlaybookEnvironmentValues | undefined> {
     if (!playbook.environment?.length) return {};
     if (cancellation?.isCancellationRequested) return undefined;
     return this.requestEnvironment(name, playbook.environment, cancellation);
@@ -87,4 +97,17 @@ export class PlaybookResultService {
         result.success ? { status: 'completed' } : { status: 'failed', error: result.message },
     });
   }
+}
+
+async function confirmPlaybookRun(name: string, playbook: PlaybookDefinition): Promise<boolean> {
+  const stepCount = playbook.steps.length;
+  const confirmation = await vscode.window.showWarningMessage(
+    `Run playbook "${name}"?`,
+    {
+      modal: true,
+      detail: `${stepCount} ${stepCount === 1 ? 'step' : 'steps'} will run in order.`,
+    },
+    'Run',
+  );
+  return confirmation === 'Run';
 }

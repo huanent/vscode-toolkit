@@ -23,13 +23,17 @@ export function ChatMessage({ message, generating = false, onCopy }: ChatMessage
     <article
       aria-label={user ? 'Your message' : 'AI message'}
       aria-busy={generating || undefined}
-      className={user ? 'flex w-full min-w-0 justify-end pl-8' : 'w-full min-w-0 pr-4 sm:pr-8'}
+      className={user ? 'relative flex w-full min-w-0 justify-end pl-8' : 'relative w-full min-w-0 pr-4 sm:pr-8'}
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-(--vscode-editor-background) to-transparent sticky"
+      />
       <div
         className={
           user
-            ? 'min-w-0 max-w-full rounded-md bg-(--vscode-textBlockQuote-background) px-3 py-2'
-            : 'min-w-0 max-w-full'
+            ? 'min-w-0 rounded-md border border-(--vscode-panel-border) bg-(--vscode-textBlockQuote-background) px-3 py-2'
+            : 'min-w-0'
         }
       >
         <div className="min-w-0 space-y-3 wrap-anywhere leading-relaxed [&_.katex-display]:my-3 [&_.katex-display]:block [&_.katex-display]:max-w-full [&_.katex-display]:overflow-x-auto [&_.katex-display]:py-1">

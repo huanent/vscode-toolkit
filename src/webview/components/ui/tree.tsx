@@ -196,7 +196,7 @@ type TreeIndentGuidesProps = {
 function TreeIndentGuides({ itemPath, activeIndentKey }: TreeIndentGuidesProps) {
   const pathSegments = itemPath.split('/').filter(Boolean);
   return (
-    <div className="pointer-events-none absolute inset-y-0 left-2 z-0 flex" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-y-0 left-2 z-10 flex" aria-hidden="true">
       {pathSegments.slice(0, -1).map((_, index) => {
         const guideKey = pathSegments.slice(0, index + 1).join('/');
         const active = activeIndentKey === guideKey;

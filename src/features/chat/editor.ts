@@ -23,6 +23,9 @@ export function registerChat(context: vscode.ExtensionContext): void {
             void panel.webview.postMessage({ type: 'chatUpdated', data } satisfies ChatUpdate);
           },
           context.globalState,
+          (title) => {
+            panel.title = title;
+          },
         );
         service = current;
         const listener = panel.webview.onDidReceiveMessage(async (message: ChatRequest) => {

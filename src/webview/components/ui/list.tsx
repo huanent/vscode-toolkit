@@ -190,7 +190,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       aria-setsize={listItem.setSize}
       onClick={onClick}
     >
-      <div className="flex items-center gap-1 flex-1 truncate">
+      <div className="flex items-center gap-1 flex-1 truncate h-full">
         {icon}
         <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
           <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
