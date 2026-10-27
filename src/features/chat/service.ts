@@ -202,17 +202,37 @@ export class ChatService {
     if (this.disposed || this.cancellation) return;
     const model = this.models.find((item) => item.id === modelId);
     if (!model) throw new Error('Select an available language model.');
-    const cancellation = new vscode.CancellationTokenSource();
-    this.cancellation = cancellation;
-    this.error = undefined;
-    this.chat.modelId = model.id;
     const isFirstMessage = !this.chat.messages.some((message) => message.role === 'user');
     this.chat.messages.push({ role: 'user', content: content.trim() });
     if (isFirstMessage) {
       this.chat.title = this.titleFromMessage(content);
       this.updateTabTitle(this.chat.title);
     }
+    this.chat.modelId = model.id;
+    this.error = undefined;
     this.emit();
+    await this.run(model, isFirstMessage);
+  }
+
+  async regenerate(modelId: string): Promise<void> {
+    if (this.cancellation) return;
+    await this.historyLoad;
+    if (this.modelRefresh) await this.modelRefresh;
+    if (this.disposed || this.cancellation) return;
+    if (!this.chat.messages.some((message) => message.role === 'user')) return;
+    const model =
+      this.models.find((item) => item.id === modelId) ?? this.models.find((item) => item.id === this.chat.modelId);
+    if (!model) throw new Error('Select an available language model.');
+    if (this.chat.messages.at(-1)?.role === 'assistant') this.chat.messages.pop();
+    this.chat.modelId = model.id;
+    this.error = undefined;
+    this.emit();
+    await this.run(model, false);
+  }
+
+  private async run(model: vscode.LanguageModelChat, isFirstMessage: boolean): Promise<void> {
+    const cancellation = new vscode.CancellationTokenSource();
+    this.cancellation = cancellation;
     try {
       await this.save();
       const messages = this.chat.messages
@@ -222,8 +242,9 @@ export class ChatService {
             ? vscode.LanguageModelChatMessage.User(message.content)
             : vscode.LanguageModelChatMessage.Assistant(message.content),
         );
+      const inputTokens = await this.countTokens(model, this.chat.messages);
       const response = await model.sendRequest(messages, {}, cancellation.token);
-      const reply: ChatMessage = { role: 'assistant', content: '' };
+      const reply: ChatMessage = { role: 'assistant', content: '', inputTokens };
       this.chat.messages.push(reply);
       try {
         for await (const fragment of response.text) {
@@ -253,6 +274,19 @@ export class ChatService {
       this.cancellation = undefined;
       cancellation.dispose();
       this.emit();
+    }
+  }
+
+  private async countTokens(model: vscode.LanguageModelChat, messages: ChatMessage[]): Promise<number | undefined> {
+    const content = messages
+      .map((message) => message.content)
+      .filter((text) => text)
+      .join('\n\n');
+    if (!content) return undefined;
+    try {
+      return await model.countTokens(content);
+    } catch {
+      return undefined;
     }
   }
 

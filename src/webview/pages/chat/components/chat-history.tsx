@@ -100,7 +100,7 @@ export function ChatHistory({ history, activeId, disabled, onSelect, onDelete }:
       }}
       trigger={
         <Button size="lg" variant="ghost" title="Chat history" aria-label="Chat history">
-          <Icon name="menu" />
+          <Icon size="lg" name="menu" />
         </Button>
       }
       className="w-64 max-w-(--available-width) text-xs p-1"

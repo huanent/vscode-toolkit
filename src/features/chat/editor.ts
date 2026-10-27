@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import { ChatService } from '@/features/chat/service';
+import { formatChatAsMarkdown } from '@/features/chat/share';
 import type { ChatRequest, ChatUpdate } from '@/features/chat/protocol';
 
 export function registerChat(context: vscode.ExtensionContext): void {
@@ -53,6 +54,16 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 if (reply?.role === 'assistant') await vscode.env.clipboard.writeText(reply.content);
                 break;
               }
+              case 'share': {
+                const { chat, models } = current.data;
+                if (!chat.messages.some((item) => item.content.trim())) break;
+                const modelLabel = models.find((model) => model.value === chat.modelId)?.label;
+                await vscode.env.clipboard.writeText(formatChatAsMarkdown(chat, modelLabel));
+                break;
+              }
+              case 'regenerate':
+                if (typeof message.modelId === 'string') await current.regenerate(message.modelId);
+                break;
             }
           } catch (error) {
             void panel.webview.postMessage({

@@ -4,20 +4,19 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Button } from '@/webview/components/ui/button';
+import { CopyButton } from '@/webview/components/copy-button';
 import { Icon } from '@/webview/components/ui/icons';
+import { ChatTokenUsage } from '@/webview/pages/chat/components/chat-token-usage';
 
 interface ChatMessageProps {
   message: ChatMessageData;
   generating?: boolean;
   onCopy: () => void;
+  onRegenerate?: () => void;
 }
 
-export function ChatMessage({ message, generating = false, onCopy }: ChatMessageProps) {
+export function ChatMessage({ message, generating = false, onCopy, onRegenerate }: ChatMessageProps) {
   const user = message.role === 'user';
-  const tokens =
-    typeof message.outputTokens === 'number' && Number.isFinite(message.outputTokens)
-      ? `${message.outputTokens.toLocaleString()} output tokens`
-      : 'Token count unavailable';
 
   return (
     <article
@@ -25,10 +24,6 @@ export function ChatMessage({ message, generating = false, onCopy }: ChatMessage
       aria-busy={generating || undefined}
       className={user ? 'relative flex w-full min-w-0 justify-end pl-8' : 'relative w-full min-w-0 pr-4 sm:pr-8'}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-(--vscode-editor-background) to-transparent sticky"
-      />
       <div
         className={
           user
@@ -121,18 +116,29 @@ export function ChatMessage({ message, generating = false, onCopy }: ChatMessage
                 <span>Responding...</span>
               </div>
             ) : (
-              <span title="Reply text token count, not billing usage">{tokens}</span>
+              <ChatTokenUsage message={message} />
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Copy message"
-              aria-label="Copy message"
-              disabled={!message.content}
-              onClick={onCopy}
-            >
-              <Icon name="copy" size="sm" />
-            </Button>
+            <div className="flex items-center">
+              {onRegenerate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Regenerate response"
+                  aria-label="Regenerate response"
+                  disabled={generating}
+                  onClick={onRegenerate}
+                >
+                  <Icon name="refresh" />
+                </Button>
+              )}
+              <CopyButton
+                size="sm"
+                title="Copy message"
+                copiedTitle="Copied"
+                disabled={!message.content}
+                onCopy={onCopy}
+              />
+            </div>
           </footer>
         )}
       </div>

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatData, ChatRequest, ChatUpdate } from '@/features/chat/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { CopyButton } from '@/webview/components/copy-button';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
-import { Icon } from '@/webview/components/ui/icons';
+import { Loading } from '@/webview/components/ui/loading';
 import { ChatHistory } from '@/webview/pages/chat/components/chat-history';
 import { ChatInput } from '@/webview/pages/chat/components/chat-input';
 import { ChatMessage } from '@/webview/pages/chat/components/chat-message';
@@ -64,6 +65,13 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
     request({ type: 'send', content, modelId });
   }
 
+  function regenerate(): void {
+    if (busy || !modelId) return;
+    followRef.current = true;
+    setPending(true);
+    request({ type: 'regenerate', modelId });
+  }
+
   return (
     <main className="relative flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
       <div className="absolute left-3 top-2 z-20">
@@ -75,6 +83,16 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           onDelete={(id) => request({ type: 'delete', id })}
         />
       </div>
+      <div className="absolute right-3 top-2 z-20">
+        <CopyButton
+          size="lg"
+          icon="share"
+          title="Copy conversation as Markdown"
+          copiedTitle="Conversation copied"
+          disabled={!data.chat.messages.some((message) => message.content.trim())}
+          onCopy={() => request({ type: 'share' })}
+        />
+      </div>
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
@@ -84,20 +102,23 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
             followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
           }}
         >
-          <div className="flex w-full flex-col gap-6 pb-6">
-            {data.chat.messages.map((message, index) => (
-              <ChatMessage
-                key={`${data.chat.id}-${index}`}
-                message={message}
-                generating={data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1}
-                onCopy={() => request({ type: 'copy', index })}
-              />
-            ))}
+          <div className="flex w-full flex-col gap-6 py-6">
+            {data.chat.messages.map((message, index) => {
+              const generating = data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1;
+              return (
+                <ChatMessage
+                  key={`${data.chat.id}-${index}`}
+                  message={message}
+                  generating={generating}
+                  onCopy={() => request({ type: 'copy', index })}
+                  onRegenerate={
+                    message.role === 'assistant' && index === data.chat.messages.length - 1 ? regenerate : undefined
+                  }
+                />
+              );
+            })}
             {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
-              <div role="status" className="flex items-center gap-2 text-(--vscode-descriptionForeground)">
-                <Icon name="loading" className="animate-spin" />
-                Responding...
-              </div>
+              <Loading label="Responding..." />
             )}
           </div>
         </div>
