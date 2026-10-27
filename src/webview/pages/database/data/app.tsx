@@ -24,7 +24,7 @@ function App() {
           <Loading label="Reading table..." />
         ) : (
           <div className="flex w-full max-w-lg flex-col items-center gap-3">
-            <ErrorMessage message={state.message} className="w-full" />
+            <ErrorMessage message={state.message} />
             <Button variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
               Retry
             </Button>

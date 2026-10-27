@@ -1,9 +1,11 @@
+import { cn } from 'cn';
 import type { SftpEditorData } from '@/features/ssh/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { Button } from '@/webview/components/ui/button';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Icon } from '@/webview/components/ui/icons';
 import { Loading } from '@/webview/components/ui/loading';
+import { glassBackdropClassName } from '@/webview/components/ui/surface-styles';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import { FilePane } from './components/file-pane';
 import '@/webview/styles.css';
@@ -23,9 +25,7 @@ function App() {
         </div>
       ) : (
         <>
-          {(state.data.error || state.error) && (
-            <ErrorMessage message={state.data.error ?? state.error!} className="shrink-0" />
-          )}
+          {(state.data.error || state.error) && <ErrorMessage message={state.data.error ?? state.error!} />}
           <div className="flex min-h-0 flex-1 overflow-x-auto">
             {(['local', 'remote'] as const).map((side) => (
               <div
@@ -43,7 +43,7 @@ function App() {
                 </div>
                 {state.data.busy[side] && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-(--vscode-editor-background) opacity-60" />
+                    <div className={cn('absolute inset-0', glassBackdropClassName)} />
                     <Loading label="Loading files..." className="relative" />
                   </div>
                 )}

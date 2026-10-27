@@ -38,7 +38,7 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger }: TempP
         <Empty title="No temporary files" description="The temp directory is empty." icon="history" />
       )}
 
-      {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
+      {error && entries ? <ErrorMessage message={error} /> : null}
     </section>
   );
 }

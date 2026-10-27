@@ -64,7 +64,7 @@ export function AssetsPanel({
       ) : (
         <Empty title="No assets" description="The assets list is empty." icon="layers" />
       )}
-      {error && <ErrorMessage message={error} className="mt-2" />}
+      {error && <ErrorMessage message={error} />}
     </section>
   );
 }

@@ -38,7 +38,7 @@ export function PlaybookPanel({ entries, error, loading, collapseAllTrigger }: P
         <Empty title="No playbooks" description="The playbook directory is empty." icon="run-coverage" />
       )}
 
-      {error && entries ? <ErrorMessage message={error} className="mt-2" /> : null}
+      {error && entries ? <ErrorMessage message={error} /> : null}
     </section>
   );
 }

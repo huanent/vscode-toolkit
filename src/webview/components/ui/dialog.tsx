@@ -3,7 +3,7 @@ import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
-import { glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
+import { glassBackdropClassName, glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
 
 export type DialogProps = {
   open: boolean;
@@ -43,7 +43,7 @@ export function Dialog({
       disablePointerDismissal
     >
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-(--vscode-editor-background) opacity-60" />
+        <BaseDialog.Backdrop className={cn('fixed inset-0 z-40', glassBackdropClassName)} />
         <BaseDialog.Popup
           className={cn(
             popupClassName,

@@ -1,5 +1,4 @@
 import { cn } from 'cn';
-import { Icon } from '@/webview/components/ui/icons';
 
 type LoadingProps = {
   label: string;
@@ -13,7 +12,13 @@ export function Loading({ label, className }: LoadingProps) {
       role="status"
       aria-live="polite"
     >
-      <Icon name="loading" size="lg" className="codicon-modifier-spin" />
+      <span
+        aria-hidden="true"
+        className="relative size-4 shrink-0 text-(--vscode-progressBar-background,var(--vscode-focusBorder))"
+      >
+        <span className="absolute inset-0 rounded-full border-2 border-current opacity-25" />
+        <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-r-current motion-reduce:animate-none" />
+      </span>
       <span className="min-w-0 wrap-break-word">{label}</span>
     </div>
   );

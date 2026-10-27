@@ -10,5 +10,7 @@ export const glassPopupClassName = 'ui-glass-surface';
 
 export const glassScrimClassName = 'ui-glass-scrim';
 
+export const glassBackdropClassName = 'ui-glass-scrim ui-glass-backdrop';
+
 export const popupItemClassName =
   'flex min-w-0 cursor-pointer items-center gap-2 px-2 py-1 outline-none select-none data-disabled:cursor-not-allowed data-disabled:opacity-50 data-highlighted:bg-(--vscode-list-activeSelectionBackground) data-highlighted:text-(--vscode-list-activeSelectionForeground)';

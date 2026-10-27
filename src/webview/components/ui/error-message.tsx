@@ -1,28 +1,21 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { cn } from 'cn';
-import { useState } from 'react';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
-import { glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
+import { glassBackdropClassName, glassPopupClassName, popupClassName } from '@/webview/components/ui/surface-styles';
 
 type ErrorMessageProps = {
   message: string;
-  className?: string;
 };
 
 export function ErrorMessage({ message }: ErrorMessageProps) {
-  const [dismissedMessage, setDismissedMessage] = useState<string>();
+  if (!message) return null;
 
   return (
-    <Dialog.Root
-      open={dismissedMessage !== message}
-      onOpenChange={(open) => {
-        if (!open) setDismissedMessage(message);
-      }}
-      disablePointerDismissal
-    >
+    // Keying by message remounts the dialog, so a dismissed error reopens when a different message arrives.
+    <Dialog.Root key={message} defaultOpen disablePointerDismissal>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-(--vscode-editor-background) opacity-60" />
+        <Dialog.Backdrop className={cn('fixed inset-0 z-50', glassBackdropClassName)} />
         <Dialog.Popup
           className={cn(
             popupClassName,
@@ -42,9 +35,6 @@ export function ErrorMessage({ message }: ErrorMessageProps) {
           <Dialog.Description className="my-4 min-h-0 overflow-auto whitespace-pre-wrap wrap-anywhere">
             {message}
           </Dialog.Description>
-          <div className="flex shrink-0 justify-end">
-            <Dialog.Close render={<Button>Close</Button>} />
-          </div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

@@ -63,17 +63,23 @@
 }
 
 /*
- * Almost-opaque scrim for controls layered over a glass surface, such as the
- * scroll arrows of a dropdown. The second declaration is intentionally a
- * color-mix so unsupporting browsers fall back to the solid first value.
+ * Scrim layered over content: dropdown scroll arrows floating over a glass
+ * surface, plus modal backdrops. The opacity is tuned by composing a modifier
+ * such as `.ui-glass-backdrop`, declared after this rule so it wins the
+ * custom-property cascade.
  */
 .ui-glass-scrim {
-  background-color: var(--ui-glass-tint, var(--vscode-editorWidget-background, var(--vscode-editor-background)));
-  background-color: color-mix(
-    in srgb,
-    var(--ui-glass-tint, var(--vscode-editorWidget-background, var(--vscode-editor-background))) 92%,
-    transparent
-  );
+  --ui-glass-scrim-tint: var(--ui-glass-tint, var(--vscode-editorWidget-background, var(--vscode-editor-background)));
+  --ui-glass-scrim-opacity: 92%;
+
+  background-color: var(--ui-glass-scrim-tint);
+  background-color: color-mix(in srgb, var(--ui-glass-scrim-tint) var(--ui-glass-scrim-opacity), transparent);
+}
+
+/* Backdrops dim the editor surface rather than the widget surface. */
+.ui-glass-backdrop {
+  --ui-glass-scrim-tint: var(--vscode-editor-background);
+  --ui-glass-scrim-opacity: 60%;
 }
 
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
@@ -87,6 +93,6 @@
   }
 
   .ui-glass-scrim {
-    background-color: var(--ui-glass-tint);
+    background-color: var(--ui-glass-scrim-tint);
   }
 }
