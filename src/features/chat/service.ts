@@ -233,6 +233,7 @@ export class ChatService {
   private async run(model: vscode.LanguageModelChat, isFirstMessage: boolean): Promise<void> {
     const cancellation = new vscode.CancellationTokenSource();
     this.cancellation = cancellation;
+    this.emit();
     try {
       await this.save();
       const messages = this.chat.messages

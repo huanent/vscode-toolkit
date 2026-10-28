@@ -47,8 +47,8 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   const busy = data.busy || pending;
 
   useEffect(() => {
-    setPending(false);
-  }, [data, error]);
+    if (data.busy || error) setPending(false);
+  }, [data.busy, error]);
 
   useEffect(() => {
     if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });

@@ -1,7 +1,9 @@
 import { StringDecoder } from 'node:string_decoder';
+import { TerminalScreen } from '@/host/utils/terminal-screen';
 
 export class CommandOutput {
-  private readonly chunks: Buffer[] = [];
+  private readonly decoder = new StringDecoder('utf8');
+  private readonly screen = new TerminalScreen();
   private size = 0;
   private truncated = false;
 
@@ -11,14 +13,13 @@ export class CommandOutput {
     const remaining = this.limit - this.size;
     if (data.length > remaining) this.truncated = true;
     if (remaining <= 0) return;
-    const chunk = Buffer.from(data.subarray(0, remaining));
-    this.chunks.push(chunk);
+    const chunk = data.subarray(0, remaining);
     this.size += chunk.length;
+    this.screen.append(this.decoder.write(chunk));
   }
 
   toString(): string {
-    const decoder = new StringDecoder('utf8');
-    const text = decoder.write(Buffer.concat(this.chunks, this.size));
-    return this.truncated ? `${text}\n[Output truncated at ${this.limit} bytes.]` : text + decoder.end();
+    const text = this.screen.toString();
+    return this.truncated ? `${text}\n[Output truncated at ${this.limit} bytes.]` : text;
   }
 }

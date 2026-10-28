@@ -63,7 +63,6 @@ export function SqliteQueryResultView({ task }: { task: ResultTask }) {
       {result.hasResultSet && result.columns.length ? (
         <section
           aria-label={`${engine} query results`}
-          tabIndex={0}
           className="max-h-125 overflow-auto border border-(--vscode-panel-border)"
         >
           <table className="w-max min-w-full border-separate border-spacing-0  select-text">
