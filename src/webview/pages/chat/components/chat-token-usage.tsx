@@ -10,11 +10,11 @@ const description = 'Input tokens are the prompt sent with this request, counted
 
 export function ChatTokenUsage({ message }: { message: ChatMessage }) {
   return (
-    <span className="flex flex-wrap items-center gap-x-2 tabular-nums" title={description}>
+    <span className="flex flex-wrap items-center gap-x-1 tabular-nums" title={description}>
+      <span aria-hidden="true">tokens</span>
       <span>in {format(message.inputTokens)}</span>
       <span aria-hidden="true">·</span>
       <span>out {format(message.outputTokens)}</span>
-      <span aria-hidden="true">Tokens</span>
     </span>
   );
 }
