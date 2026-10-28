@@ -54,6 +54,12 @@ export async function readSpreadsheet(uri: vscode.Uri): Promise<SpreadsheetSheet
 }
 
 function formatCell(cell: Cell): string {
-  if (cell.value instanceof Date) return cell.value.toLocaleString();
-  return cell.text;
+  const { value } = cell;
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toLocaleString();
+  try {
+    return cell.text;
+  } catch {
+    return typeof value === 'object' ? '' : String(value);
+  }
 }
