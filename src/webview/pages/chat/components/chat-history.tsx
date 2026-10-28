@@ -99,8 +99,8 @@ export function ChatHistory({ history, activeId, disabled, onSelect, onDelete }:
         if (!nextOpen) setQuery('');
       }}
       trigger={
-        <Button size="lg" variant="ghost" title="Chat history" aria-label="Chat history">
-          <Icon size="lg" name="menu" />
+        <Button variant="ghost" title="Chat history" aria-label="Chat history">
+          <Icon name="menu" />
         </Button>
       }
       className="w-64 max-w-(--available-width) text-xs p-1"

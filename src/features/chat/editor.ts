@@ -46,7 +46,16 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 if (typeof message.id === 'string') await current.open(message.id);
                 break;
               case 'delete':
-                if (typeof message.id === 'string') await current.delete(message.id);
+                if (typeof message.id === 'string') {
+                  const entry = current.data.history.find((item) => item.id === message.id);
+                  if (!entry) break;
+                  const choice = await vscode.window.showWarningMessage(
+                    `Delete chat "${entry.title}"?`,
+                    { modal: true },
+                    'Delete',
+                  );
+                  if (choice === 'Delete') await current.delete(message.id);
+                }
                 break;
               case 'stop':
                 current.stop();

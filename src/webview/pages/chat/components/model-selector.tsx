@@ -59,10 +59,11 @@ export function ModelSelector({ models, value, disabled, onValueChange }: ModelS
           title={selected ? `${selected.label} (${selected.vendor})` : 'No models available'}
           className="min-w-0 max-w-64 gap-1 px-1 text-xs text-(--vscode-descriptionForeground)"
           prefix={<Icon name="sparkle" size="sm" />}
+          suffix={<Icon name="chevron-down" size="sm" />}
         >
           <span className="min-w-0 truncate">{selected?.label ?? 'No models available'}</span>
           {selectedLabelShared && (
-            <span className="shrink-0 text-(--vscode-descriptionForeground)">{selected?.vendor}</span>
+            <span className="min-w-0 truncate text-(--vscode-descriptionForeground)">{selected?.vendor}</span>
           )}
         </Button>
       }
