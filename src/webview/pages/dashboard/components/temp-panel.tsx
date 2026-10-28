@@ -10,11 +10,13 @@ type TempPanelProps = {
   error: string | undefined;
   loading: boolean;
   collapseAllTrigger: number;
+  search?: string;
+  searchMatches?: readonly string[];
 };
 
 const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultContextMenuItems: true });
 
-export function TempPanel({ entries, error, loading, collapseAllTrigger }: TempPanelProps) {
+export function TempPanel({ entries, error, loading, collapseAllTrigger, search, searchMatches }: TempPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
@@ -27,6 +29,8 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger }: TempP
             ariaLabel="Temporary files"
             collapseAllTrigger={collapseAllTrigger}
             items={toTempTreeItems(entries)}
+            search={search}
+            searchMatches={searchMatches}
             onActivate={(item) => {
               if (item.type === 'file') {
                 postToHost({ type: 'openTempFile', path: item.path } satisfies OpenTempFileRequest);

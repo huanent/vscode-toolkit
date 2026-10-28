@@ -11,3 +11,18 @@ export interface DashboardData {
 export interface CollapseDashboardTreeMessage {
   type: 'collapseActiveTree';
 }
+
+export interface SearchDashboardTreeMessage {
+  type: 'searchActiveTree';
+}
+
+export interface DashboardSearchRequest {
+  type: 'searchDashboardContents';
+  tab: 'assets' | 'playbook' | 'temp';
+  query: string;
+  requestId: number;
+}
+
+export type DashboardSearchResult =
+  | { type: 'dashboardSearchResult'; requestId: number; matches: string[] }
+  | { type: 'dashboardSearchError'; requestId: number; message: string };

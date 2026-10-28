@@ -904,6 +904,12 @@
         "category": "Dashboard"
       },
       {
+        "command": "toolkit.dashboard.search",
+        "title": "Search",
+        "icon": "$(search)",
+        "category": "Dashboard"
+      },
+      {
         "command": "toolkit.dashboard.refresh",
         "title": "Refresh",
         "icon": "$(refresh)",
@@ -1096,6 +1102,11 @@
           "command": "toolkit.dashboard.collapseAll",
           "when": "view == toolkit.dashboard",
           "group": "navigation@2"
+        },
+        {
+          "command": "toolkit.dashboard.search",
+          "when": "view == toolkit.dashboard",
+          "group": "navigation@0"
         },
         {
           "command": "toolkit.credential.manage",

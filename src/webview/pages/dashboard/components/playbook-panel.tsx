@@ -12,11 +12,20 @@ type PlaybookPanelProps = {
   error: string | undefined;
   loading: boolean;
   collapseAllTrigger: number;
+  search?: string;
+  searchMatches?: readonly string[];
 };
 
 const panelContext = JSON.stringify({ webviewSection: 'playbook', preventDefaultContextMenuItems: true });
 
-export function PlaybookPanel({ entries, error, loading, collapseAllTrigger }: PlaybookPanelProps) {
+export function PlaybookPanel({
+  entries,
+  error,
+  loading,
+  collapseAllTrigger,
+  search,
+  searchMatches,
+}: PlaybookPanelProps) {
   return (
     <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
@@ -29,6 +38,8 @@ export function PlaybookPanel({ entries, error, loading, collapseAllTrigger }: P
             ariaLabel="Playbook files"
             collapseAllTrigger={collapseAllTrigger}
             items={toPlaybookTreeItems(entries)}
+            search={search}
+            searchMatches={searchMatches}
             onActivate={activatePlaybook}
             onItemDoubleClick={activatePlaybook}
             renderActions={renderPlaybookActions}

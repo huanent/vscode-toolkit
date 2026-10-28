@@ -25,7 +25,15 @@ import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
 import { CredentialService } from '@/features/credential/service';
 import { resolveStorageRoots } from '@/host/utils/storage';
-import type { CollapseDashboardTreeMessage } from '@/shared/dashboard-protocol';
+import type {
+  CollapseDashboardTreeMessage,
+  DashboardSearchRequest,
+  DashboardSearchResult,
+  SearchDashboardTreeMessage,
+} from '@/shared/dashboard-protocol';
+import { searchPlaybookContents } from '@/features/playbook/service';
+import { searchTempContents } from '@/features/temp/service';
+import { resolveStorageDirectory } from '@/host/utils/storage';
 
 interface WebviewRegistration {
   id: string;
@@ -101,9 +109,41 @@ export function registerWebviews(
     vscode.commands.registerCommand('toolkit.dashboard.collapseAll', () => {
       void dashboardWebview?.postMessage({ type: 'collapseActiveTree' } satisfies CollapseDashboardTreeMessage);
     }),
+    vscode.commands.registerCommand('toolkit.dashboard.search', () => {
+      void dashboardWebview?.postMessage({ type: 'searchActiveTree' } satisfies SearchDashboardTreeMessage);
+    }),
   );
   const dashboardHandler: WebviewViewHandler = {
     ...composedDashboardHandler,
+    onMessage: async (message, webview) => {
+      if (isDashboardSearchRequest(message)) {
+        try {
+          const query = message.query.trim().toLocaleLowerCase();
+          const matches = !query
+            ? []
+            : message.tab === 'assets'
+              ? (await assets.list())
+                  .filter((asset) => JSON.stringify(asset).toLocaleLowerCase().includes(query))
+                  .map((asset) => asset.id)
+              : message.tab === 'playbook'
+                ? await searchPlaybookContents(resolveStorageRoots(context, 'playbooks'), query)
+                : await searchTempContents(resolveStorageDirectory(context, 'temp'), query);
+          await webview.postMessage({
+            type: 'dashboardSearchResult',
+            requestId: message.requestId,
+            matches,
+          } satisfies DashboardSearchResult);
+        } catch (error) {
+          await webview.postMessage({
+            type: 'dashboardSearchError',
+            requestId: message.requestId,
+            message: error instanceof Error ? error.message : String(error),
+          } satisfies DashboardSearchResult);
+        }
+        return;
+      }
+      await composedDashboardHandler.onMessage?.(message, webview);
+    },
     onResolve: (webview) => {
       dashboardWebview = webview;
       composedDashboardHandler.onResolve?.(webview);
@@ -123,4 +163,15 @@ export function registerWebviews(
       vscode.window.registerWebviewViewProvider(view.id, new WebviewViewProvider(assetsUri, view.page, view.handler)),
     );
   }
+}
+
+function isDashboardSearchRequest(message: unknown): message is DashboardSearchRequest {
+  if (!message || typeof message !== 'object') return false;
+  const value = message as Record<string, unknown>;
+  return (
+    value.type === 'searchDashboardContents' &&
+    (value.tab === 'assets' || value.tab === 'playbook' || value.tab === 'temp') &&
+    typeof value.query === 'string' &&
+    typeof value.requestId === 'number'
+  );
 }

@@ -37,6 +37,16 @@ export async function readPlaybookRecords(roots: readonly StorageRoot[]): Promis
   return index.entries.sort((first, second) => entryNameCollator.compare(first.name, second.name));
 }
 
+export async function searchPlaybookContents(roots: readonly StorageRoot[], query: string): Promise<string[]> {
+  const index = await readPlaybookStorage(roots);
+  const matches = await Promise.all(
+    [...index.playbooks].map(async ([id, location]) =>
+      (await readFile(location.path, 'utf8')).toLocaleLowerCase().includes(query) ? id : undefined,
+    ),
+  );
+  return matches.filter((id): id is string => id !== undefined);
+}
+
 export async function readPlaybookRecord(
   roots: readonly StorageRoot[],
   id: string,

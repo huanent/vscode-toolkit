@@ -21,6 +21,8 @@ type TreeProps = {
   ariaLabel: string;
   collapseAllTrigger?: number;
   items: readonly TreeItem[];
+  search?: string;
+  searchMatches?: readonly string[];
   onActivate?: (item: TreeFileItem) => void;
   onItemDoubleClick?: (item: TreeFileItem) => void;
   renderActions?: (item: TreeFileItem) => ReactNode;
@@ -43,6 +45,8 @@ export function Tree({
   ariaLabel,
   collapseAllTrigger,
   items,
+  search,
+  searchMatches,
   onActivate,
   onItemDoubleClick,
   renderActions,
@@ -53,7 +57,9 @@ export function Tree({
   useEffect(() => {
     setExpandedKeys(new Set());
   }, [collapseAllTrigger]);
-  const treeItems = createTreeNodes(items, null, expandedKeys);
+  const query = search?.trim().toLocaleLowerCase() ?? '';
+  const filteredItems = query ? filterTreeItems(items, query, new Set(searchMatches)) : items;
+  const treeItems = createTreeNodes(filteredItems, null, expandedKeys, Boolean(query));
   const visibleItems = flattenTreeNodes(treeItems);
   const focusedNode = visibleItems.find((node) => node.key === focusedKey) ?? visibleItems[0];
   const activeIndentKey = focusedNode
@@ -135,6 +141,7 @@ function createTreeNodes(
   items: readonly TreeItem[],
   parentKey: Key | null,
   expandedKeys: ReadonlySet<Key>,
+  expandAll = false,
 ): TreeNodeModel[] {
   const sortedItems = [...items].sort((first, second) => {
     if (first.type !== second.type) return first.type === 'directory' ? -1 : 1;
@@ -144,18 +151,31 @@ function createTreeNodes(
     const key = item.path;
     const children = item.type === 'directory' ? (item.children ?? []) : [];
     const expandable = item.type === 'directory';
-    const expanded = expandable && expandedKeys.has(key);
+    const expanded = expandable && (expandAll || expandedKeys.has(key));
     return {
       item,
       key,
       parentKey,
-      children: expanded ? createTreeNodes(children, key, expandedKeys) : [],
+      children: expanded ? createTreeNodes(children, key, expandedKeys, expandAll) : [],
       level: getTreeDepth(item.path),
       position: index + 1,
       setSize: items.length,
       expandable,
       expanded,
     };
+  });
+}
+
+function filterTreeItems(items: readonly TreeItem[], query: string, matches: ReadonlySet<string>): TreeItem[] {
+  return items.flatMap((item): TreeItem[] => {
+    const matched =
+      item.name.toLocaleLowerCase().includes(query) ||
+      matches.has(item.path) ||
+      (typeof item.context?.assetId === 'string' && matches.has(item.context.assetId)) ||
+      (typeof item.context?.playbookId === 'string' && matches.has(item.context.playbookId));
+    if (item.type === 'file') return matched ? [item] : [];
+    const children = filterTreeItems(item.children ?? [], query, matches);
+    return matched ? [item] : children.length ? [{ ...item, children }] : [];
   });
 }
 

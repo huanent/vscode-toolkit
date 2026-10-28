@@ -1,4 +1,4 @@
-import { lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { TempTreeEntry } from './protocol';
 
@@ -7,6 +7,24 @@ const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 export async function readTempTree(directory: string): Promise<TempTreeEntry[]> {
   await mkdir(directory, { recursive: true });
   return readDirectory(directory);
+}
+
+export async function searchTempContents(directory: string, query: string): Promise<string[]> {
+  const tree = await readTempTree(directory);
+  const searchEntries = async (entries: readonly TempTreeEntry[], parent: string): Promise<string[]> => {
+    const matches = await Promise.all(
+      entries.map(async (entry) => {
+        const relativePath = parent ? `${parent}/${entry.name}` : entry.name;
+        if (entry.type === 'directory') return searchEntries(entry.children ?? [], relativePath);
+        const content = await readFile(await getTempFilePath(directory, relativePath));
+        return !content.includes(0) && content.toString('utf8').toLocaleLowerCase().includes(query)
+          ? [relativePath]
+          : [];
+      }),
+    );
+    return matches.flat();
+  };
+  return searchEntries(tree, '');
 }
 
 export async function createTempFile(directory: string, rawName: string): Promise<string> {
