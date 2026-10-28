@@ -1,6 +1,8 @@
 import { cn } from 'cn';
 import type { Key, MouseEvent, ReactNode } from 'react';
 
+export type DataListSortDirection = 'ascending' | 'descending';
+
 export type DataListColumn<T> = {
   key: Key;
   header: ReactNode;
@@ -8,6 +10,7 @@ export type DataListColumn<T> = {
   className?: string;
   headerClassName?: string;
   align?: 'left' | 'center' | 'right';
+  sortable?: boolean;
 };
 
 type DataListProps<T> = {
@@ -22,6 +25,11 @@ type DataListProps<T> = {
   onOpen?: (entry: T) => void;
   emptyMessage?: ReactNode;
   className?: string;
+  /** Key of the column currently used for sorting. */
+  sortColumnKey?: Key;
+  sortDirection?: DataListSortDirection;
+  /** Toggling the active column flips direction; another column starts ascending. */
+  onSortChange?: (columnKey: Key, direction: DataListSortDirection) => void;
 };
 
 const alignmentClasses = {
@@ -29,6 +37,38 @@ const alignmentClasses = {
   center: 'text-center',
   right: 'text-right',
 } as const;
+
+const justificationClasses = {
+  left: 'justify-start',
+  center: 'justify-center',
+  right: 'justify-end',
+} as const;
+
+/** Stacked ascending/descending triangles; the active direction is highlighted. */
+function SortIndicator({ direction }: { direction: DataListSortDirection | null }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 12 16" className="h-3 w-2.5 shrink-0 text-(--vscode-descriptionForeground)">
+      <path
+        d="M6 1 10.5 6.5h-9Z"
+        className={cn(
+          'transition-opacity',
+          direction === 'ascending'
+            ? 'fill-current text-(--vscode-foreground)'
+            : 'fill-current opacity-30 group-hover:opacity-70',
+        )}
+      />
+      <path
+        d="M6 15 10.5 9.5h-9Z"
+        className={cn(
+          'transition-opacity',
+          direction === 'descending'
+            ? 'fill-current text-(--vscode-foreground)'
+            : 'fill-current opacity-30 group-hover:opacity-70',
+        )}
+      />
+    </svg>
+  );
+}
 
 export function DataList<T>({
   ariaLabel,
@@ -42,6 +82,9 @@ export function DataList<T>({
   onOpen,
   emptyMessage = 'No items.',
   className,
+  sortColumnKey,
+  sortDirection = 'ascending',
+  onSortChange,
 }: DataListProps<T>) {
   return (
     <div
@@ -58,20 +101,42 @@ export function DataList<T>({
           role="row"
           className="flex items-center gap-3 border-b border-(--vscode-panel-border) px-4 py-1.5 font-medium text-(--vscode-descriptionForeground)"
         >
-          {columns.map((column) => (
-            <div
-              key={column.key}
-              role="columnheader"
-              className={cn(
-                'min-w-0 whitespace-nowrap',
-                alignmentClasses[column.align ?? 'left'],
-                column.className,
-                column.headerClassName,
-              )}
-            >
-              {column.header}
-            </div>
-          ))}
+          {columns.map((column) => {
+            const sortable = column.sortable === true && onSortChange !== undefined;
+            const active = sortable && column.key === sortColumnKey;
+            return (
+              <div
+                key={column.key}
+                role="columnheader"
+                aria-sort={sortable ? (active ? sortDirection : 'none') : undefined}
+                className={cn(
+                  'min-w-0 whitespace-nowrap',
+                  alignmentClasses[column.align ?? 'left'],
+                  column.className,
+                  column.headerClassName,
+                )}
+              >
+                {sortable ? (
+                  <button
+                    type="button"
+                    className={cn(
+                      'group flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-sm outline-none transition-colors hover:text-(--vscode-foreground) focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+                      active && 'text-(--vscode-foreground)',
+                      justificationClasses[column.align ?? 'left'],
+                    )}
+                    onClick={() =>
+                      onSortChange(column.key, active && sortDirection === 'ascending' ? 'descending' : 'ascending')
+                    }
+                  >
+                    <span className="min-w-0 truncate">{column.header}</span>
+                    <SortIndicator direction={active ? sortDirection : null} />
+                  </button>
+                ) : (
+                  column.header
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       <div role="rowgroup" className="min-w-max py-1">

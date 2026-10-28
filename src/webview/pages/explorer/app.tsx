@@ -11,6 +11,8 @@ import { formatDateTime, formatSize } from '@/webview/utils/format';
 import { getRootData, postToHost, useHostData } from '@/webview/utils/host-data';
 import { ExplorerToolbar, type ExplorerViewMode } from '@/webview/pages/explorer/components/explorer-toolbar';
 import {
+  type ExplorerSortDirection,
+  type ExplorerSortField,
   formatAddress,
   getAddressSegments,
   indexEntries,
@@ -22,6 +24,7 @@ const columns: DataListColumn<ExplorerEntry>[] = [
   {
     key: 'name',
     header: 'Name',
+    sortable: true,
     className: 'flex-1',
     headerClassName: 'pl-5',
     cell: (entry) => (
@@ -34,6 +37,7 @@ const columns: DataListColumn<ExplorerEntry>[] = [
   {
     key: 'modified',
     header: 'Modified',
+    sortable: true,
     className: 'w-36 shrink-0 whitespace-nowrap',
     align: 'left',
     cell: (entry) => (
@@ -45,6 +49,7 @@ const columns: DataListColumn<ExplorerEntry>[] = [
   {
     key: 'created',
     header: 'Created',
+    sortable: true,
     className: 'w-36 shrink-0 whitespace-nowrap',
     align: 'left',
     cell: (entry) => (
@@ -56,6 +61,7 @@ const columns: DataListColumn<ExplorerEntry>[] = [
   {
     key: 'size',
     header: 'Size',
+    sortable: true,
     className: 'w-14 shrink-0 whitespace-nowrap',
     align: 'right',
     cell: (entry) => (
@@ -81,6 +87,8 @@ function App() {
   const [viewMode, setViewMode] = useState<ExplorerViewMode>(() =>
     getRootData('viewMode') === 'grid' ? 'grid' : 'list',
   );
+  const [sortField, setSortField] = useState<ExplorerSortField>('name');
+  const [sortDirection, setSortDirection] = useState<ExplorerSortDirection>('ascending');
   const state = useHostData<ExplorerDirectory>();
   const [selection, setSelection] = useState<{
     location: string | null;
@@ -121,7 +129,7 @@ function App() {
   }
 
   const index = indexEntries(ancestors);
-  const children = sortEntries(entries);
+  const children = sortEntries(entries, sortField, sortDirection);
   const selectedKeys = selection.location === location ? selection.keys : new Set<string>();
   const selectedUris = children.filter((entry) => selectedKeys.has(entry.id)).map((entry) => entry.uri);
   const entryContext = (entry: ExplorerEntry): Record<string, unknown> => ({
@@ -165,10 +173,7 @@ function App() {
         const target = event.target as HTMLElement;
         if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
         const selectAllKey =
-          event.key.toLowerCase() === 'a' &&
-          (event.metaKey || event.ctrlKey) &&
-          !event.altKey &&
-          !event.shiftKey;
+          event.key.toLowerCase() === 'a' && (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey;
         if (selectAllKey && children.length) {
           event.preventDefault();
           event.stopPropagation();
@@ -266,6 +271,12 @@ function App() {
             isCut={(entry) => (state.data.cutUris ?? []).includes(entry.uri)}
             onSelect={selectEntry}
             onOpen={openEntry}
+            sortColumnKey={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(columnKey, direction) => {
+              setSortField(columnKey as ExplorerSortField);
+              setSortDirection(direction);
+            }}
           />
         ) : (
           <DataGrid

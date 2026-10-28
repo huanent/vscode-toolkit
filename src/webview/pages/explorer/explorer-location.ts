@@ -4,14 +4,33 @@ import type { AddressSegment } from '@/webview/components/address-breadcrumb';
 /** URI of the current folder. `null` requests the system root. */
 export type ExplorerLocation = string | null;
 
+export type ExplorerSortField = 'name' | 'modified' | 'created' | 'size';
+
+export type ExplorerSortDirection = 'ascending' | 'descending';
+
 export function indexEntries(entries: readonly ExplorerEntry[]): Map<string, ExplorerEntry> {
   return new Map(entries.map((entry) => [entry.id, entry]));
 }
 
-export function sortEntries(entries: readonly ExplorerEntry[]): ExplorerEntry[] {
+export function sortEntries(
+  entries: readonly ExplorerEntry[],
+  field: ExplorerSortField = 'name',
+  direction: ExplorerSortDirection = 'ascending',
+): ExplorerEntry[] {
   return [...entries].sort((first, second) => {
     if (first.type !== second.type) return first.type === 'directory' ? -1 : 1;
-    return first.name.localeCompare(second.name);
+    const multiplier = direction === 'ascending' ? 1 : -1;
+    let result: number;
+    if (field === 'size') {
+      result = (first.size ?? -1) - (second.size ?? -1);
+    } else if (field === 'modified') {
+      result = (first.modifiedAt ?? 0) - (second.modifiedAt ?? 0);
+    } else if (field === 'created') {
+      result = (first.createdAt ?? 0) - (second.createdAt ?? 0);
+    } else {
+      result = first.name.localeCompare(second.name, undefined, { sensitivity: 'base', numeric: true });
+    }
+    return (result || first.name.localeCompare(second.name, undefined, { sensitivity: 'base' })) * multiplier;
   });
 }
 
