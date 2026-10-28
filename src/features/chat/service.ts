@@ -252,13 +252,17 @@ export class ChatService {
     this.emit();
   }
 
-  async send(content: string, modelId: string): Promise<void> {
+  async send(content: string, modelId: string, index?: number): Promise<void> {
     if (this.cancellation || !content.trim()) return;
     await this.historyLoad;
     if (this.modelRefresh) await this.modelRefresh;
     if (this.disposed || this.cancellation) return;
     const model = this.findModel(modelId);
     if (!model) throw new Error('Select an available language model.');
+    if (index !== undefined) {
+      if (!Number.isInteger(index) || index < 0 || this.chat.messages[index]?.role !== 'user') return;
+      this.chat.messages.splice(index);
+    }
     const isFirstMessage = !this.chat.messages.some((message) => message.role === 'user');
     this.chat.messages.push({ role: 'user', content: content.trim() });
     if (isFirstMessage) {

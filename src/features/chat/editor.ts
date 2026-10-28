@@ -34,7 +34,7 @@ export function registerChat(context: vscode.ExtensionContext): void {
             switch (message?.type) {
               case 'send':
                 if (typeof message.content === 'string' && typeof message.modelId === 'string')
-                  await current.send(message.content, message.modelId);
+                  await current.send(message.content, message.modelId, message.index);
                 break;
               case 'selectModel':
                 if (typeof message.modelId === 'string') current.selectModel(message.modelId);
@@ -63,7 +63,7 @@ export function registerChat(context: vscode.ExtensionContext): void {
               case 'copy': {
                 if (!Number.isInteger(message.index) || message.index < 0) break;
                 const reply = current.data.chat.messages[message.index];
-                if (reply?.role === 'assistant') await vscode.env.clipboard.writeText(reply.content);
+                if (reply) await vscode.env.clipboard.writeText(reply.content);
                 break;
               }
               case 'share': {

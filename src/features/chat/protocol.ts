@@ -31,7 +31,7 @@ export interface ChatData {
 }
 
 export type ChatRequest =
-  | { type: 'send'; content: string; modelId: string }
+  | { type: 'send'; content: string; modelId: string; index?: number }
   | { type: 'selectModel'; modelId: string }
   | { type: 'open'; id: string }
   | { type: 'delete'; id: string }

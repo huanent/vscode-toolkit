@@ -7,18 +7,21 @@ import { ModelSelector } from '@/webview/pages/chat/components/model-selector';
 
 interface ChatInputProps {
   chatId: string;
+  editing?: { index: number; content: string };
   models: ChatData['models'];
   modelId: string;
   busy: boolean;
   canStop: boolean;
   sendError: boolean;
   onModelChange: (value: string) => void;
-  onSend: (content: string) => void;
+  onSend: (content: string, index?: number) => void;
+  onCancelEdit: () => void;
   onStop: () => void;
 }
 
 export function ChatInput({
   chatId,
+  editing,
   models,
   modelId,
   busy,
@@ -26,15 +29,30 @@ export function ChatInput({
   sendError,
   onModelChange,
   onSend,
+  onCancelEdit,
   onStop,
 }: ChatInputProps) {
   const [draft, setDraft] = useState('');
   const submitted = useRef('');
+  const savedDraft = useRef('');
+  const editingRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previousChatId = useRef(chatId);
   useEffect(() => {
     if (previousChatId.current && previousChatId.current !== chatId) setDraft('');
     previousChatId.current = chatId;
   }, [chatId]);
+  useEffect(() => {
+    if (editing) {
+      if (!editingRef.current) savedDraft.current = draft;
+      editingRef.current = true;
+      setDraft(editing.content);
+      textareaRef.current?.focus();
+    } else if (editingRef.current) {
+      editingRef.current = false;
+      setDraft(savedDraft.current);
+    }
+  }, [editing]);
   useEffect(() => {
     if (!busy && sendError && submitted.current) {
       setDraft((current) => current || submitted.current);
@@ -48,19 +66,36 @@ export function ChatInput({
   function send(): void {
     if (!canSend) return;
     submitted.current = draft;
-    onSend(draft.trim());
-    setDraft('');
+    onSend(draft.trim(), editing?.index);
+    if (editing) onCancelEdit();
+    else setDraft('');
   }
 
   return (
     <form
-      className="overflow-hidden rounded-lg border border-(--vscode-input-border,var(--vscode-panel-border)) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder)"
+      className={`overflow-hidden rounded-lg border bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) ${editing ? 'border-(--vscode-focusBorder)' : 'border-(--vscode-input-border,var(--vscode-panel-border))'}`}
       onSubmit={(event) => {
         event.preventDefault();
         send();
       }}
     >
+      {editing && (
+        <div className="flex items-center justify-between gap-2 border-b border-(--vscode-focusBorder) bg-(--vscode-editor-selectionBackground) px-3 py-1 text-xs">
+          <span>Editing message</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            title="Cancel editing"
+            aria-label="Cancel editing"
+            onClick={onCancelEdit}
+          >
+            <Icon name="close" />
+          </Button>
+        </div>
+      )}
       <Textarea
+        ref={textareaRef}
         aria-label="Message"
         placeholder="Message..."
         value={draft}
@@ -69,6 +104,11 @@ export function ChatInput({
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => {
           if (event.nativeEvent.isComposing) return;
+          if (event.key === 'Escape' && editing) {
+            event.preventDefault();
+            onCancelEdit();
+            return;
+          }
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             send();

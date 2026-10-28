@@ -10,6 +10,7 @@ import { Loading } from '@/webview/components/ui/loading';
 import { ChatHistory } from '@/webview/pages/chat/components/chat-history';
 import { ChatInput } from '@/webview/pages/chat/components/chat-input';
 import { ChatMessage } from '@/webview/pages/chat/components/chat-message';
+import { ChatNavigation } from '@/webview/pages/chat/components/chat-navigation';
 import { chatProverbs } from '@/webview/pages/chat/components/chat-proverbs';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
@@ -52,8 +53,11 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   const [selectedModel, setSelectedModel] = useState('');
   const [pending, setPending] = useState(false);
   const [awayFromBottom, setAwayFromBottom] = useState(false);
+  const [activeAnchor, setActiveAnchor] = useState<number>();
+  const [editing, setEditing] = useState<{ chatId: string; index: number; content: string }>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
+  const lastScrollTopRef = useRef(0);
   const modelId =
     [selectedModel, data.chat.modelId, data.models[0]?.value].find((id) =>
       data.models.some((model) => model.value === id),
@@ -66,21 +70,45 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   }, [data.busy, error]);
 
   useEffect(() => {
+    setEditing(undefined);
     followRef.current = true;
     setAwayFromBottom(false);
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    lastScrollTopRef.current = scrollRef.current?.scrollTop ?? 0;
   }, [data.chat.id]);
 
   useEffect(() => {
-    if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    if (followRef.current && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight });
+      lastScrollTopRef.current = scrollRef.current.scrollTop;
+    }
+    updateActiveAnchor();
   }, [data.chat.messages]);
 
-  function send(content: string): void {
+  function updateActiveAnchor(): void {
+    const container = scrollRef.current;
+    if (!container) return;
+    const anchors = data.chat.messages.flatMap((message, index) => {
+      if (message.role !== 'user') return [];
+      const element = container.querySelector<HTMLElement>(`[data-message-index="${index}"]`);
+      return element ? [{ index, element }] : [];
+    });
+    const threshold = container.getBoundingClientRect().top + 32;
+    const atBottom =
+      container.scrollHeight > container.clientHeight &&
+      container.scrollHeight - container.scrollTop - container.clientHeight < 2;
+    const current = atBottom
+      ? anchors.at(-1)
+      : (anchors.findLast(({ element }) => element.getBoundingClientRect().top <= threshold) ?? anchors[0]);
+    setActiveAnchor(current?.index);
+  }
+
+  function send(content: string, index?: number): void {
     if (busy || !content.trim() || !modelId) return;
     followRef.current = true;
     setAwayFromBottom(false);
     setPending(true);
-    request({ type: 'send', content, modelId });
+    request({ type: 'send', content, modelId, index });
   }
 
   const regenerate = useCallback((): void => {
@@ -128,39 +156,68 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
         </div>
       </header>
       <div className="relative min-h-0 flex-1">
-        <div
-          ref={scrollRef}
-          className="mx-auto h-full w-full max-w-3xl px-3 overflow-y-auto"
-          onScroll={(event) => {
-            const target = event.currentTarget;
-            followRef.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80;
-            setAwayFromBottom(!followRef.current);
-          }}
-        >
-          <div className="flex min-h-full w-full flex-col gap-6 py-6">
-            {data.chat.id && data.chat.messages.length === 0 && !busy && (
-              <div className="flex flex-1 items-center justify-center text-xs">
-                <ChatEmpty key={data.chat.id} />
-              </div>
-            )}
-            {data.chat.messages.map((message, index) => {
-              const generating = data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1;
-              return (
-                <ChatMessage
-                  key={`${data.chat.id}-${index}`}
-                  message={message}
-                  index={index}
-                  generating={generating}
-                  onCopy={copyMessage}
-                  onRegenerate={
-                    message.role === 'assistant' && index === data.chat.messages.length - 1 ? regenerate : undefined
-                  }
-                />
-              );
-            })}
-            {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
-              <Loading label="Responding..." />
-            )}
+        <div className="relative mx-auto h-full w-full max-w-3xl">
+          <ChatNavigation
+            messages={data.chat.messages}
+            activeAnchor={activeAnchor}
+            onNavigate={(index) => {
+              const container = scrollRef.current;
+              const target = container?.querySelector<HTMLElement>(`[data-message-index="${index}"]`);
+              if (!container || !target) return;
+              followRef.current = false;
+              container.scrollTo({
+                top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top,
+              });
+              lastScrollTopRef.current = container.scrollTop;
+              setAwayFromBottom(container.scrollHeight - container.scrollTop - container.clientHeight > 2);
+            }}
+          />
+          <div
+            ref={scrollRef}
+            className="h-full w-full min-w-0 overflow-y-auto px-3"
+            onScroll={(event) => {
+              const target = event.currentTarget;
+              if (target.scrollTop < lastScrollTopRef.current) {
+                followRef.current = false;
+              } else if (target.scrollHeight - target.scrollTop - target.clientHeight <= 2) {
+                followRef.current = true;
+              }
+              lastScrollTopRef.current = target.scrollTop;
+              setAwayFromBottom(!followRef.current);
+              updateActiveAnchor();
+            }}
+          >
+            <div className="flex min-h-full w-full flex-col gap-6 py-6">
+              {data.chat.id && data.chat.messages.length === 0 && !busy && (
+                <div className="flex flex-1 items-center justify-center text-xs">
+                  <ChatEmpty key={data.chat.id} />
+                </div>
+              )}
+              {data.chat.messages.map((message, index) => {
+                const generating = data.busy && message.role === 'assistant' && index === data.chat.messages.length - 1;
+                return (
+                  <div key={`${data.chat.id}-${index}`} data-message-index={index}>
+                    <ChatMessage
+                      message={message}
+                      index={index}
+                      generating={generating}
+                      onCopy={copyMessage}
+                      onEdit={
+                        message.role === 'user' && !busy && !!modelId
+                          ? (content, index) => setEditing({ chatId: data.chat.id, index, content })
+                          : undefined
+                      }
+                      onRegenerate={
+                        message.role === 'assistant' && index === data.chat.messages.length - 1 ? regenerate : undefined
+                      }
+                    />
+                  </div>
+                );
+              })}
+              {busy && (!data.busy || data.chat.messages.at(-1)?.role !== 'assistant') && (
+                <Loading label="Responding..." />
+              )}
+            </div>
           </div>
         </div>
         {awayFromBottom && (
@@ -187,7 +244,9 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           </div>
         )}
         <ChatInput
+          key={data.chat.id}
           chatId={data.chat.id}
+          editing={editing?.chatId === data.chat.id ? editing : undefined}
           models={data.models}
           modelId={modelId}
           busy={busy}
@@ -198,6 +257,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
             request({ type: 'selectModel', modelId: value });
           }}
           onSend={send}
+          onCancelEdit={() => setEditing(undefined)}
           onStop={() => request({ type: 'stop' })}
         />
       </div>
