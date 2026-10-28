@@ -3,10 +3,19 @@ import type { ChatData, ChatDocument, ChatMessage } from '@/features/chat/protoc
 
 const maxTabTitleDisplayWidth = 24;
 
+/**
+ * Builds a stable, unique key for a model. A model ID alone is only unique per vendor, so different
+ * providers exposing models with the same ID (common with custom providers) would otherwise collide.
+ */
+function modelKey(model: vscode.LanguageModelChat): string {
+  return `${model.vendor}:${model.id}`;
+}
+
 export class ChatService {
-  private chat: ChatDocument = this.createChat();
+  private chat: ChatDocument;
   private models: vscode.LanguageModelChat[] = [];
   private modelOptions: ChatData['models'];
+  private lastModelId: string;
   private modelRefresh?: Promise<void>;
   private historyLoad?: Promise<void>;
   private history: ChatData['history'] = [];
@@ -22,10 +31,29 @@ export class ChatService {
     private readonly setTabTitle: (title: string) => void,
   ) {
     this.modelOptions = cache.get<ChatData['models']>('chat.models', []);
+    this.lastModelId = cache.get<string>('chat.model', '');
+    this.chat = this.createChat();
   }
 
   private createChat(): ChatDocument {
-    return { id: String(Date.now()), modelId: '', messages: [] };
+    return { id: String(Date.now()), modelId: this.lastModelId, messages: [] };
+  }
+
+  /** Persists the selected model so new chats and new editor sessions reuse it. */
+  private rememberModel(key: string): void {
+    if (!key || this.lastModelId === key) return;
+    this.lastModelId = key;
+    void this.cache.update('chat.model', key);
+  }
+
+  selectModel(modelId: string): void {
+    const model = this.findModel(modelId);
+    if (model) {
+      this.rememberModel(modelKey(model));
+      return;
+    }
+    // Model options can come from cache before `selectChatModels` resolves.
+    if (this.modelOptions.some((option) => option.value === modelId)) this.rememberModel(modelId);
   }
 
   private titleFor(chat: ChatDocument): string {
@@ -153,10 +181,22 @@ export class ChatService {
 
   private async loadModels(): Promise<void> {
     try {
-      const models = await vscode.lm.selectChatModels();
+      const seen = new Set<string>();
+      const models = (await vscode.lm.selectChatModels()).filter((model) => {
+        const key = modelKey(model);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       if (this.disposed) return;
       this.models = models;
-      this.modelOptions = models.map((model) => ({ value: model.id, label: model.name, vendor: model.vendor }));
+      this.modelOptions = models.map((model) => ({
+        value: modelKey(model),
+        label: model.name,
+        vendor: model.vendor,
+        id: model.id,
+      }));
+      this.migrateModelId();
       this.error = this.models.length
         ? undefined
         : 'No language models available. Sign in to GitHub Copilot or configure a model provider in VS Code.';
@@ -166,6 +206,22 @@ export class ChatService {
       this.error = error instanceof Error ? error.message : String(error);
     }
     this.emit();
+  }
+
+  private findModel(key: string): vscode.LanguageModelChat | undefined {
+    return this.models.find((model) => modelKey(model) === key) ?? this.models.find((model) => model.id === key);
+  }
+
+  /** Applies the remembered model to chats without one, and upgrades legacy bare model IDs. */
+  private migrateModelId(): void {
+    const { modelId } = this.chat;
+    if (!modelId) {
+      if (this.modelOptions.some((option) => option.value === this.lastModelId)) this.chat.modelId = this.lastModelId;
+      return;
+    }
+    if (this.modelOptions.some((option) => option.value === modelId)) return;
+    const legacy = this.models.find((model) => model.id === modelId);
+    if (legacy) this.chat.modelId = modelKey(legacy);
   }
 
   async open(id?: string): Promise<void> {
@@ -178,6 +234,7 @@ export class ChatService {
         this.chat.id = String(Number(this.chat.id) + 1);
       }
     }
+    this.migrateModelId();
     this.error = undefined;
     this.updateTabTitle(this.titleFor(this.chat));
     this.emit();
@@ -200,7 +257,7 @@ export class ChatService {
     await this.historyLoad;
     if (this.modelRefresh) await this.modelRefresh;
     if (this.disposed || this.cancellation) return;
-    const model = this.models.find((item) => item.id === modelId);
+    const model = this.findModel(modelId);
     if (!model) throw new Error('Select an available language model.');
     const isFirstMessage = !this.chat.messages.some((message) => message.role === 'user');
     this.chat.messages.push({ role: 'user', content: content.trim() });
@@ -208,7 +265,8 @@ export class ChatService {
       this.chat.title = this.titleFromMessage(content);
       this.updateTabTitle(this.chat.title);
     }
-    this.chat.modelId = model.id;
+    this.chat.modelId = modelKey(model);
+    this.rememberModel(this.chat.modelId);
     this.error = undefined;
     this.emit();
     await this.run(model, isFirstMessage);
@@ -220,11 +278,11 @@ export class ChatService {
     if (this.modelRefresh) await this.modelRefresh;
     if (this.disposed || this.cancellation) return;
     if (!this.chat.messages.some((message) => message.role === 'user')) return;
-    const model =
-      this.models.find((item) => item.id === modelId) ?? this.models.find((item) => item.id === this.chat.modelId);
+    const model = this.findModel(modelId) ?? this.findModel(this.chat.modelId);
     if (!model) throw new Error('Select an available language model.');
     if (this.chat.messages.at(-1)?.role === 'assistant') this.chat.messages.pop();
-    this.chat.modelId = model.id;
+    this.rememberModel(this.chat.modelId);
+    this.chat.modelId = modelKey(model);
     this.error = undefined;
     this.emit();
     await this.run(model, false);

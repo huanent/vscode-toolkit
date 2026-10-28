@@ -134,7 +134,10 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           models={data.models}
           modelId={modelId}
           busy={busy}
-          onModelChange={setSelectedModel}
+          onModelChange={(value) => {
+            setSelectedModel(value);
+            request({ type: 'selectModel', modelId: value });
+          }}
           onSend={send}
           onStop={() => request({ type: 'stop' })}
         />

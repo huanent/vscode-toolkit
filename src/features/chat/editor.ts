@@ -36,6 +36,9 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 if (typeof message.content === 'string' && typeof message.modelId === 'string')
                   await current.send(message.content, message.modelId);
                 break;
+              case 'selectModel':
+                if (typeof message.modelId === 'string') current.selectModel(message.modelId);
+                break;
               case 'new':
                 await current.open();
                 break;

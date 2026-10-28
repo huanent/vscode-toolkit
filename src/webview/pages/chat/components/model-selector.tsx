@@ -24,6 +24,17 @@ export function ModelSelector({ models, value, disabled, onValueChange }: ModelS
     return first.localeCompare(second);
   });
   const activeVendor = vendors.includes(vendor) ? vendor : (selected?.vendor ?? vendors[0] ?? '');
+  const labelCounts = new Map<string, number>();
+  for (const model of models) {
+    const key = `${model.vendor}\u0000${model.label}`;
+    labelCounts.set(key, (labelCounts.get(key) ?? 0) + 1);
+  }
+
+  function isDuplicateLabel(model: ChatData['models'][number]): boolean {
+    return (labelCounts.get(`${model.vendor}\u0000${model.label}`) ?? 0) > 1;
+  }
+
+  const selectedLabelShared = !!selected && models.filter((model) => model.label === selected.label).length > 1;
 
   function choose(model: ChatData['models'][number]): void {
     onValueChange(model.value);
@@ -50,6 +61,9 @@ export function ModelSelector({ models, value, disabled, onValueChange }: ModelS
           prefix={<Icon name="sparkle" size="sm" />}
         >
           <span className="min-w-0 truncate">{selected?.label ?? 'No models available'}</span>
+          {selectedLabelShared && (
+            <span className="shrink-0 text-(--vscode-descriptionForeground)">{selected?.vendor}</span>
+          )}
         </Button>
       }
     >
@@ -73,7 +87,12 @@ export function ModelSelector({ models, value, disabled, onValueChange }: ModelS
                 .map((model) => ({
                   key: model.value,
                   data: model,
-                  label: <span title={model.label}>{model.label}</span>,
+                  label: (
+                    <span title={isDuplicateLabel(model) ? `${model.label} (${model.id})` : model.label}>
+                      {model.label}
+                    </span>
+                  ),
+                  description: isDuplicateLabel(model) && model.id !== model.label ? model.id : undefined,
                   icon: (
                     <div className="flex size-4 shrink-0 items-center justify-center">
                       {model.value === value && <Icon name="check" size="sm" />}
