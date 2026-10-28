@@ -10,22 +10,44 @@ interface ChatInputProps {
   models: ChatData['models'];
   modelId: string;
   busy: boolean;
+  canStop: boolean;
+  sendError: boolean;
   onModelChange: (value: string) => void;
   onSend: (content: string) => void;
   onStop: () => void;
 }
 
-export function ChatInput({ chatId, models, modelId, busy, onModelChange, onSend, onStop }: ChatInputProps) {
+export function ChatInput({
+  chatId,
+  models,
+  modelId,
+  busy,
+  canStop,
+  sendError,
+  onModelChange,
+  onSend,
+  onStop,
+}: ChatInputProps) {
   const [draft, setDraft] = useState('');
+  const submitted = useRef('');
   const previousChatId = useRef(chatId);
   useEffect(() => {
     if (previousChatId.current && previousChatId.current !== chatId) setDraft('');
     previousChatId.current = chatId;
   }, [chatId]);
+  useEffect(() => {
+    if (!busy && sendError && submitted.current) {
+      setDraft((current) => current || submitted.current);
+      submitted.current = '';
+    } else if (canStop) {
+      submitted.current = '';
+    }
+  }, [busy, canStop, sendError]);
   const canSend = !busy && !!draft.trim() && !!modelId;
 
   function send(): void {
     if (!canSend) return;
+    submitted.current = draft;
     onSend(draft.trim());
     setDraft('');
   }
@@ -60,6 +82,7 @@ export function ChatInput({ chatId, models, modelId, busy, onModelChange, onSend
             variant="secondary"
             title="Stop generating"
             aria-label="Stop generating"
+            disabled={!canStop}
             className="rounded-full"
             onClick={onStop}
           >

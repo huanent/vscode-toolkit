@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChatData, ChatRequest, ChatUpdate } from '@/features/chat/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { CopyButton } from '@/webview/components/copy-button';
@@ -12,6 +12,10 @@ import '@/webview/styles.css';
 
 function request(message: ChatRequest): void {
   postToHost(message);
+}
+
+function copyMessage(index: number): void {
+  request({ type: 'copy', index });
 }
 
 function App() {
@@ -51,12 +55,13 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   }, [data.busy, error]);
 
   useEffect(() => {
-    if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [data.chat.messages]);
+    followRef.current = true;
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [data.chat.id]);
 
   useEffect(() => {
-    followRef.current = true;
-  }, [data.chat.id]);
+    if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [data.chat.messages]);
 
   function send(content: string): void {
     if (busy || !content.trim() || !modelId) return;
@@ -65,12 +70,12 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
     request({ type: 'send', content, modelId });
   }
 
-  function regenerate(): void {
+  const regenerate = useCallback((): void => {
     if (busy || !modelId) return;
     followRef.current = true;
     setPending(true);
     request({ type: 'regenerate', modelId });
-  }
+  }, [busy, modelId]);
 
   return (
     <main className="relative flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
@@ -109,8 +114,9 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
                 <ChatMessage
                   key={`${data.chat.id}-${index}`}
                   message={message}
+                  index={index}
                   generating={generating}
-                  onCopy={() => request({ type: 'copy', index })}
+                  onCopy={copyMessage}
                   onRegenerate={
                     message.role === 'assistant' && index === data.chat.messages.length - 1 ? regenerate : undefined
                   }
@@ -134,6 +140,8 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           models={data.models}
           modelId={modelId}
           busy={busy}
+          canStop={data.busy}
+          sendError={!!error || !!data.error}
           onModelChange={(value) => {
             setSelectedModel(value);
             request({ type: 'selectModel', modelId: value });

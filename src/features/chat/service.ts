@@ -305,14 +305,22 @@ export class ChatService {
       const response = await model.sendRequest(messages, {}, cancellation.token);
       const reply: ChatMessage = { role: 'assistant', content: '', inputTokens };
       this.chat.messages.push(reply);
+      let updateTimer: ReturnType<typeof setTimeout> | undefined;
       try {
         for await (const fragment of response.text) {
           if (cancellation.token.isCancellationRequested) break;
           reply.content += fragment;
-          this.emit();
+          if (!updateTimer) {
+            updateTimer = setTimeout(() => {
+              updateTimer = undefined;
+              this.emit();
+            }, 50);
+          }
         }
         if (isFirstMessage && !cancellation.token.isCancellationRequested) void this.generateTitle(model, this.chat.id);
       } finally {
+        clearTimeout(updateTimer);
+        this.emit();
         if (reply.content) {
           try {
             reply.outputTokens = await model.countTokens(reply.content);
