@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
+import * as lockfile from 'proper-lockfile';
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 
@@ -58,22 +59,46 @@ export function registerStatusBar(context: vscode.ExtensionContext): void {
         return;
       const interval =
         Math.max(1, vscode.workspace.getConfiguration('toolkit').get('custom.statusBar.interval', 3)) * 1000;
+      const cachePath = path.join(path.dirname(script), 'status-bar-cache.json');
       const refresh = async () => {
         try {
-          const { stdout } = await execute(
-            process.execPath,
-            [
-              '-e',
-              'const { pathToFileURL } = require("node:url"); console.log = console.error; (async () => { const module = await import(pathToFileURL(process.argv[1]).href); const result = await module.default(); process.stdout.write(JSON.stringify(result)); })().catch(error => { console.error(error); process.exitCode = 1; });',
-              script,
-            ],
-            {
-              timeout: 30000,
-              maxBuffer: 1024 * 1024,
-              env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', NODE_OPTIONS: '' },
-            },
-          );
-          const result: unknown = JSON.parse(stdout);
+          const release = await lockfile.lock(script, {
+            stale: 60000,
+            retries: { retries: 100, minTimeout: 100, maxTimeout: 500 },
+          });
+          let cached: { timestamp: number; stdout?: string; error?: string } | undefined;
+          try {
+            try {
+              cached = JSON.parse(await readFile(cachePath, 'utf8')) as typeof cached;
+            } catch {
+              cached = undefined;
+            }
+            if (!cached || typeof cached.timestamp !== 'number' || Date.now() - cached.timestamp >= interval) {
+              try {
+                const { stdout } = await execute(
+                  process.execPath,
+                  [
+                    '-e',
+                    'const { pathToFileURL } = require("node:url"); console.log = console.error; (async () => { const module = await import(pathToFileURL(process.argv[1]).href); const result = await module.default(); process.stdout.write(JSON.stringify(result)); })().catch(error => { console.error(error); process.exitCode = 1; });',
+                    script,
+                  ],
+                  {
+                    timeout: 30000,
+                    maxBuffer: 1024 * 1024,
+                    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', NODE_OPTIONS: '' },
+                  },
+                );
+                cached = { timestamp: Date.now(), stdout };
+              } catch (error) {
+                cached = { timestamp: Date.now(), error: error instanceof Error ? error.message : String(error) };
+              }
+              await writeFile(cachePath, JSON.stringify(cached));
+            }
+          } finally {
+            await release();
+          }
+          if (cached.error) throw new Error(cached.error);
+          const result: unknown = JSON.parse(cached.stdout ?? '');
           if (
             !result ||
             typeof result !== 'object' ||
