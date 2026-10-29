@@ -634,6 +634,11 @@
     ],
     "commands": [
       {
+        "command": "toolkit.custom.statusBar.editScript",
+        "title": "Custom Status Bar",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.assets.add",
         "title": "New Asset",
         "category": "Assets"
@@ -1088,6 +1093,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "toolkit.custom.statusBar.editScript",
+          "when": "view == toolkit.dashboard && config.toolkit.custom.statusBar.enabled",
+          "group": "1_more@4"
+        },
         {
           "command": "toolkit.chat.open",
           "when": "view == toolkit.dashboard",
@@ -1639,6 +1649,19 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Toolkit data directory. Supports `~`. Defaults to extension global storage.",
+          "scope": "machine"
+        },
+        "toolkit.custom.statusBar.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the custom status bar script. The script runs with your user permissions.",
+          "scope": "machine"
+        },
+        "toolkit.custom.statusBar.interval": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "Custom status bar refresh interval in seconds.",
           "scope": "machine"
         }
       }

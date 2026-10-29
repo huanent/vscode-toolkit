@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { registerStatusBar } from '@/features/custom/status-bar';
 import { registerCommands } from '@/app/register-commands';
 import { registerWebviews } from '@/app/register-webviews';
 import { createPerfTipsTracker } from '@/features/perftips/perftips';
@@ -16,6 +17,7 @@ import { createPlaybookFilesView } from '@/features/playbook/view-handler';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 
 export async function registerApplication(context: vscode.ExtensionContext): Promise<void> {
+  registerStatusBar(context);
   context.subscriptions.push({ dispose: disposeSqliteProcesses });
   const tasks = new ResultTaskService();
   context.subscriptions.push(tasks);
