@@ -33,17 +33,13 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
           ? 'Local command'
           : 'Step';
   const title = definition?.name || label;
-  const statusLabel = {
-    pending: 'Pending',
-    running: 'Running',
-    completed: 'Completed',
-    failed: 'Failed',
-    cancelled: 'Cancelled',
-    skipped: 'Skipped',
-  }[status];
   const duration =
     result.startedAt && result.finishedAt
       ? `${((result.finishedAt - result.startedAt) / 1000).toFixed(1)}s`
+      : undefined;
+  const transferProgress =
+    result.totalBytes !== undefined && result.totalBytes > 0
+      ? Math.min(100, Math.max(0, ((result.transferredBytes ?? 0) / result.totalBytes) * 100))
       : undefined;
 
   return (
@@ -67,35 +63,48 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
         </div>
       }
     >
-      <div className="flex min-w-0 flex-col gap-3 pb-4 pl-5">
+      <div className="flex min-w-0 flex-col gap-4 pb-4 pl-5">
         {definition && (
-          <pre className="font-mono text-xs text-(--vscode-descriptionForeground) select-text whitespace-pre-wrap wrap-break-word">
-            {definition.type === 'sftp'
-              ? `${definition.localPath}\n${definition.direction === 'upload' ? '->' : '<-'} ${definition.remotePath}`
-              : definition.command}
-            {definition.type === 'local-command' && definition.cwd ? `\n${definition.cwd}` : ''}
-          </pre>
+          <div className="flex min-w-0 flex-col gap-2 text-xs">
+            <div className="font-semibold text-(--vscode-descriptionForeground)">{label}</div>
+            <pre className="border-l-2 border-(--vscode-panel-border) pl-2 font-mono text-(--vscode-foreground) select-text whitespace-pre-wrap wrap-break-word">
+              {definition.type === 'sftp'
+                ? `${definition.localPath}\n${definition.direction === 'upload' ? '->' : '<-'} ${definition.remotePath}`
+                : definition.command}
+            </pre>
+            {definition.type === 'local-command' && definition.cwd && (
+              <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-1 text-(--vscode-descriptionForeground)">
+                <span>Working directory</span>
+                <span className="min-w-0 font-mono select-text wrap-break-word">{definition.cwd}</span>
+              </div>
+            )}
+          </div>
         )}
         {result.totalBytes !== undefined && (
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-xs text-(--vscode-descriptionForeground)">
+              <span className="font-semibold text-(--vscode-foreground)">Transfer</span>
+              {transferProgress !== undefined && (
+                <span className="font-semibold tabular-nums text-(--vscode-foreground)">
+                  {Math.floor(transferProgress)}%
+                </span>
+              )}
+            </div>
             <Progress
               aria-label={`Step ${index + 1} transfer progress`}
               value={result.transferredBytes ?? 0}
               max={result.totalBytes || 1}
+              animated={status === 'running'}
+              className={`h-1 overflow-hidden rounded-sm ${status === 'failed' ? 'text-(--vscode-errorForeground)' : status === 'completed' ? 'text-(--vscode-testing-iconPassed)' : 'text-(--vscode-progressBar-background)'}`}
             />
-            <div className="text-xs text-(--vscode-descriptionForeground)">
-              {(result.transferredBytes ?? 0).toLocaleString()} / {result.totalBytes.toLocaleString()} bytes
+            <div className="text-xs tabular-nums text-(--vscode-descriptionForeground)">
+              <span className="tabular-nums">
+                {(result.transferredBytes ?? 0).toLocaleString()} / {result.totalBytes.toLocaleString()} bytes
+              </span>
             </div>
           </div>
         )}
-        {result.message && (
-          <div
-            className={`border-l-2 pl-2 text-xs select-text whitespace-pre-wrap wrap-break-word ${status === 'failed' ? 'border-(--vscode-errorForeground) text-(--vscode-errorForeground)' : 'border-(--vscode-panel-border) text-(--vscode-descriptionForeground)'}`}
-          >
-            {result.message}
-          </div>
-        )}
-        {result.output && <ResultText title="output" content={result.output} />}
+        {result.output && <ResultText title={`Output ${result.message}`} content={result.output} />}
       </div>
     </Collapsible>
   );
