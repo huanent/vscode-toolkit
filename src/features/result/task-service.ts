@@ -65,7 +65,8 @@ export class ResultTaskService {
   }
 
   public async startTask<TInput, TOutput>(definition: ResultTaskDefinition<TInput, TOutput>): Promise<string> {
-    const store = await this.getStore();
+    await this.getStore();
+    while (this.taskOperations.size > 0) await Promise.all(this.taskOperations.values());
     const now = Math.max(Date.now(), this.lastTimestamp + 1);
     this.lastTimestamp = now;
     const task: ResultTask = {
@@ -84,14 +85,6 @@ export class ResultTaskService {
     this.controllers.set(task.id, controller);
     this.selectedTaskId = task.id;
 
-    try {
-      await store.save(task);
-    } catch (error) {
-      this.tasks.delete(task.id);
-      this.controllers.delete(task.id);
-      if (this.selectedTaskId === task.id) this.selectedTaskId = this.getOrderedTasks()[0]?.id;
-      throw error;
-    }
     await this.publish();
     if (this.disposed) return task.id;
     void this.executeTask(task, definition.run, controller, definition.getCompletion);
@@ -101,7 +94,8 @@ export class ResultTaskService {
   public async selectTask(taskId: string): Promise<void> {
     const store = await this.getStore();
     if (!this.tasks.has(taskId)) return;
-    const detail = await store.read(taskId);
+    const current = this.tasks.get(taskId);
+    const detail = current?.status === 'running' ? current : await store.read(taskId);
     if (!this.tasks.has(taskId)) return;
     const previous = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
     if (previous && previous.status !== 'running') this.tasks.set(previous.id, toSummary(previous));
@@ -123,8 +117,7 @@ export class ResultTaskService {
         error: 'Task was terminated.',
         updatedAt: Date.now(),
       };
-      await store.save(updatedTask);
-      this.tasks.set(taskId, updatedTask);
+      await this.persistTask(store, updatedTask);
     });
     await this.publish();
   }
@@ -132,10 +125,11 @@ export class ResultTaskService {
   public async deleteTask(taskId: string): Promise<void> {
     const store = await this.getStore();
     await this.runTaskOperation(taskId, async () => {
-      if (!this.tasks.has(taskId)) return;
+      const task = this.tasks.get(taskId);
+      if (!task) return;
 
       this.controllers.get(taskId)?.abort();
-      await store.delete(taskId);
+      if (task.status !== 'running') await store.delete(taskId);
       this.tasks.delete(taskId);
       this.controllers.delete(taskId);
       if (this.selectedTaskId === taskId) {
@@ -150,7 +144,7 @@ export class ResultTaskService {
     const store = this.store;
     if (!store) throw new Error('Result task storage is not initialized.');
     await this.loadPage(store);
-    this.lastTimestamp = Math.max(0, ...Array.from(this.tasks.keys(), Number));
+    this.lastTimestamp = Math.max(0, ...Array.from(this.tasks.values(), (task) => task.createdAt));
     this.selectedTaskId = this.getOrderedTasks()[0]?.id;
     if (this.selectedTaskId) this.tasks.set(this.selectedTaskId, await store.read(this.selectedTaskId));
   }
@@ -165,7 +159,7 @@ export class ResultTaskService {
       this.cursor = undefined;
       this.hasMore = false;
       await this.loadPage(store);
-      this.lastTimestamp = Math.max(this.lastTimestamp, ...Array.from(this.tasks.keys(), Number));
+      this.lastTimestamp = Math.max(this.lastTimestamp, ...Array.from(this.tasks.values(), (task) => task.createdAt));
       if (!this.selectedTaskId || !this.tasks.has(this.selectedTaskId)) {
         this.selectedTaskId = this.getOrderedTasks()[0]?.id;
       }
@@ -256,10 +250,17 @@ export class ResultTaskService {
     await this.runTaskOperation(task.id, async () => {
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
-      await store.save(task);
-      this.tasks.set(task.id, this.selectedTaskId === task.id ? task : toSummary(task));
+      await this.persistTask(store, task);
     });
     await this.publish();
+  }
+
+  private async persistTask(store: ResultTaskStore, task: ResultTask): Promise<void> {
+    const saved = await store.create(task, new Set(this.tasks.keys()));
+    this.tasks.delete(task.id);
+    if (this.selectedTaskId === task.id) this.selectedTaskId = saved.id;
+    this.tasks.set(saved.id, this.selectedTaskId === saved.id ? saved : toSummary(saved));
+    this.lastTimestamp = Math.max(this.lastTimestamp, Number(saved.id));
   }
 
   private async runTaskOperation(taskId: string, operation: () => Promise<void>): Promise<void> {
