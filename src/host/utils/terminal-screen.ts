@@ -27,6 +27,19 @@ export class TerminalScreen {
     return this.cached;
   }
 
+  truncate(limit: number): boolean {
+    const bytes = Buffer.from(this.toString());
+    if (bytes.length <= limit) return false;
+    const decoder = new TextDecoder('utf-8');
+    const text = decoder.decode(bytes.subarray(0, limit), { stream: true });
+    this.lines.length = 0;
+    for (const line of text.split('\n')) this.lines.push(line);
+    this.row = Math.min(this.row, this.lines.length - 1);
+    this.column = Math.min(this.column, this.lines[this.row]!.length);
+    this.cached = undefined;
+    return true;
+  }
+
   private render(): void {
     const text = this.pending;
     let index = 0;
