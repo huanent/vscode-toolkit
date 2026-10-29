@@ -16,6 +16,7 @@ export type ResultTaskSummary = Pick<ResultTask, 'id' | 'kind' | 'title' | 'stat
 
 export interface ResultViewState {
   tasks: ResultTaskSummary[];
+  hasMore: boolean;
   selectedTask?: ResultTask;
 }
 
@@ -24,6 +25,8 @@ export type ResultHostMessage = { type: 'resultStateUpdated'; state: ResultViewS
 export type ResultWebviewMessage =
   | { type: 'copyToClipboard'; text: string }
   | { type: 'openInEditor'; content: string; language?: string }
+  | { type: 'loadMoreTasks' }
+  | { type: 'refreshTasks' }
   | { type: 'selectTask'; taskId: string }
   | { type: 'terminateTask'; taskId: string }
   | { type: 'deleteTask'; taskId: string };

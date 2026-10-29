@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { ResultTask, ResultTaskSummary, ResultViewState } from './protocol';
 import { ResultTaskStore } from './task-store';
 
@@ -19,6 +18,10 @@ export class ResultTaskService {
   private readonly listeners = new Set<() => void>();
   private selectedTaskId: string | undefined;
   private disposed = false;
+  private hasMore = false;
+  private cursor: string | undefined;
+  private lastTimestamp = 0;
+  private loadingMore: Promise<void> | undefined;
 
   public dispose(): void {
     this.disposed = true;
@@ -41,6 +44,7 @@ export class ResultTaskService {
     const selectedTask = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
     const state: ResultViewState = {
       tasks: tasks.map(toSummary),
+      hasMore: this.hasMore,
     };
     if (selectedTask) state.selectedTask = selectedTask;
     return state;
@@ -62,9 +66,10 @@ export class ResultTaskService {
 
   public async startTask<TInput, TOutput>(definition: ResultTaskDefinition<TInput, TOutput>): Promise<string> {
     const store = await this.getStore();
-    const now = Date.now();
+    const now = Math.max(Date.now(), this.lastTimestamp + 1);
+    this.lastTimestamp = now;
     const task: ResultTask = {
-      id: randomUUID(),
+      id: String(now),
       kind: definition.kind,
       title: definition.title,
       status: 'running',
@@ -144,9 +149,55 @@ export class ResultTaskService {
   private async loadTasks(): Promise<void> {
     const store = this.store;
     if (!store) throw new Error('Result task storage is not initialized.');
+    await this.loadPage(store);
+    this.lastTimestamp = Math.max(0, ...Array.from(this.tasks.keys(), Number));
+    this.selectedTaskId = this.getOrderedTasks()[0]?.id;
+    if (this.selectedTaskId) this.tasks.set(this.selectedTaskId, await store.read(this.selectedTaskId));
+  }
 
-    const tasks = await store.list();
-    for (const task of tasks) {
+  public async refreshTasks(): Promise<void> {
+    const store = await this.getStore();
+    while (this.loadingMore) await this.loadingMore;
+    const refresh = async () => {
+      for (const [id, task] of this.tasks) {
+        if (task.status !== 'running') this.tasks.delete(id);
+      }
+      this.cursor = undefined;
+      this.hasMore = false;
+      await this.loadPage(store);
+      this.lastTimestamp = Math.max(this.lastTimestamp, ...Array.from(this.tasks.keys(), Number));
+      if (!this.selectedTaskId || !this.tasks.has(this.selectedTaskId)) {
+        this.selectedTaskId = this.getOrderedTasks()[0]?.id;
+      }
+      const selected = this.selectedTaskId ? this.tasks.get(this.selectedTaskId) : undefined;
+      if (selected && selected.status !== 'running') {
+        const detail = await store.read(selected.id);
+        if (this.selectedTaskId === selected.id && this.tasks.get(selected.id) === selected) {
+          this.tasks.set(selected.id, detail);
+        }
+      }
+    };
+    this.loadingMore = refresh().finally(() => {
+      this.loadingMore = undefined;
+    });
+    await this.loadingMore;
+    await this.publish();
+  }
+
+  public async loadMoreTasks(): Promise<void> {
+    const store = await this.getStore();
+    if (!this.hasMore) return;
+    this.loadingMore ??= this.loadPage(store).finally(() => {
+      this.loadingMore = undefined;
+    });
+    await this.loadingMore;
+    await this.publish();
+  }
+
+  private async loadPage(store: ResultTaskStore): Promise<void> {
+    const page = await store.list(this.cursor);
+    for (const task of page.tasks) {
+      if (this.tasks.has(task.id)) continue;
       const recoveredTask: ResultTask =
         task.status === 'running'
           ? {
@@ -159,8 +210,8 @@ export class ResultTaskService {
       this.tasks.set(recoveredTask.id, toSummary(recoveredTask));
       if (recoveredTask !== task) await store.save(recoveredTask);
     }
-    this.selectedTaskId = this.getOrderedTasks()[0]?.id;
-    if (this.selectedTaskId) this.tasks.set(this.selectedTaskId, await store.read(this.selectedTaskId));
+    this.cursor = page.tasks.at(-1)?.id ?? this.cursor;
+    this.hasMore = page.hasMore;
   }
 
   private async executeTask<TOutput>(

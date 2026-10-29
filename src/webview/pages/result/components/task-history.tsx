@@ -1,5 +1,4 @@
 import type { ResultTaskSummary, ResultWebviewMessage } from '@/features/result/protocol';
-import type { WebviewReadyMessage } from '@/shared/webview-protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Empty } from '@/webview/components/ui/empty';
 import { Icon } from '@/webview/components/ui/icons';
@@ -7,14 +6,30 @@ import { List, type ListGroup } from '@/webview/components/ui/list';
 import { getDateGroup } from '@/webview/utils/date-groups';
 import { postToHost } from '@/webview/utils/host-data';
 import { cn } from 'cn';
+import { useEffect, useRef } from 'react';
 import { taskStatusPresentation } from '../task-presentation';
 
 interface TaskHistoryPanelProps {
   tasks: ResultTaskSummary[];
   selectedTaskId?: string;
+  hasMore: boolean;
 }
 
-export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
+export function TaskHistory({ tasks, selectedTaskId, hasMore }: TaskHistoryPanelProps) {
+  const sentinel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = sentinel.current;
+    if (!element || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting))
+          postToHost({ type: 'loadMoreTasks' } satisfies ResultWebviewMessage);
+      },
+      { root: element.parentElement },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasMore, tasks.length]);
   return (
     <aside
       aria-label="Task history"
@@ -29,7 +44,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
             title="Refresh tasks"
             aria-label="Refresh tasks"
             prefix={<Icon name="refresh" />}
-            onClick={() => postToHost({ type: 'ready' } satisfies WebviewReadyMessage)}
+            onClick={() => postToHost({ type: 'refreshTasks' } satisfies ResultWebviewMessage)}
           />
         </div>
       </header>
@@ -45,6 +60,7 @@ export function TaskHistory({ tasks, selectedTaskId }: TaskHistoryPanelProps) {
             onActivate={(task) => selectTask(task.id)}
             onItemClick={(task) => selectTask(task.id)}
           />
+          {hasMore && <div ref={sentinel} className="h-1" />}
         </div>
       )}
     </aside>

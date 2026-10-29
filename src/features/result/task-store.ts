@@ -8,28 +8,19 @@ const taskStatuses: ResultTaskStatus[] = ['running', 'completed', 'failed', 'can
 export class ResultTaskStore {
   constructor(private readonly directory: string) {}
 
-  public async list(): Promise<ResultTask[]> {
+  public async list(before?: string, limit = 30): Promise<{ tasks: ResultTask[]; hasMore: boolean }> {
     await mkdir(this.directory, { recursive: true });
     const entries = await readdir(this.directory, { withFileTypes: true });
     const tasks: ResultTask[] = [];
-
-    for (const entry of entries) {
-      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-
+    const names = entries
+      .filter((entry) => entry.isFile() && /^\d+\.json$/.test(entry.name))
+      .map((entry) => entry.name.slice(0, -5))
+      .filter((id) => before === undefined || Number(id) < Number(before))
+      .sort((left, right) => Number(right) - Number(left));
+    let index = 0;
+    for (; index < names.length && tasks.length < limit; index++) {
       try {
-        const filePath = path.join(this.directory, entry.name);
-        let value: unknown;
-        try {
-          value = JSON.parse(await readFile(`${filePath}.summary`, 'utf8'));
-        } catch (error) {
-          if (!(error instanceof SyntaxError) && (error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-          value = JSON.parse(await readFile(filePath, 'utf8'));
-          if (isResultTask(value)) {
-            const { id, kind, title, status, createdAt, updatedAt } = value;
-            value = { id, kind, title, status, createdAt, updatedAt };
-            await this.writeAtomic(`${filePath}.summary`, value);
-          }
-        }
+        const value: unknown = JSON.parse(await readFile(this.getFilePath(names[index]!), 'utf8'));
         if (isResultTask(value)) tasks.push(value);
       } catch (error) {
         if (error instanceof SyntaxError || (error as NodeJS.ErrnoException).code === 'ENOENT') continue;
@@ -37,7 +28,7 @@ export class ResultTaskStore {
       }
     }
 
-    return tasks.sort((left, right) => right.createdAt - left.createdAt);
+    return { tasks, hasMore: index < names.length };
   }
 
   public async save(task: ResultTask): Promise<void> {
@@ -45,13 +36,12 @@ export class ResultTaskStore {
     const filePath = this.getFilePath(task.id);
     const { id, kind, title, status, createdAt, updatedAt } = task;
     const summary: ResultTaskSummary = { id, kind, title, status, createdAt, updatedAt };
-    await rm(`${filePath}.summary`, { force: true });
-    await this.writeAtomic(filePath, task);
-    await this.writeAtomic(`${filePath}.summary`, summary);
+    await this.writeAtomic(`${filePath.slice(0, -5)}.detail.json`, task);
+    await this.writeAtomic(filePath, summary);
   }
 
   public async read(taskId: string): Promise<ResultTask> {
-    const value: unknown = JSON.parse(await readFile(this.getFilePath(taskId), 'utf8'));
+    const value: unknown = JSON.parse(await readFile(this.getDetailPath(taskId), 'utf8'));
     if (!isResultTask(value)) throw new Error('Invalid result task.');
     return value;
   }
@@ -68,12 +58,16 @@ export class ResultTaskStore {
 
   public async delete(taskId: string): Promise<void> {
     await rm(this.getFilePath(taskId), { force: true });
-    await rm(`${this.getFilePath(taskId)}.summary`, { force: true });
+    await rm(this.getDetailPath(taskId), { force: true });
   }
 
   private getFilePath(taskId: string): string {
-    if (!/^[\w-]+$/.test(taskId)) throw new Error('Invalid result task ID.');
+    if (!/^\d+$/.test(taskId)) throw new Error('Invalid result task ID.');
     return path.join(this.directory, `${taskId}.json`);
+  }
+
+  private getDetailPath(taskId: string): string {
+    return this.getFilePath(taskId).replace(/\.json$/, '.detail.json');
   }
 }
 

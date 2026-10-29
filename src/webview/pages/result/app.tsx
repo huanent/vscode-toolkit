@@ -16,7 +16,11 @@ function App() {
           error={error && !state ? error : undefined}
         />
       </section>
-      <TaskHistory tasks={state?.tasks ?? []} selectedTaskId={state?.selectedTask?.id} />
+      <TaskHistory
+        tasks={state?.tasks ?? []}
+        selectedTaskId={state?.selectedTask?.id}
+        hasMore={state?.hasMore ?? false}
+      />
     </main>
   );
 }

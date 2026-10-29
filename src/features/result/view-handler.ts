@@ -25,6 +25,14 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
       if (!isResultWebviewMessage(message)) return;
 
       switch (message.type) {
+        case 'refreshTasks': {
+          await resultTaskService.refreshTasks();
+          break;
+        }
+        case 'loadMoreTasks': {
+          await resultTaskService.loadMoreTasks();
+          break;
+        }
         case 'copyToClipboard': {
           await vscode.env.clipboard.writeText(message.text);
           void vscode.window.setStatusBarMessage('Copied to clipboard', 2000);
@@ -63,6 +71,9 @@ function isResultWebviewMessage(message: unknown): message is ResultWebviewMessa
   if (typeof message !== 'object' || message === null || !('type' in message)) return false;
 
   switch (message.type) {
+    case 'refreshTasks':
+    case 'loadMoreTasks':
+      return true;
     case 'copyToClipboard':
       return 'text' in message && typeof message.text === 'string';
     case 'openInEditor': {
