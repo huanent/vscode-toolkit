@@ -19,19 +19,28 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
       : !running && result.status === 'pending'
         ? 'skipped'
         : result.status;
-  const hasDefinition = definition !== undefined;
-  const [open, setOpen] = useState(hasDefinition && (status === 'running' || status === 'failed'));
+  const [open, setOpen] = useState(status === 'running' || status === 'failed');
   useEffect(() => {
-    if (hasDefinition && (status === 'running' || status === 'failed')) setOpen(true);
+    if (status === 'running' || status === 'failed') setOpen(true);
     else if (status === 'completed') setOpen(false);
-  }, [status, hasDefinition]);
+  }, [status]);
   const label =
     definition?.type === 'sftp'
       ? `SFTP ${definition.direction}`
       : definition?.type === 'ssh-command'
         ? 'SSH command'
-        : 'Local command';
+        : definition?.type === 'local-command'
+          ? 'Local command'
+          : 'Step';
   const title = definition?.name || label;
+  const statusLabel = {
+    pending: 'Pending',
+    running: 'Running',
+    completed: 'Completed',
+    failed: 'Failed',
+    cancelled: 'Cancelled',
+    skipped: 'Skipped',
+  }[status];
   const duration =
     result.startedAt && result.finishedAt
       ? `${((result.finishedAt - result.startedAt) / 1000).toFixed(1)}s`
@@ -41,14 +50,19 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
     <Collapsible
       open={open}
       onOpenChange={setOpen}
+      headerClassName="sticky top-10 z-10 bg-(--vscode-sideBar-background)"
       title={
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-1">
-          <PlaybookStatusIcon status={status} />
-          <div className="min-w-0 flex-1 wrap-break-word">
-            {index + 1}. {title}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="pt-1">
+            <PlaybookStatusIcon status={status} />
           </div>
-          <div className="flex shrink-0 items-center gap-2 text-xs font-normal text-(--vscode-descriptionForeground)">
-            {duration && <span>{duration}</span>}
+          <div className="min-w-0 flex-1 flex items-center">
+            <div className="wrap-break-word flex-1">
+              {index + 1}. {title}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-(--vscode-descriptionForeground)">
+              {duration && <span className="tabular-nums">{duration}</span>}
+            </div>
           </div>
         </div>
       }
@@ -74,9 +88,14 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
             </div>
           </div>
         )}
-        {result.output && (
-          <ResultText title={`Step ${index + 1} output`} description={result.message} content={result.output} />
+        {result.message && (
+          <div
+            className={`border-l-2 pl-2 text-xs select-text whitespace-pre-wrap wrap-break-word ${status === 'failed' ? 'border-(--vscode-errorForeground) text-(--vscode-errorForeground)' : 'border-(--vscode-panel-border) text-(--vscode-descriptionForeground)'}`}
+          >
+            {result.message}
+          </div>
         )}
+        {result.output && <ResultText title="output" content={result.output} />}
       </div>
     </Collapsible>
   );
