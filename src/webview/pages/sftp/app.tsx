@@ -39,7 +39,7 @@ function App() {
                     favorites={state.data.favorites[side]}
                   />
                 </div>
-                {state.data.busy[side] && <Loading label="Loading files..." full />}
+                {state.data.busy[side] && <Loading label="Loading..." full />}
               </div>
             ))}
           </div>

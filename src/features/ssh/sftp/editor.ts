@@ -18,6 +18,11 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       const entry = [...panels.entries()].find(([, panel]) => panel.active);
       if (entry) await ssh.execute(await assets.get(entry[0]), { type: 'assetAction', action: 'connect' });
     }),
+    vscode.commands.registerCommand('toolkit.sftp.copyPath', async (value: unknown) => {
+      if (!value || typeof value !== 'object') return;
+      const target = value as Record<string, unknown>;
+      if (typeof target.sftpEntryPath === 'string') await vscode.env.clipboard.writeText(target.sftpEntryPath);
+    }),
   );
   for (const action of ['upload', 'download', 'rename', 'delete'] as const) {
     context.subscriptions.push(
@@ -54,7 +59,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       }
       const panel = vscode.window.createWebviewPanel(
         'toolkit.sftp',
-        formatTabTitle(`${asset.name} SFTP`, asset.folder),
+        formatTabTitle(`${asset.name}`, asset.folder),
         vscode.ViewColumn.Active,
         {
           enableScripts: true,
