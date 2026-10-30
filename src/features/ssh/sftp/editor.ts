@@ -13,6 +13,12 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
   registerSftpFileSystem(context, ssh);
   const panels = new Map<string, vscode.WebviewPanel>();
   const handlers = new Map<string, (request: SftpRequest) => Promise<void>>();
+  context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.ssh.openFromSftp', async () => {
+      const entry = [...panels.entries()].find(([, panel]) => panel.active);
+      if (entry) await ssh.execute(await assets.get(entry[0]), { type: 'assetAction', action: 'connect' });
+    }),
+  );
   for (const action of ['upload', 'download', 'rename', 'delete'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(`toolkit.sftp.${action}`, async (value: unknown) => {

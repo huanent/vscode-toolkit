@@ -751,6 +751,12 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.ssh.openFromSftp",
+        "title": "Open SSH",
+        "icon": "$(terminal)",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.sftp.download",
         "title": "Download",
         "category": "Toolkit"
@@ -1133,6 +1139,11 @@
       ],
       "editor/title": [
         {
+          "command": "toolkit.ssh.openFromSftp",
+          "when": "activeWebviewPanelId == toolkit.sftp",
+          "group": "navigation@1"
+        },
+        {
           "command": "toolkit.http.sendRequest",
           "when": "editorLangId == http",
           "group": "navigation@1"
@@ -1186,6 +1197,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "toolkit.ssh.openFromSftp",
+          "when": "false"
+        },
         {
           "command": "toolkit.sftp.upload",
           "when": "false"

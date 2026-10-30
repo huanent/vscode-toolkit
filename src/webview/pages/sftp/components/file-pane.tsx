@@ -39,6 +39,10 @@ export function FilePane({
   const navigate = (path: string) => send({ type: 'navigate', side, path });
   const action = (type: 'rename' | 'delete' | 'open' | 'transfer', entry: SftpEntry) =>
     send({ type, side, path: entry.path });
+  const parentEntry: SftpEntry | undefined =
+    directory && directory.parent !== directory.path
+      ? { path: directory.parent, name: '..', type: 'directory', modifiedAt: 0, symbolicLink: false }
+      : undefined;
   const columns: DataListColumn<SftpEntry>[] = [
     {
       key: 'name',
@@ -57,7 +61,7 @@ export function FilePane({
       className: 'w-36 shrink-0',
       cell: (entry) => (
         <span className="whitespace-nowrap text-(--vscode-descriptionForeground)">
-          {formatDateTime(entry.modifiedAt)}
+          {entry === parentEntry ? '' : formatDateTime(entry.modifiedAt)}
         </span>
       ),
     },
@@ -149,22 +153,29 @@ export function FilePane({
       {directory ? (
         <DataList
           ariaLabel={`${label} files`}
-          entries={directory.entries.toSorted(
-            (first, second) =>
-              Number(second.type === 'directory') - Number(first.type === 'directory') ||
-              first.name.localeCompare(second.name, undefined, { numeric: true, sensitivity: 'base' }),
-          )}
+          entries={[
+            ...(parentEntry ? [parentEntry] : []),
+            ...directory.entries.toSorted(
+              (first, second) =>
+                Number(second.type === 'directory') - Number(first.type === 'directory') ||
+                first.name.localeCompare(second.name, undefined, { numeric: true, sensitivity: 'base' }),
+            ),
+          ]}
           columns={columns}
           entryKey={(entry) => entry.path}
-          entryContext={(entry) => ({
-            webviewSection: 'sftp',
-            preventDefaultContextMenuItems: true,
-            sftpAssetId: getRootData('assetId'),
-            sftpSide: side,
-            sftpEntryPath: entry.path,
-            sftpBusy: busy,
-            sftpSymbolicLink: entry.symbolicLink,
-          })}
+          entryContext={(entry) =>
+            entry === parentEntry
+              ? { webviewSection: 'sftp', preventDefaultContextMenuItems: true }
+              : {
+                  webviewSection: 'sftp',
+                  preventDefaultContextMenuItems: true,
+                  sftpAssetId: getRootData('assetId'),
+                  sftpSide: side,
+                  sftpEntryPath: entry.path,
+                  sftpBusy: busy,
+                  sftpSymbolicLink: entry.symbolicLink,
+                }
+          }
           onOpen={(entry) => {
             if (entry.type === 'directory') navigate(entry.path);
             else action('open', entry);

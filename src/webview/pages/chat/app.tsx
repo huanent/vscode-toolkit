@@ -121,8 +121,8 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
 
   return (
     <main className="relative flex h-screen min-w-0 flex-col bg-(--vscode-editor-background) text-(--vscode-editor-foreground)">
-      <header className="relative flex shrink-0 items-center justify-between gap-2 border-b border-(--vscode-panel-border) px-3 py-1">
-        <div className="relative z-10 flex items-center gap-1">
+      <header className="relative flex shrink-0 items-center gap-2 border-b border-(--vscode-panel-border) px-3 py-1">
+        <div className="z-10 flex items-center gap-1">
           <ChatHistory
             history={data.history}
             activeId={data.chat.id}
@@ -140,12 +140,14 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
             <Icon name="add" />
           </Button>
         </div>
-        <div className="pointer-events-none absolute inset-0 mx-auto flex w-full max-w-3xl items-center px-20">
-          <div className="text-sm pointer-events-auto w-full truncate text-center font-semibold" title={title}>
-            {title}
+        <div className="flex-1">
+          <div className="pointer-events-none absolute inset-0 mx-auto flex w-full max-w-3xl items-center px-20">
+            <div className="text-sm pointer-events-auto w-full truncate text-center font-semibold" title={title}>
+              {title}
+            </div>
           </div>
         </div>
-        <div className="relative z-10">
+        <div className="z-10 shrink-0">
           <CopyButton
             icon="share"
             title="Copy conversation as Markdown"

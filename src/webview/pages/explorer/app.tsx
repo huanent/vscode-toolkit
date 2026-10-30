@@ -130,15 +130,24 @@ function App() {
 
   const index = indexEntries(ancestors);
   const children = sortEntries(entries, sortField, sortDirection);
+  const parentLocation = ancestors.at(-2)?.id ?? null;
+  const parentEntry: ExplorerEntry | undefined = parentLocation
+    ? { id: 'parent-directory', name: '..', type: 'directory', uri: '' }
+    : undefined;
+  const displayedEntries = parentEntry ? [parentEntry, ...children] : children;
   const selectedKeys = selection.location === location ? selection.keys : new Set<string>();
   const selectedUris = children.filter((entry) => selectedKeys.has(entry.id)).map((entry) => entry.uri);
-  const entryContext = (entry: ExplorerEntry): Record<string, unknown> => ({
-    explorerEntryUri: entry.uri,
-    explorerEntryType: entry.type,
-    explorerSelectedUris: selectedKeys.has(entry.id) ? selectedUris : [entry.uri],
-    explorerSelectionCount: selectedKeys.has(entry.id) ? selectedUris.length : 1,
-  });
+  const entryContext = (entry: ExplorerEntry): Record<string, unknown> =>
+    entry === parentEntry
+      ? { webviewSection: 'explorer', preventDefaultContextMenuItems: true }
+      : {
+          explorerEntryUri: entry.uri,
+          explorerEntryType: entry.type,
+          explorerSelectedUris: selectedKeys.has(entry.id) ? selectedUris : [entry.uri],
+          explorerSelectionCount: selectedKeys.has(entry.id) ? selectedUris.length : 1,
+        };
   const selectEntry = (entry: ExplorerEntry, event: MouseEvent<HTMLElement>) => {
+    if (entry === parentEntry) return;
     if (event.detail > 1) return;
     const additive = event.ctrlKey || event.metaKey;
     const anchorIndex =
@@ -162,7 +171,8 @@ function App() {
   };
 
   const openEntry = (entry: ExplorerEntry) => {
-    if (entry.type === 'directory') navigate(entry.id);
+    if (entry === parentEntry) navigate(parentLocation);
+    else if (entry.type === 'directory') navigate(entry.id);
     else postToHost({ type: 'openFile', uri: entry.uri } satisfies ExplorerWebviewMessage);
   };
 
@@ -258,12 +268,12 @@ function App() {
           explorerDirectoryUri: location,
         })}
       >
-        {children.length === 0 ? (
+        {displayedEntries.length === 0 ? (
           <Empty title="Empty folder" description="This folder has no files." icon="folder" />
         ) : viewMode === 'list' ? (
           <DataList
             ariaLabel="Files"
-            entries={children}
+            entries={displayedEntries}
             columns={columns}
             entryKey={(entry) => entry.id}
             entryContext={entryContext}
@@ -281,7 +291,7 @@ function App() {
         ) : (
           <DataGrid
             ariaLabel="Files"
-            entries={children}
+            entries={displayedEntries}
             entryKey={(entry) => entry.id}
             entryContext={entryContext}
             isSelected={(entry) => selectedKeys.has(entry.id)}
