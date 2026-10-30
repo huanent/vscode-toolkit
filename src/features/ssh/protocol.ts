@@ -28,10 +28,19 @@ export interface SftpDirectory {
   canGoBack?: boolean;
 }
 
+export interface SftpResources {
+  cpu?: number;
+  memory?: number;
+  disk?: number;
+  networkIn?: number;
+  networkOut?: number;
+}
+
 export interface SftpEditorData {
   name: string;
   local: SftpDirectory;
   remote?: SftpDirectory;
+  resources?: Partial<Record<SftpSide, SftpResources>>;
   busy: Record<SftpSide, boolean>;
   favorites: Record<SftpSide, string[]>;
   error?: string;

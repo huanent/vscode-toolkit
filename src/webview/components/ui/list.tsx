@@ -195,7 +195,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
         <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
           <div className="min-w-0 shrink truncate">{listItem.label}</div>
           {listItem.description !== undefined && (
-            <div className="shrink-0 whitespace-nowrap text-(--vscode-descriptionForeground)">
+            <div className="text-sm shrink-0 whitespace-nowrap text-(--vscode-descriptionForeground)">
               {listItem.description}
             </div>
           )}

@@ -1,4 +1,4 @@
-import type { SftpDirectory, SftpEntry, SftpRequest, SftpSide } from '@/features/ssh/protocol';
+import type { SftpDirectory, SftpEntry, SftpRequest, SftpResources, SftpSide } from '@/features/ssh/protocol';
 import { AddressBar } from '@/webview/components/address-bar';
 import type { AddressSegment } from '@/webview/components/address-breadcrumb';
 import { Button } from '@/webview/components/ui/button';
@@ -12,11 +12,13 @@ export function FilePane({
   directory,
   busy,
   favorites,
+  resources,
 }: {
   side: SftpSide;
   directory?: SftpDirectory;
   busy: boolean;
   favorites: string[];
+  resources?: SftpResources;
 }) {
   let address = directory?.path ?? '';
   if (side === 'local') {
@@ -97,6 +99,51 @@ export function FilePane({
       <div className="flex shrink-0 items-center gap-1 border-b border-(--vscode-panel-border) px-2 py-1">
         <Icon name={side === 'local' ? 'device-desktop' : 'remote'} />
         <h2 className="min-w-0 flex-1 truncate text-sm font-medium">{label}</h2>
+        <div className="flex min-w-0 shrink items-center gap-2 overflow-x-auto whitespace-nowrap font-mono text-xs tabular-nums text-(--vscode-descriptionForeground)">
+          <span className="grid shrink-0" title="CPU usage">
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              CPU 100%
+            </span>
+            <span className="col-start-1 row-start-1">
+              CPU {resources?.cpu === undefined ? '-' : `${resources.cpu.toFixed(0)}%`}
+            </span>
+          </span>
+          <span className="grid shrink-0" title="Memory usage">
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              MEM 100%
+            </span>
+            <span className="col-start-1 row-start-1">
+              MEM {resources?.memory === undefined ? '-' : `${resources.memory.toFixed(0)}%`}
+            </span>
+          </span>
+          <span
+            className="grid shrink-0"
+            title={side === 'local' ? 'Current filesystem usage' : 'Root filesystem usage'}
+          >
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              Disk 100%
+            </span>
+            <span className="col-start-1 row-start-1">
+              Disk {resources?.disk === undefined ? '-' : `${resources.disk.toFixed(0)}%`}
+            </span>
+          </span>
+          <span className="grid shrink-0" title="Network receive rate">
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              In 1024 TB/s
+            </span>
+            <span className="col-start-1 row-start-1">
+              In {resources?.networkIn === undefined ? '-' : `${formatSize(Math.floor(resources.networkIn))}/s`}
+            </span>
+          </span>
+          <span className="grid shrink-0" title="Network send rate">
+            <span className="invisible col-start-1 row-start-1" aria-hidden="true">
+              Out 1024 TB/s
+            </span>
+            <span className="col-start-1 row-start-1">
+              Out {resources?.networkOut === undefined ? '-' : `${formatSize(Math.floor(resources.networkOut))}/s`}
+            </span>
+          </span>
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -115,16 +162,6 @@ export function FilePane({
           prefix={<Icon name="new-folder" />}
           onClick={() => send({ type: 'create', side, directory: true })}
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          title="Refresh"
-          aria-label={`Refresh ${side}`}
-          disabled={busy}
-          prefix={<Icon name="refresh" />}
-          onClick={() => navigate(directory?.path ?? '~')}
-        />
       </div>
       <div className="flex shrink-0 items-center gap-1 border-b border-(--vscode-panel-border) p-1">
         <Button
@@ -135,6 +172,15 @@ export function FilePane({
           disabled={busy || !directory?.canGoBack}
           prefix={<Icon name="arrow-left" />}
           onClick={() => send({ type: 'back', side })}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          title="Refresh"
+          aria-label={`Refresh ${side}`}
+          disabled={busy}
+          prefix={<Icon name="refresh" />}
+          onClick={() => navigate(directory?.path ?? '~')}
         />
         <AddressBar
           address={address}

@@ -7,6 +7,7 @@ import { getWebviewHtml } from '@/host/webview-html';
 import { formatTabTitle } from '@/shared/tab-title';
 import { SftpFileService } from './file-service';
 import { registerSftpFileSystem } from './file-system';
+import { LocalResourceMonitor, SftpResourceMonitor } from './resource-monitor';
 import type { SftpEditorData, SftpRequest, SftpSide, SshConnectionConfiguration } from '@/features/ssh/protocol';
 
 export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshService, assets: AssetService): void {
@@ -72,10 +73,13 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       panel.iconPath = new vscode.ThemeIcon('folder');
       const cancellation = new AbortController();
       const files = new SftpFileService(ssh, asset.id, cancellation.signal);
+      const monitor = new SftpResourceMonitor(ssh, asset.id, cancellation.signal);
+      const localMonitor = new LocalResourceMonitor();
       const history: Record<SftpSide, string[]> = { local: [], remote: [] };
       let data: SftpEditorData | undefined;
       const busy: Record<SftpSide, boolean> = { local: false, remote: false };
       let disposed = false;
+      let localResourcesPending = false;
       const readFavorites = async () => {
         const current = (await assets.get(asset.id)) as SshConnectionConfiguration;
         return {
@@ -89,6 +93,38 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           if (!disposed) await panel.webview.postMessage({ type: 'loaded', data: { ...data, busy } });
         }
       };
+      const updateResources = async () => {
+        if (!data || !panel.visible || disposed) return;
+        const current = data;
+        if (!localResourcesPending) {
+          localResourcesPending = true;
+          void localMonitor
+            .read(current.local.path)
+            .then(
+              (resources) => {
+                if (!disposed) {
+                  current.resources = { ...current.resources, local: resources };
+                  void publish();
+                }
+              },
+              () => {
+                if (!disposed) {
+                  current.resources = { ...current.resources, local: undefined };
+                  void publish();
+                }
+              },
+            )
+            .finally(() => {
+              localResourcesPending = false;
+            });
+        }
+        const resources = await monitor.read();
+        if (!disposed) {
+          current.resources = { ...current.resources, remote: resources };
+          await publish();
+        }
+      };
+      const resourceTimer = setInterval(() => void updateResources(), 5000);
       const refresh = async (sides: SftpSide[]) => {
         if (!data) return;
         await Promise.all(
@@ -111,6 +147,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
         );
         busy.remote = true;
         data = { name: asset.name, local, busy, favorites: await readFavorites() };
+        void updateResources();
         void remote
           .then((result) => {
             if (data && 'directory' in result) data.remote = result.directory;
@@ -235,10 +272,14 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       handlers.set(asset.id, handleRequest);
       const listener = panel.webview.onDidReceiveMessage(handleRequest);
       const visibility = panel.onDidChangeViewState(() => {
-        if (panel.visible) void publish();
+        if (panel.visible) {
+          void publish();
+          void updateResources();
+        }
       });
       panel.onDidDispose(() => {
         disposed = true;
+        clearInterval(resourceTimer);
         cancellation.abort();
         bridge.dispose();
         listener.dispose();

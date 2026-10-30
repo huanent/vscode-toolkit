@@ -37,6 +37,7 @@ function App() {
                     directory={state.data[side]}
                     busy={state.data.busy[side]}
                     favorites={state.data.favorites[side]}
+                    resources={state.data.resources?.[side]}
                   />
                 </div>
                 {state.data.busy[side] && <Loading label="Loading..." full />}
