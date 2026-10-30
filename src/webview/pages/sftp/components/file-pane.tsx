@@ -144,24 +144,6 @@ export function FilePane({
             </span>
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          title="New file"
-          aria-label={`New ${side} file`}
-          disabled={busy || !directory}
-          prefix={<Icon name="new-file" />}
-          onClick={() => send({ type: 'create', side, directory: false })}
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          title="New folder"
-          aria-label={`New ${side} folder`}
-          disabled={busy || !directory}
-          prefix={<Icon name="new-folder" />}
-          onClick={() => send({ type: 'create', side, directory: true })}
-        />
       </div>
       <div className="flex shrink-0 items-center gap-1 border-b border-(--vscode-panel-border) p-1">
         <Button
@@ -187,6 +169,22 @@ export function FilePane({
           segments={segments}
           favorites={favorites}
           disabled={busy}
+          segmentContext={(segment) => {
+            const path =
+              side === 'local' && /^\/[a-zA-Z]:\//.test(segment.location ?? '')
+                ? segment.location!.slice(1).replace(/\//g, '\\')
+                : segment.location;
+            return {
+              webviewSection: 'sftp',
+              preventDefaultContextMenuItems: true,
+              sftpAssetId: getRootData('assetId'),
+              sftpSide: side,
+              sftpEntryPath: path,
+              sftpCreatePath: path,
+              sftpRoot: segment.location === root,
+              sftpBusy: busy,
+            };
+          }}
           onToggleFavorite={(value) => send({ type: 'toggleFavorite', side, address: value })}
           onSubmit={(value) => {
             if (busy || !value.trim()) return false;
@@ -218,6 +216,7 @@ export function FilePane({
                   sftpAssetId: getRootData('assetId'),
                   sftpSide: side,
                   sftpEntryPath: entry.path,
+                  sftpCreatePath: entry.type === 'directory' ? entry.path : directory.path,
                   sftpBusy: busy,
                   sftpSymbolicLink: entry.symbolicLink,
                 }

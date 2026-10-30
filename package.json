@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "Databases, SSH, HTTP requests and reusable Playbooks, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
@@ -763,6 +763,16 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.sftp.createFile",
+        "title": "New File...",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.sftp.createFolder",
+        "title": "New Folder...",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.sftp.upload",
         "title": "Upload",
         "category": "Toolkit"
@@ -1430,18 +1440,28 @@
       ],
       "webview/context": [
         {
+          "command": "toolkit.sftp.createFile",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpCreatePath && !sftpBusy",
+          "group": "0_create@1"
+        },
+        {
+          "command": "toolkit.sftp.createFolder",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpCreatePath && !sftpBusy",
+          "group": "0_create@2"
+        },
+        {
           "command": "toolkit.sftp.upload",
-          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == local && !sftpBusy && !sftpSymbolicLink",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == local && !sftpBusy && !sftpSymbolicLink && !sftpRoot",
           "group": "1_transfer@1"
         },
         {
           "command": "toolkit.sftp.download",
-          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == remote && !sftpBusy && !sftpSymbolicLink",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && sftpSide == remote && !sftpBusy && !sftpSymbolicLink && !sftpRoot",
           "group": "1_transfer@1"
         },
         {
           "command": "toolkit.sftp.rename",
-          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy && !sftpRoot",
           "group": "2_actions@1"
         },
         {
@@ -1451,7 +1471,7 @@
         },
         {
           "command": "toolkit.sftp.delete",
-          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy",
+          "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpEntryPath && !sftpBusy && !sftpRoot",
           "group": "9_delete@1"
         },
         {

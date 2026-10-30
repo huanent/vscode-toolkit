@@ -1,4 +1,4 @@
-import { basename, posix } from 'node:path';
+import { basename, dirname, posix, sep } from 'node:path';
 import * as vscode from 'vscode';
 import type { AssetService } from '@/features/assets/service';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -25,6 +25,26 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       if (typeof target.sftpEntryPath === 'string') await vscode.env.clipboard.writeText(target.sftpEntryPath);
     }),
   );
+  for (const action of ['createFile', 'createFolder'] as const) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(`toolkit.sftp.${action}`, async (value: unknown) => {
+        if (!value || typeof value !== 'object') return;
+        const target = value as Record<string, unknown>;
+        if (
+          typeof target.sftpAssetId !== 'string' ||
+          typeof target.sftpCreatePath !== 'string' ||
+          (target.sftpSide !== 'local' && target.sftpSide !== 'remote')
+        )
+          return;
+        await handlers.get(target.sftpAssetId)?.({
+          type: 'create',
+          side: target.sftpSide,
+          path: target.sftpCreatePath,
+          directory: action === 'createFolder',
+        });
+      }),
+    );
+  }
   for (const action of ['upload', 'download', 'rename', 'delete'] as const) {
     context.subscriptions.push(
       vscode.commands.registerCommand(`toolkit.sftp.${action}`, async (value: unknown) => {
@@ -213,17 +233,28 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           }
           if (!directory) throw new Error('Connect to the remote directory first.');
           if (request.type === 'create') {
+            if (typeof request.path !== 'string') return;
             const name = await askName(request.directory ? 'New folder' : 'New file');
-            if (name) await files.create(side, files.child(side, directory.path, name), request.directory);
+            if (name) await files.create(side, files.child(side, request.path, name), request.directory);
           } else {
-            const entry = directory.entries.find((candidate) => candidate.path === request.path);
+            if (typeof request.path !== 'string') return;
+            const parent = side === 'local' ? dirname(request.path) : posix.dirname(request.path);
+            const listing = parent === directory.path ? directory : await files.list(side, parent);
+            const entry = listing.entries.find((candidate) => candidate.path === request.path);
             if (!entry) throw new Error('The entry is no longer in this directory. Refresh and try again.');
+            const separator = side === 'local' ? sep : '/';
+            const containsCurrent = directory.path === entry.path || directory.path.startsWith(entry.path + separator);
             if (request.type === 'rename') {
               const name = await askName('Rename', entry.name);
               if (name && name !== entry.name) {
-                if (directory.entries.some((candidate) => candidate.name === name))
+                if (listing.entries.some((candidate) => candidate.name === name))
                   throw new Error('An entry with this name already exists.');
-                await files.rename(side, entry.path, files.child(side, directory.path, name));
+                const target = files.child(side, listing.path, name);
+                await files.rename(side, entry.path, target);
+                if (containsCurrent) {
+                  data[side] = await files.list(side, target + directory.path.slice(entry.path.length));
+                  history[side] = [];
+                }
               }
             } else if (request.type === 'delete') {
               const confirmed = await vscode.window.showWarningMessage(
@@ -231,7 +262,13 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
                 { modal: true },
                 'Delete',
               );
-              if (confirmed === 'Delete') await files.remove(side, entry.path);
+              if (confirmed === 'Delete') {
+                await files.remove(side, entry.path);
+                if (containsCurrent) {
+                  data[side] = await files.list(side, listing.path);
+                  history[side] = [];
+                }
+              }
             } else if (request.type === 'open') {
               if (entry.type !== 'file') return;
               await files.open(side, entry.path);

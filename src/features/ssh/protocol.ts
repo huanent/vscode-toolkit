@@ -51,5 +51,5 @@ export type SftpRequest =
   | { type: 'navigate'; side: SftpSide; path: string }
   | { type: 'refresh' }
   | { type: 'back'; side: SftpSide }
-  | { type: 'create'; side: SftpSide; directory: boolean }
+  | { type: 'create'; side: SftpSide; directory: boolean; path: string }
   | { type: 'rename' | 'delete' | 'open' | 'transfer'; side: SftpSide; path: string };
