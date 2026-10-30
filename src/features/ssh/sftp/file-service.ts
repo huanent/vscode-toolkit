@@ -10,15 +10,14 @@ import { createSftpFileUri } from './file-system';
 import { stagedUpload } from './staged-upload';
 
 export class SftpFileService {
+  private readonly remote: <T>(run: (sftp: SFTPWrapper) => Promise<T>) => Promise<T>;
+
   constructor(
-    private readonly ssh: SshService,
+    ssh: SshService,
     private readonly assetId: string,
     private readonly signal: AbortSignal,
-  ) {}
-
-  private remote<T>(run: (sftp: SFTPWrapper) => Promise<T>): Promise<T> {
-    this.signal.throwIfAborted();
-    return this.ssh.withSftp(this.assetId, this.signal, run);
+  ) {
+    this.remote = ssh.createSftpRunner(assetId, signal);
   }
 
   async list(side: SftpSide, address?: string, current?: string): Promise<SftpDirectory> {

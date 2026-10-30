@@ -91,26 +91,30 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       };
       const refresh = async (sides: SftpSide[]) => {
         if (!data) return;
-        for (const side of sides) {
-          const directory = await files.list(side, data[side]?.path);
-          data[side] = { ...directory, canGoBack: history[side].length > 0 };
-        }
+        await Promise.all(
+          sides.map(async (side) => {
+            if (!data) return;
+            const directory = await files.list(side, data[side]?.path);
+            if (data) data[side] = { ...directory, canGoBack: history[side].length > 0 };
+          }),
+        );
       };
       const bridge = serveWebviewData<SftpEditorData>(panel.webview, async () => {
         if (data) return { ...data, busy };
+        const remote = files.list('remote').then(
+          (directory) => ({ directory }),
+          (error: unknown) => ({ error: error instanceof Error ? error.message : String(error) }),
+        );
         const local = await files.list(
           'local',
           vscode.workspace.workspaceFolders?.find((folder) => folder.uri.scheme === 'file')?.uri.fsPath,
         );
         busy.remote = true;
         data = { name: asset.name, local, busy, favorites: await readFavorites() };
-        void files
-          .list('remote')
-          .then((remote) => {
-            if (data) data.remote = remote;
-          })
-          .catch((error: unknown) => {
-            if (data) data.error = error instanceof Error ? error.message : String(error);
+        void remote
+          .then((result) => {
+            if (data && 'directory' in result) data.remote = result.directory;
+            else if (data && 'error' in result) data.error = result.error;
           })
           .finally(() => {
             busy.remote = false;

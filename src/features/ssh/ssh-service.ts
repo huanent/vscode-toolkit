@@ -196,6 +196,62 @@ export class SshService implements AssetProvider {
     });
   }
 
+  createSftpRunner(assetId: string, signal: AbortSignal): <T>(run: (sftp: SFTPWrapper) => Promise<T>) => Promise<T> {
+    let connection: Promise<SshClientSession> | undefined;
+    const connect = () => {
+      signal.throwIfAborted();
+      if (!connection) {
+        const pending = this.connectClient(assetId, new Set(), signal);
+        connection = pending;
+        void pending.then(
+          (session) => {
+            const close = () => {
+              if (connection === pending) connection = undefined;
+              signal.removeEventListener('abort', abort);
+              session.close();
+            };
+            const abort = () => {
+              session.client.destroy();
+              close();
+            };
+            session.client.once('close', close);
+            signal.addEventListener('abort', abort, { once: true });
+            if (signal.aborted) abort();
+          },
+          () => {
+            if (connection === pending) connection = undefined;
+          },
+        );
+      }
+      return connection;
+    };
+    return async <T>(run: (sftp: SFTPWrapper) => Promise<T>): Promise<T> => {
+      const session = await connect();
+      signal.throwIfAborted();
+      return new Promise<T>((resolve, reject) => {
+        let channel: SFTPWrapper | undefined;
+        let settled = false;
+        const closed = () => finish(new Error('SSH connection closed before the operation completed.'));
+        const finish = (error?: Error, result?: T) => {
+          if (settled) return;
+          settled = true;
+          session.client.removeListener('close', closed);
+          channel?.end();
+          if (error) reject(error);
+          else resolve(result as T);
+        };
+        session.client.once('close', closed);
+        session.client.sftp((error, sftp) => {
+          if (error) return finish(error);
+          if (settled) return sftp.end();
+          channel = sftp;
+          sftp.once('error', finish);
+          void run(sftp).then((result) => finish(undefined, result), finish);
+        });
+      });
+    };
+  }
+
   async openTunnel(
     proxyAssetIds: string[],
     host: string,
