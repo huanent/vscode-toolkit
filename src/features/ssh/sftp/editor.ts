@@ -64,7 +64,7 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
       );
       panels.set(asset.id, panel);
       context.subscriptions.push(panel);
-      panel.iconPath = new vscode.ThemeIcon('files');
+      panel.iconPath = new vscode.ThemeIcon('folder');
       const cancellation = new AbortController();
       const files = new SftpFileService(ssh, asset.id, cancellation.signal);
       const history: Record<SftpSide, string[]> = { local: [], remote: [] };
