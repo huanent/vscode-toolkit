@@ -637,7 +637,23 @@
     "commands": [
       {
         "command": "toolkit.custom.statusBar.editScript",
-        "title": "Custom Status Bar",
+        "title": "Status Bar",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.custom.commands.manage",
+        "title": "Commands",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.custom.commands.run",
+        "title": "Run Custom Command",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.custom.commands.add",
+        "title": "Add Custom Command",
+        "icon": "$(add)",
         "category": "Toolkit"
       },
       {
@@ -1073,6 +1089,10 @@
     ],
     "submenus": [
       {
+        "id": "toolkit.custom",
+        "label": "Custom"
+      },
+      {
         "id": "toolkit.assets.new",
         "label": "New Asset"
       },
@@ -1082,6 +1102,17 @@
       }
     ],
     "menus": {
+      "toolkit.custom": [
+        {
+          "command": "toolkit.custom.statusBar.editScript",
+          "when": "config.toolkit.custom.statusBar.enabled",
+          "group": "1_custom@1"
+        },
+        {
+          "command": "toolkit.custom.commands.manage",
+          "group": "1_custom@2"
+        }
+      ],
       "toolkit.assets.new": [
         {
           "command": "toolkit.assets.add.ssh",
@@ -1102,8 +1133,8 @@
       ],
       "view/title": [
         {
-          "command": "toolkit.custom.statusBar.editScript",
-          "when": "view == toolkit.dashboard && config.toolkit.custom.statusBar.enabled",
+          "submenu": "toolkit.custom",
+          "when": "view == toolkit.dashboard",
           "group": "1_more@4"
         },
         {
@@ -1138,6 +1169,11 @@
         }
       ],
       "editor/title": [
+        {
+          "command": "toolkit.custom.commands.add",
+          "when": "activeWebviewPanelId == toolkit.custom.commands",
+          "group": "navigation@1"
+        },
         {
           "command": "toolkit.ssh.openFromSftp",
           "when": "activeWebviewPanelId == toolkit.sftp",
