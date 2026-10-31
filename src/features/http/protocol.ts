@@ -29,6 +29,7 @@ export interface HttpResponseData {
   statusText: string;
   headers: Record<string, string>;
   body: string;
+  binaryBody?: string;
   formattedBody?: string;
   isJson: boolean;
   durationMs: number;

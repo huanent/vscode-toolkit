@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import type { HttpResponseData } from '@/features/http/protocol';
+import type { ResultWebviewMessage } from '@/features/result/protocol';
+import { Button } from '@/webview/components/ui/button';
+import { Icon } from '@/webview/components/ui/icons';
 import { SegmentedControl } from '@/webview/components/ui/segmented-control';
 import { formatSize } from '@/webview/utils/format';
+import { postToHost } from '@/webview/utils/host-data';
 import { HttpHeaders } from './http-headers';
 import { ResultText } from '../result-text';
 
 interface HttpResponseViewProps {
   response: HttpResponseData;
+  taskId: string;
 }
 
-export function HttpResponseView({ response }: HttpResponseViewProps) {
+export function HttpResponseView({ response, taskId }: HttpResponseViewProps) {
   const [side, setSide] = useState<'request' | 'response'>('response');
   const [bodyMode, setBodyMode] = useState<'formatted' | 'raw'>('formatted');
   const statusColorClass =
@@ -61,11 +66,25 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
             ]}
           />
         )}
-        <ResultText
-          title={side === 'request' ? 'Request body' : 'Response body'}
-          content={body ?? ''}
-          language={side === 'response' && response.isJson ? 'json' : undefined}
-        />
+        {side === 'response' && response.binaryBody !== undefined ? (
+          <div className="flex items-center gap-2 py-2">
+            <span>Binary response ({formatSize(response.sizeBytes)})</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Save response"
+              aria-label="Save response"
+              prefix={<Icon name="save" />}
+              onClick={() => postToHost({ type: 'saveHttpResponse', taskId } satisfies ResultWebviewMessage)}
+            />
+          </div>
+        ) : (
+          <ResultText
+            title={side === 'request' ? 'Request body' : 'Response body'}
+            content={body ?? ''}
+            language={side === 'response' && response.isJson ? 'json' : undefined}
+          />
+        )}
       </div>
     </div>
   );

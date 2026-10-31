@@ -46,6 +46,22 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
           await vscode.window.showTextDocument(document, { preview: false });
           break;
         }
+        case 'saveHttpResponse': {
+          const task = resultTaskService.getTask(message.taskId);
+          const output = task?.output;
+          if (
+            task?.kind !== 'http' ||
+            task.status !== 'completed' ||
+            typeof output !== 'object' ||
+            output === null ||
+            !('binaryBody' in output) ||
+            typeof output.binaryBody !== 'string'
+          )
+            break;
+          const target = await vscode.window.showSaveDialog({ saveLabel: 'Save HTTP response' });
+          if (target) await vscode.workspace.fs.writeFile(target, Buffer.from(output.binaryBody, 'base64'));
+          break;
+        }
         case 'selectTask': {
           await resultTaskService.selectTask(message.taskId);
           break;
@@ -84,6 +100,7 @@ function isResultWebviewMessage(message: unknown): message is ResultWebviewMessa
       );
     }
     case 'selectTask':
+    case 'saveHttpResponse':
     case 'terminateTask':
     case 'deleteTask':
       return 'taskId' in message && typeof message.taskId === 'string';

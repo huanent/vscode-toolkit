@@ -25,6 +25,7 @@ export type ResultHostMessage = { type: 'resultStateUpdated'; state: ResultViewS
 export type ResultWebviewMessage =
   | { type: 'copyToClipboard'; text: string }
   | { type: 'openInEditor'; content: string; language?: string }
+  | { type: 'saveHttpResponse'; taskId: string }
   | { type: 'loadMoreTasks' }
   | { type: 'refreshTasks' }
   | { type: 'selectTask'; taskId: string }

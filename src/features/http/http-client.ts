@@ -5,6 +5,7 @@ export interface ExecuteOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
   redirect?: 'follow' | 'error' | 'manual';
+  maxResponseBytes?: number;
 }
 
 export async function executeHttpRequest(
@@ -22,6 +23,9 @@ export async function executeHttpRequest(
   try {
     const method = request.method.toUpperCase();
     const canHaveBody = method !== 'GET' && method !== 'HEAD';
+    if (!canHaveBody && request.body !== undefined) {
+      throw new Error(`${method} requests cannot have a body.`);
+    }
 
     const init: RequestInit = {
       method,
@@ -35,7 +39,28 @@ export async function executeHttpRequest(
     }
 
     const res = await fetch(request.url, init);
-    const rawBody = await res.text();
+    const maxResponseBytes = options.maxResponseBytes ?? 10 * 1024 * 1024;
+    const reader = res.body?.getReader();
+    const chunks: Uint8Array[] = [];
+    let sizeBytes = 0;
+    if (reader) {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sizeBytes += value.byteLength;
+          if (sizeBytes > maxResponseBytes) {
+            await reader.cancel();
+            throw new Error(`HTTP response exceeds the ${maxResponseBytes} byte limit.`);
+          }
+          chunks.push(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    }
+    const decoder = new TextDecoder();
+    const rawBody = chunks.map((chunk) => decoder.decode(chunk, { stream: true })).join('') + decoder.decode();
     const durationMs = Math.round(performance.now() - startTime);
 
     const headers: Record<string, string> = {};
@@ -47,6 +72,11 @@ export async function executeHttpRequest(
     let formattedBody: string | undefined;
 
     const contentType = headers['content-type'] ?? '';
+    const mediaType = contentType.split(';', 1)[0].trim().toLowerCase();
+    const isBinary =
+      !!mediaType &&
+      !/^(text\/|application\/(?:json|[^/]+\+json|xml|[^/]+\+xml|javascript|x-www-form-urlencoded))/.test(mediaType);
+    const binaryBody = isBinary ? Buffer.concat(chunks, sizeBytes).toString('base64') : undefined;
     if (contentType.includes('json') || rawBody.trim().startsWith('{') || rawBody.trim().startsWith('[')) {
       const errors: ParseError[] = [];
       parse(rawBody, errors, { disallowComments: true });
@@ -56,13 +86,12 @@ export async function executeHttpRequest(
       }
     }
 
-    const sizeBytes = new TextEncoder().encode(rawBody).length;
-
     return {
       status: res.status,
       statusText: res.statusText || String(res.status),
       headers,
       body: rawBody,
+      binaryBody,
       formattedBody,
       isJson,
       durationMs,

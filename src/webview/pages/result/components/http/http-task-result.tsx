@@ -22,7 +22,7 @@ export function HttpTaskResult({ task }: HttpTaskResultProps) {
   }
 
   if (task.status === 'completed') {
-    if (isHttpResponseData(task.output)) return <HttpResponseView response={task.output} />;
+    if (isHttpResponseData(task.output)) return <HttpResponseView response={task.output} taskId={task.id} />;
     return (
       <Empty
         title="Could not display this HTTP task"
@@ -69,6 +69,7 @@ function isHttpResponseData(value: unknown): value is HttpResponseData {
     typeof response.statusText === 'string' &&
     isHeaders(response.headers) &&
     typeof response.body === 'string' &&
+    (response.binaryBody === undefined || typeof response.binaryBody === 'string') &&
     (response.formattedBody === undefined || typeof response.formattedBody === 'string') &&
     typeof response.sizeBytes === 'number' &&
     Number.isFinite(response.sizeBytes) &&

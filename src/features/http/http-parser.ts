@@ -6,7 +6,7 @@ const directivePattern = /^\s*#\s*@name\s+(\S+)/i;
 const requestLinePattern =
   /^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\s+(\S+)(?:\s+HTTP\/[0-9.]+)?\s*$/i;
 const defaultGetPattern = /^\s*(https?:\/\/\S+)(?:\s+HTTP\/[0-9.]+)?\s*$/i;
-const headerPattern = /^([a-zA-Z0-9_-]+)\s*:\s*(.*)$/;
+const headerPattern = /^([!#$%&'*+.^_`|~a-zA-Z0-9-]+)\s*:\s*(.*)$/;
 
 export interface ParsedRequest {
   name?: string;
@@ -25,6 +25,7 @@ export function parseFileVariables(text: string): Map<string, string> {
   const lines = text.split(/\r?\n/);
 
   for (const line of lines) {
+    if (requestLinePattern.test(line) || defaultGetPattern.test(line)) break;
     const match = line.match(variablePattern);
     if (match) {
       const rawName = match[1];
@@ -71,8 +72,11 @@ export function resolveSystemVariable(expression: string): string | undefined {
 
   if (trimmed.startsWith('$randomInt')) {
     const parts = trimmed.split(/\s+/);
-    const min = parseInt(parts[1], 10) || 0;
-    const max = parseInt(parts[2], 10) || 1000;
+    const min = parts[1] === undefined ? 0 : Number(parts[1]);
+    const max = parts[2] === undefined ? 1000 : Number(parts[2]);
+    if (parts.length > 3 || !Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min > max) {
+      throw new Error('Invalid $randomInt range.');
+    }
     const val = Math.floor(Math.random() * (max - min + 1)) + min;
     return String(val);
   }
@@ -110,6 +114,7 @@ export function substituteVariables(text: string, variables: Map<string, string>
 export function isHttpVariableDefined(expression: string, variables: Map<string, string>): boolean {
   const name = expression.trim();
   if (name.startsWith('$')) {
+    if (/^\$credential\s+[a-zA-Z0-9-]+\s+(?:username|password)$/.test(name)) return true;
     if (/^\$processEnv(?:\s|$)/.test(name)) {
       const envName = name.split(/\s+/)[1];
       return !!envName && process.env[envName] !== undefined;
@@ -197,6 +202,7 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
         url = getMatch[1];
         break;
       }
+      if (line.trim() && !/^\s*(#|\/\/)/.test(line) && !variablePattern.test(line)) break;
     }
 
     if (requestLineIndex === -1) {
@@ -234,7 +240,12 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
 
       const headerMatch = line.match(headerPattern);
       if (headerMatch) {
-        headers[headerMatch[1].trim()] = headerMatch[2].trim();
+        const name = headerMatch[1].trim();
+        if (Object.keys(headers).some((existing) => existing.toLowerCase() === name.toLowerCase())) {
+          invalidHeaderLines.push(section.startLine + currentIndex);
+        } else {
+          headers[name] = headerMatch[2].trim();
+        }
       } else {
         invalidHeaderLines.push(section.startLine + currentIndex);
       }
@@ -275,16 +286,16 @@ export function buildHttpRequestData(request: ParsedRequest, variables: Map<stri
   if (request.invalidHeaderLines.length) {
     throw new Error(`Invalid HTTP header at line ${request.invalidHeaderLines[0] + 1}.`);
   }
-  const resolve = (value: string): string => {
-    const unresolved: string[] = [];
-    const result = value.replace(/\{\{([^}]+)\}\}/g, (match, expression: string) => {
-      const resolved = substituteVariables(match, variables);
-      if (!isHttpVariableDefined(expression, variables)) unresolved.push(expression.trim());
-      return resolved;
+  const resolve = (value: string, stack: string[] = []): string =>
+    value.replace(/\{\{([^}]+)\}\}/g, (match, expression: string) => {
+      const name = expression.trim();
+      if (!isHttpVariableDefined(name, variables)) throw new Error(`Undefined HTTP variable: ${name}`);
+      if (name.startsWith('$credential ')) return match;
+      if (name.startsWith('$')) return substituteVariables(match, variables);
+      const key = name.startsWith('@') ? name.slice(1) : name;
+      if (stack.includes(key)) throw new Error(`Circular HTTP variable reference: ${[...stack, key].join(' -> ')}`);
+      return resolve(variables.get(key)!, [...stack, key]);
     });
-    if (unresolved.length) throw new Error(`Undefined HTTP variables: ${unresolved.join(', ')}`);
-    return result;
-  };
   let resolvedUrl = resolve(request.url).trim();
   if (!/^https?:\/\//i.test(resolvedUrl)) {
     resolvedUrl = `http://${resolvedUrl}`;

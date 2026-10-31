@@ -12,6 +12,7 @@ import { registerSqliteEditor } from '@/features/database/sqlite/editor';
 import { disposeSqliteProcesses } from '@/features/database/sqlite/process-client';
 import { registerHttpLanguage } from '@/features/http/register-http';
 import { HttpResultService } from '@/features/http/result-service';
+import { CredentialService } from '@/features/credential/service';
 import { ResultTaskService } from '@/features/result/task-service';
 import { createTempFilesView } from '@/features/temp/view-handler';
 import { createPlaybookFilesView } from '@/features/playbook/view-handler';
@@ -30,7 +31,8 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
       { modal: true },
     );
   });
-  const httpResults = new HttpResultService(tasks);
+  const credentials = new CredentialService(context);
+  const httpResults = new HttpResultService(tasks, credentials);
   const tempFiles = createTempFilesView(context);
   const playbookFiles = createPlaybookFilesView(context);
   context.subscriptions.push(tempFiles);
@@ -42,7 +44,7 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   );
   registerCommands(context, tempFiles.refresh, playbookFiles.refresh, playbookFiles.openEditor);
   context.subscriptions.push(registerXmlFormatter());
-  context.subscriptions.push(registerHttpLanguage(httpResults));
+  context.subscriptions.push(registerHttpLanguage(httpResults, credentials));
   context.subscriptions.push(registerArchiveEditor(context));
   context.subscriptions.push(registerSpreadsheetEditor(context));
   context.subscriptions.push(registerSqliteEditor(context, tasks));
