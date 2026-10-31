@@ -56,6 +56,7 @@ Reuse the shared webview infrastructure; do not re-implement it per feature:
 
 ## Webview UI and Styling
 
+- Do not modify styles of foundational components in `src/webview/components/ui/` unless the user explicitly requests or permits it.
 - Prefer `@base-ui/react` primitives when building shared components in `src/webview/components/` whenever an equivalent control exists.
 - Prefer shared components from `src/webview/components/` when implementing UI. If a generic reusable control is missing, add or extend a shared component before using Base UI primitives directly or hand-rolling controls in pages. Do not wrap feature-specific compositions in new shared components.
 - Keep semantic structures such as tables and the custom tree when Base UI has no equivalent.
