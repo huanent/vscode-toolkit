@@ -84,6 +84,11 @@ export function HttpClientPanel({ values, credentials, onChange, onCreateCredent
           />
         </FormItem>
       )}
+      {value.authType === 'basic' && (
+        <FormItem name="username" label="Username (optional)">
+          <Input value={values.username ?? ''} onChange={(event) => onChange({ username: event.target.value })} />
+        </FormItem>
+      )}
     </>
   );
 }

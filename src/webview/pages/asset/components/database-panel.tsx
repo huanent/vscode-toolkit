@@ -45,6 +45,9 @@ export function DatabasePanel(props: ConnectionPanelProps) {
           onCreate={onCreateCredential}
         />
       </FormItem>
+      <FormItem name="username" label="Username (optional)">
+        <Input value={values.username ?? ''} onChange={(event) => onChange({ username: event.target.value })} />
+      </FormItem>
       <FormItem name="database" label="Default database (optional)" className="min-w-0">
         <Input value={values.database} onChange={(event) => onChange({ database: event.target.value })} />
       </FormItem>

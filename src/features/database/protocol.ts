@@ -7,6 +7,7 @@ export interface DatabaseConnectionConfiguration<TType extends string = string> 
   host: string;
   port: number;
   credentialId: string;
+  username?: string;
   proxyAssetIds?: string[];
   database?: string;
   tls: boolean;

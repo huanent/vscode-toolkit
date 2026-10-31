@@ -30,7 +30,10 @@ export class CredentialService {
       }
     }
 
-    return entries.sort((first, second) => first.description.localeCompare(second.description));
+    return entries.sort(
+      (first, second) =>
+        first.type.localeCompare(second.type) || (first.username ?? '').localeCompare(second.username ?? ''),
+    );
   }
 
   async save(credential: Credential): Promise<void> {

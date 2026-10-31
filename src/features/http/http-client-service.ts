@@ -10,6 +10,7 @@ import type { HttpClientRequest, HttpClientSettings } from './protocol';
 interface HttpClientAsset extends AssetRecord, HttpClientSettings {
   type: 'httpClient';
   credentialId: string;
+  username?: string;
 }
 
 export class HttpClientService implements AssetProvider {
@@ -35,6 +36,7 @@ export class HttpClientService implements AssetProvider {
       enableAI: record?.enableAI !== false,
       storageScope: record?.scope ?? 'global',
       credentialId: asset?.credentialId ?? '',
+      username: asset?.username ?? '',
       httpClient: {
         baseUrl: asset?.baseUrl ?? '',
         headers: asset?.headers ?? {},
@@ -56,6 +58,7 @@ export class HttpClientService implements AssetProvider {
       description: values.description.trim() || undefined,
       baseUrl: values.httpClient.baseUrl.trim(),
       credentialId: values.credentialId,
+      username: values.username?.trim() || undefined,
       enableAI: values.enableAI,
       scope: values.storageScope,
       folder: previous?.folder ?? folder,
@@ -99,7 +102,7 @@ export class HttpClientService implements AssetProvider {
       if (asset.authType === 'basic') {
         headers.set(
           'Authorization',
-          `Basic ${Buffer.from(`${credential.username ?? ''}:${secret}`).toString('base64')}`,
+          `Basic ${Buffer.from(`${asset.username || credential.username || ''}:${secret}`).toString('base64')}`,
         );
       } else if (asset.authType === 'bearer') {
         headers.set('Authorization', `Bearer ${secret}`);
@@ -144,7 +147,7 @@ export class HttpClientService implements AssetProvider {
 }
 
 function requireHttpClient(
-  record: AssetRecord & Partial<HttpClientSettings> & { credentialId?: string },
+  record: AssetRecord & Partial<HttpClientSettings> & { credentialId?: string; username?: string },
 ): HttpClientAsset {
   const asset = record as HttpClientAsset;
   if (

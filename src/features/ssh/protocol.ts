@@ -5,6 +5,7 @@ export interface SshConnectionConfiguration {
   host: string;
   port: number;
   credentialId: string;
+  username?: string;
   proxyAssetIds?: string[];
   sftpFavorites?: string[];
 }

@@ -33,6 +33,7 @@ export class PostgresqlService implements DatabaseProvider {
       port: previous?.port ?? 5432,
       database: previous?.database ?? '',
       credentialId: previous?.credentialId ?? '',
+      username: previous?.username ?? '',
       proxyAssetIds: previous?.proxyAssetIds ?? [],
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
@@ -49,6 +50,7 @@ export class PostgresqlService implements DatabaseProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
+      username: values.username?.trim() || undefined,
       proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
       database: values.database.trim() || undefined,
       tls: values.tls,
@@ -113,7 +115,7 @@ export class PostgresqlService implements DatabaseProvider {
       const client = new Client({
         host: tunnel?.host ?? asset.host,
         port: tunnel?.port ?? asset.port,
-        user: credential.username,
+        user: asset.username || credential.username,
         password: credential.password ?? '',
         database: database ?? asset.database ?? 'postgres',
         ssl: asset.tls

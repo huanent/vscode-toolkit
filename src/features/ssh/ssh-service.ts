@@ -47,6 +47,7 @@ export class SshService implements AssetProvider {
       host: previous?.host ?? 'localhost',
       port: previous?.port ?? 22,
       credentialId: previous?.credentialId ?? '',
+      username: previous?.username ?? '',
       proxyAssetIds: previous?.proxyAssetIds ?? [],
       database: '',
       tls: false,
@@ -366,14 +367,15 @@ export class SshService implements AssetProvider {
     const asset = requireSshConfiguration(await this.assets.get(assetId));
     const credential = (await this.credentials.list()).find((candidate) => candidate.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
-    if (!credential.username) throw new Error('SSH username is required.');
+    const username = asset.username || credential.username;
+    if (!username) throw new Error('SSH username is required.');
     if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
     if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
 
     const config: ConnectConfig = {
       host: asset.host,
       port: asset.port,
-      username: credential.username,
+      username,
       readyTimeout: 20000,
       keepaliveInterval: 10000,
       hostVerifier: (key: Buffer, verify: VerifyCallback) => {
@@ -477,6 +479,7 @@ export class SshService implements AssetProvider {
       host: values.host.trim(),
       port: values.port,
       credentialId: values.credentialId,
+      username: values.username?.trim() || undefined,
       proxyAssetIds: values.proxyAssetIds?.map((id) => id.trim()) ?? [],
       sftpFavorites: previous?.sftpFavorites,
     };
@@ -513,7 +516,7 @@ export class SshService implements AssetProvider {
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
-    if (!credential.username) throw new Error('SSH username is required.');
+    if (!asset.username && !credential.username) throw new Error('SSH username is required.');
     if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
     if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
     const pty = new SshPseudoterminal(() => this.connectClient(asset.id));
