@@ -1,4 +1,5 @@
 import type { HttpRequestData, HttpResponseData } from './protocol';
+import { applyEdits, format, parse, type ParseError } from 'jsonc-parser';
 
 export interface ExecuteOptions {
   timeoutMs?: number;
@@ -47,12 +48,11 @@ export async function executeHttpRequest(
 
     const contentType = headers['content-type'] ?? '';
     if (contentType.includes('json') || rawBody.trim().startsWith('{') || rawBody.trim().startsWith('[')) {
-      try {
-        const parsed = JSON.parse(rawBody);
-        formattedBody = JSON.stringify(parsed, null, 2);
+      const errors: ParseError[] = [];
+      parse(rawBody, errors, { disallowComments: true });
+      if (!errors.length && rawBody.trim()) {
+        formattedBody = applyEdits(rawBody, format(rawBody, undefined, { insertSpaces: true, tabSize: 2, eol: '\n' }));
         isJson = true;
-      } catch {
-        // Not valid JSON
       }
     }
 

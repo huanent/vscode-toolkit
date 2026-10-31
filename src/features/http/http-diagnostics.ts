@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseHttpDocument } from './http-parser';
+import { isHttpVariableDefined, parseFileVariables, parseHttpDocument } from './http-parser';
 
 export function registerHttpDiagnostics(): vscode.Disposable {
   const collection = vscode.languages.createDiagnosticCollection('http');
@@ -12,19 +12,26 @@ export function registerHttpDiagnostics(): vscode.Disposable {
 
     const diagnostics: vscode.Diagnostic[] = [];
     const requests = parseHttpDocument(document.getText());
+    const variables = parseFileVariables(document.getText());
     for (const request of requests) {
-      let inQuery = true;
-      for (let lineNumber = request.requestLineNumber + 1; lineNumber <= request.endLine; lineNumber++) {
+      for (const lineNumber of request.invalidHeaderLines) {
         const line = document.lineAt(lineNumber);
-        const text = line.text;
-        if (!text.trim()) break;
-        if (/^\s*(#|\/\/)/.test(text)) continue;
-        if (inQuery && /^\s*[?&]/.test(text)) continue;
-        inQuery = false;
-        if (!/^[a-zA-Z0-9_-]+\s*:/.test(text)) {
-          diagnostics.push(
-            new vscode.Diagnostic(line.range, 'Invalid HTTP header.', vscode.DiagnosticSeverity.Warning),
-          );
+        diagnostics.push(new vscode.Diagnostic(line.range, 'Invalid HTTP header.', vscode.DiagnosticSeverity.Error));
+      }
+      for (let lineNumber = request.requestLineNumber; lineNumber <= request.endLine; lineNumber++) {
+        const line = document.lineAt(lineNumber);
+        if (/^\s*(#|\/\/)/.test(line.text)) continue;
+        for (const match of line.text.matchAll(/\{\{([^}]+)\}\}/g)) {
+          if (!isHttpVariableDefined(match[1], variables)) {
+            const range = new vscode.Range(lineNumber, match.index, lineNumber, match.index + match[0].length);
+            diagnostics.push(
+              new vscode.Diagnostic(
+                range,
+                `Undefined HTTP variable: ${match[1].trim()}`,
+                vscode.DiagnosticSeverity.Error,
+              ),
+            );
+          }
         }
       }
     }
@@ -37,6 +44,13 @@ export function registerHttpDiagnostics(): vscode.Disposable {
       ) {
         diagnostics.push(
           new vscode.Diagnostic(line.range, 'HTTP request URL is missing.', vscode.DiagnosticSeverity.Error),
+        );
+      } else if (
+        /^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\s+\S+/i.test(line.text) &&
+        !requests.some((request) => lineNumber >= request.requestLineNumber && lineNumber <= request.endLine)
+      ) {
+        diagnostics.push(
+          new vscode.Diagnostic(line.range, 'Invalid HTTP request line.', vscode.DiagnosticSeverity.Error),
         );
       }
     }

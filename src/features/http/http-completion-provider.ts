@@ -2,7 +2,18 @@ import * as vscode from 'vscode';
 import { parseFileVariables, parseHttpDocument } from './http-parser';
 
 const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE'];
-const headers = ['Accept', 'Authorization', 'Cache-Control', 'Content-Type', 'Cookie', 'User-Agent'];
+const headers = [
+  'Accept',
+  'Accept-Encoding',
+  'Accept-Language',
+  'Authorization',
+  'Cache-Control',
+  'Content-Type',
+  'Cookie',
+  'User-Agent',
+  'Referer',
+  'Origin',
+];
 const systemVariables = ['$guid', '$timestamp', '$datetime', '$randomInt', '$processEnv'];
 const headerValues: Record<string, string[]> = {
   accept: ['application/json', 'application/xml', 'text/plain', 'text/html', '*/*'],
@@ -16,6 +27,8 @@ const headerValues: Record<string, string[]> = {
   ],
   authorization: ['Bearer', 'Basic'],
   'cache-control': ['no-cache', 'no-store', 'max-age=0', 'public', 'private'],
+  'accept-encoding': ['gzip', 'gzip, deflate, br', 'identity'],
+  'accept-language': ['en-US', 'zh-CN', 'en-US,en;q=0.9'],
 };
 
 export class HttpCompletionProvider implements vscode.CompletionItemProvider {
@@ -53,7 +66,8 @@ export class HttpCompletionProvider implements vscode.CompletionItemProvider {
     if (headerMatch) {
       const values = headerValues[headerMatch[1].toLowerCase()] ?? [];
       const start = position.character - headerMatch[2].length;
-      const end = document.lineAt(position.line).text.length;
+      const suffix = document.lineAt(position.line).text.slice(position.character);
+      const end = position.character + (suffix.match(/^[^,;\s]*/)?.[0].length ?? 0);
       return values.map((value) => {
         const item = new vscode.CompletionItem(value, vscode.CompletionItemKind.Value);
         item.range = new vscode.Range(position.line, start, position.line, end);
@@ -64,6 +78,8 @@ export class HttpCompletionProvider implements vscode.CompletionItemProvider {
     return headers.map((header) => {
       const item = new vscode.CompletionItem(header, vscode.CompletionItemKind.Property);
       item.insertText = `${header}: `;
+      if (headerValues[header.toLowerCase()])
+        item.command = { command: 'editor.action.triggerSuggest', title: 'Suggest header values' };
       return item;
     });
   }

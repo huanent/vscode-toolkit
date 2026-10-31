@@ -27,7 +27,10 @@ export async function sendHttpRequest(results: HttpResultService, targetLine?: n
   }
 
   const variables = parseFileVariables(content);
-  const requestData = buildHttpRequestData(request, variables);
-
-  await results.sendRequest(requestData);
+  try {
+    const requestData = buildHttpRequestData(request, variables);
+    await results.sendRequest(requestData);
+  } catch (error) {
+    void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+  }
 }

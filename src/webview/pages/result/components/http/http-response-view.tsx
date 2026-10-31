@@ -11,6 +11,7 @@ interface HttpResponseViewProps {
 
 export function HttpResponseView({ response }: HttpResponseViewProps) {
   const [side, setSide] = useState<'request' | 'response'>('response');
+  const [bodyMode, setBodyMode] = useState<'formatted' | 'raw'>('formatted');
   const statusColorClass =
     response.status >= 200 && response.status < 300
       ? 'text-(--vscode-testing-iconPassed)'
@@ -18,7 +19,7 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
         ? 'text-(--vscode-editorWarning-foreground)'
         : 'text-(--vscode-editorError-foreground)';
 
-  const displayBody = response.formattedBody ?? response.body;
+  const displayBody = bodyMode === 'formatted' ? (response.formattedBody ?? response.body) : response.body;
   const headers = side === 'request' ? response.request.headers : response.headers;
   const body = side === 'request' ? response.request.body : displayBody;
 
@@ -49,6 +50,17 @@ export function HttpResponseView({ response }: HttpResponseViewProps) {
       </div>
       <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
         <HttpHeaders headers={headers} />
+        {side === 'response' && response.formattedBody !== undefined && (
+          <SegmentedControl
+            ariaLabel="Response body format"
+            value={bodyMode}
+            onValueChange={setBodyMode}
+            options={[
+              { value: 'formatted', label: 'Formatted' },
+              { value: 'raw', label: 'Raw' },
+            ]}
+          />
+        )}
         <ResultText
           title={side === 'request' ? 'Request body' : 'Response body'}
           content={body ?? ''}

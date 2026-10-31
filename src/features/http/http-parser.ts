@@ -3,8 +3,9 @@ import type { HttpRequestData } from './protocol';
 const variablePattern = /^\s*(@[a-zA-Z0-9_.-]+)\s*=\s*(.*)$/;
 const separatorPattern = /^\s*###+\s*(.*)$/;
 const directivePattern = /^\s*#\s*@name\s+(\S+)/i;
-const requestLinePattern = /^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\s+(\S+)(?:\s+HTTP\/[0-9.]+)?/i;
-const defaultGetPattern = /^\s*(https?:\/\/\S+)(?:\s+HTTP\/[0-9.]+)?/i;
+const requestLinePattern =
+  /^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)\s+(\S+)(?:\s+HTTP\/[0-9.]+)?\s*$/i;
+const defaultGetPattern = /^\s*(https?:\/\/\S+)(?:\s+HTTP\/[0-9.]+)?\s*$/i;
 const headerPattern = /^([a-zA-Z0-9_-]+)\s*:\s*(.*)$/;
 
 export interface ParsedRequest {
@@ -15,6 +16,7 @@ export interface ParsedRequest {
   method: string;
   url: string;
   headers: Record<string, string>;
+  invalidHeaderLines: number[];
   body?: string;
 }
 
@@ -78,7 +80,7 @@ export function resolveSystemVariable(expression: string): string | undefined {
   if (trimmed.startsWith('$processEnv')) {
     const parts = trimmed.split(/\s+/);
     const varName = parts[1];
-    return (varName && process.env[varName]) ?? '';
+    return varName ? process.env[varName] : undefined;
   }
 
   return undefined;
@@ -103,6 +105,18 @@ export function substituteVariables(text: string, variables: Map<string, string>
 
     return match;
   });
+}
+
+export function isHttpVariableDefined(expression: string, variables: Map<string, string>): boolean {
+  const name = expression.trim();
+  if (name.startsWith('$')) {
+    if (/^\$processEnv(?:\s|$)/.test(name)) {
+      const envName = name.split(/\s+/)[1];
+      return !!envName && process.env[envName] !== undefined;
+    }
+    return /^\$(guid|timestamp|datetime|randomInt)(?:\s|$)/.test(name);
+  }
+  return variables.has(name) || variables.has(name.startsWith('@') ? name.slice(1) : `@${name}`);
 }
 
 export function parseHttpDocument(content: string): ParsedRequest[] {
@@ -203,6 +217,7 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
 
     // Parse headers until empty line
     const headers: Record<string, string> = {};
+    const invalidHeaderLines: number[] = [];
     while (currentIndex < section.lines.length) {
       const line = section.lines[currentIndex];
       const trimmed = line.trim();
@@ -220,6 +235,8 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
       const headerMatch = line.match(headerPattern);
       if (headerMatch) {
         headers[headerMatch[1].trim()] = headerMatch[2].trim();
+      } else {
+        invalidHeaderLines.push(section.startLine + currentIndex);
       }
 
       currentIndex++;
@@ -246,6 +263,7 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
       method,
       url,
       headers,
+      invalidHeaderLines,
       body,
     });
   }
@@ -254,17 +272,30 @@ export function parseHttpDocument(content: string): ParsedRequest[] {
 }
 
 export function buildHttpRequestData(request: ParsedRequest, variables: Map<string, string>): HttpRequestData {
-  let resolvedUrl = substituteVariables(request.url, variables).trim();
+  if (request.invalidHeaderLines.length) {
+    throw new Error(`Invalid HTTP header at line ${request.invalidHeaderLines[0] + 1}.`);
+  }
+  const resolve = (value: string): string => {
+    const unresolved: string[] = [];
+    const result = value.replace(/\{\{([^}]+)\}\}/g, (match, expression: string) => {
+      const resolved = substituteVariables(match, variables);
+      if (!isHttpVariableDefined(expression, variables)) unresolved.push(expression.trim());
+      return resolved;
+    });
+    if (unresolved.length) throw new Error(`Undefined HTTP variables: ${unresolved.join(', ')}`);
+    return result;
+  };
+  let resolvedUrl = resolve(request.url).trim();
   if (!/^https?:\/\//i.test(resolvedUrl)) {
     resolvedUrl = `http://${resolvedUrl}`;
   }
 
   const resolvedHeaders: Record<string, string> = {};
   for (const [key, value] of Object.entries(request.headers)) {
-    resolvedHeaders[key] = substituteVariables(value, variables);
+    resolvedHeaders[key] = resolve(value);
   }
 
-  const resolvedBody = request.body ? substituteVariables(request.body, variables) : undefined;
+  const resolvedBody = request.body ? resolve(request.body) : undefined;
 
   return {
     name: request.name,
@@ -276,22 +307,5 @@ export function buildHttpRequestData(request: ParsedRequest, variables: Map<stri
 }
 
 export function findRequestAtLine(requests: ParsedRequest[], targetLine: number): ParsedRequest | undefined {
-  if (requests.length === 0) return undefined;
-
-  const match = requests.find((r) => targetLine >= r.startLine && targetLine <= r.endLine);
-  if (match) return match;
-
-  // Closest request
-  let closest = requests[0];
-  let minDiff = Math.abs(requests[0].requestLineNumber - targetLine);
-
-  for (let i = 1; i < requests.length; i++) {
-    const diff = Math.abs(requests[i].requestLineNumber - targetLine);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = requests[i];
-    }
-  }
-
-  return closest;
+  return requests.find((request) => targetLine >= request.startLine && targetLine <= request.endLine);
 }

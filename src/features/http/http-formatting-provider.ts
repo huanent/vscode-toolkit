@@ -42,7 +42,13 @@ export class HttpFormattingProvider implements vscode.DocumentFormattingEditProv
       }
 
       const contentType = Object.entries(request.headers).find(([name]) => name.toLowerCase() === 'content-type')?.[1];
-      if (contentType?.split(';', 1)[0].trim().toLowerCase() !== 'application/json' || bodyStart < 0) continue;
+      const mediaType = contentType?.split(';', 1)[0].trim().toLowerCase();
+      if (
+        !mediaType ||
+        (mediaType !== 'application/json' && !/^application\/.+\+json$/.test(mediaType)) ||
+        bodyStart < 0
+      )
+        continue;
 
       let bodyEnd = request.endLine;
       while (bodyEnd >= bodyStart && !document.lineAt(bodyEnd).text.trim()) bodyEnd--;
@@ -50,7 +56,6 @@ export class HttpFormattingProvider implements vscode.DocumentFormattingEditProv
 
       const range = new vscode.Range(document.lineAt(bodyStart).range.start, document.lineAt(bodyEnd).range.end);
       const body = document.getText(range);
-      if (body.includes('{{')) continue;
       const errors: ParseError[] = [];
       parse(body, errors, { disallowComments: true });
       if (errors.length) continue;
