@@ -9,6 +9,7 @@ import { registerXmlFormatter } from '@/features/xml/register-xml-formatter';
 import { registerArchiveEditor } from '@/features/archive/editor';
 import { registerSpreadsheetEditor } from '@/features/spreadsheet/editor';
 import { registerSqliteEditor } from '@/features/database/sqlite/editor';
+import { submitSqliteQuery } from '@/features/database/sqlite/result-service';
 import { disposeSqliteProcesses } from '@/features/database/sqlite/process-client';
 import { registerHttpLanguage } from '@/features/http/register-http';
 import { HttpResultService } from '@/features/http/result-service';
@@ -23,6 +24,11 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
   await registerCustomCommands(context);
   context.subscriptions.push({ dispose: disposeSqliteProcesses });
   const tasks = new ResultTaskService();
+  tasks.registerRerunner('sqlite', async (task) => {
+    const input = task.input as { databaseUri?: string; sql?: string } | undefined;
+    if (!input?.databaseUri || !input.sql) throw new Error('Database location is unavailable for this task.');
+    await submitSqliteQuery(tasks, vscode.Uri.parse(input.databaseUri), input.sql);
+  });
   context.subscriptions.push(tasks);
   void tasks.initialize(resolveStorageDirectory(context, 'results')).catch((error: unknown) => {
     tasks.dispose();

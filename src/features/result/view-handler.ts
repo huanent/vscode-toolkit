@@ -66,6 +66,16 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
           await resultTaskService.selectTask(message.taskId);
           break;
         }
+        case 'rerunTask': {
+          try {
+            await resultTaskService.rerunTask(message.taskId);
+          } catch (error) {
+            void vscode.window.showErrorMessage(
+              `Could not rerun task: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
+          break;
+        }
         case 'terminateTask': {
           await resultTaskService.terminateTask(message.taskId);
           break;
@@ -100,6 +110,7 @@ function isResultWebviewMessage(message: unknown): message is ResultWebviewMessa
       );
     }
     case 'selectTask':
+    case 'rerunTask':
     case 'saveHttpResponse':
     case 'terminateTask':
     case 'deleteTask':

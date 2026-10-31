@@ -13,10 +13,10 @@ export async function submitSqliteQuery(
   const databaseName = path.posix.basename(databaseUri.path) || 'SQLite database';
   const querySummary = sql.replace(/\s+/g, ' ').trim();
 
-  await resultTaskService.startTask<DatabaseQueryInput, DatabaseQueryResult>({
+  await resultTaskService.startTask<DatabaseQueryInput & { databaseUri: string }, DatabaseQueryResult>({
     kind: 'sqlite',
     title: `${databaseName}: ${querySummary.slice(0, 64)}${querySummary.length > 64 ? '...' : ''}`,
-    input: { databaseName, sql },
+    input: { databaseName, databaseUri: databaseUri.toString(), sql },
     run: (signal) => executeSqliteQuery(databaseUri, sql, signal),
   });
 }

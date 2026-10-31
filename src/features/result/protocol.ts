@@ -29,5 +29,6 @@ export type ResultWebviewMessage =
   | { type: 'loadMoreTasks' }
   | { type: 'refreshTasks' }
   | { type: 'selectTask'; taskId: string }
+  | { type: 'rerunTask'; taskId: string }
   | { type: 'terminateTask'; taskId: string }
   | { type: 'deleteTask'; taskId: string };

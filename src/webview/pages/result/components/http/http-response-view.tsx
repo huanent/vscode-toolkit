@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { HttpResponseData } from '@/features/http/protocol';
-import type { ResultWebviewMessage } from '@/features/result/protocol';
+import type { HttpErrorData, HttpResponseData } from '@/features/http/protocol';
+import type { ResultTaskStatus, ResultWebviewMessage } from '@/features/result/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
 import { SegmentedControl } from '@/webview/components/ui/segmented-control';
@@ -9,39 +9,46 @@ import { postToHost } from '@/webview/utils/host-data';
 import { HttpHeaders } from './http-headers';
 import { ResultText } from '../result-text';
 
-interface HttpResponseViewProps {
-  response: HttpResponseData;
-  taskId: string;
-}
+type HttpResponseViewProps = { taskId: string } & (
+  | { response: HttpResponseData; error?: never; status?: never }
+  | { response?: never; error: HttpErrorData; status: ResultTaskStatus }
+);
 
-export function HttpResponseView({ response, taskId }: HttpResponseViewProps) {
+export function HttpResponseView({ response, error, status, taskId }: HttpResponseViewProps) {
   const [side, setSide] = useState<'request' | 'response'>('response');
   const [bodyMode, setBodyMode] = useState<'formatted' | 'raw'>('formatted');
+  const request = response?.request ?? error!.request;
   const statusColorClass =
-    response.status >= 200 && response.status < 300
+    response && response.status >= 200 && response.status < 300
       ? 'text-(--vscode-testing-iconPassed)'
-      : response.status >= 300 && response.status < 400
+      : response && response.status >= 300 && response.status < 400
         ? 'text-(--vscode-editorWarning-foreground)'
         : 'text-(--vscode-editorError-foreground)';
 
-  const displayBody = bodyMode === 'formatted' ? (response.formattedBody ?? response.body) : response.body;
-  const headers = side === 'request' ? response.request.headers : response.headers;
-  const body = side === 'request' ? response.request.body : displayBody;
+  const displayBody = bodyMode === 'formatted' ? (response?.formattedBody ?? response?.body) : response?.body;
+  const headers = side === 'request' ? request.headers : response?.headers;
+  const body = side === 'request' ? request.body : displayBody;
 
   return (
     <div className="flex min-w-0 flex-col h-full">
       <div className="shrink-0 flex items-center gap-2 px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 ">
-          <span className="shrink-0 font-mono font-semibold">{response.request.method}</span>
-          <span className="min-w-0 truncate font-mono select-text" title={response.request.url}>
-            {response.request.url}
+          <span className="shrink-0 font-mono font-semibold">{request.method}</span>
+          <span className="min-w-0 truncate font-mono select-text" title={request.url}>
+            {request.url}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2 font-mono ">
           <span className={statusColorClass}>
-            {response.status} {response.statusText}
+            {response
+              ? `${response.status} ${response.statusText}`
+              : status === 'cancelled'
+                ? 'Cancelled'
+                : status === 'interrupted'
+                  ? 'Interrupted'
+                  : 'Failed'}
           </span>
-          <span className="text-(--vscode-descriptionForeground)">{formatSize(response.sizeBytes)}</span>
+          {response && <span className="text-(--vscode-descriptionForeground)">{formatSize(response.sizeBytes)}</span>}
         </div>
         <SegmentedControl
           ariaLabel="HTTP message"
@@ -54,8 +61,8 @@ export function HttpResponseView({ response, taskId }: HttpResponseViewProps) {
         />
       </div>
       <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
-        <HttpHeaders headers={headers} />
-        {side === 'response' && response.formattedBody !== undefined && (
+        {headers && <HttpHeaders headers={headers} />}
+        {side === 'response' && response?.formattedBody !== undefined && (
           <SegmentedControl
             ariaLabel="Response body format"
             value={bodyMode}
@@ -66,7 +73,9 @@ export function HttpResponseView({ response, taskId }: HttpResponseViewProps) {
             ]}
           />
         )}
-        {side === 'response' && response.binaryBody !== undefined ? (
+        {side === 'response' && error ? (
+          <ResultText title="Error" content={error.message} />
+        ) : side === 'response' && response?.binaryBody !== undefined ? (
           <div className="flex items-center gap-2 py-2">
             <span>Binary response ({formatSize(response.sizeBytes)})</span>
             <Button
@@ -82,7 +91,7 @@ export function HttpResponseView({ response, taskId }: HttpResponseViewProps) {
           <ResultText
             title={side === 'request' ? 'Request body' : 'Response body'}
             content={body ?? ''}
-            language={side === 'response' && response.isJson ? 'json' : undefined}
+            language={side === 'response' && response?.isJson ? 'json' : undefined}
           />
         )}
       </div>

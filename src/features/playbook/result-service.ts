@@ -18,7 +18,13 @@ export class PlaybookResultService {
       environment: PlaybookEnvironmentVariable[],
       cancellation?: vscode.CancellationToken,
     ) => Promise<PlaybookEnvironmentValues | undefined>,
-  ) {}
+  ) {
+    tasks.registerRerunner('playbook', async (task) => {
+      const input = task.input as { name?: string; playbook?: PlaybookDefinition } | undefined;
+      if (!input?.name || !input.playbook) throw new Error('Playbook definition is unavailable.');
+      await this.runPlaybook(input.name, input.playbook);
+    });
+  }
 
   public async runPlaybook(name: string, playbook: PlaybookDefinition): Promise<void> {
     await validatePlaybook(playbook, this.ssh);

@@ -8,7 +8,12 @@ export class HttpResultService {
   constructor(
     private readonly tasks: ResultTaskService,
     private readonly credentials: CredentialService,
-  ) {}
+  ) {
+    tasks.registerRerunner('http', async (task) => {
+      if (!task.input || typeof task.input !== 'object') throw new Error('HTTP request is unavailable.');
+      await this.sendRequest(task.input as HttpRequestData);
+    });
+  }
 
   public async focusResultView(): Promise<void> {
     try {

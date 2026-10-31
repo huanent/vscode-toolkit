@@ -11,6 +11,7 @@ export interface ResultTaskDefinition<TInput, TOutput> {
 
 export class ResultTaskService {
   private readonly tasks = new Map<string, ResultTask>();
+  private readonly rerunners = new Map<string, (task: ResultTask) => Promise<void>>();
   private readonly controllers = new Map<string, AbortController>();
   private readonly taskOperations = new Map<string, Promise<void>>();
   private store: ResultTaskStore | undefined;
@@ -52,6 +53,18 @@ export class ResultTaskService {
 
   public getTask(taskId: string): ResultTask | undefined {
     return this.tasks.get(taskId);
+  }
+
+  public registerRerunner(kind: string, rerun: (task: ResultTask) => Promise<void>): void {
+    this.rerunners.set(kind, rerun);
+  }
+
+  public async rerunTask(taskId: string): Promise<void> {
+    const task = this.tasks.get(taskId);
+    if (!task) throw new Error('Task not found.');
+    const rerun = this.rerunners.get(task.kind);
+    if (!rerun) throw new Error(`Rerunning ${task.kind} tasks is not supported.`);
+    await rerun(task);
   }
 
   public subscribe(listener: () => void): { dispose(): void } {

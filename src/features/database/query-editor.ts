@@ -24,6 +24,17 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
   tasks: ResultTaskService,
   definition: QueryEditorDefinition<TAsset>,
 ): (asset: TAsset, database?: string, table?: string) => Promise<void> {
+  tasks.registerRerunner(definition.type, async (task) => {
+    const input = task.input as { assetId?: string; database?: string; sql?: string } | undefined;
+    if (!input?.assetId || !input.sql) throw new Error('Database connection information is unavailable for this task.');
+    const asset = await definition.requireAsset(input.assetId);
+    await tasks.startTask({
+      kind: definition.type,
+      title: task.title,
+      input: task.input,
+      run: (signal) => definition.query(asset, input.database, input.sql!, signal),
+    });
+  });
   const targets = new WeakMap<vscode.TextDocument, { assetId: string; database?: string }>();
   const updateContext = (document?: vscode.TextDocument) =>
     vscode.commands.executeCommand('setContext', definition.contextKey, Boolean(document && targets.has(document)));
@@ -45,7 +56,12 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
         await tasks.startTask({
           kind: definition.type,
           title: `${asset.name}: ${sql.replace(/\s+/g, ' ').slice(0, 64)}`,
-          input: { databaseName: definition.databaseName(asset, target.database), sql },
+          input: {
+            databaseName: definition.databaseName(asset, target.database),
+            assetId: target.assetId,
+            database: target.database,
+            sql,
+          },
           run: (signal) => definition.query(asset, target.database, sql, signal),
         });
       } catch (error) {

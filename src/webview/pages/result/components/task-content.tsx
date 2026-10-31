@@ -99,11 +99,19 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
           {task.status !== 'running' && (
             <span className="font-mono tabular-nums">{formatTaskDuration(task.updatedAt - task.createdAt)}</span>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            title="Rerun task"
+            aria-label={`Rerun ${task.title}`}
+            prefix={<Icon name="refresh" />}
+            onClick={() => postToHost({ type: 'rerunTask', taskId: task.id } satisfies ResultWebviewMessage)}
+          />
           {task.status === 'running' && (
             <Button
               variant="ghost"
               size="sm"
-              className="ml-auto"
               title="Terminate task"
               aria-label={`Terminate ${task.title}`}
               prefix={<Icon name="debug-stop" />}
