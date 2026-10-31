@@ -32,11 +32,6 @@ function emitWebviewHtml(): Plugin {
   return {
     name: 'emit-webview-html',
     generateBundle(_options, bundle) {
-      const stylesheets = Object.values(bundle)
-        .filter((output) => output.type === 'asset' && output.fileName.endsWith('.css'))
-        .map((output) => `<link rel="stylesheet" crossorigin href="/${output.fileName}">`)
-        .join('\n    ');
-
       for (const output of Object.values(bundle)) {
         if (output.type !== 'chunk' || !output.isEntry || !output.facadeModuleId) continue;
 
@@ -44,6 +39,7 @@ function emitWebviewHtml(): Plugin {
         if (!page || page.startsWith('../')) continue;
 
         const dependencies = new Set<string>([output.fileName]);
+        const css = new Set<string>();
         const collectDependencies = (fileName: string): void => {
           const chunk = bundle[fileName];
           if (chunk?.type !== 'chunk') return;
@@ -52,9 +48,13 @@ function emitWebviewHtml(): Plugin {
             dependencies.add(dependency);
             collectDependencies(dependency);
           }
+          for (const stylesheet of chunk.viteMetadata?.importedCss ?? []) css.add(stylesheet);
         };
         collectDependencies(output.fileName);
         dependencies.delete(output.fileName);
+        const stylesheets = [...css]
+          .map((fileName) => `<link rel="stylesheet" crossorigin href="/${fileName}">`)
+          .join('\n    ');
         const preloads = [...dependencies]
           .map((fileName) => `<link rel="modulepreload" crossorigin href="/${fileName}">`)
           .join('\n    ');

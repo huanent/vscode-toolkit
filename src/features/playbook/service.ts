@@ -19,6 +19,7 @@ interface PlaybookStorageIndex {
   entries: PlaybookRecordEntry[];
   playbooks: Map<string, StoredPlaybookLocation>;
   folders: Map<string, StorageRoot[]>;
+  matches?: string[];
 }
 
 export function createPlaybookRecord(parentId?: string): PlaybookRecord {
@@ -38,13 +39,8 @@ export async function readPlaybookRecords(roots: readonly StorageRoot[]): Promis
 }
 
 export async function searchPlaybookContents(roots: readonly StorageRoot[], query: string): Promise<string[]> {
-  const index = await readPlaybookStorage(roots);
-  const matches = await Promise.all(
-    [...index.playbooks].map(async ([id, location]) =>
-      (await readFile(location.path, 'utf8')).toLocaleLowerCase().includes(query) ? id : undefined,
-    ),
-  );
-  return matches.filter((id): id is string => id !== undefined);
+  const index = await readPlaybookStorage(roots, query);
+  return index.matches ?? [];
 }
 
 export async function readPlaybookRecord(
@@ -260,8 +256,8 @@ export function validatePlaybookFolderId(id: string): void {
   }
 }
 
-async function readPlaybookStorage(roots: readonly StorageRoot[]): Promise<PlaybookStorageIndex> {
-  const index: PlaybookStorageIndex = { entries: [], playbooks: new Map(), folders: new Map() };
+async function readPlaybookStorage(roots: readonly StorageRoot[], query?: string): Promise<PlaybookStorageIndex> {
+  const index: PlaybookStorageIndex = { entries: [], playbooks: new Map(), folders: new Map(), matches: [] };
   const folderEntries = new Map<string, PlaybookRecordEntry>();
 
   const visit = async (root: StorageRoot, currentDirectory: string, parentId?: string): Promise<void> => {
@@ -278,11 +274,13 @@ async function readPlaybookStorage(roots: readonly StorageRoot[]): Promise<Playb
       if (!child.isFile() || !child.name.endsWith('.json')) continue;
       const recordPath = path.join(currentDirectory, child.name);
       try {
-        const value = addLegacyPlaybookStepNames(JSON.parse(await readFile(recordPath, 'utf8')));
+        const contents = await readFile(recordPath, 'utf8');
+        const value = addLegacyPlaybookStepNames(JSON.parse(contents));
         if (!isPlaybookRecord(value) || child.name !== `${value.id}.json`) continue;
         if (index.playbooks.has(value.id)) throw new Error('Duplicate playbook id.');
         index.playbooks.set(value.id, { path: recordPath, root, parentId });
         index.entries.push({ id: value.id, name: value.name, type: 'playbook', parentId });
+        if (query !== undefined && contents.toLocaleLowerCase().includes(query)) index.matches!.push(value.id);
       } catch (error) {
         if (error instanceof Error && error.message === 'Duplicate playbook id.') throw error;
       }

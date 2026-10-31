@@ -2,11 +2,14 @@ import type { Cell } from 'exceljs';
 import * as path from 'node:path';
 import { Readable } from 'node:stream';
 import * as vscode from 'vscode';
+import * as yauzl from 'yauzl';
 import type { SpreadsheetSheet } from './protocol';
 
 const maxPreviewColumns = 100;
 const maxPreviewRows = 500;
 const maxFileBytes = 20 * 1024 * 1024;
+const maxUncompressedBytes = 100 * 1024 * 1024;
+const maxArchiveEntries = 2000;
 
 export function validateSpreadsheetUri(uri: vscode.Uri): void {
   if (!['.xlsx', '.csv'].includes(path.posix.extname(uri.path).toLowerCase())) {
@@ -20,6 +23,7 @@ export async function readSpreadsheet(uri: vscode.Uri): Promise<SpreadsheetSheet
   if (metadata.size > maxFileBytes) throw new Error('Spreadsheet preview supports files up to 20 MB.');
   const data = await vscode.workspace.fs.readFile(uri);
   if (data.byteLength > maxFileBytes) throw new Error('Spreadsheet preview supports files up to 20 MB.');
+  if (uri.path.toLowerCase().endsWith('.xlsx')) await validateWorkbookSize(Buffer.from(data));
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   if (uri.path.toLowerCase().endsWith('.csv')) {
@@ -51,6 +55,25 @@ export async function readSpreadsheet(uri: vscode.Uri): Promise<SpreadsheetSheet
       truncated: rowCount > maxPreviewRows || columnCount > maxPreviewColumns,
     };
   });
+}
+
+async function validateWorkbookSize(data: Buffer): Promise<void> {
+  const zip = await yauzl.fromBufferPromise(data, { validateEntrySizes: true });
+  try {
+    let total = 0;
+    let count = 0;
+    for await (const entry of zip.eachEntry()) {
+      total += entry.uncompressedSize;
+      count++;
+      if (total > maxUncompressedBytes || count > maxArchiveEntries) {
+        throw new Error(
+          'Spreadsheet preview supports XLSX files with up to 100 MB of uncompressed data and 2000 entries.',
+        );
+      }
+    }
+  } finally {
+    zip.close();
+  }
 }
 
 function formatCell(cell: Cell): string {

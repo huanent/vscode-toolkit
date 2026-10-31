@@ -12,7 +12,15 @@ export async function listDirectory(location: string | null): Promise<ExplorerDi
       const childUri = vscode.Uri.joinPath(uri, name).toString();
       return { id: childUri, uri: childUri, name, type: type & vscode.FileType.Directory ? 'directory' : 'file' };
     });
-  await Promise.all(entries.map(addStats));
+  let nextEntry = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(entries.length, 32) }, async () => {
+      while (nextEntry < entries.length) {
+        const entry = entries[nextEntry++];
+        await addStats(entry);
+      }
+    }),
+  );
   const root = getSystemRoot(uri);
   const ancestors = [directoryEntry(root, '/')];
   let ancestorUri = root;
@@ -47,8 +55,7 @@ export async function transferEntries(
 ): Promise<void> {
   const destination = vscode.Uri.parse(destinationValue);
   const destinationStat = await vscode.workspace.fs.stat(destination);
-  if (!(destinationStat.type & vscode.FileType.Directory))
-    throw new Error('The paste destination is not a folder.');
+  if (!(destinationStat.type & vscode.FileType.Directory)) throw new Error('The paste destination is not a folder.');
 
   for (const value of values) {
     const source = vscode.Uri.parse(value);
@@ -106,8 +113,7 @@ export async function pasteEntries(
   try {
     for (const uri of pending.uris) {
       await transferEntries([uri], destination, pending.move);
-      if (pending.move)
-        clipboard.value = { ...pending, uris: pending.uris.filter((pendingUri) => pendingUri !== uri) };
+      if (pending.move) clipboard.value = { ...pending, uris: pending.uris.filter((pendingUri) => pendingUri !== uri) };
     }
     if (pending.move) clipboard.value = undefined;
   } finally {
