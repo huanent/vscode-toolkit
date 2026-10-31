@@ -24,26 +24,25 @@ export class SftpFileService {
     if (side === 'local') {
       const path = await fs.realpath(address === '~' ? homedir() : resolve(current ?? homedir(), address ?? '.'));
       const children = await fs.readdir(path, { withFileTypes: true });
-      const entries = await Promise.all(
-        children
-          .filter((entry) => entry.name !== '.DS_Store')
-          .map(async (entry) => {
-            const child = join(path, entry.name);
-            try {
-              const stat = await fs.stat(child);
-              return {
-                path: child,
-                name: entry.name,
-                type: stat.isDirectory() ? 'directory' : 'file',
-                size: stat.isFile() ? stat.size : undefined,
-                mode: stat.mode,
-                modifiedAt: stat.mtimeMs,
-                symbolicLink: entry.isSymbolicLink(),
-              } satisfies SftpEntry;
-            } catch {
-              return undefined;
-            }
-          }),
+      const entries = await mapDirectoryEntries(
+        children.filter((entry) => entry.name !== '.DS_Store'),
+        async (entry) => {
+          const child = join(path, entry.name);
+          try {
+            const stat = await fs.stat(child);
+            return {
+              path: child,
+              name: entry.name,
+              type: stat.isDirectory() ? 'directory' : 'file',
+              size: stat.isFile() ? stat.size : undefined,
+              mode: stat.mode,
+              modifiedAt: stat.mtimeMs,
+              symbolicLink: entry.isSymbolicLink(),
+            } satisfies SftpEntry;
+          } catch {
+            return undefined;
+          }
+        },
       );
       return { path, parent: dirname(path), entries: entries.filter((entry) => entry !== undefined) };
     }
@@ -51,25 +50,24 @@ export class SftpFileService {
       const requested = !address || address === '~' ? '.' : posix.resolve(current ?? '/', address);
       const path = await promisify(sftp.realpath.bind(sftp))(requested);
       const children = await promisify(sftp.readdir.bind(sftp))(path);
-      const entries = await Promise.all(
-        children
-          .filter((entry) => !['.', '..', '.DS_Store'].includes(entry.filename))
-          .map(async (entry): Promise<SftpEntry> => {
-            const child = posix.join(path, entry.filename);
-            const symbolicLink = entry.attrs.isSymbolicLink();
-            const stat = symbolicLink
-              ? await promisify(sftp.stat.bind(sftp))(child).catch(() => entry.attrs)
-              : entry.attrs;
-            return {
-              path: child,
-              name: entry.filename,
-              type: stat.isDirectory() ? 'directory' : 'file',
-              size: stat.isFile() ? stat.size : undefined,
-              mode: stat.mode,
-              modifiedAt: stat.mtime * 1000,
-              symbolicLink,
-            };
-          }),
+      const entries = await mapDirectoryEntries(
+        children.filter((entry) => !['.', '..', '.DS_Store'].includes(entry.filename)),
+        async (entry): Promise<SftpEntry> => {
+          const child = posix.join(path, entry.filename);
+          const symbolicLink = entry.attrs.isSymbolicLink();
+          const stat = symbolicLink
+            ? await promisify(sftp.stat.bind(sftp))(child).catch(() => entry.attrs)
+            : entry.attrs;
+          return {
+            path: child,
+            name: entry.filename,
+            type: stat.isDirectory() ? 'directory' : 'file',
+            size: stat.isFile() ? stat.size : undefined,
+            mode: stat.mode,
+            modifiedAt: stat.mtime * 1000,
+            symbolicLink,
+          };
+        },
       );
       return { path, parent: posix.dirname(path), entries };
     });
@@ -200,6 +198,23 @@ export class SftpFileService {
       else await copy(destination, source);
     });
   }
+}
+
+async function mapDirectoryEntries<TEntry, TResult>(
+  entries: TEntry[],
+  map: (entry: TEntry) => Promise<TResult>,
+): Promise<TResult[]> {
+  const results = new Array<TResult>(entries.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(entries.length, 32) }, async () => {
+      while (next < entries.length) {
+        const index = next++;
+        results[index] = await map(entries[index]);
+      }
+    }),
+  );
+  return results;
 }
 
 function isMissing(error: unknown): boolean {

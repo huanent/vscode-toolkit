@@ -24,7 +24,7 @@ export function createAssetsView(
     return provider;
   };
   const list = async (): Promise<AssetTreeEntry[]> => {
-    const [assets, folders] = await Promise.all([service.list(), service.listFolders()]);
+    const { assets, folders } = await service.listWithFolders();
     const entries = assets.map((asset) => {
       const provider = providerFor(asset.type);
       const entry = provider.toViewEntry(asset);

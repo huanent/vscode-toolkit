@@ -1,4 +1,5 @@
-import { lstat, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { TempTreeEntry } from './protocol';
 
@@ -11,20 +12,44 @@ export async function readTempTree(directory: string): Promise<TempTreeEntry[]> 
 
 export async function searchTempContents(directory: string, query: string): Promise<string[]> {
   const tree = await readTempTree(directory);
-  const searchEntries = async (entries: readonly TempTreeEntry[], parent: string): Promise<string[]> => {
-    const matches = await Promise.all(
-      entries.map(async (entry) => {
-        const relativePath = parent ? `${parent}/${entry.name}` : entry.name;
-        if (entry.type === 'directory') return searchEntries(entry.children ?? [], relativePath);
-        const content = await readFile(await getTempFilePath(directory, relativePath));
-        return !content.includes(0) && content.toString('utf8').toLocaleLowerCase().includes(query)
-          ? [relativePath]
-          : [];
-      }),
-    );
-    return matches.flat();
+  const paths: string[] = [];
+  const collectEntries = (entries: readonly TempTreeEntry[], parent: string): void => {
+    for (const entry of entries) {
+      const relativePath = parent ? `${parent}/${entry.name}` : entry.name;
+      if (entry.type === 'directory') collectEntries(entry.children ?? [], relativePath);
+      else paths.push(relativePath);
+    }
   };
-  return searchEntries(tree, '');
+  collectEntries(tree, '');
+  const matches = new Array<boolean>(paths.length).fill(false);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(paths.length, 8) }, async () => {
+      while (next < paths.length) {
+        const index = next++;
+        try {
+          matches[index] = await searchTempFile(await getTempFilePath(directory, paths[index]), query);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+      }
+    }),
+  );
+  return paths.filter((_, index) => matches[index]);
+}
+
+async function searchTempFile(filePath: string, query: string): Promise<boolean> {
+  const stream = createReadStream(filePath, { encoding: 'utf8' });
+  let tail = '';
+  let matched = false;
+  for await (const chunk of stream) {
+    const text = chunk as string;
+    if (text.includes('\0')) return false;
+    const combined = tail + text.toLocaleLowerCase();
+    matched ||= combined.includes(query);
+    tail = query.length > 1 ? combined.slice(-(query.length - 1)) : '';
+  }
+  return matched;
 }
 
 export async function createTempFile(directory: string, rawName: string): Promise<string> {

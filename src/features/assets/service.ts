@@ -31,13 +31,19 @@ export class AssetService {
   }
 
   async list(): Promise<AssetRecord[]> {
+    return (await this.listWithFolders()).assets;
+  }
+
+  async listWithFolders(): Promise<{ assets: AssetRecord[]; folders: string[] }> {
     const entries: AssetRecord[] = [];
+    const folders = new Set<string>();
 
     for (const root of await this.existingRoots()) {
       const traverse = async (dir: string) => {
         const files = await readdir(dir, { withFileTypes: true });
         for (const file of files) {
           if (file.isDirectory()) {
+            folders.add(path.relative(root.directory, path.join(dir, file.name)).split(path.sep).join('/'));
             await traverse(path.join(dir, file.name));
           } else if (file.isFile() && file.name.endsWith('.json')) {
             try {
@@ -60,7 +66,10 @@ export class AssetService {
       };
       await traverse(root.directory);
     }
-    return entries.sort((first, second) => first.name.localeCompare(second.name));
+    return {
+      assets: entries.sort((first, second) => first.name.localeCompare(second.name)),
+      folders: [...folders].sort((first, second) => first.localeCompare(second)),
+    };
   }
 
   async listFolders(): Promise<string[]> {
