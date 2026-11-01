@@ -7,7 +7,7 @@ import { Select } from '@/webview/components/ui/select';
 import type { ConnectionPanelProps } from '@/webview/pages/asset/components/connection-panel';
 
 const passwordTypes = ['password'] as const;
-const tokenTypes = ['password', 'apiKey'] as const;
+const tokenTypes = ['apiKey'] as const;
 
 export function HttpClientPanel({ values, credentials, onChange, onCreateCredential }: ConnectionPanelProps) {
   const value = values.httpClient;
@@ -24,7 +24,11 @@ export function HttpClientPanel({ values, credentials, onChange, onCreateCredent
         <Select
           ariaLabel="Authentication"
           value={value.authType}
-          onValueChange={(next) => update('authType', next as HttpClientSettings['authType'])}
+          onValueChange={(next) => {
+            if (next !== value.authType) {
+              onChange({ httpClient: { ...value, authType: next as HttpClientSettings['authType'] }, credentialId: '' });
+            }
+          }}
           options={[
             { value: 'none', label: 'None' },
             { value: 'basic', label: 'Basic' },
