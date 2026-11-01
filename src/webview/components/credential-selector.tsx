@@ -9,11 +9,13 @@ const createCredentialValue = '__create-credential__';
 interface CredentialSelectorProps {
   credentials: CredentialSummary[];
   onCreate: (credential: Credential) => void;
+  allowedTypes: readonly Credential['type'][];
 }
 
 export function CredentialSelector({
   credentials,
   onCreate,
+  allowedTypes,
   onValueChange,
   ...selectProps
 }: CredentialSelectorProps & Omit<SelectProps, 'options' | 'placeholder' | 'ariaLabel'>) {
@@ -27,10 +29,12 @@ export function CredentialSelector({
         ariaLabel="Credential"
         placeholder="Select a credential"
         options={[
-          ...credentials.map((credential) => ({
-            value: credential.id,
-            label: `${credential.username || '-'} - ${credential.type === 'password' ? 'Password' : 'Private Key'} - ${credential.description || '-'}`,
-          })),
+          ...credentials
+            .filter((credential) => allowedTypes.includes(credential.type))
+            .map((credential) => ({
+              value: credential.id,
+              label: `${credential.username || '-'} - ${credential.type === 'password' ? 'Password' : credential.type === 'privateKey' ? 'Private Key' : 'API Key'} - ${credential.description || '-'}`,
+            })),
           { value: createCredentialValue, label: 'Create credential...' },
         ]}
         onValueChange={(value) => {
@@ -44,6 +48,7 @@ export function CredentialSelector({
       <CredentialDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        allowedTypes={allowedTypes}
         onSave={(credential) => {
           onCreate(credential);
           setDialogOpen(false);

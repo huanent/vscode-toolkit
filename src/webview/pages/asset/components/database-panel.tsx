@@ -4,6 +4,8 @@ import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
 import type { ConnectionPanelProps } from '@/webview/pages/asset/components/connection-panel';
 
+const credentialTypes = ['password'] as const;
+
 export function DatabasePanel(props: ConnectionPanelProps) {
   const { values, capabilities, credentials, onChange, onCreateCredential } = props;
   return (
@@ -42,6 +44,7 @@ export function DatabasePanel(props: ConnectionPanelProps) {
           value={values.credentialId}
           onValueChange={(credentialId) => onChange({ credentialId })}
           credentials={credentials}
+          allowedTypes={credentialTypes}
           onCreate={onCreateCredential}
         />
       </FormItem>

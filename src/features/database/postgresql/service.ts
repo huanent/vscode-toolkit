@@ -108,6 +108,7 @@ export class PostgresqlService implements DatabaseProvider {
     if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
     const credential = (await this.credentials.list()).find((entry) => entry.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
+    if (credential.type !== 'password') throw new Error('PostgreSQL requires a password credential.');
     const tunnel = asset.proxyAssetIds?.length
       ? await this.ssh.openTunnel(asset.proxyAssetIds, asset.host, asset.port, signal)
       : undefined;

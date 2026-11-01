@@ -1,17 +1,26 @@
-export interface Credential {
+interface CredentialBase {
   id: string;
   description: string;
-  type: 'password' | 'privateKey';
-  username?: string;
-  password?: string;
-  privateKey?: string;
-  passphrase?: string;
 }
+
+export type Credential = CredentialBase &
+  (
+    | { type: 'password'; username?: string; password?: string; privateKey?: never; passphrase?: never; apiKey?: never }
+    | {
+        type: 'privateKey';
+        username?: string;
+        privateKey?: string;
+        passphrase?: string;
+        password?: never;
+        apiKey?: never;
+      }
+    | { type: 'apiKey'; username?: never; apiKey?: string; password?: never; privateKey?: never; passphrase?: never }
+  );
 
 export interface CredentialSummary {
   id: string;
   description: string;
-  type: 'password' | 'privateKey';
+  type: Credential['type'];
   username?: string;
 }
 

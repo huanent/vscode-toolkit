@@ -5,8 +5,7 @@ import { isWorkspaceStorageAvailable, resolveStorageDirectory } from '@/host/uti
 import type { AssetProvider } from './asset-provider';
 import type { AssetEditorData, AssetEditorMessage, AssetFormValues } from './protocol';
 import type { AssetRecord, AssetService } from './service';
-import type { Credential } from '@/features/credential/protocol';
-import type { CredentialService } from '@/features/credential/service';
+import { isCredential, type CredentialService } from '@/features/credential/service';
 import { isStorageScope } from '@/shared/storage-scope';
 
 export function openAssetEditor(
@@ -56,6 +55,23 @@ export function openAssetEditor(
         panel.dispose();
       } else if (message.type === 'save') {
         if (!('values' in message) || !isFormValues(message.values)) throw new Error('Invalid asset configuration.');
+        const values = message.values;
+        if (
+          provider.type === 'ssh' ||
+          provider.type === 'mysql' ||
+          provider.type === 'postgresql' ||
+          (provider.type === 'httpClient' && values.httpClient?.authType !== 'none')
+        ) {
+          const credential = (await credentials.list()).find((entry) => entry.id === values.credentialId);
+          const compatible =
+            credential &&
+            (credential.type === 'password' ||
+              (provider.type === 'ssh' && credential.type === 'privateKey') ||
+              (provider.type === 'httpClient' &&
+                values.httpClient?.authType !== 'basic' &&
+                credential.type === 'apiKey'));
+          if (!compatible) throw new Error('Select a compatible credential.');
+        }
         saving = true;
         if (storageDirectory !== resolveStorageDirectory(context, 'assets'))
           throw new Error('Storage location changed. Reopen the asset editor.');
@@ -97,20 +113,6 @@ export function openAssetEditor(
     closed.dispose();
   });
   context.subscriptions.push(panel, bridge, listener, closed);
-}
-
-function isCredential(value: unknown): value is Credential {
-  if (!value || typeof value !== 'object') return false;
-  const credential = value as Partial<Credential>;
-  return (
-    typeof credential.id === 'string' &&
-    typeof credential.description === 'string' &&
-    (credential.type === 'password' || credential.type === 'privateKey') &&
-    (credential.username === undefined || typeof credential.username === 'string') &&
-    (credential.password === undefined || typeof credential.password === 'string') &&
-    (credential.privateKey === undefined || typeof credential.privateKey === 'string') &&
-    (credential.passphrase === undefined || typeof credential.passphrase === 'string')
-  );
 }
 
 function isFormValues(value: unknown): value is AssetFormValues {

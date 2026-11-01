@@ -493,6 +493,7 @@ export class MysqlService implements DatabaseProvider {
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
+    if (credential.type !== 'password') throw new Error('MySQL requires a password credential.');
     const tunnel = asset.proxyAssetIds?.length
       ? await this.ssh.openTunnel(asset.proxyAssetIds, asset.host, asset.port, signal)
       : undefined;

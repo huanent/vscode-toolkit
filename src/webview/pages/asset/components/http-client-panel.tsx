@@ -6,6 +6,9 @@ import { KeyValueEditor } from '@/webview/components/ui/key-value-editor';
 import { Select } from '@/webview/components/ui/select';
 import type { ConnectionPanelProps } from '@/webview/pages/asset/components/connection-panel';
 
+const passwordTypes = ['password'] as const;
+const tokenTypes = ['password', 'apiKey'] as const;
+
 export function HttpClientPanel({ values, credentials, onChange, onCreateCredential }: ConnectionPanelProps) {
   const value = values.httpClient;
   if (!value) return null;
@@ -79,7 +82,8 @@ export function HttpClientPanel({ values, credentials, onChange, onCreateCredent
             required
             value={values.credentialId}
             onValueChange={(credentialId) => onChange({ credentialId })}
-            credentials={credentials.filter((credential) => credential.type === 'password')}
+            credentials={credentials}
+            allowedTypes={value.authType === 'basic' ? passwordTypes : tokenTypes}
             onCreate={onCreateCredential}
           />
         </FormItem>

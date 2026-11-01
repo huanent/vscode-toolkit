@@ -21,8 +21,8 @@ export class CredentialService {
       if (file.isFile() && file.name.endsWith('.json')) {
         try {
           const value = JSON.parse(await readFile(path.join(this.directory, file.name), 'utf8'));
-          if (value && typeof value === 'object' && typeof value.id === 'string') {
-            entries.push(value as Credential);
+          if (isCredential(value) && value.id && file.name === `${value.id}.json`) {
+            entries.push(value);
           }
         } catch {
           // Ignore invalid files
@@ -37,6 +37,7 @@ export class CredentialService {
   }
 
   async save(credential: Credential): Promise<void> {
+    if (!isCredential(credential)) throw new Error('Invalid credential.');
     await mkdir(this.directory, { recursive: true });
     if (!credential.id) {
       credential.id = randomUUID();
@@ -46,6 +47,7 @@ export class CredentialService {
   }
 
   async delete(id: string): Promise<void> {
+    if (!isCredentialId(id)) throw new Error('Invalid credential ID.');
     const target = path.join(this.directory, `${id}.json`);
     try {
       await rm(target);
@@ -53,4 +55,44 @@ export class CredentialService {
       if (e.code !== 'ENOENT') throw e;
     }
   }
+}
+
+function isCredentialId(id: string): boolean {
+  return /^[a-zA-Z0-9-]+$/.test(id);
+}
+
+export function isCredential(value: unknown): value is Credential {
+  if (!value || typeof value !== 'object') return false;
+  const credential = value as Record<string, unknown>;
+  const optionalString = (field: unknown) => field === undefined || typeof field === 'string';
+  if (
+    typeof credential.id !== 'string' ||
+    (credential.id !== '' && !isCredentialId(credential.id)) ||
+    typeof credential.description !== 'string' ||
+    !optionalString(credential.username)
+  )
+    return false;
+  if (credential.type === 'password')
+    return (
+      optionalString(credential.password) &&
+      credential.privateKey === undefined &&
+      credential.passphrase === undefined &&
+      credential.apiKey === undefined
+    );
+  if (credential.type === 'privateKey')
+    return (
+      optionalString(credential.privateKey) &&
+      optionalString(credential.passphrase) &&
+      credential.password === undefined &&
+      credential.apiKey === undefined
+    );
+  if (credential.type === 'apiKey')
+    return (
+      optionalString(credential.apiKey) &&
+      credential.username === undefined &&
+      credential.password === undefined &&
+      credential.privateKey === undefined &&
+      credential.passphrase === undefined
+    );
+  return false;
 }

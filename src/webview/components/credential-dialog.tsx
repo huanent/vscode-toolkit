@@ -9,6 +9,7 @@ import type { Credential } from '@/features/credential/protocol';
 const credentialTypeOptions: readonly SelectOption[] = [
   { value: 'password', label: 'Password' },
   { value: 'privateKey', label: 'Private Key' },
+  { value: 'apiKey', label: 'API Key' },
 ];
 
 interface CredentialDialogProps {
@@ -16,38 +17,47 @@ interface CredentialDialogProps {
   onOpenChange: (open: boolean) => void;
   credential?: Credential;
   onSave: (credential: Credential) => void;
+  allowedTypes?: readonly Credential['type'][];
 }
 
-export function CredentialDialog({ open, onOpenChange, credential, onSave }: CredentialDialogProps) {
+export function CredentialDialog({ open, onOpenChange, credential, onSave, allowedTypes }: CredentialDialogProps) {
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<'password' | 'privateKey'>('password');
+  const [type, setType] = useState<Credential['type']>('password');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [privateKey, setPrivateKey] = useState('');
   const [passphrase, setPassphrase] = useState('');
+  const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
     if (open) {
       setDescription(credential?.description || '');
-      setType(credential?.type || 'password');
+      setType(credential?.type || allowedTypes?.[0] || 'password');
       setUsername(credential?.username || '');
       setPassword(credential?.password || '');
       setPrivateKey(credential?.privateKey || '');
       setPassphrase(credential?.passphrase || '');
+      setApiKey(credential?.apiKey || '');
     }
-  }, [open, credential]);
+  }, [open, credential, allowedTypes]);
 
   const handleSave = () => {
     if (!description) return;
-    onSave({
+    const base = {
       id: credential?.id || '',
       description,
-      type,
-      username: username || undefined,
-      password: type === 'password' ? password || undefined : undefined,
-      privateKey: type === 'privateKey' ? privateKey || undefined : undefined,
-      passphrase: type === 'privateKey' ? passphrase || undefined : undefined,
-    });
+    };
+    if (type === 'password')
+      onSave({ ...base, type, username: username || undefined, password: password || undefined });
+    else if (type === 'privateKey')
+      onSave({
+        ...base,
+        type,
+        username: username || undefined,
+        privateKey: privateKey || undefined,
+        passphrase: passphrase || undefined,
+      });
+    else onSave({ ...base, type, apiKey: apiKey || undefined });
   };
 
   return (
@@ -62,17 +72,21 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
           <Select
             ariaLabel="Type"
             value={type}
-            onValueChange={(value) => setType(value as 'password' | 'privateKey')}
-            options={credentialTypeOptions}
+            onValueChange={(value) => setType(value as Credential['type'])}
+            options={credentialTypeOptions.filter(
+              (option) => !allowedTypes || allowedTypes.includes(option.value as Credential['type']),
+            )}
           />
         </FormItem>
-        <FormItem name="username" label="Username">
-          <Input
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Username (optional)"
-          />
-        </FormItem>
+        {type !== 'apiKey' && (
+          <FormItem name="username" label="Username">
+            <Input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="Username (optional)"
+            />
+          </FormItem>
+        )}
         {type === 'password' && (
           <FormItem name="password" label="Password">
             <Input
@@ -81,6 +95,11 @@ export function CredentialDialog({ open, onOpenChange, credential, onSave }: Cre
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
             />
+          </FormItem>
+        )}
+        {type === 'apiKey' && (
+          <FormItem name="apiKey" label="API Key">
+            <Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} />
           </FormItem>
         )}
         {type === 'privateKey' && (

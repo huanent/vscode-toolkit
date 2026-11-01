@@ -98,7 +98,7 @@ export class HttpClientService implements AssetProvider {
     new Headers(input.headers).forEach((value, key) => headers.set(key, value));
     if (asset.authType !== 'none') {
       const credential = await this.requireCredential(asset);
-      const secret = credential.password ?? '';
+      const secret = (credential.type === 'apiKey' ? credential.apiKey : credential.password) ?? '';
       if (asset.authType === 'basic') {
         headers.set(
           'Authorization',
@@ -135,8 +135,13 @@ export class HttpClientService implements AssetProvider {
 
   private async requireCredential(asset: HttpClientAsset) {
     const credential = (await this.credentials.list()).find((entry) => entry.id === asset.credentialId);
-    if (!credential || credential.type !== 'password' || !credential.password) {
-      throw new Error('Select a password credential for HTTP authentication.');
+    if (
+      !credential ||
+      (credential.type !== 'password' && credential.type !== 'apiKey') ||
+      (asset.authType === 'basic' && credential.type !== 'password') ||
+      !(credential.type === 'password' ? credential.password : credential.apiKey)
+    ) {
+      throw new Error('Select a compatible credential for HTTP authentication.');
     }
     return credential;
   }

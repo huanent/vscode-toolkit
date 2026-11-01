@@ -3,6 +3,8 @@ import { FormItem } from '@/webview/components/ui/form';
 import { Input } from '@/webview/components/ui/input';
 import type { ConnectionPanelProps } from '@/webview/pages/asset/components/connection-panel';
 
+const credentialTypes = ['password', 'privateKey'] as const;
+
 export function SshPanel({ values, credentials, onChange, onCreateCredential }: ConnectionPanelProps) {
   return (
     <>
@@ -40,6 +42,7 @@ export function SshPanel({ values, credentials, onChange, onCreateCredential }: 
           value={values.credentialId}
           onValueChange={(credentialId) => onChange({ credentialId })}
           credentials={credentials}
+          allowedTypes={credentialTypes}
           onCreate={onCreateCredential}
         />
       </FormItem>

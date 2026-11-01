@@ -367,6 +367,7 @@ export class SshService implements AssetProvider {
     const asset = requireSshConfiguration(await this.assets.get(assetId));
     const credential = (await this.credentials.list()).find((candidate) => candidate.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
+    if (credential.type === 'apiKey') throw new Error('SSH requires a password or private key credential.');
     const username = asset.username || credential.username;
     if (!username) throw new Error('SSH username is required.');
     if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
@@ -516,6 +517,7 @@ export class SshService implements AssetProvider {
     const credentials = await this.credentials.list();
     const credential = credentials.find((c) => c.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
+    if (credential.type === 'apiKey') throw new Error('SSH requires a password or private key credential.');
     if (!asset.username && !credential.username) throw new Error('SSH username is required.');
     if (credential.type === 'password' && !credential.password) throw new Error('SSH password is required.');
     if (credential.type === 'privateKey' && !credential.privateKey) throw new Error('SSH private key is required.');
