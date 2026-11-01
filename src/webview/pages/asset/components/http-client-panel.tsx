@@ -26,7 +26,10 @@ export function HttpClientPanel({ values, credentials, onChange, onCreateCredent
           value={value.authType}
           onValueChange={(next) => {
             if (next !== value.authType) {
-              onChange({ httpClient: { ...value, authType: next as HttpClientSettings['authType'] }, credentialId: '' });
+              onChange({
+                httpClient: { ...value, authType: next as HttpClientSettings['authType'] },
+                credentialId: '',
+              });
             }
           }}
           options={[
