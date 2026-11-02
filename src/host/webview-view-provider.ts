@@ -4,7 +4,7 @@ import { getWebviewHtml } from '@/host/webview-html';
 
 export interface WebviewViewHandler {
   load?: () => Promise<unknown>;
-  onResolve?: (webview: vscode.Webview) => void;
+  onResolve?: (webview: vscode.Webview, view: vscode.WebviewView) => void;
   onMessage?: (message: unknown, webview: vscode.Webview) => Promise<void> | void;
   onDispose?: () => void;
 }
@@ -19,7 +19,7 @@ export function composeWebviewHandlers(handlers: Record<string, WebviewViewHandl
       );
       return Object.fromEntries(entries);
     },
-    onResolve: (webview) => Object.values(handlers).forEach((h) => h.onResolve?.(webview)),
+    onResolve: (webview, view) => Object.values(handlers).forEach((h) => h.onResolve?.(webview, view)),
     onMessage: async (message, webview) => {
       for (const h of Object.values(handlers)) {
         await h.onMessage?.(message, webview);
@@ -42,7 +42,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.assetsUri],
     };
     const disposables: vscode.Disposable[] = [];
-    this.handler?.onResolve?.(webviewView.webview);
+    this.handler?.onResolve?.(webviewView.webview, webviewView);
     if (this.handler?.load) {
       disposables.push(serveWebviewData(webviewView.webview, this.handler.load, { once: false }));
     }

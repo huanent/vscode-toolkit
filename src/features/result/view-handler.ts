@@ -8,9 +8,15 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
 
   return {
     load: async () => resultTaskService.getState(),
-    onResolve: (webview) => {
+    onResolve: (webview, view) => {
       subscription?.dispose();
+      const updateBadge = () => {
+        const count = resultTaskService.getRunningCount();
+        view.badge = count > 0 ? { value: count, tooltip: `${count} running tasks` } : undefined;
+      };
+      updateBadge();
       subscription = resultTaskService.subscribe(() => {
+        updateBadge();
         void Promise.resolve()
           .then(async () =>
             webview.postMessage({

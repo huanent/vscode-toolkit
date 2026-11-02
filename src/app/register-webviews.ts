@@ -144,9 +144,9 @@ export function registerWebviews(
       }
       await composedDashboardHandler.onMessage?.(message, webview);
     },
-    onResolve: (webview) => {
+    onResolve: (webview, view) => {
       dashboardWebview = webview;
-      composedDashboardHandler.onResolve?.(webview);
+      composedDashboardHandler.onResolve?.(webview, view);
     },
     onDispose: () => {
       dashboardWebview = undefined;

@@ -55,6 +55,10 @@ export class ResultTaskService {
     return this.tasks.get(taskId);
   }
 
+  public getRunningCount(): number {
+    return Array.from(this.tasks.values()).filter((task) => task.status === 'running').length;
+  }
+
   public registerRerunner(kind: string, rerun: (task: ResultTask) => Promise<void>): void {
     this.rerunners.set(kind, rerun);
   }
