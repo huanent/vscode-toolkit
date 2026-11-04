@@ -28,7 +28,7 @@ export class PlaybookResultService {
 
   public async runPlaybook(name: string, playbook: PlaybookDefinition): Promise<void> {
     await validatePlaybook(playbook, this.ssh);
-    if (!(await confirmPlaybookRun(name, playbook))) return;
+    if (!playbook.environment?.length && !(await confirmPlaybookRun(name, playbook))) return;
     const values = await this.resolveEnvironment(name, playbook);
     if (!values) return;
     await this.startPlaybookTask(name, playbook, (signal, updateOutput) =>
