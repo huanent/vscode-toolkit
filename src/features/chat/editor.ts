@@ -41,7 +41,9 @@ export function registerChat(context: vscode.ExtensionContext): void {
                   const template = current.data.templates.find((item) => item.id === message.id);
                   if (!template) break;
                   const choice = await vscode.window.showWarningMessage(
-                    `Delete template "${template.name}"?`, { modal: true }, 'Delete',
+                    `Delete template "${template.name}"?`,
+                    { modal: true },
+                    'Delete',
                   );
                   if (choice === 'Delete') await current.deleteTemplate(message.id);
                 }

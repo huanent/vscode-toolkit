@@ -142,10 +142,12 @@ export class ChatService {
   }
 
   initialize(): ChatData {
-    void this.loadConfig().then(() => this.emit()).catch((error: unknown) => {
-      this.error = error instanceof Error ? error.message : String(error);
-      this.emit();
-    });
+    void this.loadConfig()
+      .then(() => this.emit())
+      .catch((error: unknown) => {
+        this.error = error instanceof Error ? error.message : String(error);
+        this.emit();
+      });
     this.historyLoad = this.loadHistory().catch((error: unknown) => {
       this.error = error instanceof Error ? error.message : String(error);
       this.emit();
@@ -165,23 +167,44 @@ export class ChatService {
     const value: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
     if (!value || typeof value !== 'object') throw new Error('Invalid chat configuration.');
     const config = value as { templates?: unknown; systemPrompt?: unknown };
-    if (config.templates !== undefined && (!Array.isArray(config.templates) || !config.templates.every(
-      (item: unknown) => item && typeof item === 'object' && typeof (item as ChatPromptTemplate).id === 'string' &&
-        typeof (item as ChatPromptTemplate).name === 'string' && typeof (item as ChatPromptTemplate).content === 'string',
-    ))) throw new Error('Invalid chat templates.');
-    if (config.systemPrompt !== undefined && typeof config.systemPrompt !== 'string') throw new Error('Invalid system prompt.');
+    if (
+      config.templates !== undefined &&
+      (!Array.isArray(config.templates) ||
+        !config.templates.every(
+          (item: unknown) =>
+            item &&
+            typeof item === 'object' &&
+            typeof (item as ChatPromptTemplate).id === 'string' &&
+            typeof (item as ChatPromptTemplate).name === 'string' &&
+            typeof (item as ChatPromptTemplate).content === 'string',
+        ))
+    )
+      throw new Error('Invalid chat templates.');
+    if (config.systemPrompt !== undefined && typeof config.systemPrompt !== 'string')
+      throw new Error('Invalid system prompt.');
     this.templates = (config.templates as ChatPromptTemplate[] | undefined) ?? [];
     this.systemPrompt = (config.systemPrompt as string | undefined) ?? '';
   }
 
   private async saveConfig(): Promise<void> {
     await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(this.configUri, '..'));
-    await vscode.workspace.fs.writeFile(this.configUri, Buffer.from(JSON.stringify({ templates: this.templates, systemPrompt: this.systemPrompt }, null, 2)));
+    await vscode.workspace.fs.writeFile(
+      this.configUri,
+      Buffer.from(JSON.stringify({ templates: this.templates, systemPrompt: this.systemPrompt }, null, 2)),
+    );
     this.emit();
   }
 
   async saveTemplate(template: ChatPromptTemplate): Promise<void> {
-    if (!template || typeof template.id !== 'string' || typeof template.name !== 'string' || !template.name.trim() || typeof template.content !== 'string' || !template.content.trim()) return;
+    if (
+      !template ||
+      typeof template.id !== 'string' ||
+      typeof template.name !== 'string' ||
+      !template.name.trim() ||
+      typeof template.content !== 'string' ||
+      !template.content.trim()
+    )
+      return;
     await this.updateConfig(() => {
       const index = this.templates.findIndex((item) => item.id === template.id);
       if (index < 0) this.templates.push(template);
@@ -190,11 +213,15 @@ export class ChatService {
   }
 
   async deleteTemplate(id: string): Promise<void> {
-    await this.updateConfig(() => { this.templates = this.templates.filter((item) => item.id !== id); });
+    await this.updateConfig(() => {
+      this.templates = this.templates.filter((item) => item.id !== id);
+    });
   }
 
   async saveSystemPrompt(content: string): Promise<void> {
-    await this.updateConfig(() => { this.systemPrompt = content; });
+    await this.updateConfig(() => {
+      this.systemPrompt = content;
+    });
   }
 
   private updateConfig(change: () => void): Promise<void> {
@@ -371,7 +398,12 @@ export class ChatService {
             : vscode.LanguageModelChatMessage.Assistant(message.content),
         );
       if (this.systemPrompt.trim()) messages.unshift(vscode.LanguageModelChatMessage.User(this.systemPrompt));
-      const inputTokens = await this.countTokens(model, this.systemPrompt.trim() ? [{ role: 'user', content: this.systemPrompt }, ...this.chat.messages] : this.chat.messages);
+      const inputTokens = await this.countTokens(
+        model,
+        this.systemPrompt.trim()
+          ? [{ role: 'user', content: this.systemPrompt }, ...this.chat.messages]
+          : this.chat.messages,
+      );
       const response = await model.sendRequest(messages, {}, cancellation.token);
       const reply: ChatMessage = { role: 'assistant', content: '', inputTokens };
       this.chat.messages.push(reply);
