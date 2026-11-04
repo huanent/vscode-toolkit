@@ -193,7 +193,8 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
         const sides: SftpSide[] =
           request.type === 'refresh' || request.type === 'transfer' ? ['local', 'remote'] : [request.side];
         if (sides.some((side) => busy[side])) return;
-        for (const side of sides) busy[side] = true;
+        const busySides = request.type === 'transfer' ? [] : sides;
+        for (const side of busySides) busy[side] = true;
         data.error = undefined;
         await publish();
         try {
@@ -288,21 +289,48 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
                 );
                 if (confirmed !== 'Overwrite') return;
               }
-              await vscode.window.withProgress(
-                {
-                  location: vscode.ProgressLocation.Notification,
-                  title: `${side === 'local' ? 'Uploading' : 'Downloading'} ${name}`,
-                  cancellable: false,
-                },
-                () => files.transfer(side, entry.path, files.child(destinationSide, destination.path, name)),
-              );
+              const controller = new AbortController();
+              const signal = AbortSignal.any([cancellation.signal, controller.signal]);
+              await Promise.resolve(
+                vscode.window.withProgress(
+                  {
+                    location: vscode.ProgressLocation.Notification,
+                    title: `${side === 'local' ? 'Uploading' : 'Downloading'} ${name}`,
+                    cancellable: true,
+                  },
+                  async (progress, token) => {
+                    const listener = token.onCancellationRequested(() => controller.abort());
+                    let previous = 0;
+                    try {
+                      await files.transfer(
+                        side,
+                        entry.path,
+                        files.child(destinationSide, destination.path, name),
+                        signal,
+                        (current, transferred, total) => {
+                          const percent = total > 0 ? Math.min(100, (transferred / total) * 100) : 0;
+                          progress.report({
+                            message: `${current}: ${Math.floor(percent)}%`,
+                            increment: entry.type === 'file' ? Math.max(0, percent - previous) : undefined,
+                          });
+                          previous = percent;
+                        },
+                      );
+                    } finally {
+                      listener.dispose();
+                    }
+                  },
+                ),
+              ).catch((error: unknown) => {
+                if (!signal.aborted) throw error;
+              });
             }
           }
           await refresh(sides);
         } catch (error) {
           data.error = error instanceof Error ? error.message : String(error);
         } finally {
-          for (const side of sides) busy[side] = false;
+          for (const side of busySides) busy[side] = false;
           await publish();
         }
       };

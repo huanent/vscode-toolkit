@@ -13,7 +13,7 @@ export class SftpFileService {
   private readonly remote: <T>(run: (sftp: SFTPWrapper) => Promise<T>) => Promise<T>;
 
   constructor(
-    ssh: SshService,
+    private readonly ssh: SshService,
     private readonly assetId: string,
     private readonly signal: AbortSignal,
   ) {
@@ -141,10 +141,16 @@ export class SftpFileService {
     await vscode.window.showTextDocument(document, { preview: true });
   }
 
-  async transfer(side: SftpSide, source: string, destination: string): Promise<void> {
-    await this.remote(async (sftp) => {
+  async transfer(
+    side: SftpSide,
+    source: string,
+    destination: string,
+    signal: AbortSignal,
+    onProgress: (name: string, transferred: number, total: number) => void,
+  ): Promise<void> {
+    await this.ssh.withSftp(this.assetId, signal, async (sftp) => {
       const copy = async (local: string, remote: string): Promise<void> => {
-        this.signal.throwIfAborted();
+        signal.throwIfAborted();
         if ((side === 'local' ? basename(local) : posix.basename(remote)) === '.DS_Store') return;
         const sourceStat = side === 'local' ? await fs.lstat(local) : await promisify(sftp.lstat.bind(sftp))(remote);
         if (sourceStat.isSymbolicLink()) throw new Error('Symbolic link transfers are not supported.');
@@ -187,11 +193,23 @@ export class SftpFileService {
           } catch (error) {
             if (!isMissing(error)) throw error;
           }
+          const name = side === 'local' ? basename(local) : posix.basename(remote);
+          const options = {
+            step: (transferred: number, _chunk: number, total: number) => onProgress(name, transferred, total),
+          };
           if (side === 'local')
-            await stagedUpload(sftp, remote, (temporaryPath) =>
-              promisify(sftp.fastPut.bind(sftp))(local, temporaryPath),
+            await stagedUpload(
+              sftp,
+              remote,
+              (temporaryPath) =>
+                new Promise<void>((resolve, reject) => {
+                  sftp.fastPut(local, temporaryPath, options, (error) => (error ? reject(error) : resolve()));
+                }),
             );
-          else await promisify(sftp.fastGet.bind(sftp))(remote, local);
+          else
+            await new Promise<void>((resolve, reject) => {
+              sftp.fastGet(remote, local, options, (error) => (error ? reject(error) : resolve()));
+            });
         }
       };
       if (side === 'local') await copy(source, destination);
