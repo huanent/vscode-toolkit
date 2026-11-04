@@ -74,6 +74,9 @@ function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: str
         (other, otherIndex) => otherIndex !== index && other.name.toUpperCase() === variable.name.toUpperCase(),
       ),
   );
+  const validConditions = steps.every(
+    ({ step }) => !step.when || environment.some((variable) => variable.name === step.when?.variable),
+  );
 
   const updateStep = (id: string, step: PlaybookStep) =>
     setSteps(steps.map((item) => (item.id === id ? { ...item, step } : item)));
@@ -112,6 +115,7 @@ function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: str
             !name.trim() ||
             !steps.length ||
             !validEnvironment ||
+            !validConditions ||
             !steps.every((item) => isStepComplete(item.step, sshHosts))
           )
             return;
@@ -129,7 +133,7 @@ function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: str
           storageScope={storageScope}
           onStorageScopeChange={setStorageScope}
           workspaceStorageAvailable={data.workspaceStorageAvailable}
-          saveDisabled={!name.trim() || !steps.length || !validEnvironment}
+          saveDisabled={!name.trim() || !steps.length || !validEnvironment || !validConditions}
         />
         {error && <ErrorMessage message={error} />}
         <Tabs
@@ -224,6 +228,7 @@ function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: str
                         index={index}
                         step={item.step}
                         hosts={data.assets}
+                        environment={environment}
                         onChange={(step) => updateStep(item.id, step)}
                         onTypeChange={(type) =>
                           updateStep(item.id, convertStep(item.step, type, sshHosts[0]?.id ?? ''))

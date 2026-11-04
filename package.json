@@ -446,7 +446,7 @@
         "displayName": "Create or Update Playbook",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "playbookUpsert",
-        "modelDescription": "Create a saved playbook from ordered steps, or update an existing one when id is given. Steps run in order and stop at the first failure. Local command cwd and command, and sftp localPath, support placeholders: ${workspaceFolder}, ${workspaceFolderBasename}, ${userHome}, ${pathSeparator}, ${env:NAME}. Returns the playbook ID and whether it was created or updated.",
+        "modelDescription": "Create or update a saved playbook. Steps run in order and stop on failure; optional when conditions compare declared variable values as strings. Commands and paths support placeholders including ${workspaceFolder} and ${env:NAME}.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -592,6 +592,24 @@
                       "sftp"
                     ],
                     "description": "Step type."
+                  },
+                  "when": {
+                    "type": "object",
+                    "description": "Skip this step unless the declared variable equals the given string.",
+                    "properties": {
+                      "variable": {
+                        "type": "string",
+                        "description": "Name of a declared playbook variable."
+                      },
+                      "equals": {
+                        "type": "string",
+                        "description": "Exact value to match; checkbox values are true or false."
+                      }
+                    },
+                    "required": [
+                      "variable",
+                      "equals"
+                    ]
                   },
                   "command": {
                     "type": "string",

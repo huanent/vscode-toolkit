@@ -1,7 +1,9 @@
 import type { StorageScope } from '@/shared/storage-scope';
 import type { AssetSummary } from '@/features/assets/protocol';
 
-export type PlaybookStep =
+export type PlaybookStepCondition = { variable: string; equals: string };
+
+export type PlaybookStep = (
   | { type: 'local-command'; name: string; command: string; cwd?: string }
   | {
       type: 'sftp';
@@ -11,7 +13,8 @@ export type PlaybookStep =
       localPath: string;
       remotePath: string;
     }
-  | { type: 'ssh-command'; name: string; assetId: string; command: string };
+  | { type: 'ssh-command'; name: string; assetId: string; command: string }
+) & { when?: PlaybookStepCondition };
 
 export type PlaybookEnvironmentVariable =
   | { name: string; label: string; type: 'input'; defaultValue: string }

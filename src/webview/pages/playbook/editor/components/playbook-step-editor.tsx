@@ -1,4 +1,4 @@
-import type { PlaybookStep } from '@/features/playbook/protocol';
+import type { PlaybookEnvironmentVariable, PlaybookStep } from '@/features/playbook/protocol';
 import type { AssetSummary } from '@/features/assets/protocol';
 import { AssetSelect } from '@/webview/components/asset-select';
 import { FormItem } from '@/webview/components/ui/form';
@@ -11,12 +11,30 @@ type PlaybookStepEditorProps = {
   index: number;
   step: PlaybookStep;
   hosts: readonly AssetSummary[];
+  environment: readonly PlaybookEnvironmentVariable[];
   onChange: (step: PlaybookStep) => void;
   onTypeChange: (type: PlaybookStep['type']) => void;
 };
 
-export function PlaybookStepEditor({ index, step, hosts, onChange, onTypeChange }: PlaybookStepEditorProps) {
+export function PlaybookStepEditor({
+  index,
+  step,
+  hosts,
+  environment,
+  onChange,
+  onTypeChange,
+}: PlaybookStepEditorProps) {
   const sshHosts = hosts.filter((host) => host.type === 'ssh');
+  const conditionVariable = environment.find((variable) => variable.name === step.when?.variable);
+  const conditionOptions =
+    conditionVariable?.type === 'checkbox'
+      ? [
+          { value: 'true', label: 'True' },
+          { value: 'false', label: 'False' },
+        ]
+      : conditionVariable?.type === 'select'
+        ? conditionVariable.options
+        : undefined;
   return (
     <div className="grid">
       <FormItem
@@ -29,6 +47,53 @@ export function PlaybookStepEditor({ index, step, hosts, onChange, onTypeChange 
       >
         <Input placeholder={`Step ${index + 1}`} />
       </FormItem>
+
+      <FormItem
+        name={`steps.${index}.when.variable`}
+        label="Run when variable equals"
+        invalid={!!step.when && !environment.some((variable) => variable.name === step.when?.variable)}
+        error={
+          step.when && !environment.some((variable) => variable.name === step.when?.variable)
+            ? 'Select a declared variable.'
+            : undefined
+        }
+      >
+        <Select
+          ariaLabel="Condition variable"
+          value={step.when?.variable ?? ''}
+          onValueChange={(variable) => {
+            const selected = environment.find((entry) => entry.name === variable);
+            const equals =
+              selected?.type === 'checkbox'
+                ? 'true'
+                : selected?.type === 'select'
+                  ? (selected.options[0]?.value ?? '')
+                  : '';
+            onChange({ ...step, when: variable ? { variable, equals } : undefined });
+          }}
+          options={[
+            { value: '', label: 'Always' },
+            ...environment.map((variable) => ({ value: variable.name, label: variable.label || variable.name })),
+          ]}
+        />
+      </FormItem>
+      {step.when && (
+        <FormItem name={`steps.${index}.when.equals`} label="Condition value">
+          {conditionOptions ? (
+            <Select
+              ariaLabel="Condition value"
+              value={step.when.equals}
+              options={conditionOptions}
+              onValueChange={(equals) => onChange({ ...step, when: { ...step.when!, equals } })}
+            />
+          ) : (
+            <Input
+              value={step.when.equals}
+              onChange={(event) => onChange({ ...step, when: { ...step.when!, equals: event.target.value } })}
+            />
+          )}
+        </FormItem>
+      )}
       <FormItem name={`steps.${index}.type`} label="Operation">
         <Select
           ariaLabel="Operation"

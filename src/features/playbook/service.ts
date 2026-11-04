@@ -476,6 +476,17 @@ function isPlaybookStep(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const step = value as Record<string, unknown>;
   if (typeof step.name !== 'string' || !step.name.trim()) return false;
+  if (step.when !== undefined) {
+    if (!step.when || typeof step.when !== 'object') return false;
+    const condition = step.when as Record<string, unknown>;
+    if (
+      typeof condition.variable !== 'string' ||
+      !/^[A-Za-z_][A-Za-z0-9_]*$/.test(condition.variable) ||
+      typeof condition.equals !== 'string' ||
+      condition.equals.includes('\0')
+    )
+      return false;
+  }
   if (step.type === 'local-command') {
     return typeof step.command === 'string' && (step.cwd === undefined || typeof step.cwd === 'string');
   }

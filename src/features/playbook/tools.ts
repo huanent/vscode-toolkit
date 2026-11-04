@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import type { StorageScope } from '@/shared/storage-scope';
 import type { SshService } from '@/features/ssh/ssh-service';
-import type { PlaybookDefinition, PlaybookEnvironmentVariable, PlaybookStep } from './protocol';
+import type { PlaybookDefinition, PlaybookEnvironmentVariable, PlaybookStep, PlaybookStepCondition } from './protocol';
 import { validatePlaybook } from './runner';
 import { readPlaybookRecord, readPlaybookRecords, savePlaybookRecord } from './service';
 import type { PlaybookResultService } from './result-service';
@@ -17,6 +17,7 @@ interface PlaybookStepInput {
   direction?: 'upload' | 'download';
   localPath?: string;
   remotePath?: string;
+  when?: PlaybookStepCondition;
 }
 
 interface UpsertPlaybookInput {
@@ -137,6 +138,7 @@ async function toPlaybookStep(step: PlaybookStepInput, index: number, ssh: SshSe
     return {
       type: 'local-command',
       name: step.name.trim(),
+      ...(step.when !== undefined ? { when: step.when } : {}),
       command: step.command ?? '',
       ...(step.cwd ? { cwd: step.cwd } : {}),
     };
@@ -146,6 +148,7 @@ async function toPlaybookStep(step: PlaybookStepInput, index: number, ssh: SshSe
     return {
       type: 'sftp',
       name: step.name.trim(),
+      ...(step.when !== undefined ? { when: step.when } : {}),
       assetId: await resolveStepAssetId(step.assetId, ssh),
       direction: step.direction,
       localPath: step.localPath ?? '',
@@ -155,6 +158,7 @@ async function toPlaybookStep(step: PlaybookStepInput, index: number, ssh: SshSe
   return {
     type: 'ssh-command',
     name: step.name.trim(),
+    ...(step.when !== undefined ? { when: step.when } : {}),
     assetId: await resolveStepAssetId(step.assetId, ssh),
     command: step.command ?? '',
   };

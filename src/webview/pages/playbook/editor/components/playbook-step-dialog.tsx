@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { PlaybookStep } from '@/features/playbook/protocol';
+import type { PlaybookEnvironmentVariable, PlaybookStep } from '@/features/playbook/protocol';
 import type { AssetSummary } from '@/features/assets/protocol';
 import { Dialog } from '@/webview/components/ui/dialog';
 import { Form } from '@/webview/components/ui/form';
@@ -10,6 +10,7 @@ export function PlaybookStepDialog({
   step,
   index,
   hosts,
+  environment,
   editing,
   onClose,
   onSave,
@@ -17,6 +18,7 @@ export function PlaybookStepDialog({
   step: PlaybookStep;
   index: number;
   hosts: readonly AssetSummary[];
+  environment: readonly PlaybookEnvironmentVariable[];
   editing: boolean;
   onClose: () => void;
   onSave: (step: PlaybookStep) => void;
@@ -48,6 +50,7 @@ export function PlaybookStepDialog({
           index={index}
           step={draft}
           hosts={hosts}
+          environment={environment}
           onChange={setDraft}
           onTypeChange={(type) =>
             setDraft(convertStep(draft, type, hosts.find((host) => host.type === 'ssh')?.id ?? ''))

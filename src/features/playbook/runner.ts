@@ -20,6 +20,9 @@ export async function validatePlaybook(playbook: PlaybookDefinition, ssh: SshSer
   if (!playbook.steps.length) throw new Error('Add at least one playbook step.');
   const connections = await ssh.listConnections();
   for (const [index, step] of playbook.steps.entries()) {
+    if (step.when && !playbook.environment?.some((variable) => variable.name === step.when?.variable)) {
+      throw new Error(`Condition variable for step ${index + 1} must be declared in the playbook.`);
+    }
     if (step.type === 'local-command') {
       if (!step.command.trim()) throw new Error(`Enter the command for step ${index + 1}.`);
     } else {
@@ -62,6 +65,22 @@ export async function runPlaybook(
     if (signal.aborted) {
       current.status = 'cancelled';
       return stop(index, 'Task was terminated.');
+    }
+    if (step.when) {
+      if (
+        !playbook.environment?.some((variable) => variable.name === step.when!.variable) ||
+        !Object.hasOwn(values, step.when.variable)
+      ) {
+        current.status = 'failed';
+        current.message = `Condition variable ${step.when.variable} is not available.`;
+        return stop(index, current.message);
+      }
+      if (values[step.when.variable] !== step.when.equals) {
+        current.status = 'skipped';
+        current.message = 'Condition not met.';
+        onUpdate?.(snapshot(false, `Skipping step ${index + 1}: condition not met.`));
+        continue;
+      }
     }
     current.status = 'running';
     current.startedAt = Date.now();

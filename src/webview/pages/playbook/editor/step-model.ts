@@ -32,11 +32,12 @@ export function convertStep(
 ): PlaybookStep {
   if (step?.type === type) return step;
   const name = step?.name ?? 'Step 1';
+  const condition = step?.when ? { when: step.when } : {};
   const command = step && 'command' in step ? step.command : '';
   const assetId = step && 'assetId' in step && step.assetId ? step.assetId : defaultAssetId;
-  if (type === 'local-command') return { type, name, command };
-  if (type === 'ssh-command') return { type, name, assetId, command };
-  return { type, name, assetId, direction: 'upload', localPath: '', remotePath: '' };
+  if (type === 'local-command') return { type, name, command, ...condition };
+  if (type === 'ssh-command') return { type, name, assetId, command, ...condition };
+  return { type, name, assetId, direction: 'upload', localPath: '', remotePath: '', ...condition };
 }
 
 export function getStepTypeLabel(type: PlaybookStep['type']): string {
