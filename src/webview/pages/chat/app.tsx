@@ -11,6 +11,7 @@ import { ChatHistory } from '@/webview/pages/chat/components/chat-history';
 import { ChatInput } from '@/webview/pages/chat/components/chat-input';
 import { ChatMessage } from '@/webview/pages/chat/components/chat-message';
 import { ChatNavigation } from '@/webview/pages/chat/components/chat-navigation';
+import { ChatPrompts } from '@/webview/pages/chat/components/chat-prompts';
 import { chatProverbs } from '@/webview/pages/chat/components/chat-proverbs';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import '@/webview/styles.css';
@@ -33,6 +34,8 @@ function App() {
     chat: { id: '', modelId: '', messages: [] },
     history: [],
     models: [],
+    templates: [],
+    systemPrompt: '',
     busy: false,
   }));
   const state = useHostData<ChatData, ChatUpdate>((message, previous) =>
@@ -55,6 +58,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   const [awayFromBottom, setAwayFromBottom] = useState(false);
   const [activeAnchor, setActiveAnchor] = useState<number>();
   const [editing, setEditing] = useState<{ chatId: string; index: number; content: string }>();
+  const [insertion, setInsertion] = useState<{ content: string; id: number }>();
   const scrollRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
   const lastScrollTopRef = useRef(0);
@@ -147,7 +151,15 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
             </div>
           </div>
         </div>
-        <div className="z-10 shrink-0">
+        <div className="z-10 flex shrink-0 items-center gap-1">
+          <ChatPrompts
+            templates={data.templates}
+            systemPrompt={data.systemPrompt}
+            onInsert={(content) => setInsertion({ content, id: Date.now() })}
+            onSave={(template) => request({ type: 'saveTemplate', template })}
+            onDelete={(id) => request({ type: 'deleteTemplate', id })}
+            onSaveSystem={(content) => request({ type: 'saveSystemPrompt', content })}
+          />
           <CopyButton
             icon="share"
             title="Copy conversation as Markdown"
@@ -239,7 +251,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           </div>
         )}
       </div>
-      <div className="mx-auto w-full max-w-3xl px-3 shrink-0 py-2">
+      <div className="mx-auto w-full max-w-3xl px-3 shrink-0 pb-2 pt-1">
         {(error || data.error) && (
           <div className="mb-2" role="alert">
             <ErrorMessage message={error || data.error || ''} />
@@ -249,6 +261,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           key={data.chat.id}
           chatId={data.chat.id}
           editing={editing?.chatId === data.chat.id ? editing : undefined}
+          insertion={insertion}
           models={data.models}
           modelId={modelId}
           busy={busy}

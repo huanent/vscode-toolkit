@@ -27,11 +27,28 @@ export function registerChat(context: vscode.ExtensionContext): void {
           (title) => {
             panel.title = title;
           },
+          vscode.Uri.file(resolveStorageDirectory(context, 'chat.json')),
         );
         service = current;
         const listener = panel.webview.onDidReceiveMessage(async (message: ChatRequest) => {
           try {
             switch (message?.type) {
+              case 'saveTemplate':
+                await current.saveTemplate(message.template);
+                break;
+              case 'deleteTemplate':
+                if (typeof message.id === 'string') {
+                  const template = current.data.templates.find((item) => item.id === message.id);
+                  if (!template) break;
+                  const choice = await vscode.window.showWarningMessage(
+                    `Delete template "${template.name}"?`, { modal: true }, 'Delete',
+                  );
+                  if (choice === 'Delete') await current.deleteTemplate(message.id);
+                }
+                break;
+              case 'saveSystemPrompt':
+                if (typeof message.content === 'string') await current.saveSystemPrompt(message.content);
+                break;
               case 'send':
                 if (typeof message.content === 'string' && typeof message.modelId === 'string')
                   await current.send(message.content, message.modelId, message.index);

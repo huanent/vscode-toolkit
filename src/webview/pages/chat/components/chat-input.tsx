@@ -8,6 +8,7 @@ import { ModelSelector } from '@/webview/pages/chat/components/model-selector';
 interface ChatInputProps {
   chatId: string;
   editing?: { index: number; content: string };
+  insertion?: { content: string; id: number };
   models: ChatData['models'];
   modelId: string;
   busy: boolean;
@@ -22,6 +23,7 @@ interface ChatInputProps {
 export function ChatInput({
   chatId,
   editing,
+  insertion,
   models,
   modelId,
   busy,
@@ -38,6 +40,19 @@ export function ChatInput({
   const editingRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previousChatId = useRef(chatId);
+  const lastInsertion = useRef(insertion);
+  useEffect(() => {
+    if (!insertion || insertion === lastInsertion.current) return;
+    lastInsertion.current = insertion;
+    const textarea = textareaRef.current;
+    const start = textarea?.selectionStart ?? draft.length;
+    const end = textarea?.selectionEnd ?? start;
+    setDraft((current) => current.slice(0, start) + insertion.content + current.slice(end));
+    requestAnimationFrame(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(start + insertion.content.length, start + insertion.content.length);
+    });
+  }, [insertion]);
   useEffect(() => {
     if (previousChatId.current && previousChatId.current !== chatId) setDraft('');
     previousChatId.current = chatId;

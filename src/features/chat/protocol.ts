@@ -22,15 +22,26 @@ export interface ChatModelOption {
   id: string;
 }
 
+export interface ChatPromptTemplate {
+  id: string;
+  name: string;
+  content: string;
+}
+
 export interface ChatData {
   chat: ChatDocument;
   history: { id: string; title: string }[];
   models: ChatModelOption[];
+  templates: ChatPromptTemplate[];
+  systemPrompt: string;
   busy: boolean;
   error?: string;
 }
 
 export type ChatRequest =
+  | { type: 'saveTemplate'; template: ChatPromptTemplate }
+  | { type: 'deleteTemplate'; id: string }
+  | { type: 'saveSystemPrompt'; content: string }
   | { type: 'send'; content: string; modelId: string; index?: number }
   | { type: 'selectModel'; modelId: string }
   | { type: 'open'; id: string }

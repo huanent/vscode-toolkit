@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ChatData, ChatDocument, ChatMessage } from '@/features/chat/protocol';
+import type { ChatData, ChatDocument, ChatMessage, ChatPromptTemplate } from '@/features/chat/protocol';
 
 const maxTabTitleDisplayWidth = 24;
 
@@ -19,6 +19,9 @@ export class ChatService {
   private modelRefresh?: Promise<void>;
   private historyLoad?: Promise<void>;
   private history: ChatData['history'] = [];
+  private templates: ChatPromptTemplate[] = [];
+  private systemPrompt = '';
+  private configOperation: Promise<void> = Promise.resolve();
   private cancellation?: vscode.CancellationTokenSource;
   private titleGenerationChatId?: string;
   private error?: string;
@@ -29,6 +32,7 @@ export class ChatService {
     private readonly update: (data: ChatData) => void,
     private readonly cache: vscode.Memento,
     private readonly setTabTitle: (title: string) => void,
+    private readonly configUri: vscode.Uri,
   ) {
     this.modelOptions = cache.get<ChatData['models']>('chat.models', []);
     this.lastModelId = cache.get<string>('chat.model', '');
@@ -126,6 +130,8 @@ export class ChatService {
       chat: this.chat,
       history: this.history,
       models: this.modelOptions,
+      templates: this.templates,
+      systemPrompt: this.systemPrompt,
       busy: !!this.cancellation,
       error: this.error,
     };
@@ -136,12 +142,69 @@ export class ChatService {
   }
 
   initialize(): ChatData {
+    void this.loadConfig().then(() => this.emit()).catch((error: unknown) => {
+      this.error = error instanceof Error ? error.message : String(error);
+      this.emit();
+    });
     this.historyLoad = this.loadHistory().catch((error: unknown) => {
       this.error = error instanceof Error ? error.message : String(error);
       this.emit();
     });
     void this.refreshModels();
     return this.data;
+  }
+
+  private async loadConfig(): Promise<void> {
+    let bytes: Uint8Array;
+    try {
+      bytes = await vscode.workspace.fs.readFile(this.configUri);
+    } catch (error) {
+      if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') return;
+      throw error;
+    }
+    const value: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
+    if (!value || typeof value !== 'object') throw new Error('Invalid chat configuration.');
+    const config = value as { templates?: unknown; systemPrompt?: unknown };
+    if (config.templates !== undefined && (!Array.isArray(config.templates) || !config.templates.every(
+      (item: unknown) => item && typeof item === 'object' && typeof (item as ChatPromptTemplate).id === 'string' &&
+        typeof (item as ChatPromptTemplate).name === 'string' && typeof (item as ChatPromptTemplate).content === 'string',
+    ))) throw new Error('Invalid chat templates.');
+    if (config.systemPrompt !== undefined && typeof config.systemPrompt !== 'string') throw new Error('Invalid system prompt.');
+    this.templates = (config.templates as ChatPromptTemplate[] | undefined) ?? [];
+    this.systemPrompt = (config.systemPrompt as string | undefined) ?? '';
+  }
+
+  private async saveConfig(): Promise<void> {
+    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(this.configUri, '..'));
+    await vscode.workspace.fs.writeFile(this.configUri, Buffer.from(JSON.stringify({ templates: this.templates, systemPrompt: this.systemPrompt }, null, 2)));
+    this.emit();
+  }
+
+  async saveTemplate(template: ChatPromptTemplate): Promise<void> {
+    if (!template || typeof template.id !== 'string' || typeof template.name !== 'string' || !template.name.trim() || typeof template.content !== 'string' || !template.content.trim()) return;
+    await this.updateConfig(() => {
+      const index = this.templates.findIndex((item) => item.id === template.id);
+      if (index < 0) this.templates.push(template);
+      else this.templates[index] = template;
+    });
+  }
+
+  async deleteTemplate(id: string): Promise<void> {
+    await this.updateConfig(() => { this.templates = this.templates.filter((item) => item.id !== id); });
+  }
+
+  async saveSystemPrompt(content: string): Promise<void> {
+    await this.updateConfig(() => { this.systemPrompt = content; });
+  }
+
+  private updateConfig(change: () => void): Promise<void> {
+    const operation = this.configOperation.then(async () => {
+      await this.loadConfig();
+      change();
+      await this.saveConfig();
+    });
+    this.configOperation = operation.catch(() => {});
+    return operation;
   }
 
   private async loadHistory(): Promise<void> {
@@ -298,6 +361,8 @@ export class ChatService {
     this.emit();
     try {
       await this.save();
+      await this.configOperation;
+      await this.loadConfig();
       const messages = this.chat.messages
         .filter((message) => message.content)
         .map((message) =>
@@ -305,7 +370,8 @@ export class ChatService {
             ? vscode.LanguageModelChatMessage.User(message.content)
             : vscode.LanguageModelChatMessage.Assistant(message.content),
         );
-      const inputTokens = await this.countTokens(model, this.chat.messages);
+      if (this.systemPrompt.trim()) messages.unshift(vscode.LanguageModelChatMessage.User(this.systemPrompt));
+      const inputTokens = await this.countTokens(model, this.systemPrompt.trim() ? [{ role: 'user', content: this.systemPrompt }, ...this.chat.messages] : this.chat.messages);
       const response = await model.sendRequest(messages, {}, cancellation.token);
       const reply: ChatMessage = { role: 'assistant', content: '', inputTokens };
       this.chat.messages.push(reply);
