@@ -7,7 +7,7 @@ interface ChatNavigationProps {
 }
 
 export function ChatNavigation({ messages, activeAnchor, onNavigate }: ChatNavigationProps) {
-  if (!messages.some((message) => message.role === 'user')) return null;
+  if (messages.filter((message) => message.role === 'user').length <= 1) return null;
 
   return (
     <nav aria-label="Message navigation" className="absolute inset-y-0 -left-2 z-10 flex flex-col overflow-y-auto">

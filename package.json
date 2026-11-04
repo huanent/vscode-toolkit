@@ -318,7 +318,7 @@
         "displayName": "Run SSH Command",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "sshExecute",
-        "modelDescription": "Run a command on an SSH asset by its ID. Requires user confirmation.",
+        "modelDescription": "Run a command on an SSH asset by its ID using a PTY. When the remote shell is recognized, runs it as a login shell, usually in interactive mode. The tool cannot respond to prompts; disable pagers and avoid commands requiring interactive input.",
         "inputSchema": {
           "type": "object",
           "properties": {
