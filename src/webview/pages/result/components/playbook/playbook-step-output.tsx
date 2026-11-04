@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PlaybookStep, PlaybookStepResult } from '@/features/playbook/protocol';
 import { Collapsible } from '@/webview/components/ui/collapsible';
 import { Progress } from '@/webview/components/ui/progress';
@@ -20,6 +20,37 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
         ? 'skipped'
         : result.status;
   const [open, setOpen] = useState(status === 'running' || status === 'failed');
+  const outputRef = useRef<HTMLDivElement>(null);
+  const followingRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const output = outputRef.current;
+    const container = output?.closest<HTMLElement>('[data-result-scroll-container]');
+    if (!output || !container || status !== 'running') {
+      followingRef.current = false;
+      return;
+    }
+
+    const isBottomVisible = () => {
+      const bottom = output.getBoundingClientRect().bottom;
+      const viewport = container.getBoundingClientRect();
+      return bottom >= viewport.top && bottom <= viewport.bottom + 1;
+    };
+    followingRef.current = isBottomVisible();
+    const onScroll = () => {
+      followingRef.current = isBottomVisible();
+    };
+    container.addEventListener('scroll', onScroll);
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [status, open, Boolean(result.output)]);
+
+  useLayoutEffect(() => {
+    const output = outputRef.current;
+    const container = output?.closest<HTMLElement>('[data-result-scroll-container]');
+    if (!output || !container || !followingRef.current || status !== 'running') return;
+    const delta = output.getBoundingClientRect().bottom - container.getBoundingClientRect().bottom;
+    if (delta > 0) container.scrollTop += delta;
+  }, [result.output, status]);
   useEffect(() => {
     if (status === 'running' || status === 'failed') setOpen(true);
     else if (status === 'completed') setOpen(false);
@@ -104,7 +135,11 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
             </div>
           </div>
         )}
-        {result.output && <ResultText title={`Output ${result.message}`} content={result.output} />}
+        {result.output && (
+          <div ref={outputRef}>
+            <ResultText title={`Output ${result.message}`} content={result.output} />
+          </div>
+        )}
       </div>
     </Collapsible>
   );

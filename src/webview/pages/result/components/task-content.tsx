@@ -64,7 +64,7 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
       previousTaskIdRef.current = task?.id;
       shouldFollowOutputRef.current = true;
     }
-    if (shouldFollowOutputRef.current) container.scrollTop = container.scrollHeight;
+    if (task?.kind !== 'playbook' && shouldFollowOutputRef.current) container.scrollTop = container.scrollHeight;
   }, [task]);
 
   if (task) {
@@ -73,6 +73,7 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
       <div className="flex h-full min-h-0 flex-col">
         <div
           ref={resultScrollRef}
+          data-result-scroll-container
           className="min-h-0 flex-1 overflow-auto"
           aria-busy={task.status === 'running'}
           onScroll={(event) => {
