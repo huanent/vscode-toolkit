@@ -22,6 +22,7 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
   const [open, setOpen] = useState(status === 'running' || status === 'failed');
   const outputRef = useRef<HTMLDivElement>(null);
   const followingRef = useRef(false);
+  const bottomOffsetRef = useRef(0);
 
   useLayoutEffect(() => {
     const output = outputRef.current;
@@ -36,9 +37,15 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
       const viewport = container.getBoundingClientRect();
       return bottom >= viewport.top && bottom <= viewport.bottom + 1;
     };
-    followingRef.current = isBottomVisible();
-    const onScroll = () => {
+    const updatePosition = () => {
       followingRef.current = isBottomVisible();
+      if (followingRef.current) {
+        bottomOffsetRef.current = output.getBoundingClientRect().bottom - container.getBoundingClientRect().top;
+      }
+    };
+    updatePosition();
+    const onScroll = () => {
+      updatePosition();
     };
     container.addEventListener('scroll', onScroll);
     return () => container.removeEventListener('scroll', onScroll);
@@ -48,8 +55,8 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
     const output = outputRef.current;
     const container = output?.closest<HTMLElement>('[data-result-scroll-container]');
     if (!output || !container || !followingRef.current || status !== 'running') return;
-    const delta = output.getBoundingClientRect().bottom - container.getBoundingClientRect().bottom;
-    if (delta > 0) container.scrollTop += delta;
+    const delta = output.getBoundingClientRect().bottom - container.getBoundingClientRect().top - bottomOffsetRef.current;
+    if (delta !== 0) container.scrollTop += delta;
   }, [result.output, status]);
   useEffect(() => {
     if (status === 'running' || status === 'failed') setOpen(true);

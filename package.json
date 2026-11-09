@@ -109,6 +109,12 @@
     ],
     "customEditors": [
       {
+        "viewType": "toolkit.containerEditor",
+        "displayName": "Containers",
+        "selector": [{ "filenamePattern": "*.toolkit-container" }],
+        "priority": "option"
+      },
+      {
         "viewType": "toolkit.chatEditor",
         "displayName": "Chat",
         "selector": [
@@ -708,6 +714,11 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.assets.add.container",
+        "title": "Container",
+        "category": "Assets"
+      },
+      {
         "command": "toolkit.assets.createFolder",
         "title": "New Folder",
         "category": "Assets"
@@ -1170,6 +1181,10 @@
         {
           "command": "toolkit.assets.add.httpClient",
           "group": "1_types@4"
+        },
+        {
+          "command": "toolkit.assets.add.container",
+          "group": "1_types@5"
         }
       ],
       "view/title": [

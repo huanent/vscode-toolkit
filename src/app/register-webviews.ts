@@ -10,6 +10,8 @@ import { registerMysqlEditor } from '@/features/database/mysql/editor';
 import { registerRemoteSqlite } from '@/features/database/sqlite/service';
 import { registerRemoteArchive } from '@/features/archive/service';
 import { SshService } from '@/features/ssh/ssh-service';
+import { ContainerService } from '@/features/container/service';
+import { registerContainerEditor } from '@/features/container/editor';
 import { registerSftpEditor } from '@/features/ssh/sftp/editor';
 import { registerSshTools } from '@/features/ssh/tools';
 import { registerDatabaseTools } from '@/features/database/tools';
@@ -59,6 +61,7 @@ export function registerWebviews(
   const databases = [mysql, postgresql];
   registerSftpEditor(context, ssh, assets);
   const httpClients = new HttpClientService(assets, credentials);
+  const containers = new ContainerService(assets, ssh);
   const playbookResults = new PlaybookResultService(tasks, ssh, (name, environment, cancellation) =>
     requestPlaybookEnvironment(context, name, environment, cancellation),
   );
@@ -81,6 +84,8 @@ export function registerWebviews(
     ...databases,
     ssh,
     httpClients,
+    containers,
+    registerContainerEditor(context, containers),
     registerMysqlEditor(context, mysql, tasks),
     registerPlaybookEditor(
       context,
@@ -91,7 +96,7 @@ export function registerWebviews(
       playbookFiles.refresh,
     ),
   );
-  const assetsView = createAssetsView(context, assets, [...databases, ssh, httpClients], credentials);
+  const assetsView = createAssetsView(context, assets, [...databases, ssh, httpClients, containers], credentials);
   const composedDashboardHandler = composeWebviewHandlers({
     temp: tempFiles.handler,
     playbook: playbookFiles.handler,

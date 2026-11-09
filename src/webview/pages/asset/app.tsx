@@ -56,6 +56,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           values={values}
           capabilities={data.capabilities}
           credentials={credentials}
+          assets={data.assets}
           onChange={update}
           onCreateCredential={(credential) => {
             setError(undefined);

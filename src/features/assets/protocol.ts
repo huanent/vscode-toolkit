@@ -1,6 +1,7 @@
 import type { Credential, CredentialSummary } from '@/features/credential/protocol';
 import type { StorageScope } from '@/shared/storage-scope';
 import type { HttpClientSettings } from '@/features/http/protocol';
+import type { ContainerSettings } from '@/features/container/protocol';
 
 export interface AssetSummary {
   id: string;
@@ -24,6 +25,7 @@ export interface AssetFormValues {
   username?: string;
   proxyAssetIds?: string[];
   httpClient?: HttpClientSettings;
+  container?: ContainerSettings;
 }
 
 export interface AssetCapabilities {
@@ -32,6 +34,7 @@ export interface AssetCapabilities {
   proxyTunnel?: boolean;
   query?: boolean;
   httpClient?: boolean;
+  container?: boolean;
 }
 
 export interface AssetEditorData {

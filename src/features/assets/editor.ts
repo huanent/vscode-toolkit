@@ -32,7 +32,7 @@ export function openAssetEditor(
   const storageDirectory = resolveStorageDirectory(context, 'assets');
   const bridge = serveWebviewData(panel.webview, async () => {
     const creds = await credentials.list();
-    const assets = provider.capabilities.proxyTunnel
+    const assets = provider.capabilities.proxyTunnel || provider.capabilities.container
       ? (await service.listSummaries()).filter((record) => record.id !== previous?.id)
       : [];
     return {
