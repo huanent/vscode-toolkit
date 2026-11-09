@@ -5,6 +5,7 @@ import { createConnection, escapeId, type Connection as CoreConnection } from 'm
 import { type Connection, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import {
   databaseTablePageSize,
+  isDatabaseBooleanColumn,
   type DatabaseColumn,
   type DatabaseDocument,
   type DatabaseQueryResult,
@@ -23,6 +24,7 @@ import { createMysqlUri, mysqlEditorViewType } from '@/features/database/mysql/e
 import { buildMysqlCreateTableStatement, isSystemDatabase } from '@/features/database/mysql/schema';
 import type { CredentialService } from '@/features/credential/service';
 import { buildRowMutation } from '@/features/database/row-mutation';
+import { buildTableFilter } from '@/features/database/table-filter';
 import type { SshService } from '@/features/ssh/ssh-service';
 
 export class MysqlService implements DatabaseProvider {
@@ -231,7 +233,7 @@ export class MysqlService implements DatabaseProvider {
           /(?:VIRTUAL|STORED) GENERATED/i.test(String(col.EXTRA)) ||
           /binary|blob|bit|geometry|point|linestring|polygon/i.test(String(col.COLUMN_TYPE)),
       }));
-      const { where, parameters, active } = buildTableFilter(columns, filters);
+      const { where, parameters, active } = buildTableFilter(columns, filters, 'mysql');
       const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
 
       let rowCount = counts?.rowCount ?? 0;
@@ -273,16 +275,18 @@ export class MysqlService implements DatabaseProvider {
         columnCount: columns.length,
         columns,
         rows: values.map((row) =>
-          row.map((value) =>
-            value === null
-              ? null
-              : typeof value === 'number' || typeof value === 'string'
-                ? value
-                : Buffer.isBuffer(value)
-                  ? value.toString('hex')
-                  : value instanceof Date
-                    ? value.toISOString()
-                    : JSON.stringify(value),
+          row.map((value, index) =>
+            Buffer.isBuffer(value) && isDatabaseBooleanColumn(columns[index])
+              ? Number(value[0])
+              : value === null
+                ? null
+                : typeof value === 'number' || typeof value === 'string'
+                  ? value
+                  : Buffer.isBuffer(value)
+                    ? value.toString('hex')
+                    : value instanceof Date
+                      ? value.toISOString()
+                      : JSON.stringify(value),
           ),
         ),
         ...(filteredRowCount === undefined ? {} : { filteredRowCount }),
@@ -539,47 +543,6 @@ export class MysqlService implements DatabaseProvider {
       tunnel?.close();
     }
   }
-}
-
-function buildTableFilter(
-  columns: DatabaseColumn[],
-  filters?: DatabaseTableFilters,
-): { where: string[]; parameters: string[]; active: boolean } {
-  const where: string[] = [];
-  const parameters: string[] = [];
-  const searchableColumns = columns.map((column) => escapeId(column.name));
-  const search = filters?.search?.trim();
-
-  if (search) {
-    const pattern = toLikePattern(search);
-    const matches = searchableColumns.map((column) => {
-      parameters.push(pattern);
-      return search.toLowerCase() === 'null'
-        ? `(LOWER(CAST(${column} AS CHAR)) LIKE ? ESCAPE CHAR(92) OR ${column} IS NULL)`
-        : `LOWER(CAST(${column} AS CHAR)) LIKE ? ESCAPE CHAR(92)`;
-    });
-    if (matches.length) where.push(`(${matches.join(' OR ')})`);
-  }
-
-  for (const [name, value] of Object.entries(filters?.columns ?? {})) {
-    const filter = value.trim();
-    const column = columns.find((candidate) => candidate.name === name);
-    if (!filter || !column) continue;
-    const escapedColumn = escapeId(column.name);
-    parameters.push(toLikePattern(filter));
-    where.push(
-      filter.toLowerCase() === 'null'
-        ? `(LOWER(CAST(${escapedColumn} AS CHAR)) LIKE ? ESCAPE CHAR(92) OR ${escapedColumn} IS NULL)`
-        : `LOWER(CAST(${escapedColumn} AS CHAR)) LIKE ? ESCAPE CHAR(92)`,
-    );
-  }
-
-  return { where, parameters, active: where.length > 0 };
-}
-
-function toLikePattern(value: string): string {
-  const escaped = value.toLowerCase().replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
-  return `%${escaped}%`;
 }
 
 function isMysqlAsset(value: unknown): value is MysqlConnectionConfiguration {

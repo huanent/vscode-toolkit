@@ -12,6 +12,7 @@ import {
 } from '@/features/database/protocol';
 import { quoteIdentifier } from '@/features/database/sqlite-schema';
 import { buildRowMutation } from '@/features/database/row-mutation';
+import { buildTableFilter } from '@/features/database/table-filter';
 
 const maxPreviewColumns = 50;
 const maxQueryResultRows = 1000;
@@ -274,7 +275,7 @@ function readTable(
       rows: [],
     };
   }
-  const { where, parameters, active } = buildTableFilter(columns, filters);
+  const { where, parameters, active } = buildTableFilter(columns, filters, 'sqlite');
   const whereClause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
   const rowCount =
     counts?.rowCount ??
@@ -301,47 +302,6 @@ function readTable(
     rows,
     ...(filteredRowCount === undefined ? {} : { filteredRowCount }),
   };
-}
-
-function buildTableFilter(
-  columns: DatabaseTable['columns'],
-  filters?: DatabaseTableFilters,
-): { where: string[]; parameters: string[]; active: boolean } {
-  const where: string[] = [];
-  const parameters: string[] = [];
-  const searchableColumns = columns.map((column) => quoteIdentifier(column.name));
-  const search = filters?.search?.trim();
-
-  if (search) {
-    const searchValue = toLikePattern(search);
-    const matches = searchableColumns.map((column) => {
-      parameters.push(searchValue);
-      return search.toLowerCase() === 'null'
-        ? `(LOWER(CAST(${column} AS TEXT)) LIKE ? ESCAPE char(92) OR ${column} IS NULL)`
-        : `LOWER(CAST(${column} AS TEXT)) LIKE ? ESCAPE char(92)`;
-    });
-    if (matches.length) where.push(`(${matches.join(' OR ')})`);
-  }
-
-  for (const [name, value] of Object.entries(filters?.columns ?? {})) {
-    const filter = value.trim();
-    const column = columns.find((candidate) => candidate.name === name);
-    if (!filter || !column) continue;
-    const quotedColumn = quoteIdentifier(column.name);
-    parameters.push(toLikePattern(filter));
-    where.push(
-      filter.toLowerCase() === 'null'
-        ? `(LOWER(CAST(${quotedColumn} AS TEXT)) LIKE ? ESCAPE char(92) OR ${quotedColumn} IS NULL)`
-        : `LOWER(CAST(${quotedColumn} AS TEXT)) LIKE ? ESCAPE char(92)`,
-    );
-  }
-
-  return { where, parameters, active: where.length > 0 };
-}
-
-function toLikePattern(value: string): string {
-  const escaped = value.toLowerCase().replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
-  return `%${escaped}%`;
 }
 
 function toDisplayValue(value: unknown): string | number | null {

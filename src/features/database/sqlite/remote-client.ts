@@ -16,6 +16,7 @@ import {
 } from '@/features/database/protocol';
 import { quoteIdentifier } from '@/features/database/sqlite-schema';
 import { buildRowMutation } from '@/features/database/row-mutation';
+import { buildTableFilter } from '@/features/database/table-filter';
 
 type Row = Record<string, DatabaseCellValue>;
 
@@ -106,19 +107,13 @@ export class RemoteSqliteClient {
   ): Promise<DatabaseTable> {
     const columns = await this.columns(uri, tableName);
     const preview = columns.slice(0, 50);
-    const conditions: string[] = [];
-    const match = (column: DatabaseColumn, value: string) => {
-      const name = quoteIdentifier(column.name);
-      const pattern = `%${value.toLowerCase().replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`;
-      const like = `LOWER(CAST(${name} AS TEXT)) LIKE ${literal(pattern)} ESCAPE char(92)`;
-      return value.toLowerCase() === 'null' ? `(${like} OR ${name} IS NULL)` : like;
-    };
-    const search = filters?.search?.trim();
-    if (search && preview.length) conditions.push(`(${preview.map((column) => match(column, search)).join(' OR ')})`);
-    for (const [name, value] of Object.entries(filters?.columns ?? {})) {
-      const column = preview.find((candidate) => candidate.name === name);
-      if (column && value.trim()) conditions.push(match(column, value.trim()));
-    }
+    const filter = buildTableFilter(preview, filters, 'sqlite');
+    let parameterIndex = 0;
+    const conditions = filter.where.map((condition) =>
+      condition.replace(/"(?:[^"]|"")*"|\?/g, (token) =>
+        token === '?' ? literal(filter.parameters[parameterIndex++]) : token,
+      ),
+    );
     const table = quoteIdentifier(tableName);
     const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
     const offset = (filters?.page ?? 0) * databaseTablePageSize;

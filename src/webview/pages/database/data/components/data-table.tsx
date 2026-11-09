@@ -1,9 +1,11 @@
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
-import type { DatabaseCellValue, DatabaseTable } from '@/features/database/protocol';
+import { isDatabaseBooleanColumn, type DatabaseCellValue, type DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
+import { Empty } from '@/webview/components/ui/empty';
 import { Input } from '@/webview/components/ui/input';
+import { Select } from '@/webview/components/ui/select';
 
 type DataColumn = {
   key: string;
@@ -50,15 +52,32 @@ export function DataTable({
             {column.type || 'unknown'}
           </span>
         </div>
-        <Input
-          type="search"
-          className="w-full"
-          aria-label={`Filter ${column.name}`}
-          placeholder="Filter..."
-          value={filters[column.name] ?? ''}
-          disabled={mutationPending}
-          onChange={(event) => onFilterChange(column.name, event.target.value)}
-        />
+        {isDatabaseBooleanColumn(column) ? (
+          <Select
+            className="w-full"
+            ariaLabel={`Filter ${column.name}`}
+            value={filters[column.name] ?? ''}
+            options={[
+              { value: '', label: 'All values' },
+              { value: 'true', label: 'true' },
+              { value: 'false', label: 'false' },
+              { value: 'null', label: 'NULL' },
+            ]}
+            disabled={mutationPending}
+            onValueChange={(value) => onFilterChange(column.name, value)}
+          />
+        ) : (
+          <Input
+            type="search"
+            className="w-full"
+            aria-label={`Filter ${column.name}`}
+            placeholder="Contains... / NULL"
+            title="Case-insensitive text match. Enter NULL to match null values only."
+            value={filters[column.name] ?? ''}
+            disabled={mutationPending}
+            onChange={(event) => onFilterChange(column.name, event.target.value)}
+          />
+        )}
       </div>
     ),
     headerClassName: 'min-w-44 bg-(--vscode-editor-background) px-3!',
@@ -71,12 +90,24 @@ export function DataTable({
             {value === null ? 'NULL' : 'empty'}
           </span>
         );
+      const booleanValue = isDatabaseBooleanColumn(column) && /^(?:0|1|true|false)$/i.test(String(value));
+      const display = booleanValue
+        ? /^(?:1|true)$/i.test(String(value))
+          ? 'true'
+          : 'false'
+        : String(value);
       return (
         <span
-          title={String(value)}
-          className={typeof value === 'number' ? 'text-(--vscode-debugTokenExpression-number)' : undefined}
+          title={display}
+          className={
+            booleanValue
+              ? 'text-(--vscode-debugTokenExpression-boolean)'
+              : typeof value === 'number'
+                ? 'text-(--vscode-debugTokenExpression-number)'
+                : undefined
+          }
         >
-          {String(value)}
+          {display}
         </span>
       );
     },
@@ -142,6 +173,17 @@ export function DataTable({
           </tr>
         </thead>
         <tbody>
+          {table.rows.length === 0 && (
+            <tr>
+              <td colSpan={columns.length} className="p-8">
+                <Empty
+                  icon="table"
+                  title={table.rowCount ? 'No matching rows' : 'No rows'}
+                  description={table.rowCount ? 'Adjust or clear the filters to see more data.' : 'This table is empty.'}
+                />
+              </td>
+            </tr>
+          )}
           {table.rows.map((values, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((column) => (

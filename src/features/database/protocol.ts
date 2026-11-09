@@ -30,6 +30,10 @@ export interface DatabaseColumn {
   readOnly?: boolean;
 }
 
+export function isDatabaseBooleanColumn(column: DatabaseColumn): boolean {
+  return /^(?:bool(?:ean)?|bit\s*\(\s*1\s*\))$/i.test(column.type.trim());
+}
+
 export interface DatabaseTable {
   name: string;
   rowCount: number;
