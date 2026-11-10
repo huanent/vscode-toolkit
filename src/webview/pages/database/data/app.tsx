@@ -25,7 +25,7 @@ function App() {
         ) : (
           <div className="flex w-full max-w-lg flex-col items-center gap-3">
             <ErrorMessage message={state.message} />
-            <Button variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
+            <Button shortcut="refresh" title="Retry" variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
               Retry
             </Button>
           </div>
@@ -89,6 +89,7 @@ function App() {
           <Button
             variant="ghost"
             prefix={<Icon name="refresh" className={pending ? 'animate-spin motion-reduce:animate-none' : undefined} />}
+            shortcut="refresh"
             title="Refresh data"
             aria-label="Refresh data"
             disabled={busy}

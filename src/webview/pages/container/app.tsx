@@ -61,7 +61,7 @@ function ContainerList({ data }: { data: ContainerEditorData }) {
     <main className="flex h-screen min-w-0 flex-col text-(--vscode-foreground)">
       <header className="flex shrink-0 items-center gap-3 border-b border-(--vscode-panel-border) px-4 py-2">
         <h1 className="min-w-0 flex-1 truncate font-semibold">{data.assetName}</h1>
-        <Button variant="secondary" disabled={busy} prefix={<Icon name="refresh" />} onClick={() => request({ type: 'list' })}>Refresh</Button>
+        <Button shortcut="refresh" variant="secondary" disabled={busy} prefix={<Icon name="refresh" />} onClick={() => request({ type: 'list' })}>Refresh</Button>
       </header>
       {error && <ErrorMessage message={error} />}
       <DataList ariaLabel="Containers" entries={containers} columns={columns} entryKey={(row) => row.id} emptyMessage={busy ? 'Loading containers...' : 'No containers.'} />

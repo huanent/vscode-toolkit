@@ -41,6 +41,7 @@ export function TaskHistory({ tasks, selectedTaskId, hasMore }: TaskHistoryPanel
           <Button
             variant="ghost"
             size="sm"
+            shortcut="refresh"
             title="Refresh tasks"
             aria-label="Refresh tasks"
             prefix={<Icon name="refresh" />}

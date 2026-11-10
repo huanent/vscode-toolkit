@@ -85,6 +85,7 @@ export function Dialog({
               }
             />
             <Button
+              shortcut={saveLabel === 'Save' ? 'save' : undefined}
               type={form ? 'submit' : 'button'}
               form={form}
               onClick={onSave}

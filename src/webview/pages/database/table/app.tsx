@@ -61,6 +61,7 @@ function App() {
             <Button
               variant="ghost"
               size="md"
+              shortcut="refresh"
               title="Refresh tables"
               aria-label="Refresh tables"
               prefix={<Icon name="refresh" />}

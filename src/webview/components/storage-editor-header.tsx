@@ -34,7 +34,7 @@ export function StorageEditorHeader({
           />
         </div>
       </FormItem>
-      <Button type="submit" prefix={<Icon name={saving ? 'loading' : 'save'} />} disabled={saveDisabled || saving}>
+      <Button shortcut="save" type="submit" prefix={<Icon name={saving ? 'loading' : 'save'} />} disabled={saveDisabled || saving}>
         {saving ? 'Saving...' : 'Save'}
       </Button>
     </div>

@@ -92,6 +92,7 @@ export function FilePane({
 
   return (
     <section
+      data-shortcut-scope
       aria-label={`${label} files`}
       aria-busy={busy}
       className="flex min-h-0 min-w-72 flex-1 basis-0 flex-col overflow-hidden border-r border-(--vscode-panel-border) last:border-r-0"
@@ -158,6 +159,7 @@ export function FilePane({
         <Button
           type="button"
           variant="ghost"
+          shortcut="refresh"
           title="Refresh"
           aria-label={`Refresh ${side}`}
           disabled={busy}

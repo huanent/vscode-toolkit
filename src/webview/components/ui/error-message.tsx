@@ -29,7 +29,15 @@ export function ErrorMessage({ message }: ErrorMessageProps) {
               Error
             </Dialog.Title>
             <Dialog.Close
-              render={<Button variant="ghost" prefix={<Icon name="close" />} aria-label="Close error" title="Close" />}
+              render={
+                <Button
+                  variant="ghost"
+                  className="outline-none"
+                  prefix={<Icon name="close" />}
+                  aria-label="Close error"
+                  title="Close"
+                />
+              }
             />
           </div>
           <Dialog.Description className="my-4 min-h-0 overflow-auto whitespace-pre-wrap wrap-anywhere">

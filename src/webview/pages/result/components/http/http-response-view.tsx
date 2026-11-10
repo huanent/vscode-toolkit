@@ -81,6 +81,7 @@ export function HttpResponseView({ response, error, status, taskId }: HttpRespon
             <Button
               variant="ghost"
               size="sm"
+              shortcut="save"
               title="Save response"
               aria-label="Save response"
               prefix={<Icon name="save" />}

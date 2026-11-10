@@ -47,6 +47,7 @@ export function ExplorerToolbar({
       />
       <Button
         variant="ghost"
+        shortcut="refresh"
         aria-label="Refresh"
         title="Refresh"
         onClick={onRefresh}

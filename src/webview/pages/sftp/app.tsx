@@ -17,7 +17,7 @@ function App() {
       ) : state.status === 'error' ? (
         <div className="p-2">
           <ErrorMessage message={state.message} />
-          <Button onClick={() => postToHost({ type: 'ready' })} prefix={<Icon name="refresh" />}>
+          <Button shortcut="refresh" title="Retry" onClick={() => postToHost({ type: 'ready' })} prefix={<Icon name="refresh" />}>
             Retry
           </Button>
         </div>

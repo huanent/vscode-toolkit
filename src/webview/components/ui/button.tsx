@@ -2,6 +2,7 @@ import { Button as BaseButton, type ButtonProps as BaseButtonProps } from '@base
 import { cn } from 'cn';
 import { isValidElement, type ReactNode } from 'react';
 import { Icon } from '@/webview/components/ui/icons';
+import { getAriaShortcut, getShortcutLabel, type KeyboardShortcut } from '@/webview/utils/keyboard-shortcuts';
 
 export type ButtonProps = Omit<BaseButtonProps, 'className' | 'prefix'> & {
   className?: string;
@@ -9,6 +10,7 @@ export type ButtonProps = Omit<BaseButtonProps, 'className' | 'prefix'> & {
   suffix?: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
+  shortcut?: KeyboardShortcut;
 };
 
 const variants = {
@@ -36,6 +38,8 @@ export function Button({
   variant = 'primary',
   size = 'md',
   type = 'button',
+  shortcut,
+  title,
   ...props
 }: ButtonProps) {
   const iconOnly =
@@ -50,6 +54,9 @@ export function Button({
         className,
       )}
       type={type}
+      data-keyboard-shortcut={shortcut}
+      aria-keyshortcuts={shortcut ? getAriaShortcut(shortcut) : undefined}
+      title={shortcut ? `${title ?? (shortcut === 'save' ? 'Save' : 'Refresh')} (${getShortcutLabel(shortcut)})` : title}
       {...props}
     >
       {prefix != null && (

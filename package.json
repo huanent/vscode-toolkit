@@ -1766,27 +1766,27 @@
         {
           "command": "toolkit.runDotnetScript",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .cs",
-          "group": "3_run@1"
+          "group": "0_run@1"
         },
         {
           "command": "toolkit.runShScript",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .sh && !isWindows",
-          "group": "3_run@1"
+          "group": "0_run@1"
         },
         {
           "command": "toolkit.runBatScript",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .bat && isWindows",
-          "group": "3_run@1"
+          "group": "0_run@1"
         },
         {
           "command": "toolkit.runNodeScript",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension =~ /\\.(js|mjs|cjs|ts|mts|cts)$/ && toolkit.nodeAvailable",
-          "group": "3_run@1"
+          "group": "0_run@1"
         },
         {
           "command": "toolkit.runPythonScript",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .py",
-          "group": "3_run@1"
+          "group": "0_run@1"
         },
         {
           "command": "toolkit.playbook.createFile",
