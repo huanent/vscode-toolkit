@@ -1,3 +1,4 @@
+import { getShortId } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import { parseFileVariables, parseHttpDocument } from './http-parser';
 import type { CredentialService } from '@/features/credential/service';
@@ -50,8 +51,7 @@ export class HttpCompletionProvider implements vscode.CompletionItemProvider {
       );
       const credentials = (await this.credentials.list()).filter((credential) => credential.type === 'password');
       return credentials.map((credential) => {
-        const shortId = credential.id.slice(0, 8);
-        const id = credentials.filter((entry) => entry.id.startsWith(shortId)).length === 1 ? shortId : credential.id;
+        const id = getShortId(credential.id, credentials.map((entry) => entry.id));
         const item = new vscode.CompletionItem(id, vscode.CompletionItemKind.Reference);
         item.detail = `${credential.username || '-'} - Password - ${credential.description || '-'}`;
         item.filterText = `${id} ${credential.username || ''} ${credential.description || ''}`;

@@ -64,6 +64,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
     icon: 'database',
     validate: validateSqliteUri,
     load: readSqliteDatabase,
+    data: (uri) => ({ name: uri.path.split('/').pop() ?? 'SQLite Database', databaseUri: uri.toString() }),
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
       const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
@@ -128,7 +129,6 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to update schema: ${errorMessage}`, { modal: true });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
           }
         }

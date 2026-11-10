@@ -1,3 +1,8 @@
+import {
+  planSqliteSchemaMigration,
+  sqliteSchemaSnapshotQuery,
+  type SqliteSchemaObject,
+} from '@/features/database/sqlite/schema-migration';
 import { randomUUID } from 'node:crypto';
 import type * as vscode from 'vscode';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -199,49 +204,8 @@ export class RemoteSqliteClient {
   }
 
   async updateSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {
-    const oldColumns = await this.columns(uri, options.tableName);
-    if (oldColumns.length > 50) throw new Error('Tables with more than 50 columns require an explicit SQL migration.');
-    const retained = new Set<string>();
-    const statements: string[] = [];
-    const table = quoteIdentifier(options.tableName);
-    let previousIndex = -1;
-    let addedColumn = false;
-    for (const column of options.columns) {
-      const source = column.originalName ?? column.name;
-      const index = oldColumns.findIndex((existing) => existing.name === source);
-      if (index < 0) {
-        if (column.originalName) throw new Error(`Column no longer exists: ${source}`);
-        if (column.primaryKey) throw new Error('Adding a primary key requires an explicit SQL migration.');
-        statements.push(
-          `ALTER TABLE ${table} ADD COLUMN ${quoteIdentifier(column.name.trim())} ${column.type?.trim() ?? ''}${column.notNull ? ' NOT NULL' : ''}`,
-        );
-        addedColumn = true;
-        continue;
-      }
-      if (retained.has(source)) throw new Error(`Column is used more than once: ${source}`);
-      if (index < previousIndex || addedColumn)
-        throw new Error('Reordering columns requires an explicit SQL migration.');
-      const existing = oldColumns[index];
-      if (
-        existing.type.trim().toUpperCase() !== (column.type ?? '').trim().toUpperCase() ||
-        existing.primaryKey !== column.primaryKey ||
-        existing.notNull !== column.notNull
-      )
-        throw new Error('Changing column types, primary keys or nullability requires an explicit SQL migration.');
-      retained.add(source);
-      previousIndex = index;
-      if (source !== column.name.trim())
-        statements.push(
-          `ALTER TABLE ${table} RENAME COLUMN ${quoteIdentifier(source)} TO ${quoteIdentifier(column.name.trim())}`,
-        );
-    }
-    for (const column of oldColumns) {
-      if (!retained.has(column.name))
-        statements.push(`ALTER TABLE ${table} DROP COLUMN ${quoteIdentifier(column.name)}`);
-    }
-    if (options.newTableName !== options.tableName)
-      statements.push(`ALTER TABLE ${table} RENAME TO ${quoteIdentifier(options.newTableName)}`);
-    await this.execute(uri, ['PRAGMA legacy_alter_table = OFF', 'BEGIN IMMEDIATE', ...statements, 'COMMIT'], true);
+    const [objects] = await this.execute(uri, [sqliteSchemaSnapshotQuery()]);
+    await this.execute(uri, planSqliteSchemaMigration(objects as unknown as SqliteSchemaObject[], options), true);
   }
 
   private async columns(uri: vscode.Uri, tableName: string): Promise<DatabaseColumn[]> {

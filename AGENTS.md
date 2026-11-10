@@ -11,6 +11,7 @@ These instructions apply to the entire repository. Webview-specific rules apply 
 - When a file's responsibility changes, promptly rename it to reflect its current responsibility.
 - When a file accumulates too many responsibilities, split it into focused files with clear ownership.
 - Use `@/` for imports from `src/`. Prefer imports such as `@/webview/components/button` over relative paths that traverse up multiple directories.
+- Prefer short IDs for all entity types (assets, playbooks, tasks, results, etc.) wherever safe, especially in user-facing text and copied AI references. For long opaque IDs, default to the first 8 characters; keep already-short IDs unchanged. Check prefix uniqueness within the relevant entity scope and fall back to the full ID when ambiguous or uniqueness cannot be established. Accept short IDs in user/AI-facing lookups where feasible, resolving them to full IDs and rejecting ambiguous matches rather than choosing arbitrarily. Keep full IDs for storage, internal relationships, runtime context, and APIs or protocols that require exact identifiers. Do not truncate semantic identifiers or IDs whose consumers do not support prefix resolution. Reuse `getShortId`, `findIdMatches`, and `shortIdLength` from `src/shared/short-id.ts` rather than duplicating truncation, collision detection, or prefix matching. Callers define the relevant entity scope and report domain-specific lookup errors.
 
 ## Validation
 

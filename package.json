@@ -759,6 +759,16 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.database.copyTableName",
+        "title": "Copy Table Name",
+        "category": "Database"
+      },
+      {
+        "command": "toolkit.database.copyAiReference",
+        "title": "Copy AI Reference",
+        "category": "Database"
+      },
+      {
         "command": "toolkit.assets.query",
         "title": "Run SQL Query",
         "category": "Assets"
@@ -1390,6 +1400,14 @@
           "when": "false"
         },
         {
+          "command": "toolkit.database.copyTableName",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.database.copyAiReference",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.rename",
           "when": "false"
         },
@@ -1479,6 +1497,16 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "toolkit.database.copyTableName",
+          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor') && webviewSection == 'databaseTables' && tableName",
+          "group": "1_copy@1"
+        },
+        {
+          "command": "toolkit.database.copyAiReference",
+          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor') && webviewSection == 'databaseTables' && tableName",
+          "group": "1_copy@2"
+        },
         {
           "command": "toolkit.sftp.createFile",
           "when": "webviewId == 'toolkit.sftp' && webviewSection == 'sftp' && sftpCreatePath && !sftpBusy",
@@ -1653,6 +1681,31 @@
           "command": "toolkit.temp.copyPath",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
           "group": "2_actions@3"
+        },
+        {
+          "command": "toolkit.runDotnetScript",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .cs",
+          "group": "3_run@1"
+        },
+        {
+          "command": "toolkit.runShScript",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .sh && !isWindows",
+          "group": "3_run@1"
+        },
+        {
+          "command": "toolkit.runBatScript",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .bat && isWindows",
+          "group": "3_run@1"
+        },
+        {
+          "command": "toolkit.runNodeScript",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension =~ /\\.(js|mjs|cjs|ts|mts|cts)$/ && toolkit.nodeAvailable",
+          "group": "3_run@1"
+        },
+        {
+          "command": "toolkit.runPythonScript",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryType == 'file' && tempEntryExtension == .py",
+          "group": "3_run@1"
         },
         {
           "command": "toolkit.playbook.createFile",

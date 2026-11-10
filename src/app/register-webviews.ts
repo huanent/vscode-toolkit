@@ -7,6 +7,7 @@ import { MysqlService } from '@/features/database/mysql/service';
 import { PostgresqlService } from '@/features/database/postgresql/service';
 import { registerPostgresqlQueryEditor } from '@/features/database/postgresql/query-editor';
 import { registerMysqlEditor } from '@/features/database/mysql/editor';
+import { registerTableCommands } from '@/features/database/table-commands';
 import { registerRemoteSqlite } from '@/features/database/sqlite/service';
 import { registerRemoteArchive } from '@/features/archive/service';
 import { SshService } from '@/features/ssh/ssh-service';
@@ -51,6 +52,7 @@ export function registerWebviews(
 ): void {
   const assetsUri = vscode.Uri.file(__dirname);
   const assets = new AssetService(context);
+  registerTableCommands(context, assets);
   const credentials = new CredentialService(context);
   const ssh = new SshService(assets, credentials, context.globalState);
   context.subscriptions.push(registerRemoteSqlite(ssh));

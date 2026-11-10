@@ -1,3 +1,8 @@
+import {
+  planSqliteSchemaMigration,
+  sqliteSchemaSnapshotQuery,
+  type SqliteSchemaObject,
+} from '@/features/database/sqlite/schema-migration';
 import { DatabaseSync } from 'node:sqlite';
 import {
   databaseTablePageSize,
@@ -69,78 +74,12 @@ export function applySqliteTableDeletion(databasePath: string, tableName: string
 export function applySqliteTableSchema(databasePath: string, options: UpdateSqliteTableSchemaOptions): void {
   const database = new DatabaseSync(databasePath);
   try {
-    const tableExists = database
-      .prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?")
-      .get(options.tableName);
-    if (!tableExists) throw new Error(`SQLite table not found: ${options.tableName}`);
-
-    if (options.newTableName !== options.tableName) {
-      const targetExists = database
-        .prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = ?")
-        .get(options.newTableName);
-      if (targetExists) throw new Error(`Table already exists: ${options.newTableName}`);
-    }
-
-    database.exec('PRAGMA foreign_keys = ON');
-    database.exec('PRAGMA legacy_alter_table = OFF');
-    database.exec('BEGIN IMMEDIATE');
+    const objects = database.prepare(sqliteSchemaSnapshotQuery()).all() as unknown as SqliteSchemaObject[];
+    const statements = planSqliteSchemaMigration(objects, options);
     try {
-      const oldColumns = database.prepare(`PRAGMA table_xinfo(${quoteIdentifier(options.tableName)})`).all();
-      if (oldColumns.length > maxPreviewColumns) {
-        throw new Error('Tables with more than 50 columns require an explicit SQL migration.');
-      }
-      const retained = new Set<string>();
-      const statements: string[] = [];
-      const table = quoteIdentifier(options.tableName);
-      let previousIndex = -1;
-      let addedColumn = false;
-      for (const column of options.columns) {
-        const source = column.originalName ?? column.name;
-        const index = oldColumns.findIndex((existing) => existing.name === source);
-        if (index < 0) {
-          if (column.originalName) throw new Error(`Column no longer exists: ${column.originalName}`);
-          if (column.primaryKey) throw new Error('Adding a primary key requires an explicit SQL migration.');
-          let definition = quoteIdentifier(column.name.trim());
-          if (column.type?.trim()) definition += ` ${column.type.trim()}`;
-          if (column.notNull) definition += ' NOT NULL';
-          statements.push(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
-          addedColumn = true;
-          continue;
-        }
-        const existing = oldColumns[index];
-        if (retained.has(source)) throw new Error(`Column is used more than once: ${source}`);
-        if (index < previousIndex || addedColumn) {
-          throw new Error('Reordering columns requires an explicit SQL migration.');
-        }
-        if (
-          String(existing.type ?? '')
-            .trim()
-            .toUpperCase() !== (column.type ?? '').trim().toUpperCase() ||
-          (Number(existing.pk) !== 0) !== column.primaryKey ||
-          (Number(existing.notnull) !== 0) !== column.notNull
-        ) {
-          throw new Error('Changing column types, primary keys or nullability requires an explicit SQL migration.');
-        }
-        retained.add(source);
-        previousIndex = index;
-        if (source !== column.name.trim()) {
-          statements.push(
-            `ALTER TABLE ${table} RENAME COLUMN ${quoteIdentifier(source)} TO ${quoteIdentifier(column.name.trim())}`,
-          );
-        }
-      }
-      for (const column of oldColumns) {
-        if (!retained.has(String(column.name))) {
-          statements.push(`ALTER TABLE ${table} DROP COLUMN ${quoteIdentifier(String(column.name))}`);
-        }
-      }
-      if (options.newTableName !== options.tableName) {
-        statements.push(`ALTER TABLE ${table} RENAME TO ${quoteIdentifier(options.newTableName)}`);
-      }
       for (const statement of statements) database.exec(statement);
-      database.exec('COMMIT');
     } catch (error) {
-      database.exec('ROLLBACK');
+      if (database.isTransaction) database.exec('ROLLBACK');
       throw error;
     }
   } finally {

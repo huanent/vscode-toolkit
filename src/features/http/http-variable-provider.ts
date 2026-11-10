@@ -1,3 +1,4 @@
+import { findIdMatches, shortIdLength } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import { parseFileVariables } from './http-parser';
 import type { CredentialService } from '@/features/credential/service';
@@ -35,10 +36,11 @@ export class HttpVariableProvider implements vscode.DefinitionProvider, vscode.H
     const text = document.lineAt(position.line).text;
     for (const match of text.matchAll(/\{\{\s*\$credential\s+([a-zA-Z0-9-]+)\s+(username|password)\s*\}\}/g)) {
       if (position.character >= match.index && position.character <= match.index + match[0].length) {
-        const matches = (await this.credentials.list()).filter(
-          (credential) =>
-            credential.type === 'password' &&
-            (credential.id === match[1] || (match[1].length === 8 && credential.id.startsWith(match[1]))),
+        const matches = findIdMatches(
+          (await this.credentials.list()).filter((credential) => credential.type === 'password'),
+          match[1],
+          (credential) => credential.id,
+          shortIdLength,
         );
         const content = new vscode.MarkdownString();
         content.appendMarkdown('**Credential**\n\n');

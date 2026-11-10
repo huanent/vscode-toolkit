@@ -1,3 +1,4 @@
+import { findIdMatches } from '@/shared/short-id';
 import { randomUUID } from 'node:crypto';
 import { access, lstat, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
@@ -49,15 +50,12 @@ export async function readPlaybookRecord(
 ): Promise<StoredPlaybookRecord | undefined> {
   if (!/^[0-9a-f-]+$/i.test(id)) throw new Error('Invalid playbook id.');
   const index = await readPlaybookStorage(roots);
-  let resolvedId = id;
-  if (!index.playbooks.has(id)) {
-    const matches = [...index.playbooks.keys()].filter((playbookId) => playbookId.startsWith(id));
-    if (matches.length > 1) {
-      throw new Error(`Playbook ID prefix "${id}" matches multiple playbooks. Use a longer ID.`);
-    }
-    if (!matches.length) return undefined;
-    resolvedId = matches[0];
+  const matches = findIdMatches([...index.playbooks.keys()], id, (playbookId) => playbookId);
+  if (matches.length > 1) {
+    throw new Error(`Playbook ID prefix "${id}" matches multiple playbooks. Use a longer ID.`);
   }
+  if (!matches.length) return undefined;
+  const resolvedId = matches[0];
   const location = index.playbooks.get(resolvedId);
   if (!location) return undefined;
   const value = addLegacyPlaybookStepNames(JSON.parse(await readFile(location.path, 'utf8')));

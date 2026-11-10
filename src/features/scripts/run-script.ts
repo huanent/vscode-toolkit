@@ -1,16 +1,27 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { getRunnableFileUri, isNodeScriptUri, isTypeScriptDocument, resolveNodeDocument } from './script-document';
+import type { TempContextTarget } from '@/features/temp/protocol';
+import {
+  getRunnableFileUri,
+  isNodeScriptUri,
+  isTypeScriptDocument,
+  resolveNodeDocument,
+  resolveScriptTarget,
+} from './script-document';
 import { getScriptRuntime, getTypeScriptRuntimeArgs } from './script-runtime';
 
 const terminalName = 'Toolkit';
 
 export async function runScript(
   context: vscode.ExtensionContext,
-  scriptUri: vscode.Uri | undefined,
+  target: vscode.Uri | TempContextTarget | undefined,
   selectedUris: readonly vscode.Uri[] | undefined,
 ): Promise<void> {
   try {
+    const scriptUri = await resolveScriptTarget(
+      context,
+      target ?? selectedUris?.find(isSupportedScript) ?? vscode.window.activeTextEditor?.document.uri,
+    );
     await runResolvedScript(context, scriptUri, selectedUris);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

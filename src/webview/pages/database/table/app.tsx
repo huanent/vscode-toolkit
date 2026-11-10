@@ -86,7 +86,11 @@ function App() {
         </div>
         <section aria-label="Database tables" className="flex min-h-0 flex-1 flex-col">
           {tables.length ? (
-            <TableManagement tables={visibleTables} onEditSchema={setEditingTable} />
+            <TableManagement
+              tables={visibleTables}
+              database={state.data.currentDatabase}
+              onEditSchema={setEditingTable}
+            />
           ) : (
             <div className="grid min-h-0 flex-1 place-items-center px-4 text-center">
               <Empty

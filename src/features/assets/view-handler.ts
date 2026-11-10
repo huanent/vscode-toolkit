@@ -1,3 +1,4 @@
+import { getShortId } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import type { AssetRequest, AssetsMessage, AssetTreeEntry, AssetViewEntry } from './protocol';
@@ -117,11 +118,10 @@ export function createAssetsView(
     const assets = await service.list();
     const asset = assets.find((entry) => entry.id === id);
     if (!asset) throw new Error('Asset no longer exists.');
-    const shortId = asset.id.slice(0, 8);
-    const conflict = assets.some((entry) => entry.id !== asset.id && entry.id.startsWith(shortId));
+    const referenceId = getShortId(asset.id, assets.map((entry) => entry.id));
     const path = asset.folder ? `${asset.folder}/${asset.name}` : asset.name;
     await vscode.env.clipboard.writeText(
-      `[Asset "${path}", id: ${conflict ? asset.id : shortId}, type: ${asset.type}]`,
+      `[Asset "${path}", id: ${referenceId}, type: ${asset.type}]`,
     );
     void vscode.window.setStatusBarMessage('AI reference copied to clipboard', 2000);
   };

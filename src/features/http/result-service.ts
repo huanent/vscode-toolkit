@@ -1,3 +1,4 @@
+import { findIdMatches, shortIdLength } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import type { HttpRequestData } from './protocol';
 import type { ResultTaskService } from '@/features/result/task-service';
@@ -33,8 +34,11 @@ export class HttpResultService {
     const headers: Record<string, string> = {};
     for (const [name, value] of Object.entries(request.headers)) {
       headers[name] = value.replace(credentialPattern, (_match, id: string, field: 'username' | 'password') => {
-        const matches = credentials.filter(
-          (entry) => entry.type === 'password' && (entry.id === id || (id.length === 8 && entry.id.startsWith(id))),
+        const matches = findIdMatches(
+          credentials.filter((entry) => entry.type === 'password'),
+          id,
+          (entry) => entry.id,
+          shortIdLength,
         );
         if (matches.length > 1) throw new Error(`Credential ID ${id} is ambiguous; use the full ID.`);
         const credential = matches[0];

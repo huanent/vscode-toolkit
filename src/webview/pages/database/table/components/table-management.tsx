@@ -2,10 +2,11 @@ import type { DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
 import { Icon } from '@/webview/components/ui/icons';
-import { postToHost } from '@/webview/utils/host-data';
+import { getRootData, postToHost } from '@/webview/utils/host-data';
 
 interface TableManagementProps {
   tables: readonly DatabaseTable[];
+  database?: string;
   onEditSchema: (table: DatabaseTable) => void;
 }
 
@@ -97,7 +98,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
   ];
 }
 
-export function TableManagement({ tables, onEditSchema }: TableManagementProps) {
+export function TableManagement({ tables, database, onEditSchema }: TableManagementProps) {
   const columns = getTableColumns(onEditSchema);
 
   return (
@@ -106,6 +107,14 @@ export function TableManagement({ tables, onEditSchema }: TableManagementProps) 
       columns={columns}
       entries={tables}
       entryKey={(table) => table.name}
+      entryContext={(table) => ({
+        webviewSection: 'databaseTables',
+        preventDefaultContextMenuItems: true,
+        tableName: table.name,
+        databaseName: database,
+        assetId: getRootData('assetId'),
+        databaseUri: getRootData('databaseUri'),
+      })}
       onOpen={(table) => {
         postToHost({ type: 'activeTableChanged', tableName: table.name });
         postToHost({ type: 'openTable', tableName: table.name });

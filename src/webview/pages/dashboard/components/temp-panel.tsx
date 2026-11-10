@@ -50,7 +50,12 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
 function toTempTreeItems(entries: readonly TempTreeEntry[], parentPath = ''): TreeItem[] {
   return entries.map((entry) => {
     const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
-    const context = { tempEntryPath: path, tempEntryType: entry.type };
+    const extensionIndex = entry.name.lastIndexOf('.');
+    const context = {
+      tempEntryPath: path,
+      tempEntryType: entry.type,
+      tempEntryExtension: extensionIndex > 0 ? entry.name.slice(extensionIndex).toLowerCase() : '',
+    };
     return entry.type === 'directory'
       ? {
           path,

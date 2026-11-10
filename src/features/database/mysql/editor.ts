@@ -115,7 +115,10 @@ export function registerMysqlEditor(
       if (doc.currentDatabase) activeDatabases.set(uriKey, doc.currentDatabase);
       return doc;
     },
-    data: (uri) => ({ name: new URLSearchParams(uri.query).get('name') ?? 'MySQL Database' }),
+    data: (uri) => ({
+      name: new URLSearchParams(uri.query).get('name') ?? 'MySQL Database',
+      assetId: parseMysqlUri(uri).assetId,
+    }),
     onPanelResolved: (uri, panel) => {
       const uriKey = uri.toString();
       const { assetId } = parseMysqlUri(uri);
@@ -216,7 +219,6 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to update schema: ${errorMessage}`, { modal: true });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
           }
         }

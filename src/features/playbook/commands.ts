@@ -1,3 +1,4 @@
+import { getShortId } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import { playbookEditorViewType } from './editor';
@@ -51,12 +52,12 @@ async function copyPlaybookAiReference(context: vscode.ExtensionContext, target:
   const entries = await readPlaybookRecords(resolveStorageRoots(context, 'playbooks'));
   const entry = entries.find((candidate) => candidate.type === 'playbook' && candidate.id === id);
   if (!entry) throw new Error('Playbook no longer exists.');
-  const shortId = entry.id.slice(0, 8);
-  const conflict = entries.some(
-    (candidate) => candidate.type === 'playbook' && candidate.id !== entry.id && candidate.id.startsWith(shortId),
+  const referenceId = getShortId(
+    entry.id,
+    entries.filter((candidate) => candidate.type === 'playbook').map((candidate) => candidate.id),
   );
   const path = entry.parentId ? `${entry.parentId}/${entry.name}` : entry.name;
-  await vscode.env.clipboard.writeText(`[Playbook "${path}", id: ${conflict ? entry.id : shortId}]`);
+  await vscode.env.clipboard.writeText(`[Playbook "${path}", id: ${referenceId}]`);
   void vscode.window.setStatusBarMessage('AI reference copied to clipboard', 2000);
 }
 

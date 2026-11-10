@@ -1,3 +1,4 @@
+import { findIdMatches } from '@/shared/short-id';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, rm, unlink, writeFile, lstat } from 'node:fs/promises';
 import * as path from 'node:path';
@@ -301,9 +302,7 @@ export function isAiEnabled(asset: AssetRecord): boolean {
 }
 
 function findAssetById(assets: AssetRecord[], id: string): AssetRecord | undefined {
-  const exact = assets.find((entry) => entry.id === id);
-  if (exact || !id) return exact;
-  const matches = assets.filter((entry) => entry.id.startsWith(id));
+  const matches = findIdMatches(assets, id, (entry) => entry.id);
   if (matches.length > 1) throw new Error(`Asset ID prefix "${id}" matches multiple assets. Use a longer ID.`);
   return matches[0];
 }
