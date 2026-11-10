@@ -24,6 +24,7 @@ type TreeProps = {
   search?: string;
   searchMatches?: readonly string[];
   getItemClassName?: (item: TreeItem) => string | undefined;
+  getItemLabelClassName?: (item: TreeItem) => string | undefined;
   onActivate?: (item: TreeFileItem) => void;
   onItemDoubleClick?: (item: TreeFileItem) => void;
   renderActions?: (item: TreeFileItem) => ReactNode;
@@ -49,6 +50,7 @@ export function Tree({
   search,
   searchMatches,
   getItemClassName,
+  getItemLabelClassName,
   onActivate,
   onItemDoubleClick,
   renderActions,
@@ -118,6 +120,7 @@ export function Tree({
         ),
         label: node.item.name,
         contentClassName: getItemClassName?.(node.item),
+        labelClassName: getItemLabelClassName?.(node.item),
         description: node.item.type === 'file' ? node.item.detail : undefined,
         context: node.item.context,
         actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,

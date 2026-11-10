@@ -40,7 +40,7 @@ export function PlaybookPanel({
             items={toPlaybookTreeItems(entries)}
             search={search}
             searchMatches={searchMatches}
-            getItemClassName={(item) => item.context?.playbookStorageScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
+            getItemLabelClassName={(item) => item.context?.playbookStorageScope === 'workspace' ? 'underline' : undefined}
             onActivate={activatePlaybook}
             onItemDoubleClick={activatePlaybook}
             renderActions={renderPlaybookActions}

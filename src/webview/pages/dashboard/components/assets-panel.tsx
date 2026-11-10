@@ -36,7 +36,7 @@ export function AssetsPanel({
             items={entries}
             search={search}
             searchMatches={searchMatches}
-            getItemClassName={(item) => item.context?.assetStorageScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
+            getItemLabelClassName={(item) => item.context?.assetStorageScope === 'workspace' ? 'underline' : undefined}
             onActivate={activateAsset}
             onItemDoubleClick={activateAsset}
             renderActions={(item) => {

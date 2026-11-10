@@ -70,7 +70,7 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
             items={entries.flatMap(({ scope, entries: scopeEntries }) => toTempTreeItems(scopeEntries, scope)).sort(compareTempItems)}
             search={search}
             searchMatches={searchMatches}
-            getItemClassName={(item) => item.context?.tempScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
+            getItemLabelClassName={(item) => item.context?.tempScope === 'workspace' ? 'underline' : undefined}
             onActivate={(item) => {
               if (item.type === 'file') {
                 const { tempEntryPath, tempScope } = item.context ?? {};

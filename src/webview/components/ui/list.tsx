@@ -13,6 +13,7 @@ export type ListItem<T> = {
   icon?: ReactNode | ((state: ListItemState) => ReactNode);
   label: ReactNode;
   contentClassName?: string;
+  labelClassName?: string;
   description?: ReactNode;
   actions?: ReactNode;
   context?: Readonly<Record<string, string | number | boolean>>;
@@ -194,7 +195,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       <div className={cn('flex items-center gap-1 flex-1 truncate h-full', listItem.contentClassName)}>
         {icon}
         <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
-          <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
+          <div className={cn('max-w-full shrink-0 truncate', listItem.labelClassName)}>{listItem.label}</div>
           {listItem.description !== undefined && (
             <div className="min-w-0 text-sm truncate text-(--vscode-descriptionForeground)">{listItem.description}</div>
           )}
