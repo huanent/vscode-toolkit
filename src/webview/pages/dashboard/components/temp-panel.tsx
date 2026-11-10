@@ -7,11 +7,13 @@ import type {
   TempFileCommandRequest,
   TempContextTarget,
   TempTreeEntry,
+  TempScopeGroup,
 } from '@/features/temp/protocol';
+import type { StorageScope } from '@/shared/storage-scope';
 import { postToHost } from '@/webview/utils/host-data';
 
 type TempPanelProps = {
-  entries: TempTreeEntry[] | undefined;
+  entries: TempScopeGroup[] | undefined;
   error: string | undefined;
   loading: boolean;
   collapseAllTrigger: number;
@@ -24,7 +26,7 @@ const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultCont
 export function TempPanel({ entries, error, loading, collapseAllTrigger, search, searchMatches }: TempPanelProps) {
   return (
     <section
-      className="flex h-full min-h-0 flex-col"
+      className="temp-panel flex h-full min-h-0 flex-col"
       data-vscode-context={panelContext}
       tabIndex={0}
       onKeyDownCapture={(event) => {
@@ -60,17 +62,21 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
         <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading temporary files..." />
-      ) : entries?.length ? (
+      ) : entries?.some((group) => group.entries.length > 0) ? (
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Temporary files"
             collapseAllTrigger={collapseAllTrigger}
-            items={toTempTreeItems(entries)}
+            items={entries.flatMap(({ scope, entries: scopeEntries }) => toTempTreeItems(scopeEntries, scope)).sort(compareTempItems)}
             search={search}
             searchMatches={searchMatches}
+            getItemClassName={(item) => item.context?.tempScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
             onActivate={(item) => {
               if (item.type === 'file') {
-                postToHost({ type: 'openTempFile', path: item.path } satisfies OpenTempFileRequest);
+                const { tempEntryPath, tempScope } = item.context ?? {};
+                if (typeof tempEntryPath === 'string' && (tempScope === 'global' || tempScope === 'workspace')) {
+                  postToHost({ type: 'openTempFile', path: tempEntryPath, scope: tempScope } satisfies OpenTempFileRequest);
+                }
               }
             }}
           />
@@ -84,23 +90,32 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
   );
 }
 
-function toTempTreeItems(entries: readonly TempTreeEntry[], parentPath = ''): TreeItem[] {
+const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
+
+function compareTempItems(left: TreeItem, right: TreeItem): number {
+  return left.type === right.type
+    ? entryNameCollator.compare(left.name, right.name)
+    : left.type === 'directory' ? -1 : 1;
+}
+
+function toTempTreeItems(entries: readonly TempTreeEntry[], scope: StorageScope, parentPath = ''): TreeItem[] {
   return entries.map((entry) => {
     const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
     const extensionIndex = entry.name.lastIndexOf('.');
     const context = {
+      tempScope: scope,
       tempEntryPath: path,
       tempEntryType: entry.type,
       tempEntryExtension: extensionIndex > 0 ? entry.name.slice(extensionIndex).toLowerCase() : '',
     };
     return entry.type === 'directory'
       ? {
-          path,
+          path: `${scope}:${path}`,
           name: entry.name,
           type: 'directory' as const,
           context,
-          children: entry.children ? toTempTreeItems(entry.children, path) : undefined,
+          children: entry.children ? toTempTreeItems(entry.children, scope, path) : undefined,
         }
-      : { path, name: entry.name, type: 'file' as const, context };
+      : { path: `${scope}:${path}`, name: entry.name, type: 'file' as const, context };
   });
 }

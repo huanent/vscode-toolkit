@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
+import { findStorageRoot } from '@/shared/storage-scope';
 import { createTempFileUri } from '@/features/temp/file-system';
 import { TEMP_FILE_SYSTEM_SCHEME, type TempContextTarget } from '@/features/temp/protocol';
 import { getTempFilePath } from '@/features/temp/service';
@@ -20,7 +21,7 @@ export async function resolveScriptTarget(
   if (target.tempEntryType !== 'file' || typeof target.tempEntryPath !== 'string') {
     throw new Error('Select a temporary script file to run.');
   }
-  const uri = createTempFileUri(target.tempEntryPath);
+  const uri = createTempFileUri(target.tempEntryPath, target.tempScope);
   return getRunnableFileUri(context, await vscode.workspace.openTextDocument(uri));
 }
 
@@ -42,7 +43,7 @@ export async function getRunnableFileUri(
       throw new Error('Save the script before running it.');
     }
     if (document.uri.scheme === TEMP_FILE_SYSTEM_SCHEME) {
-      const filePath = await getTempFilePath(resolveStorageDirectory(context, 'temp'), document.uri.path.slice(1));
+      const filePath = await getTempFilePath(findStorageRoot(resolveStorageRoots(context, 'temp'), document.uri.authority === 'workspace' ? 'workspace' : 'global').directory, document.uri.path.slice(1));
       return vscode.Uri.file(filePath);
     }
     return document.uri;

@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
+import { findStorageRoot, isStorageScope, type StorageScope } from '@/shared/storage-scope';
+import { mkdir, writeFile } from 'node:fs/promises';
 import type { FileClipboard } from '@/host/utils/file-clipboard';
 import type { TempContextTarget, TempEntryType, TempTreeEntry } from './protocol';
 import { createTempAutoSaveScheduler } from './auto-save';
 import { createTempFileUri, registerTempFileSystem } from './file-system';
-import { showFolderPicker } from '@/host/utils/folder-picker';
 import {
   createTempDirectory,
   createTempFile,
@@ -30,7 +31,7 @@ export function registerTempCommands(
   const copyTemp = async (target: unknown, cut: boolean) => {
     const entry = parseTempTarget(target);
     if (!entry.tempEntryPath || !entry.tempEntryType) return;
-    const directory = resolveStorageDirectory(context, 'temp');
+    const directory = getTempDirectory(context, entry.tempScope);
     const source = entry.tempEntryType === 'directory'
       ? await resolveTempDirectory(directory, entry.tempEntryPath)
       : await getTempFilePath(directory, entry.tempEntryPath);
@@ -83,10 +84,14 @@ export function registerTempCommands(
   );
 }
 
+function getTempDirectory(context: vscode.ExtensionContext, scope: StorageScope = 'global'): string {
+  return findStorageRoot(resolveStorageRoots(context, 'temp'), scope).directory;
+}
+
 async function copyTempEntryPath(context: vscode.ExtensionContext, target: unknown): Promise<void> {
   const entry = parseTempTarget(target);
   if (!entry.tempEntryPath || !entry.tempEntryType) return;
-  const directory = resolveStorageDirectory(context, 'temp');
+  const directory = getTempDirectory(context, entry.tempScope);
   const entryPath =
     entry.tempEntryType === 'directory'
       ? await resolveTempDirectory(directory, entry.tempEntryPath)
@@ -102,38 +107,48 @@ async function moveTempEntryFromInput(
   const entry = parseTempTarget(target);
   if (!entry.tempEntryPath || !entry.tempEntryType) return;
 
-  const directory = resolveStorageDirectory(context, 'temp');
-  const tree = await readTempTree(directory);
-  const destinations: string[] = [];
-  const collectFolders = (entries: readonly TempTreeEntry[], parent = '') => {
-    for (const child of entries) {
-      if (child.type !== 'directory') continue;
-      const relativePath = parent ? `${parent}/${child.name}` : child.name;
-      destinations.push(relativePath);
-      collectFolders(child.children ?? [], relativePath);
-    }
-  };
-  collectFolders(tree);
-
+  const sourceScope = entry.tempScope ?? 'global';
   const sourcePath = entry.tempEntryPath;
-  if (entry.tempEntryType === 'directory') {
-    await resolveTempDirectory(directory, sourcePath);
-    for (let index = destinations.length - 1; index > 0; index--) {
-      const folder = destinations[index];
-      if (folder === sourcePath || folder.startsWith(`${sourcePath}/`)) destinations.splice(index, 1);
-    }
-  } else {
-    await getTempFilePath(directory, sourcePath);
+  const directory = getTempDirectory(context, sourceScope);
+  if (entry.tempEntryType === 'directory') await resolveTempDirectory(directory, sourcePath);
+  else await getTempFilePath(directory, sourcePath);
+
+  const destinations: Array<vscode.QuickPickItem & { scope: StorageScope; folderPath?: string }> = [];
+  for (const root of resolveStorageRoots(context, 'temp')) {
+    const label = root.scope === 'global' ? 'Global' : 'Workspace';
+    destinations.push({ label: 'Root', description: label, scope: root.scope });
+    const collectFolders = (entries: readonly TempTreeEntry[], parent = '') => {
+      for (const child of entries) {
+        if (child.type !== 'directory') continue;
+        const folderPath = parent ? `${parent}/${child.name}` : child.name;
+        if (root.scope === sourceScope && entry.tempEntryType === 'directory' &&
+            (folderPath === sourcePath || folderPath.startsWith(`${sourcePath}/`))) continue;
+        destinations.push({ label: folderPath, description: label, scope: root.scope, folderPath });
+        collectFolders(child.children ?? [], folderPath);
+      }
+    };
+    collectFolders(await readTempTree(root.directory));
   }
 
-  const selected = await showFolderPicker(destinations);
+  const selected = await vscode.window.showQuickPick(destinations, {
+    title: 'Move to Folder', placeHolder: 'Select a destination folder',
+  });
   if (!selected) return;
   const currentParent = path.posix.dirname(sourcePath);
-  if ((currentParent === '.' ? undefined : currentParent) === selected.folderPath) return;
+  if (selected.scope === sourceScope && (currentParent === '.' ? undefined : currentParent) === selected.folderPath) return;
 
+  const destinationDirectory = getTempDirectory(context, selected.scope);
+  await mkdir(destinationDirectory, { recursive: true });
+  if (selected.scope === 'workspace') {
+    try {
+      await writeFile(path.join(destinationDirectory, '.gitignore'), '*\n', { flag: 'wx' });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    }
+  }
   const name = path.posix.basename(sourcePath);
   const destinationPath = selected.folderPath ? `${selected.folderPath}/${name}` : name;
-  await vscode.workspace.fs.rename(createTempFileUri(sourcePath), createTempFileUri(destinationPath));
+  await vscode.workspace.fs.rename(createTempFileUri(sourcePath, sourceScope), createTempFileUri(destinationPath, selected.scope));
   await refresh();
 }
 
@@ -144,7 +159,8 @@ async function createTempEntry(
   target: unknown,
 ): Promise<void> {
   const isFile = type === 'file';
-  const directory = await resolveTargetDirectory(context, parseTempTarget(target));
+  const entry = parseTempTarget(target);
+  const directory = await resolveTargetDirectory(context, entry);
   const name = await vscode.window.showInputBox({
     prompt: isFile ? 'Name the temporary file' : 'Folder name',
     placeHolder: isFile ? 'scratch.md' : 'drafts',
@@ -155,8 +171,8 @@ async function createTempEntry(
   if (isFile) {
     const filePath = await createTempFile(directory, name);
     await refresh();
-    const relativePath = path.relative(resolveStorageDirectory(context, 'temp'), filePath);
-    await vscode.commands.executeCommand('vscode.open', createTempFileUri(relativePath));
+    const relativePath = path.relative(getTempDirectory(context, entry.tempScope), filePath);
+    await vscode.commands.executeCommand('vscode.open', createTempFileUri(relativePath, entry.tempScope));
     return;
   }
 
@@ -166,7 +182,7 @@ async function createTempEntry(
 
 /** New entries go into the right-clicked folder, or next to the right-clicked file. */
 async function resolveTargetDirectory(context: vscode.ExtensionContext, target: TempContextTarget): Promise<string> {
-  const directory = resolveStorageDirectory(context, 'temp');
+  const directory = getTempDirectory(context, target.tempScope);
   const relativePath = getTargetRelativePath(target);
   if (!relativePath) return directory;
   return resolveTempDirectory(directory, relativePath);
@@ -188,7 +204,7 @@ async function renameTempEntryFromInput(refresh: () => Promise<void>, target: un
 
   const parentPath = path.posix.dirname(entry.tempEntryPath);
   const renamedPath = path.posix.join(parentPath, name.trim());
-  await vscode.workspace.fs.rename(createTempFileUri(entry.tempEntryPath), createTempFileUri(renamedPath));
+  await vscode.workspace.fs.rename(createTempFileUri(entry.tempEntryPath, entry.tempScope), createTempFileUri(renamedPath, entry.tempScope));
   await refresh();
 }
 
@@ -207,21 +223,21 @@ async function deleteTempEntryFromInput(refresh: () => Promise<void>, target: un
   );
   if (confirmation !== 'Delete') return;
 
-  await vscode.workspace.fs.delete(createTempFileUri(entry.tempEntryPath), { recursive: isFolder });
-  await closeTabsForPath(entry.tempEntryPath);
+  await vscode.workspace.fs.delete(createTempFileUri(entry.tempEntryPath, entry.tempScope), { recursive: isFolder });
+  await closeTabsForPath(entry.tempEntryPath, entry.tempScope);
   await refresh();
 }
 
 /** Keeps editors from lingering on files that no longer exist. */
-async function closeTabsForPath(relativePath: string): Promise<void> {
-  const targetUri = createTempFileUri(relativePath);
+async function closeTabsForPath(relativePath: string, scope?: StorageScope): Promise<void> {
+  const targetUri = createTempFileUri(relativePath, scope);
   const targetPath = targetUri.path.replace(/\/$/, '');
   const tabs = vscode.window.tabGroups.all
     .flatMap((group) => group.tabs)
     .filter((tab) => {
       const input = tab.input;
       if (!(input instanceof vscode.TabInputText)) return false;
-      if (input.uri.scheme !== targetUri.scheme) return false;
+      if (input.uri.scheme !== targetUri.scheme || input.uri.authority !== targetUri.authority) return false;
       return input.uri.path === targetPath || input.uri.path.startsWith(`${targetPath}/`);
     });
   if (tabs.length) await vscode.window.tabGroups.close(tabs);
@@ -249,6 +265,7 @@ function parseTempTarget(value: unknown): TempContextTarget {
   if (typeof value !== 'object' || value === null) return {};
   const target = value as Record<string, unknown>;
   return {
+    tempScope: isStorageScope(target.tempScope) ? target.tempScope : undefined,
     tempEntryPath: typeof target.tempEntryPath === 'string' ? target.tempEntryPath : undefined,
     tempEntryType:
       target.tempEntryType === 'file' || target.tempEntryType === 'directory' ? target.tempEntryType : undefined,

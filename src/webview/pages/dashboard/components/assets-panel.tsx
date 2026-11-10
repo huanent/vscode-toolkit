@@ -25,7 +25,7 @@ export function AssetsPanel({
   searchMatches?: readonly string[];
 }) {
   return (
-    <section className="flex h-full min-h-0 min-w-0 flex-col" data-vscode-context={panelContext}>
+    <section className="assets-panel flex h-full min-h-0 min-w-0 flex-col" data-vscode-context={panelContext}>
       {loading ? (
         <Loading label="Reading assets..." />
       ) : entries?.length ? (
@@ -36,6 +36,7 @@ export function AssetsPanel({
             items={entries}
             search={search}
             searchMatches={searchMatches}
+            getItemClassName={(item) => item.context?.assetStorageScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
             onActivate={activateAsset}
             onItemDoubleClick={activateAsset}
             renderActions={(item) => {

@@ -27,7 +27,7 @@ export function PlaybookPanel({
   searchMatches,
 }: PlaybookPanelProps) {
   return (
-    <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
+    <section className="playbook-panel flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
       {error && !entries ? (
         <ErrorMessage message={error} />
       ) : loading ? (
@@ -40,6 +40,7 @@ export function PlaybookPanel({
             items={toPlaybookTreeItems(entries)}
             search={search}
             searchMatches={searchMatches}
+            getItemClassName={(item) => item.context?.playbookStorageScope === 'workspace' ? 'text-(--vscode-gitDecoration-untrackedResourceForeground)' : undefined}
             onActivate={activatePlaybook}
             onItemDoubleClick={activatePlaybook}
             renderActions={renderPlaybookActions}
@@ -100,6 +101,7 @@ function toPlaybookTreeItems(entries: readonly PlaybookRecordEntry[]): TreeItem[
           context: {
             playbookId: entry.id,
             playbookName: entry.name,
+            playbookStorageScope: entry.scope ?? 'global',
             ...(entry.parentId ? { playbookParentId: entry.parentId } : {}),
           },
         });

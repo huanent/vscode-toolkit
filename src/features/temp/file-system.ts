@@ -1,18 +1,19 @@
 import { existsSync, lstatSync, watch as watchFileSystem, type FSWatcher } from 'node:fs';
-import { lstat, mkdir, readFile, readdir, rename, rm, rmdir, unlink, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, readFile, readdir, rename, rm, rmdir, unlink, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageRoots } from '@/host/utils/storage';
+import { findStorageRoot, type StorageScope } from '@/shared/storage-scope';
 import { TEMP_FILE_SYSTEM_SCHEME } from './protocol';
 import { resolveTempFileSystemPath } from './service';
 
-export function createTempFileUri(relativePath: string): vscode.Uri {
+export function createTempFileUri(relativePath: string, scope: StorageScope = 'global'): vscode.Uri {
   const uriPath = relativePath.replaceAll('\\', '/').replace(/^\/+/, '');
-  return vscode.Uri.from({ scheme: TEMP_FILE_SYSTEM_SCHEME, path: `/${uriPath}` });
+  return vscode.Uri.from({ scheme: TEMP_FILE_SYSTEM_SCHEME, authority: scope === 'workspace' ? 'workspace' : '', path: `/${uriPath}` });
 }
 
 export function registerTempFileSystem(context: vscode.ExtensionContext): vscode.Disposable {
-  const provider = new TempFileSystemProvider(() => resolveStorageDirectory(context, 'temp'));
+  const provider = new TempFileSystemProvider((scope) => findStorageRoot(resolveStorageRoots(context, 'temp'), scope).directory);
   const registration = vscode.workspace.registerFileSystemProvider(TEMP_FILE_SYSTEM_SCHEME, provider);
   return new vscode.Disposable(() => {
     registration.dispose();
@@ -26,7 +27,7 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
   private disposed = false;
   readonly onDidChangeFile = this.fileChangeEmitter.event;
 
-  constructor(private readonly getTempDirectory: () => string) {}
+  constructor(private readonly getTempDirectory: (scope: StorageScope) => string) {}
 
   watch(uri: vscode.Uri, options: { recursive: boolean; excludes: readonly string[] }): vscode.Disposable {
     if (this.disposed) return new vscode.Disposable(() => {});
@@ -46,7 +47,7 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
         const changedPath = filename ? path.resolve(watchedPath, filename.toString()) : storagePath;
         if (!isDirectory && changedPath !== storagePath) return;
 
-        const changedUri = this.createUriForStoragePath(changedPath);
+        const changedUri = this.createUriForStoragePath(changedPath, uri.authority === 'workspace' ? 'workspace' : 'global');
         if (!changedUri) return;
 
         const type =
@@ -178,7 +179,13 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
       if (newStats?.isDirectory()) await rm(newPath, { recursive: true });
       else if (newStats) await unlink(newPath);
 
-      await rename(oldPath, newPath);
+      try {
+        await rename(oldPath, newPath);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EXDEV') throw error;
+        await cp(oldPath, newPath, { recursive: oldStats.isDirectory(), errorOnExist: true, force: false });
+        await rm(oldPath, { recursive: oldStats.isDirectory() });
+      }
       this.fileChangeEmitter.fire([
         { type: vscode.FileChangeType.Deleted, uri: oldUri },
         { type: vscode.FileChangeType.Created, uri: newUri },
@@ -194,19 +201,21 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
   }
 
   private getStoragePath(uri: vscode.Uri): string {
-    if (uri.scheme !== TEMP_FILE_SYSTEM_SCHEME || uri.authority || uri.query || uri.fragment) {
+    if (uri.scheme !== TEMP_FILE_SYSTEM_SCHEME || (uri.authority && uri.authority !== 'workspace') || uri.query || uri.fragment) {
       throw vscode.FileSystemError.NoPermissions(uri);
     }
 
     try {
-      return resolveTempFileSystemPath(this.getTempDirectory(), uri.path);
+      return resolveTempFileSystemPath(this.getTempDirectory(uri.authority === 'workspace' ? 'workspace' : 'global'), uri.path);
     } catch {
       throw vscode.FileSystemError.NoPermissions(uri);
     }
   }
 
   private isStorageRoot(storagePath: string): boolean {
-    return path.resolve(storagePath) === path.resolve(this.getTempDirectory());
+    return (['global', 'workspace'] as const).some((scope) => {
+      try { return path.resolve(storagePath) === path.resolve(this.getTempDirectory(scope)); } catch { return false; }
+    });
   }
 
   private async getStatsIfExists(storagePath: string) {
@@ -218,8 +227,8 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
     }
   }
 
-  private createUriForStoragePath(storagePath: string): vscode.Uri | undefined {
-    const rootPath = path.resolve(this.getTempDirectory());
+  private createUriForStoragePath(storagePath: string, scope: StorageScope): vscode.Uri | undefined {
+    const rootPath = path.resolve(this.getTempDirectory(scope));
     const relativePath = path.relative(rootPath, storagePath);
     if (
       !relativePath ||
@@ -229,7 +238,7 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
     ) {
       return undefined;
     }
-    return createTempFileUri(relativePath);
+    return createTempFileUri(relativePath, scope);
   }
 
   private fireChange(type: vscode.FileChangeType, uri: vscode.Uri): void {

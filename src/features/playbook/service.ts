@@ -277,7 +277,7 @@ async function readPlaybookStorage(roots: readonly StorageRoot[], query?: string
         if (!isPlaybookRecord(value) || child.name !== `${value.id}.json`) continue;
         if (index.playbooks.has(value.id)) throw new Error('Duplicate playbook id.');
         index.playbooks.set(value.id, { path: recordPath, root, parentId });
-        index.entries.push({ id: value.id, name: value.name, type: 'playbook', parentId });
+        index.entries.push({ id: value.id, name: value.name, type: 'playbook', scope: root.scope, parentId });
         if (query !== undefined && contents.toLocaleLowerCase().includes(query)) index.matches!.push(value.id);
       } catch (error) {
         if (error instanceof Error && error.message === 'Duplicate playbook id.') throw error;

@@ -36,7 +36,6 @@ import type {
 } from '@/shared/dashboard-protocol';
 import { searchPlaybookContents } from '@/features/playbook/service';
 import { searchTempContents } from '@/features/temp/service';
-import { resolveStorageDirectory } from '@/host/utils/storage';
 
 interface WebviewRegistration {
   id: string;
@@ -134,7 +133,9 @@ export function registerWebviews(
                   .map((asset) => asset.id)
               : message.tab === 'playbook'
                 ? await searchPlaybookContents(resolveStorageRoots(context, 'playbooks'), query)
-                : await searchTempContents(resolveStorageDirectory(context, 'temp'), query);
+                : (await Promise.all(resolveStorageRoots(context, 'temp').map(async ({ scope, directory }) =>
+                    (await searchTempContents(directory, query)).map((entryPath) => `${scope}:${entryPath}`),
+                  ))).flat();
           await webview.postMessage({
             type: 'dashboardSearchResult',
             requestId: message.requestId,

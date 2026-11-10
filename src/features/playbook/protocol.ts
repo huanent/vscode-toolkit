@@ -107,6 +107,7 @@ export interface PlaybookRecordEntry {
   id: string;
   name: string;
   type: 'playbook' | 'folder';
+  scope?: StorageScope;
   parentId?: string;
 }
 

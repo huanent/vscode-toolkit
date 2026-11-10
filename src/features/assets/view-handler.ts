@@ -38,6 +38,7 @@ export function createAssetsView(
         context: {
           ...entry.context,
           assetCanQuery: provider.capabilities.query === true,
+          assetStorageScope: asset.scope ?? 'global',
           ...(asset.folder ? { assetFolderPath: asset.folder } : {}),
           ...(isAiEnabled(asset) ? { assetAiEnabled: true } : {}),
           ...hostContext,

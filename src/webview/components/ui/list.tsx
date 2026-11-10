@@ -12,6 +12,7 @@ export type ListItem<T> = {
   data: T;
   icon?: ReactNode | ((state: ListItemState) => ReactNode);
   label: ReactNode;
+  contentClassName?: string;
   description?: ReactNode;
   actions?: ReactNode;
   context?: Readonly<Record<string, string | number | boolean>>;
@@ -190,7 +191,7 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
       aria-setsize={listItem.setSize}
       onClick={onClick}
     >
-      <div className="flex items-center gap-1 flex-1 truncate h-full">
+      <div className={cn('flex items-center gap-1 flex-1 truncate h-full', listItem.contentClassName)}>
         {icon}
         <div className="flex min-w-0 flex-1 items-baseline gap-1 overflow-hidden">
           <div className="max-w-full shrink-0 truncate">{listItem.label}</div>
