@@ -1883,18 +1883,6 @@
           "command": "toolkit.runBunPackageScript",
           "when": "explorerResourceIsFolder && toolkit.bunAvailable && resourcePath in toolkit.bunScriptFolders",
           "group": "navigation@12"
-        },
-        {
-          "command": "toolkit.files.copy",
-          "group": "2_toolkit_clipboard@1"
-        },
-        {
-          "command": "toolkit.files.cut",
-          "group": "2_toolkit_clipboard@2"
-        },
-        {
-          "command": "toolkit.files.paste",
-          "group": "2_toolkit_clipboard@3"
         }
       ],
       "toolkit.sourceControl": [
