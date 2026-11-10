@@ -1,7 +1,6 @@
 import { posix } from 'node:path';
 import * as vscode from 'vscode';
-import { pasteEntries } from './service';
-import type { ExplorerClipboardState } from './service';
+import type { FileClipboard } from '@/host/utils/file-clipboard';
 
 type ExplorerContextTarget = {
   explorerDirectoryUri?: string;
@@ -13,7 +12,7 @@ type ExplorerContextTarget = {
 export function registerExplorerContextCommands(
   context: vscode.ExtensionContext,
   refresh: () => Promise<void>,
-  clipboard: ExplorerClipboardState,
+  clipboard: FileClipboard,
 ): void {
   const register = (command: string, action: (target: ExplorerContextTarget) => Promise<void>) =>
     vscode.commands.registerCommand(command, async (value: unknown) => {
@@ -74,15 +73,15 @@ export function registerExplorerContextCommands(
       });
     }),
     register('toolkit.explorer.copy', async (target) => {
-      clipboard.value = { uris: getSelectedEntryUris(target), move: false };
+      await clipboard.write(getSelectedEntryUris(target).map((uri) => vscode.Uri.parse(uri)), false);
       await refresh();
     }),
     register('toolkit.explorer.cut', async (target) => {
-      clipboard.value = { uris: getSelectedEntryUris(target), move: true };
+      await clipboard.write(getSelectedEntryUris(target).map((uri) => vscode.Uri.parse(uri)), true);
       await refresh();
     }),
     register('toolkit.explorer.paste', (target) =>
-      pasteEntries(clipboard, resolveTargetDirectory(target).toString(), refresh),
+      clipboard.paste(resolveTargetDirectory(target)),
     ),
     register('toolkit.explorer.delete', async (target) => {
       if (!target.explorerEntryUri) return;

@@ -100,27 +100,6 @@ export async function transferEntries(
   }
 }
 
-export type ExplorerClipboard = { uris: string[]; move: boolean };
-export type ExplorerClipboardState = { value?: ExplorerClipboard };
-
-export async function pasteEntries(
-  clipboard: ExplorerClipboardState,
-  destination: string,
-  refresh: () => Promise<void>,
-): Promise<void> {
-  const pending = clipboard.value;
-  if (!pending?.uris.length) return;
-  try {
-    for (const uri of pending.uris) {
-      await transferEntries([uri], destination, pending.move);
-      if (pending.move) clipboard.value = { ...pending, uris: pending.uris.filter((pendingUri) => pendingUri !== uri) };
-    }
-    if (pending.move) clipboard.value = undefined;
-  } finally {
-    await refresh();
-  }
-}
-
 function directoryEntry(uri: vscode.Uri, name: string): ExplorerEntry {
   return { id: uri.toString(), name, type: 'directory', uri: uri.toString() };
 }

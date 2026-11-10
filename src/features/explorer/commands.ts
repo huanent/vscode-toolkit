@@ -3,15 +3,14 @@ import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
 import type { WebviewLoadedMessage } from '@/shared/webview-protocol';
 import type { ExplorerDirectory, ExplorerWebviewMessage } from './protocol';
-import { listDirectory, openExplorerFile, pasteEntries, resolveDirectoryAddress } from './service';
+import { listDirectory, openExplorerFile, resolveDirectoryAddress } from './service';
 import { registerExplorerContextCommands } from './context-commands';
-import type { ExplorerClipboardState } from './service';
+import type { FileClipboard } from '@/host/utils/file-clipboard';
 
-export function registerExplorerCommands(context: vscode.ExtensionContext): void {
+export function registerExplorerCommands(context: vscode.ExtensionContext, clipboard: FileClipboard): void {
   let panel: vscode.WebviewPanel | undefined;
   let refresh: (() => Promise<void>) | undefined;
   let navigate: ((location: string) => Promise<void>) | undefined;
-  const clipboard: ExplorerClipboardState = {};
 
   registerExplorerContextCommands(context, async () => {
     await refresh?.();
@@ -58,7 +57,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
         target.title = data.ancestors.at(-1)?.name ?? 'Explorer';
         return {
           ...data,
-          cutUris: clipboard.value?.move ? clipboard.value.uris : [],
+          cutUris: await clipboard.getCutUris(),
           canGoBack: history.length > 0,
           favorites: context.globalState.get<string[]>('explorer.favorites', []),
         };
@@ -94,11 +93,14 @@ export function registerExplorerCommands(context: vscode.ExtensionContext): void
           else if (message.type === 'copyEntries' || message.type === 'cutEntries') {
             if (!Array.isArray(message.uris) || !message.uris.every((uri) => typeof uri === 'string'))
               throw new Error('Invalid file selection.');
-            clipboard.value = { uris: [...new Set(message.uris)], move: message.type === 'cutEntries' };
+            await clipboard.write(
+              [...new Set(message.uris)].map((uri) => vscode.Uri.parse(uri)),
+              message.type === 'cutEntries',
+            );
             await publish(location, 'refresh');
           } else if (message.type === 'pasteEntries') {
             if (!location) return;
-            await pasteEntries(clipboard, location, async () => publish(location, 'refresh'));
+            await clipboard.paste(vscode.Uri.parse(location));
           } else if (message.type === 'deleteEntries') {
             await vscode.commands.executeCommand('toolkit.explorer.delete', {
               explorerDirectoryUri: location,

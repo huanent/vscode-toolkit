@@ -23,10 +23,21 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
       if (!disposed) activeWebview = webview;
     },
     onMessage: async (message, webview) => {
+      if (
+        typeof message === 'object' && message !== null &&
+        'type' in message && message.type === 'tempFileCommand' &&
+        'command' in message && typeof message.command === 'string' &&
+        ['copy', 'cut', 'paste', 'delete', 'rename', 'copyPath'].includes(message.command)
+      ) {
+        await vscode.commands.executeCommand(`toolkit.temp.${message.command}`, message);
+        return;
+      }
       if (!isOpenTempFileRequest(message)) return;
       try {
         await getTempFilePath(getTempDirectory(), message.path);
-        await vscode.commands.executeCommand('vscode.open', createTempFileUri(message.path));
+        await vscode.commands.executeCommand('vscode.open', createTempFileUri(message.path), {
+          preserveFocus: true,
+        } satisfies vscode.TextDocumentShowOptions);
       } catch (error) {
         await postTempFileError(webview, error);
       }

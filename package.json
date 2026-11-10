@@ -111,7 +111,11 @@
       {
         "viewType": "toolkit.containerEditor",
         "displayName": "Containers",
-        "selector": [{ "filenamePattern": "*.toolkit-container" }],
+        "selector": [
+          {
+            "filenamePattern": "*.toolkit-container"
+          }
+        ],
         "priority": "option"
       },
       {
@@ -1063,6 +1067,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.temp.paste",
+        "title": "Paste",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.copyPath",
         "title": "Copy Path",
         "category": "Toolkit"
@@ -1117,6 +1126,31 @@
         "command": "toolkit.mysql.openTable",
         "title": "Open MySQL Table",
         "category": "MySQL"
+      },
+      {
+        "command": "toolkit.temp.copy",
+        "title": "Copy",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.cut",
+        "title": "Cut",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.files.copy",
+        "title": "Copy (Temp / Explorer)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.files.cut",
+        "title": "Cut (Temp / Explorer)",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.files.paste",
+        "title": "Paste (Temp / Explorer)",
+        "category": "Toolkit"
       }
     ],
     "keybindings": [
@@ -1147,6 +1181,24 @@
         "key": "ctrl+enter",
         "mac": "cmd+enter",
         "when": "toolkit.mysqlQueryEditor"
+      },
+      {
+        "command": "toolkit.files.copy",
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "when": "filesExplorerFocus && !inputFocus"
+      },
+      {
+        "command": "toolkit.files.cut",
+        "key": "ctrl+x",
+        "mac": "cmd+x",
+        "when": "filesExplorerFocus && !inputFocus"
+      },
+      {
+        "command": "toolkit.files.paste",
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "when": "filesExplorerFocus && !inputFocus"
       }
     ],
     "submenus": [
@@ -1444,6 +1496,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.temp.paste",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.copyPath",
           "when": "false"
         },
@@ -1493,6 +1549,26 @@
         },
         {
           "command": "toolkit.runBunPackageScript",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.copy",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.cut",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.files.copy",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.files.cut",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.files.paste",
           "when": "false"
         }
       ],
@@ -1678,6 +1754,11 @@
           "group": "2_actions@2"
         },
         {
+          "command": "toolkit.temp.paste",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp'",
+          "group": "2_actions@0"
+        },
+        {
           "command": "toolkit.temp.copyPath",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
           "group": "2_actions@3"
@@ -1741,6 +1822,16 @@
           "command": "toolkit.playbook.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && (playbookId || playbookFolderId)",
           "group": "2_actions@3"
+        },
+        {
+          "command": "toolkit.temp.copy",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_clipboard@1"
+        },
+        {
+          "command": "toolkit.temp.cut",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
+          "group": "2_clipboard@2"
         }
       ],
       "explorer/context": [
@@ -1792,6 +1883,18 @@
           "command": "toolkit.runBunPackageScript",
           "when": "explorerResourceIsFolder && toolkit.bunAvailable && resourcePath in toolkit.bunScriptFolders",
           "group": "navigation@12"
+        },
+        {
+          "command": "toolkit.files.copy",
+          "group": "2_toolkit_clipboard@1"
+        },
+        {
+          "command": "toolkit.files.cut",
+          "group": "2_toolkit_clipboard@2"
+        },
+        {
+          "command": "toolkit.files.paste",
+          "group": "2_toolkit_clipboard@3"
         }
       ],
       "toolkit.sourceControl": [

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { resolveStorageDirectory } from '@/host/utils/storage';
+import type { FileClipboard } from '@/host/utils/file-clipboard';
 import type { TempContextTarget, TempEntryType, TempTreeEntry } from './protocol';
 import { createTempAutoSaveScheduler } from './auto-save';
 import { createTempFileUri, registerTempFileSystem } from './file-system';
@@ -20,9 +21,37 @@ import {
  * `webview/context` menu of the dashboard temp panel, which passes the
  * right-clicked entry as the command argument.
  */
-export function registerTempCommands(context: vscode.ExtensionContext, refresh: () => Promise<void>): void {
+export function registerTempCommands(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  clipboard: FileClipboard,
+): void {
   const autoSaveScheduler = createTempAutoSaveScheduler();
+  const copyTemp = async (target: unknown, cut: boolean) => {
+    const entry = parseTempTarget(target);
+    if (!entry.tempEntryPath || !entry.tempEntryType) return;
+    const directory = resolveStorageDirectory(context, 'temp');
+    const source = entry.tempEntryType === 'directory'
+      ? await resolveTempDirectory(directory, entry.tempEntryPath)
+      : await getTempFilePath(directory, entry.tempEntryPath);
+    await clipboard.write([vscode.Uri.file(source)], cut);
+  };
   context.subscriptions.push(
+    vscode.commands.registerCommand('toolkit.temp.copy', (target: unknown) =>
+      copyTemp(target, false).catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.temp.cut', (target: unknown) =>
+      copyTemp(target, true).catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.files.copy', (resource?: vscode.Uri, selection?: vscode.Uri[]) =>
+      clipboard.copyExplorer(false, resource, selection).catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.files.cut', (resource?: vscode.Uri, selection?: vscode.Uri[]) =>
+      clipboard.copyExplorer(true, resource, selection).catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.files.paste', (resource?: vscode.Uri) =>
+      clipboard.pasteExplorer(resource).catch(showTempCommandError),
+    ),
     registerTempFileSystem(context),
     vscode.workspace.onDidChangeTextDocument(({ document }) => autoSaveScheduler.schedule(document)),
     vscode.workspace.onDidSaveTextDocument(autoSaveScheduler.cancel),
@@ -42,6 +71,11 @@ export function registerTempCommands(context: vscode.ExtensionContext, refresh: 
     ),
     vscode.commands.registerCommand('toolkit.temp.move', (target: unknown) =>
       moveTempEntryFromInput(context, refresh, target).catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.temp.paste', (target: unknown) =>
+      resolveTargetDirectory(context, parseTempTarget(target))
+        .then((directory) => clipboard.paste(vscode.Uri.file(directory)))
+        .catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.copyPath', (target: unknown) =>
       copyTempEntryPath(context, target).catch(showTempCommandError),

@@ -2,7 +2,12 @@ import { Empty } from '@/webview/components/ui/empty';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Loading } from '@/webview/components/ui/loading';
 import { Tree, type TreeItem } from '@/webview/components/ui/tree';
-import type { OpenTempFileRequest, TempTreeEntry } from '@/features/temp/protocol';
+import type {
+  OpenTempFileRequest,
+  TempFileCommandRequest,
+  TempContextTarget,
+  TempTreeEntry,
+} from '@/features/temp/protocol';
 import { postToHost } from '@/webview/utils/host-data';
 
 type TempPanelProps = {
@@ -18,7 +23,39 @@ const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultCont
 
 export function TempPanel({ entries, error, loading, collapseAllTrigger, search, searchMatches }: TempPanelProps) {
   return (
-    <section className="flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
+    <section
+      className="flex h-full min-h-0 flex-col"
+      data-vscode-context={panelContext}
+      tabIndex={0}
+      onKeyDownCapture={(event) => {
+        const key = event.key.toLowerCase();
+        const element = event.target as HTMLElement;
+        if (element.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+        if (event.altKey) return;
+        const modified = event.metaKey || event.ctrlKey;
+        let command: TempFileCommandRequest['command'] | undefined;
+        if (modified && !event.shiftKey) {
+          if (key === 'c') command = 'copy';
+          else if (key === 'x') command = 'cut';
+          else if (key === 'v') command = 'paste';
+          else if (event.metaKey && !event.ctrlKey && key === 'backspace') command = 'delete';
+        } else if (modified && event.shiftKey && key === 'c') command = 'copyPath';
+        else if (!modified && !event.shiftKey) {
+          if (key === 'delete') command = 'delete';
+          else if (key === 'f2') command = 'rename';
+        }
+        if (!command) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.repeat) return;
+        const activeId = element.closest('[role="tree"]')?.getAttribute('aria-activedescendant');
+        const activeItem = activeId ? element.ownerDocument.getElementById(activeId) : null;
+        const context = activeItem?.dataset.vscodeContext;
+        const target: TempContextTarget = context ? JSON.parse(context) : {};
+        if (command !== 'paste' && !target.tempEntryPath) return;
+        postToHost({ ...target, type: 'tempFileCommand', command } satisfies TempFileCommandRequest);
+      }}
+    >
       {error && !entries ? (
         <ErrorMessage message={error} />
       ) : loading ? (

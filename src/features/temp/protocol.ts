@@ -23,6 +23,11 @@ export interface OpenTempFileRequest {
   path: string;
 }
 
+export interface TempFileCommandRequest extends TempContextTarget {
+  type: 'tempFileCommand';
+  command: 'copy' | 'cut' | 'paste' | 'delete' | 'rename' | 'copyPath';
+}
+
 export type TempFilesWebviewMessage =
   | { type: 'tempFilesUpdated'; entries: TempTreeEntry[] }
   | { type: 'tempFileError'; message: string };
