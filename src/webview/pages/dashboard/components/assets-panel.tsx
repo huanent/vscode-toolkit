@@ -38,7 +38,11 @@ export function AssetsPanel({
             searchMatches={searchMatches}
             renderIndicator={(item) =>
               item.context?.assetStorageScope === 'workspace' ? (
-                <div className="flex items-center justify-center" title="Stored in workspace" aria-label="Stored in workspace">
+                <div
+                  className="flex items-center justify-center pr-0.5 opacity-50"
+                  title="Stored in workspace"
+                  aria-label="Stored in workspace"
+                >
                   <Icon name="file-symlink-file" />
                 </div>
               ) : null
