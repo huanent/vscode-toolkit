@@ -28,6 +28,7 @@ type TreeProps = {
   onActivate?: (item: TreeFileItem) => void;
   onItemDoubleClick?: (item: TreeFileItem) => void;
   renderActions?: (item: TreeFileItem) => ReactNode;
+  renderIndicator?: (item: TreeItem) => ReactNode;
   onExpand?: (item: Extract<TreeItem, { type: 'directory' }>) => void;
 };
 
@@ -54,6 +55,7 @@ export function Tree({
   onActivate,
   onItemDoubleClick,
   renderActions,
+  renderIndicator,
   onExpand,
 }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
@@ -124,6 +126,7 @@ export function Tree({
         description: node.item.type === 'file' ? node.item.detail : undefined,
         context: node.item.context,
         actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,
+        indicator: renderIndicator?.(node.item),
         expanded: node.item.type === 'directory' ? node.expanded : undefined,
         level: node.level,
         position: node.position,

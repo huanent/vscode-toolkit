@@ -1,6 +1,7 @@
 import { Empty } from '@/webview/components/ui/empty';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Loading } from '@/webview/components/ui/loading';
+import { Icon } from '@/webview/components/ui/icons';
 import { Tree, type TreeItem } from '@/webview/components/ui/tree';
 import type {
   OpenTempFileRequest,
@@ -67,15 +68,27 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
           <Tree
             ariaLabel="Temporary files"
             collapseAllTrigger={collapseAllTrigger}
-            items={entries.flatMap(({ scope, entries: scopeEntries }) => toTempTreeItems(scopeEntries, scope)).sort(compareTempItems)}
+            items={entries
+              .flatMap(({ scope, entries: scopeEntries }) => toTempTreeItems(scopeEntries, scope))
+              .sort(compareTempItems)}
             search={search}
             searchMatches={searchMatches}
-            getItemLabelClassName={(item) => item.context?.tempScope === 'workspace' ? 'underline' : undefined}
+            renderIndicator={(item) =>
+              item.context?.tempScope === 'workspace' ? (
+                <div className="flex items-center justify-center" title="Stored in workspace" aria-label="Stored in workspace">
+                  <Icon name="file-symlink-file" />
+                </div>
+              ) : null
+            }
             onActivate={(item) => {
               if (item.type === 'file') {
                 const { tempEntryPath, tempScope } = item.context ?? {};
                 if (typeof tempEntryPath === 'string' && (tempScope === 'global' || tempScope === 'workspace')) {
-                  postToHost({ type: 'openTempFile', path: tempEntryPath, scope: tempScope } satisfies OpenTempFileRequest);
+                  postToHost({
+                    type: 'openTempFile',
+                    path: tempEntryPath,
+                    scope: tempScope,
+                  } satisfies OpenTempFileRequest);
                 }
               }
             }}
@@ -95,7 +108,9 @@ const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 function compareTempItems(left: TreeItem, right: TreeItem): number {
   return left.type === right.type
     ? entryNameCollator.compare(left.name, right.name)
-    : left.type === 'directory' ? -1 : 1;
+    : left.type === 'directory'
+      ? -1
+      : 1;
 }
 
 function toTempTreeItems(entries: readonly TempTreeEntry[], scope: StorageScope, parentPath = ''): TreeItem[] {

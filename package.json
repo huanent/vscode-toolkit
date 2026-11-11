@@ -1067,6 +1067,16 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.temp.moveToWorkspace",
+        "title": "Move to Workspace",
+        "category": "Toolkit"
+      },
+      {
+        "command": "toolkit.temp.moveBackGlobal",
+        "title": "Move back Global",
+        "category": "Toolkit"
+      },
+      {
         "command": "toolkit.temp.paste",
         "title": "Paste",
         "category": "Toolkit"
@@ -1496,6 +1506,14 @@
           "when": "false"
         },
         {
+          "command": "toolkit.temp.moveToWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.temp.moveBackGlobal",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.paste",
           "when": "false"
         },
@@ -1752,6 +1770,16 @@
           "command": "toolkit.temp.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath",
           "group": "2_actions@2"
+        },
+        {
+          "command": "toolkit.temp.moveToWorkspace",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath && tempScope == 'global' && workspaceFolderCount > 0",
+          "group": "2_actions@2.1"
+        },
+        {
+          "command": "toolkit.temp.moveBackGlobal",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'temp' && tempEntryPath && tempScope == 'workspace'",
+          "group": "2_actions@2.1"
         },
         {
           "command": "toolkit.temp.paste",

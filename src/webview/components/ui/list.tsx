@@ -16,6 +16,7 @@ export type ListItem<T> = {
   labelClassName?: string;
   description?: ReactNode;
   actions?: ReactNode;
+  indicator?: ReactNode;
   context?: Readonly<Record<string, string | number | boolean>>;
   expanded?: boolean;
   level?: number;
@@ -201,14 +202,26 @@ function ListRow<T>({ listItem, listId, itemRole, selected, listHasFocus, onClic
           )}
         </div>
       </div>
-      {listItem.actions && (
-        <div
-          className="flex shrink-0 items-center opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-          data-list-actions
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          {listItem.actions}
+      {(listItem.indicator || listItem.actions) && (
+        <div className="grid shrink-0 items-center justify-items-end">
+          {listItem.indicator && (
+            <div className={cn(
+              'col-start-1 row-start-1 flex items-center text-(--vscode-descriptionForeground)',
+              listItem.actions && 'group-hover:invisible group-focus-within:invisible',
+            )}>
+              {listItem.indicator}
+            </div>
+          )}
+          {listItem.actions && (
+            <div
+              className="col-start-1 row-start-1 flex items-center opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+              data-list-actions
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              {listItem.actions}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -73,6 +73,12 @@ export function registerTempCommands(
     vscode.commands.registerCommand('toolkit.temp.move', (target: unknown) =>
       moveTempEntryFromInput(context, refresh, target).catch(showTempCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.temp.moveToWorkspace', (target: unknown) =>
+      moveTempEntryToScope(context, refresh, target, 'workspace').catch(showTempCommandError),
+    ),
+    vscode.commands.registerCommand('toolkit.temp.moveBackGlobal', (target: unknown) =>
+      moveTempEntryToScope(context, refresh, target, 'global').catch(showTempCommandError),
+    ),
     vscode.commands.registerCommand('toolkit.temp.paste', (target: unknown) =>
       resolveTargetDirectory(context, parseTempTarget(target))
         .then((directory) => clipboard.paste(vscode.Uri.file(directory)))
@@ -114,7 +120,7 @@ async function moveTempEntryFromInput(
   else await getTempFilePath(directory, sourcePath);
 
   const destinations: Array<vscode.QuickPickItem & { scope: StorageScope; folderPath?: string }> = [];
-  for (const root of resolveStorageRoots(context, 'temp')) {
+  for (const root of resolveStorageRoots(context, 'temp').filter((root) => root.scope === sourceScope)) {
     const label = root.scope === 'global' ? 'Global' : 'Workspace';
     destinations.push({ label: 'Root', description: label, scope: root.scope });
     const collectFolders = (entries: readonly TempTreeEntry[], parent = '') => {
@@ -137,18 +143,48 @@ async function moveTempEntryFromInput(
   const currentParent = path.posix.dirname(sourcePath);
   if (selected.scope === sourceScope && (currentParent === '.' ? undefined : currentParent) === selected.folderPath) return;
 
-  const destinationDirectory = getTempDirectory(context, selected.scope);
+  const name = path.posix.basename(sourcePath);
+  const destinationPath = selected.folderPath ? `${selected.folderPath}/${name}` : name;
+  await moveTempEntry(context, refresh, sourcePath, sourceScope, destinationPath, selected.scope);
+}
+
+async function moveTempEntryToScope(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  target: unknown,
+  destinationScope: StorageScope,
+): Promise<void> {
+  const entry = parseTempTarget(target);
+  if (!entry.tempEntryPath || !entry.tempEntryType) return;
+  const sourceScope = entry.tempScope ?? 'global';
+  if (sourceScope === destinationScope) return;
+  const directory = getTempDirectory(context, sourceScope);
+  if (entry.tempEntryType === 'directory') await resolveTempDirectory(directory, entry.tempEntryPath);
+  else await getTempFilePath(directory, entry.tempEntryPath);
+
+  await moveTempEntry(
+    context, refresh, entry.tempEntryPath, sourceScope, path.posix.basename(entry.tempEntryPath), destinationScope,
+  );
+}
+
+async function moveTempEntry(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  sourcePath: string,
+  sourceScope: StorageScope,
+  destinationPath: string,
+  destinationScope: StorageScope,
+): Promise<void> {
+  const destinationDirectory = getTempDirectory(context, destinationScope);
   await mkdir(destinationDirectory, { recursive: true });
-  if (selected.scope === 'workspace') {
+  if (destinationScope === 'workspace') {
     try {
       await writeFile(path.join(destinationDirectory, '.gitignore'), '*\n', { flag: 'wx' });
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
     }
   }
-  const name = path.posix.basename(sourcePath);
-  const destinationPath = selected.folderPath ? `${selected.folderPath}/${name}` : name;
-  await vscode.workspace.fs.rename(createTempFileUri(sourcePath, sourceScope), createTempFileUri(destinationPath, selected.scope));
+  await vscode.workspace.fs.rename(createTempFileUri(sourcePath, sourceScope), createTempFileUri(destinationPath, destinationScope));
   await refresh();
 }
 

@@ -40,7 +40,13 @@ export function PlaybookPanel({
             items={toPlaybookTreeItems(entries)}
             search={search}
             searchMatches={searchMatches}
-            getItemLabelClassName={(item) => item.context?.playbookStorageScope === 'workspace' ? 'underline' : undefined}
+            renderIndicator={(item) =>
+              item.context?.playbookStorageScope === 'workspace' ? (
+                <div className="flex items-center justify-center" title="Stored in workspace" aria-label="Stored in workspace">
+                  <Icon name="file-symlink-file" />
+                </div>
+              ) : null
+            }
             onActivate={activatePlaybook}
             onItemDoubleClick={activatePlaybook}
             renderActions={renderPlaybookActions}

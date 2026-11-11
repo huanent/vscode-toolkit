@@ -36,7 +36,13 @@ export function AssetsPanel({
             items={entries}
             search={search}
             searchMatches={searchMatches}
-            getItemLabelClassName={(item) => item.context?.assetStorageScope === 'workspace' ? 'underline' : undefined}
+            renderIndicator={(item) =>
+              item.context?.assetStorageScope === 'workspace' ? (
+                <div className="flex items-center justify-center" title="Stored in workspace" aria-label="Stored in workspace">
+                  <Icon name="file-symlink-file" />
+                </div>
+              ) : null
+            }
             onActivate={activateAsset}
             onItemDoubleClick={activateAsset}
             renderActions={(item) => {
