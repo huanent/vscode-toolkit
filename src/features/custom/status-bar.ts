@@ -66,6 +66,7 @@ export function registerStatusBar(context: vscode.ExtensionContext): void {
       const refresh = async () => {
         try {
           const release = await lockfile.lock(script, {
+            lockfilePath: path.join(tmpdir(), `toolkit-${cacheKey}-status-bar.lock`),
             stale: 60000,
             retries: { retries: 100, minTimeout: 100, maxTimeout: 500 },
           });
