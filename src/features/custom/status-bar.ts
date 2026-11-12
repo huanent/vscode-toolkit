@@ -1,5 +1,7 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 import * as lockfile from 'proper-lockfile';
@@ -59,7 +61,8 @@ export function registerStatusBar(context: vscode.ExtensionContext): void {
         return;
       const interval =
         Math.max(1, vscode.workspace.getConfiguration('toolkit').get('custom.statusBar.interval', 3)) * 1000;
-      const cachePath = path.join(path.dirname(script), 'status-bar-cache.json');
+      const cacheKey = createHash('sha256').update(script).digest('hex');
+      const cachePath = path.join(tmpdir(), `toolkit-${cacheKey}-status-bar-cache.json`);
       const refresh = async () => {
         try {
           const release = await lockfile.lock(script, {
