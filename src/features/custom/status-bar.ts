@@ -36,7 +36,7 @@ export function registerStatusBar(context: vscode.ExtensionContext): void {
   let hover: string | undefined;
 
   async function ensureScript(): Promise<string> {
-    const directory = resolveStorageDirectory(context, 'custom');
+    const directory = resolveStorageDirectory(context, '');
     const script = path.join(directory, 'statusBar.ts');
     await mkdir(directory, { recursive: true });
     try {
