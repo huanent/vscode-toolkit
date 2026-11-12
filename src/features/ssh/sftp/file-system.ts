@@ -1,3 +1,4 @@
+import { posix } from 'node:path';
 import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -21,6 +22,7 @@ export function registerSftpFileSystem(context: vscode.ExtensionContext, ssh: Ss
 class SftpFileSystemProvider implements vscode.FileSystemProvider, vscode.Disposable {
   private readonly changes = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   private readonly cancellation = new AbortController();
+  private readonly savingFiles = new Set<string>();
   readonly onDidChangeFile = this.changes.event;
 
   constructor(private readonly ssh: SshService) {}
@@ -57,17 +59,66 @@ class SftpFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
     content: Uint8Array,
     options: { create: boolean; overwrite: boolean },
   ): Promise<void> {
-    await this.ssh.withSftp(uri.authority, this.cancellation.signal, async (sftp) => {
+    const key = createSftpFileUri(uri.authority, posix.normalize(uri.path)).toString();
+    if (this.savingFiles.has(key))
+      throw vscode.FileSystemError.Unavailable('This file is already being saved. Wait for it to finish and save again.');
+    this.savingFiles.add(key);
+    try {
+      await this.saveWithProgress(uri, content, options);
+    } finally {
+      this.savingFiles.delete(key);
+    }
+  }
+
+  private async saveWithProgress(
+    uri: vscode.Uri,
+    content: Uint8Array,
+    options: { create: boolean; overwrite: boolean },
+  ): Promise<void> {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Saving ${posix.basename(uri.path)}`,
+        cancellable: false,
+      },
+      async (progress) => {
+        let previous = 0;
+        progress.report({ message: `${uri.path}: 0%` });
+        await this.saveFile(uri, content, options, this.cancellation.signal, (transferred) => {
+          const percent = content.length ? Math.min(99, (transferred / content.length) * 100) : 99;
+          progress.report({ message: `${uri.path}: ${Math.floor(percent)}%`, increment: percent - previous });
+          previous = percent;
+        });
+        this.changes.fire([{ type: vscode.FileChangeType.Changed, uri }]);
+        progress.report({ message: `${uri.path}: 100%`, increment: 100 - previous });
+      },
+    );
+  }
+
+  private async saveFile(
+    uri: vscode.Uri,
+    content: Uint8Array,
+    options: { create: boolean; overwrite: boolean },
+    signal: AbortSignal,
+    onProgress: (transferred: number) => void,
+  ): Promise<void> {
+    await this.ssh.withSftp(uri.authority, signal, async (sftp) => {
       if (!options.overwrite) throw vscode.FileSystemError.FileExists(uri);
       const handle = await promisify(sftp.open.bind(sftp))(uri.path, 'r+');
       try {
         const stat = await promisify(sftp.fstat.bind(sftp))(handle);
         if (!stat.isFile()) throw vscode.FileSystemError.NoPermissions('Only regular files can be edited.');
         const buffer = Buffer.from(content);
-        await new Promise<void>((resolve, reject) => {
-          if (!buffer.length) return resolve();
-          sftp.write(handle, buffer, 0, buffer.length, 0, (error) => (error ? reject(error) : resolve()));
-        });
+        for (let offset = 0; offset < buffer.length; ) {
+          signal.throwIfAborted();
+          const length = Math.min(64 * 1024, buffer.length - offset);
+          await new Promise<void>((resolve, reject) => {
+            sftp.write(handle, buffer, offset, length, offset, (error) => (error ? reject(error) : resolve()));
+          });
+          offset += length;
+          onProgress(offset);
+        }
+        signal.throwIfAborted();
         await promisify(sftp.fsetstat.bind(sftp))(handle, { size: buffer.length });
         const updated = await promisify(sftp.fstat.bind(sftp))(handle);
         if ((updated.mode & 0o7777) !== (stat.mode & 0o7777)) {
@@ -80,7 +131,6 @@ class SftpFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
         await promisify(sftp.close.bind(sftp))(handle);
       }
     });
-    this.changes.fire([{ type: vscode.FileChangeType.Changed, uri }]);
   }
 
   readDirectory(): [string, vscode.FileType][] {
