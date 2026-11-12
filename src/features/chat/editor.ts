@@ -104,10 +104,22 @@ export function registerChat(context: vscode.ExtensionContext): void {
           }
         });
         const models = vscode.lm.onDidChangeChatModels(() => void current.refreshModels());
-        return vscode.Disposable.from(listener, models, current);
+        return vscode.Disposable.from(
+          listener,
+          models,
+          current,
+          new vscode.Disposable(() => {
+            if (service === current) service = undefined;
+          }),
+        );
       },
     }),
     vscode.commands.registerCommand('toolkit.chat.open', async () => {
+      const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+      if (service && input instanceof vscode.TabInputCustom && input.viewType === 'toolkit.chatEditor') {
+        await service.open();
+        return;
+      }
       await vscode.commands.executeCommand(
         'vscode.openWith',
         vscode.Uri.parse('toolkit-chat:/chat.toolkit-chat'),

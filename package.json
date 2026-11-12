@@ -1166,8 +1166,8 @@
     "keybindings": [
       {
         "command": "toolkit.chat.open",
-        "key": "ctrl+shift+[Backslash]",
-        "mac": "cmd+shift+[Backslash]"
+        "key": "ctrl+shift+,",
+        "mac": "cmd+shift+,"
       },
       {
         "command": "toolkit.postgresql.executeQuery",
