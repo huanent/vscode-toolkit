@@ -22,5 +22,5 @@ export function formatTaskKind(kind: string): string {
 
 export function formatTaskDuration(durationMs: number): string {
   const duration = Math.max(0, durationMs);
-  return duration < 1000 ? `${duration} ms` : `${(duration / 1000).toFixed(2)} s`;
+  return duration < 1000 ? `${duration}ms` : `${(duration / 1000).toFixed(2)}s`;
 }

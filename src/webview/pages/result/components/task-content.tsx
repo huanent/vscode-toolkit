@@ -85,17 +85,17 @@ export function TaskContent({ task, loading, error }: ResultPanelProps) {
         </div>
         <footer
           aria-label="Task status"
-          className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--vscode-panel-border) px-3 py-1  text-(--vscode-descriptionForeground)"
+          className="flex shrink-0 flex-wrap items-center gap-3 border-t border-(--vscode-panel-border) px-1 py-0.5  text-(--vscode-descriptionForeground)"
         >
-          <span className={`flex items-center gap-1 ${presentation.className}`} role="status">
+          <div className={`flex items-center pl-1 gap-1 ${presentation.className}`} role="status">
             <Icon
               name={presentation.icon}
               size="sm"
               className={task.status === 'running' ? 'animate-spin' : undefined}
             />
             {presentation.label}
-          </span>
-          <span>{formatTaskKind(task.kind)}</span>
+          </div>
+          <div>{formatTaskKind(task.kind)}</div>
           <time dateTime={new Date(task.createdAt).toISOString()}>{new Date(task.createdAt).toLocaleString()}</time>
           {task.status !== 'running' && (
             <span className="font-mono tabular-nums">{formatTaskDuration(task.updatedAt - task.createdAt)}</span>
