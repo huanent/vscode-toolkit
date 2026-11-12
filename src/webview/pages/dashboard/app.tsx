@@ -116,6 +116,7 @@ function App() {
                 }
               }}
               onKeyDown={(event) => {
+                if (event.nativeEvent.isComposing) return;
                 if (event.key === 'Escape') {
                   setSearches({});
                   setSearchOpen(false);

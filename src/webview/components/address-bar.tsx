@@ -87,7 +87,7 @@ export function AddressBar({
         }}
         onBlur={stopEditing}
         onKeyDown={(event) => {
-          if (event.defaultPrevented) return;
+          if (event.defaultPrevented || event.nativeEvent.isComposing) return;
           if (event.key === 'Escape') stopEditing();
           else if (event.key === 'Enter') {
             if (onSubmit(draft)) stopEditing();
