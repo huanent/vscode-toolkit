@@ -48,7 +48,7 @@ export async function registerApplication(context: vscode.ExtensionContext): Pro
       vscode.commands.executeCommand('workbench.view.extension.toolkit_results'),
     ),
   );
-  registerCommands(context, tempFiles.refresh, playbookFiles.refresh, playbookFiles.openEditor);
+  registerCommands(context, tempFiles.refresh, playbookFiles.refresh, playbookFiles.openEditor, tempFiles.beginCreate);
   context.subscriptions.push(registerXmlFormatter());
   context.subscriptions.push(registerHttpLanguage(httpResults, credentials));
   context.subscriptions.push(registerArchiveEditor(context));

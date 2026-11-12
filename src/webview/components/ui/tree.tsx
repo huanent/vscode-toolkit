@@ -2,7 +2,7 @@ import { cn } from 'cn';
 import { useEffect, useState } from 'react';
 import type { Key, KeyboardEvent, ReactNode } from 'react';
 import { Icon } from '@/webview/components/ui/icons';
-import { List } from '@/webview/components/ui/list';
+import { List, type ListItem } from '@/webview/components/ui/list';
 
 type TreeItemBase = {
   path: string;
@@ -30,6 +30,7 @@ type TreeProps = {
   renderActions?: (item: TreeFileItem) => ReactNode;
   renderIndicator?: (item: TreeItem) => ReactNode;
   onExpand?: (item: Extract<TreeItem, { type: 'directory' }>) => void;
+  inlineEditor?: { parentPath?: string; content: ReactNode };
 };
 
 type TreeNodeModel = {
@@ -57,15 +58,28 @@ export function Tree({
   renderActions,
   renderIndicator,
   onExpand,
+  inlineEditor,
 }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<Key>>(() => new Set());
   const [focusedKey, setFocusedKey] = useState<Key | null>(null);
   useEffect(() => {
     setExpandedKeys(new Set());
   }, [collapseAllTrigger]);
+  useEffect(() => {
+    if (!inlineEditor?.parentPath) return;
+    const segments = inlineEditor.parentPath.split('/');
+    setExpandedKeys((current) => {
+      const next = new Set(current);
+      segments.forEach((_, index) => next.add(segments.slice(0, index + 1).join('/')));
+      return next;
+    });
+  }, [inlineEditor?.parentPath]);
   const query = search?.trim().toLocaleLowerCase() ?? '';
   const filteredItems = query ? filterTreeItems(items, query, new Set(searchMatches)) : items;
-  const treeItems = createTreeNodes(filteredItems, null, expandedKeys, Boolean(query));
+  const effectiveExpandedKeys = new Set(expandedKeys);
+  const parentSegments = inlineEditor?.parentPath?.split('/') ?? [];
+  parentSegments.forEach((_, index) => effectiveExpandedKeys.add(parentSegments.slice(0, index + 1).join('/')));
+  const treeItems = createTreeNodes(filteredItems, null, effectiveExpandedKeys, Boolean(query));
   const visibleItems = flattenTreeNodes(treeItems);
   const focusedNode = visibleItems.find((node) => node.key === focusedKey) ?? visibleItems[0];
   const activeIndentKey = focusedNode
@@ -108,30 +122,47 @@ export function Tree({
     else setExpanded(currentItem.key, true);
   };
 
+  const rows: ListItem<TreeNodeModel>[] = visibleItems.map((node) => ({
+    key: node.key,
+    data: node,
+    icon: (
+      <>
+        <TreeRowIndentation node={node} activeIndentKey={activeIndentKey} />
+        {node.item.type === 'file' && <Icon className="py-1" name={node.item.icon ?? 'file'} />}
+      </>
+    ),
+    label: node.item.name,
+    contentClassName: getItemClassName?.(node.item),
+    labelClassName: getItemLabelClassName?.(node.item),
+    description: node.item.type === 'file' ? node.item.detail : undefined,
+    context: node.item.context,
+    actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,
+    indicator: renderIndicator?.(node.item),
+    expanded: node.item.type === 'directory' ? node.expanded : undefined,
+    level: node.level,
+    position: node.position,
+    setSize: node.setSize,
+  }));
+  if (inlineEditor) {
+    const parentIndex = visibleItems.findIndex((node) => node.key === inlineEditor.parentPath);
+    const level = inlineEditor.parentPath ? getTreeDepth(inlineEditor.parentPath) + 1 : 1;
+    const editorNode: TreeNodeModel = {
+      item: { path: '__inline-editor__', name: '', type: 'file' },
+      key: '__inline-editor__', parentKey: inlineEditor.parentPath ?? null,
+      children: [], level, position: 1, setSize: 1, expandable: false, expanded: false,
+    };
+    rows.splice(parentIndex + 1, 0, {
+      key: editorNode.key, data: editorNode, level,
+      icon: <div className="flex shrink-0">{Array.from({ length: level - 1 }, (_, index) => <div key={index} className="w-4" />)}</div>,
+      label: inlineEditor.content,
+      labelClassName: 'w-full shrink min-w-0',
+    });
+  }
+
   return (
     <List
       ariaLabel={ariaLabel}
-      items={visibleItems.map((node) => ({
-        key: node.key,
-        data: node,
-        icon: (
-          <>
-            <TreeRowIndentation node={node} activeIndentKey={activeIndentKey} />
-            {node.item.type === 'file' && <Icon className="py-1" name={node.item.icon ?? 'file'} />}
-          </>
-        ),
-        label: node.item.name,
-        contentClassName: getItemClassName?.(node.item),
-        labelClassName: getItemLabelClassName?.(node.item),
-        description: node.item.type === 'file' ? node.item.detail : undefined,
-        context: node.item.context,
-        actions: node.item.type === 'file' ? renderActions?.(node.item) : undefined,
-        indicator: renderIndicator?.(node.item),
-        expanded: node.item.type === 'directory' ? node.expanded : undefined,
-        level: node.level,
-        position: node.position,
-        setSize: node.setSize,
-      }))}
+      items={rows}
       role="tree"
       itemRole="treeitem"
       onFocusedKeyChange={setFocusedKey}

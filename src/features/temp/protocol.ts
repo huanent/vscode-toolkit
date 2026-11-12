@@ -37,6 +37,15 @@ export interface TempFileCommandRequest extends TempContextTarget {
   command: 'copy' | 'cut' | 'paste' | 'delete' | 'rename' | 'copyPath';
 }
 
+export interface CreateTempEntryRequest extends TempContextTarget {
+  type: 'createTempEntry';
+  requestId: string;
+  entryType: TempEntryType;
+  name: string;
+}
+
 export type TempFilesWebviewMessage =
+  | { type: 'beginTempEntry'; entryType: TempEntryType; target: TempContextTarget }
+  | { type: 'tempEntryCreated'; requestId: string; error?: string }
   | { type: 'tempFilesUpdated'; entries: TempScopeGroup[] }
   | { type: 'tempFileError'; message: string };

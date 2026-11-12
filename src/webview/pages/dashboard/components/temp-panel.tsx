@@ -9,6 +9,7 @@ import type {
   TempContextTarget,
   TempTreeEntry,
   TempScopeGroup,
+  TempFilesWebviewMessage,
 } from '@/features/temp/protocol';
 import type { StorageScope } from '@/shared/storage-scope';
 import { postToHost } from '@/webview/utils/host-data';
@@ -25,6 +26,20 @@ type TempPanelProps = {
 const panelContext = JSON.stringify({ webviewSection: 'temp', preventDefaultContextMenuItems: true });
 
 export function TempPanel({ entries, error, loading, collapseAllTrigger, search, searchMatches }: TempPanelProps) {
+  const [draft, setDraft] = useState<TempEntryDraft>();
+  const closeDraft = useCallback(() => setDraft(undefined), []);
+  useEffect(() => {
+    const onMessage = (event: MessageEvent<TempFilesWebviewMessage>) => {
+      if (event.data.type !== 'beginTempEntry') return;
+      setDraft({ ...event.data, requestId: crypto.randomUUID() });
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+  const targetPath = draft?.target.tempEntryPath;
+  const parentPath = draft?.target.tempEntryType === 'file'
+    ? targetPath?.slice(0, Math.max(0, targetPath.lastIndexOf('/')))
+    : targetPath;
   return (
     <section
       className="temp-panel flex h-full min-h-0 flex-col"
@@ -63,16 +78,20 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
         <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading temporary files..." />
-      ) : entries?.some((group) => group.entries.length > 0) ? (
+      ) : draft || entries?.some((group) => group.entries.length > 0) ? (
         <div className="min-h-0 flex-1 overflow-auto">
           <Tree
             ariaLabel="Temporary files"
             collapseAllTrigger={collapseAllTrigger}
-            items={entries
+            inlineEditor={draft ? {
+              parentPath: parentPath ? `${draft.target.tempScope ?? 'global'}:${parentPath}` : undefined,
+              content: <TempEntryInput key={draft.requestId} draft={draft} onClose={closeDraft} />,
+            } : undefined}
+            items={(entries ?? [])
               .flatMap(({ scope, entries: scopeEntries }) => toTempTreeItems(scopeEntries, scope))
               .sort(compareTempItems)}
-            search={search}
-            searchMatches={searchMatches}
+            search={draft ? undefined : search}
+            searchMatches={draft ? undefined : searchMatches}
             renderIndicator={(item) =>
               item.context?.tempScope === 'workspace' ? (
                 <div
@@ -138,3 +157,5 @@ function toTempTreeItems(entries: readonly TempTreeEntry[], scope: StorageScope,
       : { path: `${scope}:${path}`, name: entry.name, type: 'file' as const, context };
   });
 }
+import { useCallback, useEffect, useState } from 'react';
+import { TempEntryInput, type TempEntryDraft } from './temp-entry-input';

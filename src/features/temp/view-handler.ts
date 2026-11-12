@@ -4,13 +4,15 @@ import { mkdir } from 'node:fs/promises';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import { findStorageRoot, isStorageScope } from '@/shared/storage-scope';
-import type { OpenTempFileRequest, TempFilesWebviewMessage } from './protocol';
+import type { OpenTempFileRequest, TempFilesWebviewMessage, TempEntryType, TempContextTarget } from './protocol';
+import { createTempEntry } from './commands';
 import { createTempFileUri } from './file-system';
 import { getTempFilePath, readTempTree } from './service';
 
 export interface TempFilesView extends vscode.Disposable {
   handler: WebviewViewHandler;
   refresh(): Promise<void>;
+  beginCreate(type: TempEntryType, target: TempContextTarget): Promise<void>;
 }
 
 export function createTempFilesView(context: vscode.ExtensionContext): TempFilesView {
@@ -66,6 +68,22 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
     onMessage: async (message, webview) => {
       if (
         typeof message === 'object' && message !== null &&
+        'type' in message && message.type === 'createTempEntry' &&
+        'requestId' in message && typeof message.requestId === 'string' &&
+        'name' in message && typeof message.name === 'string' &&
+        'entryType' in message && (message.entryType === 'file' || message.entryType === 'directory')
+      ) {
+        let error: string | undefined;
+        try {
+          await createTempEntry(context, refresh, message.entryType, message, message.name);
+        } catch (cause) {
+          error = cause instanceof Error ? cause.message : String(cause);
+        }
+        await webview.postMessage({ type: 'tempEntryCreated', requestId: message.requestId, error } satisfies TempFilesWebviewMessage);
+        return;
+      }
+      if (
+        typeof message === 'object' && message !== null &&
         'type' in message && message.type === 'tempFileCommand' &&
         'command' in message && typeof message.command === 'string' &&
         ['copy', 'cut', 'paste', 'delete', 'rename', 'copyPath'].includes(message.command)
@@ -92,6 +110,12 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
   return {
     handler,
     refresh,
+    beginCreate: async (entryType, target) => {
+      if (!activeWebview || disposed) throw new Error('Open the Temp panel before creating an entry.');
+      if (!await activeWebview.postMessage({ type: 'beginTempEntry', entryType, target } satisfies TempFilesWebviewMessage)) {
+        throw new Error('Unable to start creating a temporary entry.');
+      }
+    },
     dispose: () => {
       disposed = true;
       watcherGeneration++;

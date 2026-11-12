@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { generateGitignore } from '@/features/git/gitignore-service';
 import { registerScripts } from '@/features/scripts/register-scripts';
 import { registerTempCommands } from '@/features/temp/commands';
+import type { TempFilesView } from '@/features/temp/view-handler';
 import { registerPlaybookCommands } from '@/features/playbook/commands';
 import { registerCredentialCommands } from '@/features/credential/commands';
 import { registerExplorerCommands } from '@/features/explorer/commands';
@@ -13,6 +14,7 @@ export function registerCommands(
   refreshTempFiles: () => Promise<void>,
   refreshPlaybookFiles: () => Promise<void>,
   openPlaybookEditor: (id?: string) => Promise<void>,
+  beginCreateTempEntry: TempFilesView['beginCreate'],
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.generateGitignore', () => generateGitignore(context.extensionUri)),
@@ -21,7 +23,7 @@ export function registerCommands(
     await refreshTempFiles();
     await vscode.commands.executeCommand('toolkit.explorer.refresh');
   });
-  registerTempCommands(context, refreshTempFiles, clipboard);
+  registerTempCommands(context, refreshTempFiles, clipboard, beginCreateTempEntry);
   registerPlaybookCommands(context, refreshPlaybookFiles, openPlaybookEditor);
   registerCredentialCommands(context);
   registerExplorerCommands(context, clipboard);

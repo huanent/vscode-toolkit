@@ -26,6 +26,7 @@ export function registerTempCommands(
   context: vscode.ExtensionContext,
   refresh: () => Promise<void>,
   clipboard: FileClipboard,
+  beginCreate: (type: TempEntryType, target: TempContextTarget) => Promise<void>,
 ): void {
   const autoSaveScheduler = createTempAutoSaveScheduler();
   const copyTemp = async (target: unknown, cut: boolean) => {
@@ -59,10 +60,10 @@ export function registerTempCommands(
     vscode.workspace.onDidCloseTextDocument(autoSaveScheduler.cancel),
     { dispose: () => autoSaveScheduler.dispose() },
     vscode.commands.registerCommand('toolkit.temp.createFile', (target: unknown) =>
-      createTempEntry(context, refresh, 'file', target).catch(showTempCommandError),
+      beginCreate('file', parseTempTarget(target)).catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.createFolder', (target: unknown) =>
-      createTempEntry(context, refresh, 'directory', target).catch(showTempCommandError),
+      beginCreate('directory', parseTempTarget(target)).catch(showTempCommandError),
     ),
     vscode.commands.registerCommand('toolkit.temp.rename', (target: unknown) =>
       renameTempEntryFromInput(refresh, target).catch(showTempCommandError),
@@ -188,22 +189,16 @@ async function moveTempEntry(
   await refresh();
 }
 
-async function createTempEntry(
+export async function createTempEntry(
   context: vscode.ExtensionContext,
   refresh: () => Promise<void>,
   type: TempEntryType,
   target: unknown,
+  name: string,
 ): Promise<void> {
   const isFile = type === 'file';
   const entry = parseTempTarget(target);
   const directory = await resolveTargetDirectory(context, entry);
-  const name = await vscode.window.showInputBox({
-    prompt: isFile ? 'Name the temporary file' : 'Folder name',
-    placeHolder: isFile ? 'scratch.md' : 'drafts',
-    validateInput: isFile ? validateTempFileName : validateTempFolderName,
-  });
-  if (name === undefined) return;
-
   if (isFile) {
     const filePath = await createTempFile(directory, name);
     await refresh();
