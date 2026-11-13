@@ -5,6 +5,7 @@ import { playbookEditorViewType } from './editor';
 import { showFolderPicker } from '@/host/utils/folder-picker';
 import {
   deletePlaybookEntry,
+  duplicatePlaybookRecord,
   movePlaybookEntry,
   readPlaybookRecords,
   renamePlaybookEntry,
@@ -31,6 +32,9 @@ export function registerPlaybookCommands(
     vscode.commands.registerCommand('toolkit.playbook.edit', (target: unknown) =>
       openEditor(parsePlaybookId(target)).catch(showPlaybookCommandError),
     ),
+    vscode.commands.registerCommand('toolkit.playbook.duplicate', (target: unknown) =>
+      duplicatePlaybook(context, refresh, openEditor, target).catch(showPlaybookCommandError),
+    ),
     vscode.commands.registerCommand('toolkit.playbook.copyAiReference', (target: unknown) =>
       copyPlaybookAiReference(context, target).catch(showPlaybookCommandError),
     ),
@@ -44,6 +48,19 @@ export function registerPlaybookCommands(
       movePlaybook(context, refresh, target).catch(showPlaybookCommandError),
     ),
   );
+}
+
+async function duplicatePlaybook(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  openEditor: (id?: string, parentId?: string) => Promise<void>,
+  target: unknown,
+): Promise<void> {
+  const id = parsePlaybookId(target);
+  if (!id) throw new Error('Select a playbook to duplicate.');
+  const record = await duplicatePlaybookRecord(resolveStorageRoots(context, 'playbooks'), id);
+  await refresh();
+  await openEditor(record.id);
 }
 
 async function copyPlaybookAiReference(context: vscode.ExtensionContext, target: unknown): Promise<void> {

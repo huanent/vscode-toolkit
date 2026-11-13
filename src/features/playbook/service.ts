@@ -119,6 +119,31 @@ export async function savePlaybookFolder(
   return { kind: 'folder', id, name: trimmedName, parentId };
 }
 
+export async function duplicatePlaybookRecord(
+  roots: readonly StorageRoot[],
+  id: string,
+): Promise<StoredPlaybookRecord> {
+  const record = await readPlaybookRecord(roots, id);
+  if (!record) throw new Error('Playbook no longer exists.');
+  const names = new Set(
+    (await readPlaybookRecords(roots))
+      .filter((entry) => entry.parentId === record.parentId)
+      .map((entry) => entry.name),
+  );
+  let name = `${record.name} copy`;
+  for (let index = 2; names.has(name); index++) name = `${record.name} copy ${index}`;
+  return savePlaybookRecord(
+    roots,
+    randomUUID(),
+    name,
+    record.playbook,
+    record.parentId,
+    record.scope,
+    record.description,
+    record.enableAI,
+  );
+}
+
 export async function renamePlaybookEntry(roots: readonly StorageRoot[], id: string, rawName: string): Promise<void> {
   const name = rawName.trim();
   if (!name || name === '.' || name === '..' || /[\\/\0]/.test(name)) {

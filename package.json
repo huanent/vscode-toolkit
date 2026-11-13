@@ -1047,6 +1047,11 @@
         "category": "Toolkit"
       },
       {
+        "command": "toolkit.playbook.duplicate",
+        "title": "Duplicate",
+        "category": "Playbook"
+      },
+      {
         "command": "toolkit.playbook.copyAiReference",
         "title": "Copy AI Reference",
         "category": "Playbook"
@@ -1478,6 +1483,10 @@
           "when": "false"
         },
         {
+          "command": "toolkit.playbook.duplicate",
+          "when": "false"
+        },
+        {
           "command": "toolkit.playbook.copyAiReference",
           "when": "false"
         },
@@ -1830,6 +1839,11 @@
           "command": "toolkit.playbook.edit",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && playbookId",
           "group": "2_actions@1"
+        },
+        {
+          "command": "toolkit.playbook.duplicate",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && playbookId",
+          "group": "2_actions@1.5"
         },
         {
           "command": "toolkit.playbook.copyAiReference",
