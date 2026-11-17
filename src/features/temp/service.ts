@@ -6,8 +6,12 @@ import type { TempTreeEntry } from './protocol';
 const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 
 export async function readTempTree(directory: string): Promise<TempTreeEntry[]> {
-  await mkdir(directory, { recursive: true });
-  return readDirectory(directory);
+  try {
+    return await readDirectory(directory);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
 }
 
 export async function searchTempContents(directory: string, query: string): Promise<string[]> {

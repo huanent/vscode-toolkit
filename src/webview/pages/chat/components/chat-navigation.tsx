@@ -20,7 +20,7 @@ export function ChatNavigation({ messages, activeAnchor, onNavigate }: ChatNavig
               title={message.content.trim() || 'Your message'}
               aria-label={`Go to message ${index + 1}: ${message.content.trim().slice(0, 100)}`}
               aria-current={activeAnchor === index ? 'location' : undefined}
-              className="group flex h-4 w-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline focus-visible:outline-(--vscode-focusBorder)"
+              className="group flex h-4 w-4 shrink-0 items-center justify-center rounded-sm"
               onClick={() => onNavigate(index)}
             >
               <span

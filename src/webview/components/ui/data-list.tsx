@@ -120,7 +120,7 @@ export function DataList<T>({
                   <button
                     type="button"
                     className={cn(
-                      'group flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-sm outline-none transition-colors hover:text-(--vscode-foreground) focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+                      'group flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-sm outline-none transition-colors hover:text-(--vscode-foreground)',
                       active && 'text-(--vscode-foreground)',
                       justificationClasses[column.align ?? 'left'],
                     )}
@@ -148,7 +148,7 @@ export function DataList<T>({
             data-vscode-context={entryContext ? JSON.stringify(entryContext(entry)) : undefined}
             tabIndex={onOpen ? 0 : undefined}
             className={cn(
-              'mx-1 flex items-center gap-3 rounded px-3 py-1 text-sm outline-none transition-colors focus-visible:outline-1 -outline-offset-1 focus-visible:outline-(--vscode-focusBorder)',
+              'mx-1 flex items-center gap-3 rounded px-3 py-1 text-sm outline-none transition-colors',
               isSelected?.(entry)
                 ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
                 : 'hover:bg-(--vscode-list-hoverBackground)',

@@ -48,7 +48,7 @@ export function DataGrid<T>({
             title={title?.(entry)}
             aria-pressed={isSelected?.(entry)}
             className={cn(
-              'flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-2 py-1 transition-colors focus-visible:border-(--vscode-focusBorder)',
+              'flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-2 py-1 transition-colors',
               isSelected?.(entry)
                 ? 'bg-(--vscode-list-activeSelectionBackground) text-(--vscode-list-activeSelectionForeground)'
                 : 'hover:bg-(--vscode-list-hoverBackground) focus-visible:bg-(--vscode-list-hoverBackground)',

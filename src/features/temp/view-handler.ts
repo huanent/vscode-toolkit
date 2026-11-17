@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import { watch, type FSWatcher } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageRoots } from '@/host/utils/storage';
 import { findStorageRoot, isStorageScope } from '@/shared/storage-scope';
@@ -18,9 +16,8 @@ export interface TempFilesView extends vscode.Disposable {
 export function createTempFilesView(context: vscode.ExtensionContext): TempFilesView {
   let activeWebview: vscode.Webview | undefined;
   let disposed = false;
-  let watchers: FSWatcher[] = [];
+  let watchers: vscode.FileSystemWatcher[] = [];
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-  let watcherGeneration = 0;
   const getRoots = () => resolveStorageRoots(context, 'temp');
   const loadGroups = () => Promise.all(getRoots().map(async ({ scope, directory }) => ({
     scope, entries: (await readTempTree(directory)).filter((entry) => scope !== 'workspace' || entry.name !== '.gitignore'),
@@ -33,32 +30,32 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
     if (disposed || activeWebview !== webview) return;
     await webview.postMessage({ type: 'tempFilesUpdated', entries } satisfies TempFilesWebviewMessage);
   };
-  const resetWatchers = async () => {
-    const generation = ++watcherGeneration;
-    for (const watcher of watchers) watcher.close();
+  const resetWatchers = () => {
+    for (const watcher of watchers) watcher.dispose();
     watchers = [];
     for (const { directory } of getRoots()) {
-      await mkdir(directory, { recursive: true });
-      if (disposed || generation !== watcherGeneration) return;
-      try {
-        const watcher = watch(directory, { recursive: true }, () => {
-          if (refreshTimer) clearTimeout(refreshTimer);
-          refreshTimer = setTimeout(() => { void refresh().catch(console.error); }, 100);
-        });
-        watcher.on('error', () => watcher.close());
-        watchers.push(watcher);
-      } catch (error) {
-        console.error('Unable to watch temporary files:', error);
-      }
+      const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(directory), '**/*'));
+      const onChange = () => {
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => { void refresh().catch(console.error); }, 100);
+      };
+      watcher.onDidCreate(onChange);
+      watcher.onDidChange(onChange);
+      watcher.onDidDelete(onChange);
+      watchers.push(watcher);
     }
   };
   const workspaceListener = vscode.workspace.onDidChangeWorkspaceFolders(() => {
-    void resetWatchers().then(refresh).catch(console.error);
+    resetWatchers();
+    void refresh().catch(console.error);
   });
   const configurationListener = vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration('toolkit.storagePath')) void resetWatchers().then(refresh).catch(console.error);
+    if (event.affectsConfiguration('toolkit.storagePath')) {
+      resetWatchers();
+      void refresh().catch(console.error);
+    }
   });
-  void resetWatchers().catch(console.error);
+  resetWatchers();
 
   const handler: WebviewViewHandler = {
     load: loadGroups,
@@ -118,8 +115,7 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
     },
     dispose: () => {
       disposed = true;
-      watcherGeneration++;
-      for (const watcher of watchers) watcher.close();
+      for (const watcher of watchers) watcher.dispose();
       if (refreshTimer) clearTimeout(refreshTimer);
       workspaceListener.dispose();
       configurationListener.dispose();

@@ -71,7 +71,7 @@ export function Select({
           variant === 'field'
             ? fieldClassName
             : 'h-6 min-w-0 rounded-sm border border-transparent bg-transparent px-1 text-(--vscode-descriptionForeground) hover:bg-(--vscode-toolbar-hoverBackground) hover:text-(--vscode-foreground) disabled:cursor-not-allowed disabled:opacity-50',
-          'flex cursor-pointer items-center justify-between gap-2 text-left select-none data-popup-open:border-(--vscode-focusBorder)',
+          'flex cursor-pointer items-center justify-between gap-2 text-left select-none',
           className,
         )}
       >

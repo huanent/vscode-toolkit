@@ -71,8 +71,6 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
   async stat(uri: vscode.Uri): Promise<vscode.FileStat> {
     return this.withFileSystemErrors(uri, async () => {
       const storagePath = this.getStoragePath(uri);
-      if (this.isStorageRoot(storagePath)) await mkdir(storagePath, { recursive: true });
-
       const stats = await lstat(storagePath);
       const type = stats.isDirectory() ? vscode.FileType.Directory : stats.isFile() ? vscode.FileType.File : undefined;
       if (type === undefined) throw vscode.FileSystemError.FileNotFound(uri);
@@ -84,7 +82,6 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
   async readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
     return this.withFileSystemErrors(uri, async () => {
       const storagePath = this.getStoragePath(uri);
-      if (this.isStorageRoot(storagePath)) await mkdir(storagePath, { recursive: true });
       const stats = await lstat(storagePath);
       if (!stats.isDirectory()) throw vscode.FileSystemError.FileNotADirectory(uri);
 
@@ -106,6 +103,8 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
         throw vscode.FileSystemError.FileExists(uri);
       }
 
+      const parentPath = path.dirname(storagePath);
+      if (this.isStorageRoot(parentPath)) await mkdir(parentPath, { recursive: true });
       await mkdir(storagePath, { recursive: this.isStorageRoot(storagePath) });
       this.fireChange(vscode.FileChangeType.Created, uri);
     });
@@ -136,6 +135,8 @@ class TempFileSystemProvider implements vscode.FileSystemProvider, vscode.Dispos
       if (existingStats && existingStats.isDirectory()) throw vscode.FileSystemError.FileIsADirectory(uri);
       if (existingStats && !existingStats.isFile()) throw vscode.FileSystemError.NoPermissions(uri);
 
+      const parentPath = path.dirname(storagePath);
+      if (this.isStorageRoot(parentPath)) await mkdir(parentPath, { recursive: true });
       await writeFile(storagePath, content, { flag: existingStats ? 'w' : 'wx' });
       this.fireChange(existingStats ? vscode.FileChangeType.Changed : vscode.FileChangeType.Created, uri);
     });

@@ -88,7 +88,7 @@ export function ChatInput({
 
   return (
     <form
-      className={`overflow-hidden rounded-lg border bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) ${editing ? 'border-(--vscode-focusBorder)' : 'border-(--vscode-input-border,var(--vscode-panel-border))'}`}
+      className={`overflow-hidden rounded-lg border bg-(--vscode-input-background) ${editing ? 'border-(--vscode-focusBorder)' : 'border-(--vscode-input-border,var(--vscode-panel-border))'}`}
       onSubmit={(event) => {
         event.preventDefault();
         send();

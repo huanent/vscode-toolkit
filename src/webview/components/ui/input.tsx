@@ -63,7 +63,7 @@ export function Input({ className, prefix, suffix, type, ...props }: InputProps)
   return (
     <div
       className={cn(
-        'flex h-6 w-full min-w-0 items-center gap-2 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) focus-within:border-(--vscode-focusBorder) has-aria-invalid:border-(--vscode-inputValidation-errorBorder)',
+        'flex h-6 w-full min-w-0 items-center gap-2 rounded-sm border border-(--vscode-input-border,transparent) bg-(--vscode-input-background) px-2 text-(--vscode-input-foreground) has-aria-invalid:border-(--vscode-inputValidation-errorBorder)',
         props.disabled && 'cursor-not-allowed opacity-50',
       )}
     >
