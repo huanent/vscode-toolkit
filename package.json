@@ -139,6 +139,9 @@
             "filenamePattern": "*.vsix"
           },
           {
+            "filenamePattern": "*.nupkg"
+          },
+          {
             "filenamePattern": "*.tar.gz"
           },
           {

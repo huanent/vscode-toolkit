@@ -14,8 +14,8 @@ export function registerRemoteArchive(ssh: SshService): vscode.Disposable {
 }
 
 export function validateArchiveUri(uri: vscode.Uri): void {
-  if (!/\.(zip|vsix|tar\.gz|tgz)$/i.test(uri.path))
-    throw new Error('Only ZIP, VSIX, TAR.GZ or TGZ archives can be previewed.');
+  if (!/\.(zip|vsix|nupkg|tar\.gz|tgz)$/i.test(uri.path))
+    throw new Error('Only ZIP, VSIX, NUPKG, TAR.GZ or TGZ archives can be previewed.');
 }
 
 export type ArchiveIndex = ReadonlyMap<string, readonly ArchiveTreeEntry[]>;
@@ -30,7 +30,7 @@ export async function readArchiveIndex(uri: vscode.Uri): Promise<ArchiveIndex> {
       uri.authority,
       tarGzip
         ? `command -v tar >/dev/null 2>&1 || { printf '%s\\n' 'Remote TAR.GZ preview requires tar with gzip support on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec tar -tvzf ${argument}`
-        : `command -v unzip >/dev/null 2>&1 || { printf '%s\\n' 'Remote ZIP / VSIX preview requires unzip on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec unzip -l ${argument}`,
+        : `command -v unzip >/dev/null 2>&1 || { printf '%s\\n' 'Remote ZIP / VSIX / NUPKG preview requires unzip on the SSH server.' >&2; exit 127; }\nLC_ALL=C exec unzip -l ${argument}`,
       AbortSignal.timeout(60000),
     );
     if (result.exitCode !== 0) throw new Error(result.stderr.trim() || 'Remote archive preview failed.');
