@@ -148,12 +148,26 @@ export function Tree({
     const level = inlineEditor.parentPath ? getTreeDepth(inlineEditor.parentPath) + 1 : 1;
     const editorNode: TreeNodeModel = {
       item: { path: '__inline-editor__', name: '', type: 'file' },
-      key: '__inline-editor__', parentKey: inlineEditor.parentPath ?? null,
-      children: [], level, position: 1, setSize: 1, expandable: false, expanded: false,
+      key: '__inline-editor__',
+      parentKey: inlineEditor.parentPath ?? null,
+      children: [],
+      level,
+      position: 1,
+      setSize: 1,
+      expandable: false,
+      expanded: false,
     };
     rows.splice(parentIndex + 1, 0, {
-      key: editorNode.key, data: editorNode, level,
-      icon: <div className="flex shrink-0">{Array.from({ length: level - 1 }, (_, index) => <div key={index} className="w-4" />)}</div>,
+      key: editorNode.key,
+      data: editorNode,
+      level,
+      icon: (
+        <div className="flex shrink-0">
+          {Array.from({ length: level - 1 }, (_, index) => (
+            <div key={index} className="w-4" />
+          ))}
+        </div>
+      ),
       label: inlineEditor.content,
       labelClassName: 'w-full shrink min-w-0',
     });
@@ -264,7 +278,7 @@ function TreeIndentGuides({ itemPath, activeIndentKey }: TreeIndentGuidesProps) 
           <span
             key={index}
             className={cn(
-              'w-5 shrink-0 self-stretch border-l',
+              'w-4 shrink-0 self-stretch border-l',
               active
                 ? 'border-(--vscode-tree-indentGuidesStroke) opacity-100'
                 : 'border-(--vscode-tree-inactiveIndentGuidesStroke) opacity-60',
