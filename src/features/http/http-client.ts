@@ -12,12 +12,12 @@ export async function executeHttpRequest(
   request: HttpRequestData,
   options: ExecuteOptions = {},
 ): Promise<HttpResponseData> {
-  const timeoutMs = options.timeoutMs ?? 60_000;
+  const timeoutMs = options.timeoutMs;
   const controller = new AbortController();
   const abortFromCaller = () => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abortFromCaller();
   else options.signal?.addEventListener('abort', abortFromCaller, { once: true });
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = timeoutMs === undefined ? undefined : setTimeout(() => controller.abort(), timeoutMs);
 
   const startTime = performance.now();
   try {

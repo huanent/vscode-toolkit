@@ -44,7 +44,7 @@
     "@vscode/debugprotocol": "^1.68.0",
     "@vscode/vsce": "^4.0.0",
     "cn": "^0.4.0",
-    "exceljs": "^3.4.0",
+    "exceljs": "^4.4.0",
     "jsonc-parser": "^3.3.1",
     "mysql2": "^3.24.5",
     "oxfmt": "^0.70.0",
