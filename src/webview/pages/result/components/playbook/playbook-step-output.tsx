@@ -19,6 +19,8 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
       : !running && result.status === 'pending'
         ? 'skipped'
         : result.status;
+  const error = status === 'failed' ? result.message : undefined;
+  const output = error ? [result.output, `Error: ${error}`].filter(Boolean).join('\n') : result.output;
   const [open, setOpen] = useState(status === 'running' || status === 'failed');
   const outputRef = useRef<HTMLDivElement>(null);
   const followingRef = useRef(false);
@@ -49,15 +51,16 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
     };
     container.addEventListener('scroll', onScroll);
     return () => container.removeEventListener('scroll', onScroll);
-  }, [status, open, Boolean(result.output)]);
+  }, [status, open, Boolean(output)]);
 
   useLayoutEffect(() => {
     const output = outputRef.current;
     const container = output?.closest<HTMLElement>('[data-result-scroll-container]');
     if (!output || !container || !followingRef.current || status !== 'running') return;
-    const delta = output.getBoundingClientRect().bottom - container.getBoundingClientRect().top - bottomOffsetRef.current;
+    const delta =
+      output.getBoundingClientRect().bottom - container.getBoundingClientRect().top - bottomOffsetRef.current;
     if (delta !== 0) container.scrollTop += delta;
-  }, [result.output, status]);
+  }, [output, status]);
   useEffect(() => {
     if (status === 'running' || status === 'failed') setOpen(true);
     else if (status === 'completed') setOpen(false);
@@ -142,9 +145,9 @@ export function PlaybookStepOutput({ index, definition, result, running }: Playb
             </div>
           </div>
         )}
-        {result.output && (
+        {output && (
           <div ref={outputRef}>
-            <ResultText title={`Output ${result.message}`} content={result.output} />
+            <ResultText title="Output" content={output} description={error ? '' : result.message} />
           </div>
         )}
       </div>
