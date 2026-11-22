@@ -1154,21 +1154,6 @@
         "command": "toolkit.temp.cut",
         "title": "Cut",
         "category": "Toolkit"
-      },
-      {
-        "command": "toolkit.files.copy",
-        "title": "Copy (Temp / Explorer)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "toolkit.files.cut",
-        "title": "Cut (Temp / Explorer)",
-        "category": "Toolkit"
-      },
-      {
-        "command": "toolkit.files.paste",
-        "title": "Paste (Temp / Explorer)",
-        "category": "Toolkit"
       }
     ],
     "keybindings": [
@@ -1199,24 +1184,6 @@
         "key": "ctrl+enter",
         "mac": "cmd+enter",
         "when": "toolkit.mysqlQueryEditor"
-      },
-      {
-        "command": "toolkit.files.copy",
-        "key": "ctrl+c",
-        "mac": "cmd+c",
-        "when": "filesExplorerFocus && !inputFocus"
-      },
-      {
-        "command": "toolkit.files.cut",
-        "key": "ctrl+x",
-        "mac": "cmd+x",
-        "when": "filesExplorerFocus && !inputFocus"
-      },
-      {
-        "command": "toolkit.files.paste",
-        "key": "ctrl+v",
-        "mac": "cmd+v",
-        "when": "filesExplorerFocus && !inputFocus"
       }
     ],
     "submenus": [
@@ -1587,18 +1554,6 @@
         },
         {
           "command": "toolkit.temp.cut",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.files.copy",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.files.cut",
-          "when": "false"
-        },
-        {
-          "command": "toolkit.files.paste",
           "when": "false"
         }
       ],

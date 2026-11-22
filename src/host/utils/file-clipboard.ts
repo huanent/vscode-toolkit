@@ -37,49 +37,13 @@ export function createFileClipboard(refresh: () => Promise<void>) {
     }
   }
 
-  async function copyExplorer(cut: boolean, resource?: vscode.Uri, selection?: vscode.Uri[]): Promise<void> {
-    if (resource) {
-      await write(selection?.some((uri) => uri.toString() === resource.toString()) ? selection : [resource], cut);
-      return;
-    }
-    // Keyboard commands receive no resource arguments; let Explorer serialize its selection.
-    await vscode.commands.executeCommand('copyFilePath');
-    const paths = (await vscode.env.clipboard.readText()).split(/\r?\n/).filter(Boolean);
-    await write(paths.map((value) => vscode.Uri.file(value)), cut);
-  }
-
-  async function pasteExplorer(resource?: vscode.Uri): Promise<void> {
-    if (!clipboard || clipboard.text !== await vscode.env.clipboard.readText()) {
-      try {
-        await vscode.commands.executeCommand('filesExplorer.paste');
-      } finally {
-        await refresh();
-      }
-      return;
-    }
-    if (!resource) {
-      const text = await vscode.env.clipboard.readText();
-      try {
-        await vscode.commands.executeCommand('copyFilePath');
-        const selectedPath = (await vscode.env.clipboard.readText()).split(/\r?\n/)[0];
-        if (selectedPath && selectedPath !== text) resource = vscode.Uri.file(selectedPath);
-      } finally {
-        await vscode.env.clipboard.writeText(text);
-      }
-    }
-    resource ??= vscode.workspace.workspaceFolders?.length === 1 ? vscode.workspace.workspaceFolders[0].uri : undefined;
-    if (!resource) throw new Error('Select a destination folder in Explorer.');
-    const stat = await vscode.workspace.fs.stat(resource);
-    await paste(stat.type & vscode.FileType.Directory ? resource : vscode.Uri.joinPath(resource, '..'));
-  }
-
   async function getCutUris(): Promise<string[]> {
     return clipboard?.cut && clipboard.text === await vscode.env.clipboard.readText()
       ? clipboard.sources.map((source) => source.toString())
       : [];
   }
 
-  return { write, paste, copyExplorer, pasteExplorer, getCutUris };
+  return { write, paste, getCutUris };
 }
 
 export type FileClipboard = ReturnType<typeof createFileClipboard>;

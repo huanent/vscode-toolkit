@@ -45,15 +45,6 @@ export function registerTempCommands(
     vscode.commands.registerCommand('toolkit.temp.cut', (target: unknown) =>
       copyTemp(target, true).catch(showTempCommandError),
     ),
-    vscode.commands.registerCommand('toolkit.files.copy', (resource?: vscode.Uri, selection?: vscode.Uri[]) =>
-      clipboard.copyExplorer(false, resource, selection).catch(showTempCommandError),
-    ),
-    vscode.commands.registerCommand('toolkit.files.cut', (resource?: vscode.Uri, selection?: vscode.Uri[]) =>
-      clipboard.copyExplorer(true, resource, selection).catch(showTempCommandError),
-    ),
-    vscode.commands.registerCommand('toolkit.files.paste', (resource?: vscode.Uri) =>
-      clipboard.pasteExplorer(resource).catch(showTempCommandError),
-    ),
     registerTempFileSystem(context),
     vscode.workspace.onDidChangeTextDocument(({ document }) => autoSaveScheduler.schedule(document)),
     vscode.workspace.onDidSaveTextDocument(autoSaveScheduler.cancel),
