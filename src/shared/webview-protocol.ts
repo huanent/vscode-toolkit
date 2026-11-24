@@ -7,9 +7,8 @@ export interface WebviewLoadedMessage<TData> {
   data: TData;
 }
 
-export interface WebviewErrorMessage {
-  type: 'error';
-  message: string;
+export interface WebviewLoadFailedMessage {
+  type: 'loadFailed';
 }
 
-export type WebviewHostMessage<TData> = WebviewLoadedMessage<TData> | WebviewErrorMessage;
+export type WebviewHostMessage<TData> = WebviewLoadedMessage<TData> | WebviewLoadFailedMessage;

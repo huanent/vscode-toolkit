@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type {
   PlaybookDefinition,
   PlaybookEditorOpenRequest,
@@ -54,12 +55,12 @@ export function createPlaybookFilesView(context: vscode.ExtensionContext): Playb
     onResolve: (webview) => {
       if (!disposed) activeWebview = webview;
     },
-    onMessage: async (message, webview) => {
+    onMessage: async (message) => {
       try {
         if (isPlaybookEditorOpenRequest(message)) await openEditor(message.id, message.parentId);
         else if (isPlaybookRunRequest(message)) await runFile(message.id);
       } catch (error) {
-        await postPlaybookFileError(webview, error);
+        showOperationError(error);
       }
     },
     onDispose: () => {
@@ -108,11 +109,4 @@ function isPlaybookEditorOpenRequest(message: unknown): message is PlaybookEdito
     (!('id' in message) || message.id === undefined || typeof message.id === 'string') &&
     (!('parentId' in message) || message.parentId === undefined || typeof message.parentId === 'string')
   );
-}
-
-async function postPlaybookFileError(webview: vscode.Webview, error: unknown): Promise<void> {
-  await webview.postMessage({
-    type: 'playbookFileError',
-    message: error instanceof Error ? error.message : String(error),
-  } satisfies PlaybookFilesWebviewMessage);
 }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type {
@@ -34,11 +35,15 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
   const openTableCommand = vscode.commands.registerCommand(
     sqliteOpenTableCommand,
     async (databaseUri: vscode.Uri, tableName: string) => {
-      await vscode.commands.executeCommand(
-        'vscode.openWith',
-        createSqliteTableUri(databaseUri, tableName),
-        sqliteTableEditorViewType,
-      );
+      try {
+        await vscode.commands.executeCommand(
+          'vscode.openWith',
+          createSqliteTableUri(databaseUri, tableName),
+          sqliteTableEditorViewType,
+        );
+      } catch (error) {
+        showOperationError(error);
+      }
     },
   );
   const openSqlEditorCommand = vscode.commands.registerCommand(sqliteOpenSqlEditorCommand, async () => {
@@ -73,7 +78,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
           try {
             result.data = await readSqliteTable(uri, message.filters);
           } catch (error) {
-            result.error = error instanceof Error ? error.message : String(error);
+            showOperationError(error);
           }
           await panel.webview.postMessage(result);
         } else if (
@@ -101,8 +106,7 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
             const data = await readSqliteDatabase(uri);
             await panel.webview.postMessage({ type: 'loaded', data });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`, { modal: true });
+            showOperationError(`Failed to delete table: ${error instanceof Error ? error.message : String(error)}`);
           }
         } else if (isCreateTableMessage(message)) {
           try {
@@ -111,8 +115,8 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
+            showOperationError(error);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
           }
         } else if (isUpdateTableSchemaMessage(message)) {
           try {
@@ -128,8 +132,8 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
+            showOperationError(error);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
           }
         }
       });

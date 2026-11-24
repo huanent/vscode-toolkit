@@ -16,9 +16,8 @@ export function TempEntryInput({ draft, onClose }: { draft: TempEntryDraft; onCl
     const onMessage = (event: MessageEvent<TempFilesWebviewMessage>) => {
       const message = event.data;
       if (message.type !== 'tempEntryCreated' || message.requestId !== draft.requestId) return;
-      if (!message.error) onClose();
+      if (message.success) onClose();
       else {
-        setError(message.error);
         setPending(false);
         inputRef.current?.focus();
       }

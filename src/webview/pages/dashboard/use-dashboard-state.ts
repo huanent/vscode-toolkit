@@ -33,11 +33,6 @@ export function useDashboardState(activeTabId: string) {
     if (message.type === 'assetsUpdated' && previous.status === 'loaded') {
       return { status: 'loaded', data: { ...previous.data, assets: message.entries } };
     }
-    if (message.type === 'tempFileError' || message.type === 'assetError' || message.type === 'playbookFileError') {
-      return previous.status === 'loaded'
-        ? { ...previous, error: message.message }
-        : { status: 'error', message: message.message };
-    }
     return undefined;
   });
 
@@ -46,7 +41,7 @@ export function useDashboardState(activeTabId: string) {
     playbookEntries: state.status === 'loaded' ? state.data.playbook : undefined,
     assets: state.status === 'loaded' ? state.data.assets : undefined,
     collapseAllTriggers,
-    error: state.status === 'loaded' ? state.error : state.status === 'error' ? state.message : undefined,
+    error: state.status === 'error' ? state.message : undefined,
     loading: state.status === 'loading',
   };
 }

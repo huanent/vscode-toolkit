@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { WebviewLoadedMessage } from '@/shared/webview-protocol';
 import type { ExplorerDirectory, ExplorerWebviewMessage } from './protocol';
 import { listDirectory, openExplorerFile, resolveDirectoryAddress } from './service';
@@ -20,8 +21,13 @@ export function registerExplorerCommands(context: vscode.ExtensionContext, clipb
     vscode.commands.registerCommand('toolkit.explorer.open', async (uri?: vscode.Uri) => {
       let requestedLocation: string | undefined;
       if (uri) {
-        const stat = await vscode.workspace.fs.stat(uri);
-        requestedLocation = (stat.type & vscode.FileType.Directory ? uri : vscode.Uri.joinPath(uri, '..')).toString();
+        try {
+          const stat = await vscode.workspace.fs.stat(uri);
+          requestedLocation = (stat.type & vscode.FileType.Directory ? uri : vscode.Uri.joinPath(uri, '..')).toString();
+        } catch (error) {
+          showOperationError(error);
+          return;
+        }
       }
       if (panel) {
         panel.reveal();
@@ -72,10 +78,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext, clipb
             } satisfies WebviewLoadedMessage<ExplorerDirectory>);
           }
         } catch (error) {
-          await target.webview.postMessage({
-            type: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          });
+          if (panel === target) showOperationError(error);
         }
       };
       refresh = () => publish(location, 'refresh');
@@ -126,10 +129,7 @@ export function registerExplorerCommands(context: vscode.ExtensionContext, clipb
             await publish(history[history.length - 1] ?? null, 'back');
           }
         } catch (error) {
-          await target.webview.postMessage({
-            type: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          });
+          if (panel === target) showOperationError(error);
         }
       });
 

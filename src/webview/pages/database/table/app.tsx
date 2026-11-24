@@ -130,7 +130,11 @@ function App() {
 
   return (
     <main className="grid min-h-dvh place-items-center bg-(--vscode-editor-background) p-4 text-(--vscode-foreground)">
-      {state.status === 'loading' ? <Loading label="Reading database..." /> : <ErrorMessage message={state.message} />}
+      {state.status === 'loading' ? (
+        <Loading label="Reading database..." />
+      ) : (
+        <ErrorMessage message="Could not load database tables." />
+      )}
     </main>
   );
 }

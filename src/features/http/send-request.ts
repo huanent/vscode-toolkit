@@ -31,6 +31,6 @@ export async function sendHttpRequest(results: HttpResultService, targetLine?: n
     const requestData = buildHttpRequestData(request, variables);
     await results.sendRequest(requestData);
   } catch (error) {
-    void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+    void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
   }
 }

@@ -12,7 +12,6 @@ import '@/webview/styles.css';
 function ContainerList({ data }: { data: ContainerEditorData }) {
   const [containers, setContainers] = useState(data.containers);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
   const [logs, setLogs] = useState<{ id: string; text: string }>();
   const onMessage = useEffectEvent((event: MessageEvent<ContainerEditorMessage>) => {
     const message = event.data;
@@ -22,8 +21,7 @@ function ContainerList({ data }: { data: ContainerEditorData }) {
     } else if (message?.type === 'logs') {
       setLogs({ id: message.id, text: message.logs });
       setBusy(false);
-    } else if (message?.type === 'containerError') {
-      setError(message.message);
+    } else if (message?.type === 'containerOperationFailed') {
       setBusy(false);
     }
   });
@@ -35,7 +33,6 @@ function ContainerList({ data }: { data: ContainerEditorData }) {
   const request = (message: ContainerEditorRequest) => {
     if (busy) return;
     setBusy(true);
-    setError(undefined);
     postToHost(message);
   };
   const columns: DataListColumn<ContainerInfo>[] = [
@@ -63,7 +60,6 @@ function ContainerList({ data }: { data: ContainerEditorData }) {
         <h1 className="min-w-0 flex-1 truncate font-semibold">{data.assetName}</h1>
         <Button shortcut="refresh" variant="secondary" disabled={busy} prefix={<Icon name="refresh" />} onClick={() => request({ type: 'list' })}>Refresh</Button>
       </header>
-      {error && <ErrorMessage message={error} />}
       <DataList ariaLabel="Containers" entries={containers} columns={columns} entryKey={(row) => row.id} emptyMessage={busy ? 'Loading containers...' : 'No containers.'} />
       {logs && (
         <section aria-label="Container logs" className="flex max-h-72 min-h-0 shrink-0 flex-col border-t border-(--vscode-panel-border)">

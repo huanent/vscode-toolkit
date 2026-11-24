@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { resolveStorageDirectory } from '@/host/utils/storage';
 import { ChatService } from '@/features/chat/service';
 import { formatChatAsMarkdown } from '@/features/chat/share';
@@ -30,7 +31,9 @@ export function registerChat(context: vscode.ExtensionContext): void {
           vscode.Uri.file(resolveStorageDirectory(context, 'chat.json')),
         );
         service = current;
+        let disposed = false;
         const listener = panel.webview.onDidReceiveMessage(async (message: ChatRequest) => {
+          let restoreDraft = message?.type === 'send';
           try {
             switch (message?.type) {
               case 'saveTemplate':
@@ -53,7 +56,7 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 break;
               case 'send':
                 if (typeof message.content === 'string' && typeof message.modelId === 'string')
-                  await current.send(message.content, message.modelId, message.index);
+                  restoreDraft = !(await current.send(message.content, message.modelId, message.index));
                 break;
               case 'selectModel':
                 if (typeof message.modelId === 'string') current.selectModel(message.modelId);
@@ -97,10 +100,11 @@ export function registerChat(context: vscode.ExtensionContext): void {
                 break;
             }
           } catch (error) {
-            void panel.webview.postMessage({
-              type: 'error',
-              message: error instanceof Error ? error.message : String(error),
-            });
+            if (!disposed) showOperationError(error);
+          } finally {
+            if (!disposed && (message?.type === 'send' || message?.type === 'regenerate')) {
+              void panel.webview.postMessage({ type: 'chatExecutionCompleted', restoreDraft } satisfies ChatUpdate);
+            }
           }
         });
         const models = vscode.lm.onDidChangeChatModels(() => void current.refreshModels());
@@ -109,6 +113,7 @@ export function registerChat(context: vscode.ExtensionContext): void {
           models,
           current,
           new vscode.Disposable(() => {
+            disposed = true;
             if (service === current) service = undefined;
           }),
         );
@@ -117,7 +122,11 @@ export function registerChat(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('toolkit.chat.open', async () => {
       const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
       if (service && input instanceof vscode.TabInputCustom && input.viewType === 'toolkit.chatEditor') {
-        await service.open();
+        try {
+          await service.open();
+        } catch (error) {
+          showOperationError(error);
+        }
         return;
       }
       await vscode.commands.executeCommand(

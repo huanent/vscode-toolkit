@@ -17,7 +17,6 @@ function App() {
   const [error, setError] = useState('');
   const host = useHostData<CustomCommand[], CustomCommandHostMessage>((message, state) => {
     if (message.type === 'updated') return { status: 'loaded', data: message.commands };
-    if (message.type === 'error') setError(message.message);
     return state;
   });
   const [open, setOpen] = useState(false);
@@ -110,11 +109,6 @@ function App() {
   ];
   return (
     <div className="flex h-screen flex-col">
-      {error && !open && (
-        <div role="alert" className="px-4 py-2 text-(--vscode-errorForeground)">
-          {error}
-        </div>
-      )}
       <DataList
         ariaLabel="Commands"
         columns={columns}

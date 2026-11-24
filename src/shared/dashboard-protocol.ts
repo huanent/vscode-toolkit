@@ -23,6 +23,8 @@ export interface DashboardSearchRequest {
   requestId: number;
 }
 
-export type DashboardSearchResult =
-  | { type: 'dashboardSearchResult'; requestId: number; matches: string[] }
-  | { type: 'dashboardSearchError'; requestId: number; message: string };
+export interface DashboardSearchResult {
+  type: 'dashboardSearchResult';
+  requestId: number;
+  matches: string[];
+}

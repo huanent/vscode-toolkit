@@ -139,6 +139,7 @@ export function registerStatusBar(context: vscode.ExtensionContext): void {
         output.appendLine(error instanceof Error ? error.message : String(error));
         void vscode.window.showErrorMessage(
           'Failed to initialize custom status bar. See Toolkit Status Bar output for details.',
+          { modal: true },
         );
       }
     }

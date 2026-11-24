@@ -1,6 +1,7 @@
 import { getShortId } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { playbookEditorViewType } from './editor';
 import { showFolderPicker } from '@/host/utils/folder-picker';
 import {
@@ -24,28 +25,28 @@ export function registerPlaybookCommands(
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.playbook.createFile', (target: unknown) =>
-      openEditor(undefined, parsePlaybookParentId(target)).catch(showPlaybookCommandError),
+      openEditor(undefined, parsePlaybookParentId(target)).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.createFolder', (target: unknown) =>
-      createPlaybookFolder(context, refresh, target).catch(showPlaybookCommandError),
+      createPlaybookFolder(context, refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.edit', (target: unknown) =>
-      openEditor(parsePlaybookId(target)).catch(showPlaybookCommandError),
+      openEditor(parsePlaybookId(target)).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.duplicate', (target: unknown) =>
-      duplicatePlaybook(context, refresh, openEditor, target).catch(showPlaybookCommandError),
+      duplicatePlaybook(context, refresh, openEditor, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.copyAiReference', (target: unknown) =>
-      copyPlaybookAiReference(context, target).catch(showPlaybookCommandError),
+      copyPlaybookAiReference(context, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.rename', (target: unknown) =>
-      renamePlaybook(context, refresh, target).catch(showPlaybookCommandError),
+      renamePlaybook(context, refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.delete', (target: unknown) =>
-      deletePlaybook(context, refresh, target).catch(showPlaybookCommandError),
+      deletePlaybook(context, refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.playbook.move', (target: unknown) =>
-      movePlaybook(context, refresh, target).catch(showPlaybookCommandError),
+      movePlaybook(context, refresh, target).catch(showOperationError),
     ),
   );
 }
@@ -216,8 +217,4 @@ function validatePlaybookName(value: string): string | undefined {
 function validateFolderName(value: string): string | undefined {
   if (!value.trim() || /[\\/\0]/.test(value)) return 'Enter a valid folder name.';
   return undefined;
-}
-
-function showPlaybookCommandError(error: unknown): void {
-  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
 }

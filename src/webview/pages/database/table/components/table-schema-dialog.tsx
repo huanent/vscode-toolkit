@@ -69,11 +69,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     const handler = (event: MessageEvent<DatabaseWebviewMessage>) => {
       if (event.data?.type === 'schemaUpdateResult') {
         setIsSubmitting(false);
-        if (event.data.success) {
-          onClose();
-        } else {
-          setError(event.data.error);
-        }
+        if (event.data.success) onClose();
       }
     };
     window.addEventListener('message', handler);

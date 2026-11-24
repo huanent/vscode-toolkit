@@ -45,7 +45,8 @@ Page entry files should compose components and manage page state rather than dup
 Reuse the shared webview infrastructure; do not re-implement it per feature:
 
 - `src/host/webview-html.ts` builds HTML, rewrites Vite's root-absolute asset URLs, and applies the CSP for both webview views and custom editors. Pages must not declare asset paths.
-- `src/host/webview-bridge.ts` owns the host-side `ready` -> `loaded` / `error` protocol.
+- `src/host/webview-bridge.ts` owns the host-side `ready` -> `loaded` / `loadFailed` protocol.
+- Report operation failures through native VS Code modal dialogs. Webview failure messages should only reset UI state; keep form validation, results, and logs inline.
 - `src/host/webview-editor.ts` registers read-only custom editors from a definition containing `viewType`, `page`, `icon`, `validate`, `load`, and `data`.
 - `src/webview/utils/host-data.ts` provides `useHostData<TData>()` for payload state and `getRootData()` for host-provided `data-*` values.
 

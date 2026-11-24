@@ -46,6 +46,5 @@ export interface CreateTempEntryRequest extends TempContextTarget {
 
 export type TempFilesWebviewMessage =
   | { type: 'beginTempEntry'; entryType: TempEntryType; target: TempContextTarget }
-  | { type: 'tempEntryCreated'; requestId: string; error?: string }
-  | { type: 'tempFilesUpdated'; entries: TempScopeGroup[] }
-  | { type: 'tempFileError'; message: string };
+  | { type: 'tempEntryCreated'; requestId: string; success: boolean }
+  | { type: 'tempFilesUpdated'; entries: TempScopeGroup[] };

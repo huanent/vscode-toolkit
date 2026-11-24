@@ -42,7 +42,6 @@ function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searches, setSearches] = useState<Record<string, string>>({});
   const [searchMatches, setSearchMatches] = useState<string[]>([]);
-  const [searchError, setSearchError] = useState('');
   const requestId = useRef(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const dashboardState = useDashboardState(activeTabId);
@@ -61,7 +60,6 @@ function App() {
   useEffect(() => {
     const currentRequest = ++requestId.current;
     setSearchMatches([]);
-    setSearchError('');
     const query = searches[activeTabId] ?? '';
     if (!searchOpen || !query.trim()) return;
     const timer = setTimeout(() => {
@@ -83,9 +81,8 @@ function App() {
   ]);
   useEffect(() => {
     const onResult = (event: MessageEvent<DashboardSearchResult>) => {
-      if (event.data?.requestId !== requestId.current) return;
-      if (event.data.type === 'dashboardSearchResult') setSearchMatches(event.data.matches);
-      else if (event.data.type === 'dashboardSearchError') setSearchError(event.data.message);
+      if (event.data?.type !== 'dashboardSearchResult' || event.data.requestId !== requestId.current) return;
+      setSearchMatches(event.data.matches);
     };
     window.addEventListener('message', onResult);
     return () => window.removeEventListener('message', onResult);
@@ -123,11 +120,6 @@ function App() {
                 }
               }}
             />
-            {searchError && (
-              <div role="alert" className="text-(--vscode-errorForeground)">
-                {searchError}
-              </div>
-            )}
           </div>
         )}
         <div className="min-h-0 flex-1 overflow-auto py-2">

@@ -28,6 +28,7 @@ import type { ResultTaskService } from '@/features/result/task-service';
 import { WebviewViewProvider, type WebviewViewHandler, composeWebviewHandlers } from '@/host/webview-view-provider';
 import { CredentialService } from '@/features/credential/service';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type {
   CollapseDashboardTreeMessage,
   DashboardSearchRequest,
@@ -109,7 +110,7 @@ export function registerWebviews(
       try {
         await Promise.all([assetsView.refresh(), playbookFiles.refresh(), tempFiles.refresh()]);
       } catch (error) {
-        await vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
+        showOperationError(error);
       }
     }),
     vscode.commands.registerCommand('toolkit.dashboard.collapseAll', () => {
@@ -142,11 +143,7 @@ export function registerWebviews(
             matches,
           } satisfies DashboardSearchResult);
         } catch (error) {
-          await webview.postMessage({
-            type: 'dashboardSearchError',
-            requestId: message.requestId,
-            message: error instanceof Error ? error.message : String(error),
-          } satisfies DashboardSearchResult);
+          showOperationError(error);
         }
         return;
       }

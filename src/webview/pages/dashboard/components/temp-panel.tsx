@@ -74,7 +74,7 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
         postToHost({ ...target, type: 'tempFileCommand', command } satisfies TempFileCommandRequest);
       }}
     >
-      {error && !entries ? (
+      {error ? (
         <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading temporary files..." />
@@ -120,8 +120,6 @@ export function TempPanel({ entries, error, loading, collapseAllTrigger, search,
       ) : (
         <Empty title="No temporary files" description="The temp directory is empty." icon="history" />
       )}
-
-      {error && entries ? <ErrorMessage message={error} /> : null}
     </section>
   );
 }

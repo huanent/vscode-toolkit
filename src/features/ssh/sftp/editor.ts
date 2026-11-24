@@ -4,6 +4,7 @@ import type { AssetService } from '@/features/assets/service';
 import type { SshService } from '@/features/ssh/ssh-service';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { formatTabTitle } from '@/shared/tab-title';
 import { SftpFileService } from './file-service';
 import { registerSftpFileSystem } from './file-system';
@@ -17,12 +18,22 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.ssh.openFromSftp', async () => {
       const entry = [...panels.entries()].find(([, panel]) => panel.active);
-      if (entry) await ssh.execute(await assets.get(entry[0]), { type: 'assetAction', action: 'connect' });
+      if (!entry) return;
+      try {
+        await ssh.execute(await assets.get(entry[0]), { type: 'assetAction', action: 'connect' });
+      } catch (error) {
+        showOperationError(error);
+      }
     }),
     vscode.commands.registerCommand('toolkit.sftp.copyPath', async (value: unknown) => {
       if (!value || typeof value !== 'object') return;
       const target = value as Record<string, unknown>;
-      if (typeof target.sftpEntryPath === 'string') await vscode.env.clipboard.writeText(target.sftpEntryPath);
+      if (typeof target.sftpEntryPath !== 'string') return;
+      try {
+        await vscode.env.clipboard.writeText(target.sftpEntryPath);
+      } catch (error) {
+        showOperationError(error);
+      }
     }),
   );
   for (const action of ['createFile', 'createFolder'] as const) {
@@ -107,11 +118,18 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           remote: current.sftpFavorites ?? [],
         };
       };
+      const postData = async () => {
+        if (!disposed && data) await panel.webview.postMessage({ type: 'loaded', data: { ...data, busy } });
+      };
       const publish = async () => {
-        if (!disposed && data) {
-          data.favorites = await readFavorites();
-          if (!disposed) await panel.webview.postMessage({ type: 'loaded', data: { ...data, busy } });
-        }
+        if (disposed || !data) return;
+        data.favorites = await readFavorites();
+        await postData();
+      };
+      const publishInBackground = () => {
+        void publish().catch((error: unknown) => {
+          if (!disposed) console.error('Could not update SFTP view:', error);
+        });
       };
       const updateResources = async () => {
         if (!data || !panel.visible || disposed) return;
@@ -124,13 +142,13 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
               (resources) => {
                 if (!disposed) {
                   current.resources = { ...current.resources, local: resources };
-                  void publish();
+                  publishInBackground();
                 }
               },
               () => {
                 if (!disposed) {
                   current.resources = { ...current.resources, local: undefined };
-                  void publish();
+                  publishInBackground();
                 }
               },
             )
@@ -141,42 +159,48 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
         const resources = await monitor.read();
         if (!disposed) {
           current.resources = { ...current.resources, remote: resources };
-          await publish();
+          publishInBackground();
         }
       };
       const resourceTimer = setInterval(() => void updateResources(), 5000);
       const refresh = async (sides: SftpSide[]) => {
         if (!data) return;
-        await Promise.all(
+        const results = await Promise.allSettled(
           sides.map(async (side) => {
             if (!data) return;
             const directory = await files.list(side, data[side]?.path);
             if (data) data[side] = { ...directory, canGoBack: history[side].length > 0 };
           }),
         );
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure) throw failure.reason;
       };
       const bridge = serveWebviewData<SftpEditorData>(panel.webview, async () => {
         if (data) return { ...data, busy };
         const remote = files.list('remote').then(
           (directory) => ({ directory }),
-          (error: unknown) => ({ error: error instanceof Error ? error.message : String(error) }),
+          (error: unknown) => ({ error }),
         );
         const local = await files.list(
           'local',
           vscode.workspace.workspaceFolders?.find((folder) => folder.uri.scheme === 'file')?.uri.fsPath,
         );
+        const favorites = await readFavorites();
         busy.remote = true;
-        data = { name: asset.name, local, busy, favorites: await readFavorites() };
+        const initialData: SftpEditorData = { name: asset.name, local, busy, favorites };
+        data = initialData;
         void updateResources();
-        void remote
-          .then((result) => {
-            if (data && 'directory' in result) data.remote = result.directory;
-            else if (data && 'error' in result) data.error = result.error;
-          })
-          .finally(() => {
-            busy.remote = false;
-            void publish();
+        void remote.then((result) => {
+          busy.remote = false;
+          if (disposed) return;
+          if ('directory' in result) initialData.remote = result.directory;
+          else showOperationError(result.error);
+          void postData().catch((error: unknown) => {
+            if (disposed) return;
+            if ('directory' in result) showOperationError(error);
+            else console.error('Could not update SFTP view:', error);
           });
+        });
         return data;
       });
       const handleRequest = async (request: SftpRequest) => {
@@ -195,9 +219,9 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
         if (sides.some((side) => busy[side])) return;
         const busySides = request.type === 'transfer' ? [] : sides;
         for (const side of busySides) busy[side] = true;
-        data.error = undefined;
-        await publish();
+        let reportedFailure = false;
         try {
+          await publish();
           if (request.type === 'toggleFavorite') {
             if (typeof request.address !== 'string' || !request.address.trim()) return;
             const current = (await assets.get(asset.id)) as typeof asset & SshConnectionConfiguration;
@@ -328,17 +352,27 @@ export function registerSftpEditor(context: vscode.ExtensionContext, ssh: SshSer
           }
           await refresh(sides);
         } catch (error) {
-          data.error = error instanceof Error ? error.message : String(error);
+          if (!disposed) {
+            reportedFailure = true;
+            showOperationError(error);
+          }
         } finally {
           for (const side of busySides) busy[side] = false;
-          await publish();
+          try {
+            await publish();
+          } catch (error) {
+            if (!disposed && !reportedFailure) showOperationError(error);
+            await postData().catch((postError: unknown) => {
+              if (!disposed) console.error('Could not update SFTP view:', postError);
+            });
+          }
         }
       };
       handlers.set(asset.id, handleRequest);
       const listener = panel.webview.onDidReceiveMessage(handleRequest);
       const visibility = panel.onDidChangeViewState(() => {
         if (panel.visible) {
-          void publish();
+          publishInBackground();
           void updateResources();
         }
       });

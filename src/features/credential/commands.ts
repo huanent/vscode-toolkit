@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CredentialService } from './service';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { Credential, CredentialHostMessage, CredentialWebviewMessage } from './protocol';
 
 export function registerCredentialCommands(context: vscode.ExtensionContext): void {
@@ -49,10 +50,7 @@ export function registerCredentialCommands(context: vscode.ExtensionContext): vo
             } satisfies CredentialHostMessage);
           }
         } catch (error) {
-          await panel?.webview.postMessage({
-            type: 'credentialError',
-            message: error instanceof Error ? error.message : String(error),
-          } satisfies CredentialHostMessage);
+          showOperationError(error);
         }
       });
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { WebviewViewHandler } from '@/host/webview-view-provider';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { findStorageRoot, isStorageScope } from '@/shared/storage-scope';
 import type { OpenTempFileRequest, TempFilesWebviewMessage, TempEntryType, TempContextTarget } from './protocol';
 import { createTempEntry } from './commands';
@@ -70,13 +71,18 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
         'name' in message && typeof message.name === 'string' &&
         'entryType' in message && (message.entryType === 'file' || message.entryType === 'directory')
       ) {
-        let error: string | undefined;
+        let success = false;
         try {
           await createTempEntry(context, refresh, message.entryType, message, message.name);
-        } catch (cause) {
-          error = cause instanceof Error ? cause.message : String(cause);
+          success = true;
+        } catch (error) {
+          showOperationError(error);
         }
-        await webview.postMessage({ type: 'tempEntryCreated', requestId: message.requestId, error } satisfies TempFilesWebviewMessage);
+        await webview.postMessage({
+          type: 'tempEntryCreated',
+          requestId: message.requestId,
+          success,
+        } satisfies TempFilesWebviewMessage);
         return;
       }
       if (
@@ -96,7 +102,7 @@ export function createTempFilesView(context: vscode.ExtensionContext): TempFiles
           preserveFocus: true,
         } satisfies vscode.TextDocumentShowOptions);
       } catch (error) {
-        await postTempFileError(webview, error);
+        showOperationError(error);
       }
     },
     onDispose: () => {
@@ -134,11 +140,4 @@ function isOpenTempFileRequest(message: unknown): message is OpenTempFileRequest
     typeof message.path === 'string' &&
     (!('scope' in message) || message.scope === undefined || isStorageScope(message.scope))
   );
-}
-
-async function postTempFileError(webview: vscode.Webview, error: unknown): Promise<void> {
-  await webview.postMessage({
-    type: 'tempFileError',
-    message: error instanceof Error ? error.message : String(error),
-  } satisfies TempFilesWebviewMessage);
 }

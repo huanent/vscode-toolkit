@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { DatabaseQueryResult } from '@/features/database/protocol';
 import type { ResultTaskService } from '@/features/result/task-service';
 
@@ -26,13 +27,14 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
 ): (asset: TAsset, database?: string, table?: string) => Promise<void> {
   tasks.registerRerunner(definition.type, async (task) => {
     const input = task.input as { assetId?: string; database?: string; sql?: string } | undefined;
-    if (!input?.assetId || !input.sql) throw new Error('Database connection information is unavailable for this task.');
+    const sql = input?.sql;
+    if (!input?.assetId || !sql) throw new Error('Database connection information is unavailable for this task.');
     const asset = await definition.requireAsset(input.assetId);
     await tasks.startTask({
       kind: definition.type,
       title: task.title,
       input: task.input,
-      run: (signal) => definition.query(asset, input.database, input.sql!, signal),
+      run: (signal) => definition.query(asset, input.database, sql, signal),
     });
   });
   const targets = new WeakMap<vscode.TextDocument, { assetId: string; database?: string }>();
@@ -65,9 +67,8 @@ export function registerQueryEditor<TAsset extends QueryEditorAsset>(
           run: (signal) => definition.query(asset, target.database, sql, signal),
         });
       } catch (error) {
-        void vscode.window.showErrorMessage(
+        showOperationError(
           `Could not start ${definition.label} query: ${error instanceof Error ? error.message : String(error)}`,
-          { modal: true },
         );
       }
     }),

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { getWebviewHtml } from '@/host/webview-html';
 import { isWorkspaceStorageAvailable, resolveStorageDirectory } from '@/host/utils/storage';
 import type { AssetProvider } from './asset-provider';
@@ -97,11 +98,10 @@ export function openAssetEditor(
         } satisfies AssetEditorMessage);
       }
     } catch (error) {
-      if (!disposed)
-        await panel.webview.postMessage({
-          type: message.type === 'createCredential' ? 'credentialError' : 'saveError',
-          message: error instanceof Error ? error.message : String(error),
-        } satisfies AssetEditorMessage);
+      if (!disposed) {
+        showOperationError(error);
+        if (message.type === 'save') await panel.webview.postMessage({ type: 'saveFailed' } satisfies AssetEditorMessage);
+      }
     } finally {
       if (message.type === 'save') saving = false;
     }

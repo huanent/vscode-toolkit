@@ -171,7 +171,6 @@ export function createAssetsView(
       await refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await activeWebview?.postMessage({ type: 'assetError', message } satisfies AssetsMessage);
       await vscode.window.showErrorMessage(message, { modal: true });
     }
   };

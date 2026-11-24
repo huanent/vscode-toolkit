@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
+import { showOperationError } from '@/host/utils/show-operation-error';
 
 export interface WebviewViewHandler {
   load?: () => Promise<unknown>;
@@ -52,11 +53,7 @@ export class WebviewViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage((message: unknown) => {
           void Promise.resolve()
             .then(() => onMessage(message, webviewView.webview))
-            .catch((error: unknown) => {
-              void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), {
-                modal: true,
-              });
-            });
+            .catch(showOperationError);
         }),
       );
     }

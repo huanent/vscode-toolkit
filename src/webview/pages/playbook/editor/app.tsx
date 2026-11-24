@@ -35,19 +35,14 @@ function App() {
     if (message.type === 'playbookSaved' && previous.status === 'loaded') {
       return { status: 'loaded', data: { ...previous.data, name: message.name } };
     }
-    if (message.type === 'playbookEditorError') {
-      return previous.status === 'loaded'
-        ? { ...previous, error: message.message }
-        : { status: 'error', message: message.message };
-    }
     return undefined;
   });
   if (state.status === 'error') return <ErrorMessage message={state.message} />;
   if (state.status !== 'loaded') return <Loading label="Loading playbook..." />;
-  return <PlaybookEditor data={state.data} error={state.error} />;
+  return <PlaybookEditor data={state.data} />;
 }
 
-function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: string }) {
+function PlaybookEditor({ data }: { data: PlaybookEditorData }) {
   const sshHosts = data.assets.filter((asset) => asset.type === 'ssh');
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? '');
@@ -135,7 +130,6 @@ function PlaybookEditor({ data, error }: { data: PlaybookEditorData; error?: str
           workspaceStorageAvailable={data.workspaceStorageAvailable}
           saveDisabled={!name.trim() || !steps.length || !validEnvironment || !validConditions}
         />
-        {error && <ErrorMessage message={error} />}
         <Tabs
           tabs={[
             { id: 'general', label: 'General' },

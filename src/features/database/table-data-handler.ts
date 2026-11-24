@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import {
   isDatabaseRowMutationRequest,
   isDatabaseTableFilterRequest,
@@ -49,11 +50,8 @@ export function registerTableDataHandler(
             }
           } catch (error) {
             if (!disposed && !pendingFilter) {
-              await panel.webview.postMessage({
-                type: 'tableFilterResult',
-                requestId: request.requestId,
-                error: error instanceof Error ? error.message : String(error),
-              });
+              showOperationError(error);
+              await panel.webview.postMessage({ type: 'tableFilterResult', requestId: request.requestId });
             }
           }
         }
@@ -63,7 +61,8 @@ export function registerTableDataHandler(
     } else if (isDatabaseRowMutationRequest(message)) {
       const result: DatabaseRowMutationResult = { type: 'rowMutationResult', requestId: message.requestId };
       if (mutating) {
-        result.error = 'Another row operation is in progress.';
+        showOperationError('Another row operation is in progress.');
+        result.failed = true;
         await panel.webview.postMessage(result);
         return;
       }
@@ -82,7 +81,8 @@ export function registerTableDataHandler(
           await mutate(message);
         }
       } catch (error) {
-        result.error = error instanceof Error ? error.message : String(error);
+        showOperationError(error);
+        result.failed = true;
       } finally {
         mutating = false;
       }

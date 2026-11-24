@@ -1,6 +1,7 @@
 import { posix } from 'node:path';
 import * as vscode from 'vscode';
 import type { FileClipboard } from '@/host/utils/file-clipboard';
+import { showOperationError } from '@/host/utils/show-operation-error';
 
 type ExplorerContextTarget = {
   explorerDirectoryUri?: string;
@@ -29,7 +30,7 @@ export function registerExplorerContextCommands(
       try {
         await action(target);
       } catch (error) {
-        void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
+        showOperationError(error);
       }
     });
 

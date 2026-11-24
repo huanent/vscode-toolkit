@@ -17,7 +17,6 @@ export function useTableData() {
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
   const [mutationPending, setMutationPending] = useState(false);
-  const [mutationError, setMutationError] = useState<string>();
   const queryKey = JSON.stringify({ search, columns: columnFilters, page, revision });
   const request = useRef({ id: 0, key: initialQuery, page: 0 });
   const mutationRequest = useRef(0);
@@ -31,16 +30,14 @@ export function useTableData() {
       request.current.key !== currentQuery.current
     )
       return previous;
-    if (message.error)
+    if (!message.data)
       return previous.status === 'loaded'
-        ? { ...previous, error: message.error, data: { ...previous.data, settledQuery: request.current.key } }
+        ? { ...previous, data: { ...previous.data, settledQuery: request.current.key } }
         : previous;
-    return message.data
-      ? {
-          status: 'loaded',
-          data: { ...message.data, settledQuery: request.current.key, displayedPage: request.current.page },
-        }
-      : previous;
+    return {
+      status: 'loaded',
+      data: { ...message.data, settledQuery: request.current.key, displayedPage: request.current.page },
+    };
   });
   const [editor, setEditor] = useState<{ original?: Record<string, string | number | null> }>();
   const name = state.status === 'loaded' ? state.data.name : (getRootData('name') ?? 'Database Table');
@@ -71,8 +68,7 @@ export function useTableData() {
       return;
     mutationLock.current = false;
     setMutationPending(false);
-    setMutationError(message.error);
-    if (!message.error && !message.cancelled) {
+    if (!message.failed && !message.cancelled) {
       setEditor(undefined);
       setPage(0);
       setRevision((value) => value + 1);
@@ -87,7 +83,6 @@ export function useTableData() {
     if (mutationLock.current || pending) return;
     mutationLock.current = true;
     setMutationPending(true);
-    setMutationError(undefined);
     postToHost({ type: 'mutateRow', requestId: ++mutationRequest.current, ...mutation });
   }
 
@@ -99,7 +94,6 @@ export function useTableData() {
     pending,
     hasActiveFilters,
     mutationPending,
-    mutationError,
     editor,
     mutate,
     setSearch(value: string) {
@@ -125,7 +119,6 @@ export function useTableData() {
     },
     setPage,
     openEditor(original?: Record<string, string | number | null>) {
-      setMutationError(undefined);
       setEditor({ original });
     },
     closeEditor() {

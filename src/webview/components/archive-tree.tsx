@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ArchiveChildrenResult, ArchiveTreeEntry } from '@/features/archive/protocol';
 import { Empty } from '@/webview/components/ui/empty';
-import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Loading } from '@/webview/components/ui/loading';
 import { Tree, type TreeItem } from '@/webview/components/ui/tree';
 import { formatSize } from '@/webview/utils/format';
@@ -17,7 +16,6 @@ export function ArchiveTree({
   collapseAllTrigger?: number;
 }) {
   const [children, setChildren] = useState<Record<string, ArchiveTreeEntry[]>>({});
-  const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const pending = useRef(new Set<string>());
 
@@ -26,8 +24,8 @@ export function ArchiveTree({
       const message = event.data;
       if (message?.type !== 'archiveChildren' || !pending.current.delete(message.path)) return;
       setLoading(pending.current.size > 0);
-      if (message.error) setError(message.error);
-      else if (message.entries) setChildren((current) => ({ ...current, [message.path]: message.entries! }));
+      const { path, entries } = message;
+      if (entries) setChildren((current) => ({ ...current, [path]: entries }));
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -35,7 +33,6 @@ export function ArchiveTree({
 
   return entries.length ? (
     <>
-      {error && <ErrorMessage message={error} />}
       <Tree
         ariaLabel={`${name} contents`}
         collapseAllTrigger={collapseAllTrigger}
@@ -43,7 +40,6 @@ export function ArchiveTree({
         onExpand={(item) => {
           if (Object.hasOwn(children, item.path) || pending.current.has(item.path)) return;
           pending.current.add(item.path);
-          setError(undefined);
           setLoading(true);
           postToHost({ type: 'loadArchiveChildren', path: item.path });
         }}

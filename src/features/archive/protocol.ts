@@ -9,5 +9,4 @@ export interface ArchiveChildrenResult {
   type: 'archiveChildren';
   path: string;
   entries?: ArchiveTreeEntry[];
-  error?: string;
 }

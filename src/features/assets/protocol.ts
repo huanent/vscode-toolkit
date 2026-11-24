@@ -50,10 +50,9 @@ export interface AssetEditorData {
 }
 
 export type AssetEditorMessage =
-  | { type: 'saveError'; message: string }
+  | { type: 'saveFailed' }
   | { type: 'privateKeySelected'; path: string }
-  | { type: 'credentialsUpdated'; credentials: CredentialSummary[]; createdId: string }
-  | { type: 'credentialError'; message: string };
+  | { type: 'credentialsUpdated'; credentials: CredentialSummary[]; createdId: string };
 
 export type AssetEditorRequest =
   | { type: 'save'; values: AssetFormValues }
@@ -79,9 +78,7 @@ export interface AssetDirectoryEntry {
 
 export type AssetTreeEntry = AssetViewEntry | AssetDirectoryEntry;
 
-export type AssetsMessage =
-  | { type: 'assetsUpdated'; entries: AssetTreeEntry[] }
-  | { type: 'assetError'; message: string };
+export type AssetsMessage = { type: 'assetsUpdated'; entries: AssetTreeEntry[] };
 
 export interface AssetRequest {
   type: 'assetAction';

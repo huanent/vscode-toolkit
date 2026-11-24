@@ -18,6 +18,5 @@ export type CustomCommandWebviewMessage =
 
 export type CustomCommandHostMessage =
   | { type: 'updated'; commands: CustomCommand[] }
-  | { type: 'error'; message: string }
   | { type: 'availableCommands'; commands: string[] }
   | { type: 'add' };

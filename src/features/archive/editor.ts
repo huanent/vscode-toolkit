@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ArchiveChildrenResult, ArchiveTreeEntry } from './protocol';
 import { readArchiveIndex, validateArchiveUri, type ArchiveIndex } from './service';
 
@@ -37,6 +38,7 @@ export function registerArchiveEditor(context: vscode.ExtensionContext): vscode.
     onPanelResolved: (uri, panel) => {
       const key = uri.toString();
       panels.set(key, panel);
+      let disposed = false;
       const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (
           !message ||
@@ -53,12 +55,13 @@ export function registerArchiveEditor(context: vscode.ExtensionContext): vscode.
           if (!entries) throw new Error('Archive directory no longer exists.');
           result.entries = [...entries];
         } catch (error) {
-          result.error = error instanceof Error ? error.message : String(error);
+          if (!disposed) showOperationError(error);
         }
-        await panel.webview.postMessage(result);
+        if (!disposed) await panel.webview.postMessage(result);
       });
       return {
         dispose: () => {
+          disposed = true;
           listener.dispose();
           indexes.delete(key);
           if (panels.get(key) === panel) panels.delete(key);

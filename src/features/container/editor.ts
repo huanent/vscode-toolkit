@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ContainerEditorData, ContainerEditorMessage } from './protocol';
 import type { ContainerService } from './service';
 
@@ -59,10 +60,8 @@ export function registerContainerEditor(
             } satisfies ContainerEditorMessage);
           }
         } catch (error) {
-          await panel.webview.postMessage({
-            type: 'containerError',
-            message: error instanceof Error ? error.message : String(error),
-          } satisfies ContainerEditorMessage);
+          showOperationError(error);
+          await panel.webview.postMessage({ type: 'containerOperationFailed' } satisfies ContainerEditorMessage);
         }
       }),
   });

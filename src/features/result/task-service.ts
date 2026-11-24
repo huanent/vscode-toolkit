@@ -1,3 +1,4 @@
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ResultTask, ResultTaskSummary, ResultViewState } from './protocol';
 import { ResultTaskStore } from './task-store';
 
@@ -246,9 +247,13 @@ export class ResultTaskService {
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
       const completion = getCompletion?.(output) ?? { status: 'completed' as const };
       await this.updateTask({ ...currentTask, ...completion, output, updatedAt: Date.now() });
+      if (completion.status === 'failed' && !controller.signal.aborted && !this.disposed) {
+        showOperationError(completion.error || 'Task failed.');
+      }
     } catch (error) {
       const currentTask = this.tasks.get(task.id);
       if (this.disposed || !currentTask || currentTask.status !== 'running') return;
+      if (!controller.signal.aborted) showOperationError(error);
       await this.updateTask({
         ...currentTask,
         status: controller.signal.aborted ? 'cancelled' : 'failed',

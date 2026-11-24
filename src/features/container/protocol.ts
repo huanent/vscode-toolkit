@@ -25,4 +25,4 @@ export type ContainerEditorRequest = { type: 'list' } | { type: 'start' | 'stop'
 export type ContainerEditorMessage =
   | { type: 'containersUpdated'; containers: ContainerInfo[] }
   | { type: 'logs'; id: string; logs: string }
-  | { type: 'containerError'; message: string };
+  | { type: 'containerOperationFailed' };

@@ -44,7 +44,6 @@ export interface SftpEditorData {
   resources?: Partial<Record<SftpSide, SftpResources>>;
   busy: Record<SftpSide, boolean>;
   favorites: Record<SftpSide, string[]>;
-  error?: string;
 }
 
 export type SftpRequest =

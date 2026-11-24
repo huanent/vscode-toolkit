@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { submitSqliteQuery } from './result-service';
 import type { ResultTaskService } from '@/features/result/task-service';
 
@@ -35,7 +36,7 @@ export function registerSqliteQueryEditor(
     try {
       await submitSqliteQuery(tasks, databaseUri, query);
     } catch (error) {
-      void vscode.window.showErrorMessage(`Could not start SQLite query: ${getErrorMessage(error)}`, { modal: true });
+      showOperationError(`Could not start SQLite query: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
   const activeEditorListener = vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -45,21 +46,21 @@ export function registerSqliteQueryEditor(
   void updateContext(vscode.window.activeTextEditor?.document);
 
   return async (databaseUri, tableName) => {
-    const document = await vscode.workspace.openTextDocument({
-      language: 'sql',
-      content: createInitialQuery(tableName),
-    });
-    databasesByDocument.set(document, databaseUri);
-    await vscode.window.showTextDocument(document, { preview: false });
-    await updateContext(vscode.window.activeTextEditor?.document ?? document);
+    try {
+      const document = await vscode.workspace.openTextDocument({
+        language: 'sql',
+        content: createInitialQuery(tableName),
+      });
+      databasesByDocument.set(document, databaseUri);
+      await vscode.window.showTextDocument(document, { preview: false });
+      await updateContext(vscode.window.activeTextEditor?.document ?? document);
+    } catch (error) {
+      showOperationError(error);
+    }
   };
 }
 
 function createInitialQuery(tableName?: string): string {
   if (!tableName) return '';
   return `SELECT * FROM "${tableName.replaceAll('"', '""')}" LIMIT 100;\n`;
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

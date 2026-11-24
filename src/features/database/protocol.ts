@@ -67,7 +67,6 @@ export interface DatabaseTableFilterResult {
   type: 'tableFilterResult';
   requestId: number;
   data?: DatabaseTable;
-  error?: string;
 }
 
 export interface DatabaseRowMutation {
@@ -84,7 +83,7 @@ export interface DatabaseRowMutationRequest extends DatabaseRowMutation {
 export interface DatabaseRowMutationResult {
   type: 'rowMutationResult';
   requestId: number;
-  error?: string;
+  failed?: true;
   cancelled?: boolean;
 }
 
@@ -197,7 +196,5 @@ export interface DeleteDatabaseMessage {
 }
 
 export type DatabaseWebviewMessage =
-  | { type: 'schemaUpdateResult'; success: true }
-  | { type: 'schemaUpdateResult'; success: false; error: string }
-  | { type: 'databaseOperationResult'; success: true }
-  | { type: 'databaseOperationResult'; success: false; error: string };
+  | { type: 'schemaUpdateResult'; success: boolean }
+  | { type: 'databaseOperationResult'; success: boolean };

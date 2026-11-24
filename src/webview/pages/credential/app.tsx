@@ -9,15 +9,9 @@ import { CredentialDialog } from '@/webview/components/credential-dialog';
 import '@/webview/styles.css';
 
 function App() {
-  const host = useHostData<Credential[], CredentialHostMessage>((message, state) => {
-    if (message.type === 'credentialsUpdated') {
-      return { status: 'loaded', data: message.credentials };
-    }
-    if (message.type === 'credentialError') {
-      // Could show a toast or error message here
-      console.error(message.message);
-    }
-    return state;
+  const host = useHostData<Credential[], CredentialHostMessage>((message) => {
+    if (message.type === 'credentialsUpdated') return { status: 'loaded', data: message.credentials };
+    return undefined;
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);

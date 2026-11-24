@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ChatData, ChatDocument, ChatMessage, ChatPromptTemplate } from '@/features/chat/protocol';
 
 const maxTabTitleDisplayWidth = 24;
@@ -24,7 +25,7 @@ export class ChatService {
   private configOperation: Promise<void> = Promise.resolve();
   private cancellation?: vscode.CancellationTokenSource;
   private titleGenerationChatId?: string;
-  private error?: string;
+  private modelStatus?: string;
   private disposed = false;
 
   constructor(
@@ -47,7 +48,9 @@ export class ChatService {
   private rememberModel(key: string): void {
     if (!key || this.lastModelId === key) return;
     this.lastModelId = key;
-    void this.cache.update('chat.model', key);
+    void Promise.resolve(this.cache.update('chat.model', key)).catch((error: unknown) => {
+      if (!this.disposed) showOperationError(error);
+    });
   }
 
   selectModel(modelId: string): void {
@@ -133,7 +136,7 @@ export class ChatService {
       templates: this.templates,
       systemPrompt: this.systemPrompt,
       busy: !!this.cancellation,
-      error: this.error,
+      modelStatus: this.modelStatus,
     };
   }
 
@@ -145,12 +148,10 @@ export class ChatService {
     void this.loadConfig()
       .then(() => this.emit())
       .catch((error: unknown) => {
-        this.error = error instanceof Error ? error.message : String(error);
-        this.emit();
+        if (!this.disposed) showOperationError(error);
       });
     this.historyLoad = this.loadHistory().catch((error: unknown) => {
-      this.error = error instanceof Error ? error.message : String(error);
-      this.emit();
+      if (!this.disposed) showOperationError(error);
     });
     void this.refreshModels();
     return this.data;
@@ -287,15 +288,20 @@ export class ChatService {
         id: model.id,
       }));
       this.migrateModelId();
-      this.error = this.models.length
+      this.modelStatus = this.models.length
         ? undefined
         : 'No language models available. Sign in to GitHub Copilot or configure a model provider in VS Code.';
-      this.emit();
-      await this.cache.update('chat.models', this.modelOptions);
     } catch (error) {
-      this.error = error instanceof Error ? error.message : String(error);
+      this.modelStatus = error instanceof Error ? error.message : String(error);
+      this.emit();
+      return;
     }
     this.emit();
+    try {
+      await this.cache.update('chat.models', this.modelOptions);
+    } catch (error) {
+      if (!this.disposed) console.error('Could not cache Chat model availability:', error);
+    }
   }
 
   private findModel(key: string): vscode.LanguageModelChat | undefined {
@@ -325,7 +331,6 @@ export class ChatService {
       }
     }
     this.migrateModelId();
-    this.error = undefined;
     this.updateTabTitle(this.titleFor(this.chat));
     this.emit();
   }
@@ -342,15 +347,15 @@ export class ChatService {
     this.emit();
   }
 
-  async send(content: string, modelId: string, index?: number): Promise<void> {
-    if (this.cancellation || !content.trim()) return;
+  async send(content: string, modelId: string, index?: number): Promise<boolean> {
+    if (this.cancellation || !content.trim()) return false;
     await this.historyLoad;
     if (this.modelRefresh) await this.modelRefresh;
-    if (this.disposed || this.cancellation) return;
+    if (this.disposed || this.cancellation) return false;
     const model = this.findModel(modelId);
     if (!model) throw new Error('Select an available language model.');
     if (index !== undefined) {
-      if (!Number.isInteger(index) || index < 0 || this.chat.messages[index]?.role !== 'user') return;
+      if (!Number.isInteger(index) || index < 0 || this.chat.messages[index]?.role !== 'user') return false;
       this.chat.messages.splice(index);
     }
     const isFirstMessage = !this.chat.messages.some((message) => message.role === 'user');
@@ -361,9 +366,9 @@ export class ChatService {
     }
     this.chat.modelId = modelKey(model);
     this.rememberModel(this.chat.modelId);
-    this.error = undefined;
     this.emit();
     await this.run(model, isFirstMessage);
+    return true;
   }
 
   async regenerate(modelId: string): Promise<void> {
@@ -377,7 +382,6 @@ export class ChatService {
     if (this.chat.messages.at(-1)?.role === 'assistant') this.chat.messages.pop();
     this.rememberModel(this.chat.modelId);
     this.chat.modelId = modelKey(model);
-    this.error = undefined;
     this.emit();
     await this.run(model, false);
   }
@@ -386,8 +390,11 @@ export class ChatService {
     const cancellation = new vscode.CancellationTokenSource();
     this.cancellation = cancellation;
     this.emit();
+    let failure: string | undefined;
+    let saved = false;
     try {
       await this.save();
+      saved = true;
       await this.configOperation;
       await this.loadConfig();
       const messages = this.chat.messages
@@ -433,16 +440,18 @@ export class ChatService {
       }
     } catch (error) {
       if (!cancellation.token.isCancellationRequested)
-        this.error = error instanceof Error ? error.message : String(error);
+        failure = error instanceof Error ? error.message : String(error);
     } finally {
       try {
         await this.save();
       } catch (error) {
-        this.error = `Could not save chat: ${error instanceof Error ? error.message : String(error)}`;
+        const saveFailure = `Could not save chat: ${error instanceof Error ? error.message : String(error)}`;
+        failure = saved && failure ? `${failure}\n${saveFailure}` : saveFailure;
       }
       this.cancellation = undefined;
       cancellation.dispose();
       this.emit();
+      if (failure !== undefined && !this.disposed) showOperationError(failure);
     }
   }
 

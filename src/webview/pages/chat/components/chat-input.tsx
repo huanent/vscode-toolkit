@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChatData } from '@/features/chat/protocol';
+import type { ChatData, ChatExecutionResult } from '@/features/chat/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
 import { Textarea } from '@/webview/components/ui/textarea';
@@ -13,7 +13,7 @@ interface ChatInputProps {
   modelId: string;
   busy: boolean;
   canStop: boolean;
-  sendError: boolean;
+  executionResult?: ChatExecutionResult;
   onModelChange: (value: string) => void;
   onSend: (content: string, index?: number) => void;
   onCancelEdit: () => void;
@@ -28,7 +28,7 @@ export function ChatInput({
   modelId,
   busy,
   canStop,
-  sendError,
+  executionResult,
   onModelChange,
   onSend,
   onCancelEdit,
@@ -69,13 +69,11 @@ export function ChatInput({
     }
   }, [editing]);
   useEffect(() => {
-    if (!busy && sendError && submitted.current) {
-      setDraft((current) => current || submitted.current);
-      submitted.current = '';
-    } else if (canStop) {
-      submitted.current = '';
-    }
-  }, [busy, canStop, sendError]);
+    if (!executionResult) return;
+    const content = submitted.current;
+    submitted.current = '';
+    if (executionResult.restoreDraft && content) setDraft((current) => current || content);
+  }, [executionResult]);
   const canSend = !busy && !!draft.trim() && !!modelId;
 
   function send(): void {

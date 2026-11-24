@@ -26,7 +26,6 @@ export interface CredentialSummary {
 
 export type CredentialHostMessage =
   | { type: 'credentialsUpdated'; credentials: Credential[] }
-  | { type: 'credentialError'; message: string }
   | { type: 'openAddCredential' };
 
 export type CredentialWebviewMessage =

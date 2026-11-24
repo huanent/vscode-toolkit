@@ -22,29 +22,26 @@ function App() {
           </Button>
         </div>
       ) : (
-        <>
-          {(state.data.error || state.error) && <ErrorMessage message={state.data.error ?? state.error!} />}
-          <div className="flex min-h-0 flex-1 overflow-x-auto">
-            {(['local', 'remote'] as const).map((side) => (
-              <div
-                key={side}
-                className="relative flex min-h-0 min-w-72 flex-1 basis-0 border-r border-(--vscode-panel-border) last:border-r-0"
-                aria-busy={state.data.busy[side]}
-              >
-                <div className="flex min-h-0 min-w-0 flex-1" inert={state.data.busy[side]}>
-                  <FilePane
-                    side={side}
-                    directory={state.data[side]}
-                    busy={state.data.busy[side]}
-                    favorites={state.data.favorites[side]}
-                    resources={state.data.resources?.[side]}
-                  />
-                </div>
-                {state.data.busy[side] && <Loading label="Loading..." full />}
+        <div className="flex min-h-0 flex-1 overflow-x-auto">
+          {(['local', 'remote'] as const).map((side) => (
+            <div
+              key={side}
+              className="relative flex min-h-0 min-w-72 flex-1 basis-0 border-r border-(--vscode-panel-border) last:border-r-0"
+              aria-busy={state.data.busy[side]}
+            >
+              <div className="flex min-h-0 min-w-0 flex-1" inert={state.data.busy[side]}>
+                <FilePane
+                  side={side}
+                  directory={state.data[side]}
+                  busy={state.data.busy[side]}
+                  favorites={state.data.favorites[side]}
+                  resources={state.data.resources?.[side]}
+                />
               </div>
-            ))}
-          </div>
-        </>
+              {state.data.busy[side] && <Loading label="Loading..." full />}
+            </div>
+          ))}
+        </div>
       )}
     </main>
   );

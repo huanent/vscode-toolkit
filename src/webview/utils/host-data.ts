@@ -13,11 +13,11 @@ declare global {
 
 export type HostDataState<TData> =
   | { status: 'loading' }
-  | { status: 'loaded'; data: TData; error?: string }
+  | { status: 'loaded'; data: TData }
   | { status: 'error'; message: string };
 
 /**
- * Requests the host payload using the shared `ready` → `loaded` / `error` protocol.
+ * Requests the host payload using the shared `ready` → `loaded` / `loadFailed` protocol.
  * Pages stay declarative: they render `status` instead of wiring message listeners.
  */
 export function useHostData<TData, TMessage = never>(
@@ -30,10 +30,9 @@ export function useHostData<TData, TMessage = never>(
     if (!message || typeof message !== 'object' || !('type' in message)) return;
     if (message.type === 'loaded' && 'data' in message) {
       setState({ status: 'loaded', data: message.data as TData });
-    } else if (message.type === 'error' && 'message' in message && typeof message.message === 'string') {
-      const error = message.message;
+    } else if (message.type === 'loadFailed') {
       setState((previous) =>
-        previous.status === 'loaded' ? { ...previous, error } : { status: 'error', message: error },
+        previous.status === 'loaded' ? previous : { status: 'error', message: 'Content unavailable.' },
       );
     } else if (update) {
       setState((previous) => update(message as TMessage, previous) ?? previous);

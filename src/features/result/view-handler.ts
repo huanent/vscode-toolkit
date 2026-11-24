@@ -78,6 +78,7 @@ export function createResultViewHandler(resultTaskService: ResultTaskService): W
           } catch (error) {
             void vscode.window.showErrorMessage(
               `Could not rerun task: ${error instanceof Error ? error.message : String(error)}`,
+              { modal: true },
             );
           }
           break;

@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageDirectory } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { getWebviewHtml } from '@/host/webview-html';
 import type { CustomCommand, CustomCommandHostMessage, CustomCommandWebviewMessage } from '@/features/custom/protocol';
@@ -41,7 +42,7 @@ export async function registerCustomCommands(context: vscode.ExtensionContext): 
   try {
     await load();
   } catch (error) {
-    void vscode.window.showErrorMessage(`Failed to load custom commands: ${String(error)}`);
+    showOperationError(`Failed to load custom commands: ${String(error)}`);
   }
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.custom.commands.run', async (id?: string) => {
@@ -50,7 +51,7 @@ export async function registerCustomCommands(context: vscode.ExtensionContext): 
           id ?? (await vscode.window.showQuickPick(commands.map((entry) => ({ label: entry.name, id: entry.id }))))?.id;
         if (selected) await run(selected);
       } catch (error) {
-        void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error));
+        showOperationError(error);
       }
     }),
     vscode.commands.registerCommand('toolkit.custom.commands.manage', () => {
@@ -103,10 +104,7 @@ export async function registerCustomCommands(context: vscode.ExtensionContext): 
           }
           await panel?.webview.postMessage({ type: 'updated', commands } satisfies CustomCommandHostMessage);
         } catch (error) {
-          await panel?.webview.postMessage({
-            type: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          } satisfies CustomCommandHostMessage);
+          showOperationError(error);
         }
       });
       panel.onDidDispose(() => {
@@ -126,7 +124,7 @@ export async function registerCustomCommands(context: vscode.ExtensionContext): 
       if (event.affectsConfiguration('toolkit.storagePath'))
         void load()
           .then(() => panel?.webview.postMessage({ type: 'updated', commands } satisfies CustomCommandHostMessage))
-          .catch((error: unknown) => vscode.window.showErrorMessage(String(error)));
+          .catch(showOperationError);
     }),
     { dispose: () => panel?.dispose() },
   );

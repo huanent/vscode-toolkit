@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import { isWorkspaceStorageAvailable } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { formatTabTitle } from '@/shared/tab-title';
 import { isStorageScope, type StorageRoot } from '@/shared/storage-scope';
-import type { PlaybookEditorData, PlaybookEditorMessage, PlaybookEditorRequest } from './protocol';
+import type { PlaybookEditorData, PlaybookEditorRequest } from './protocol';
 import {
   isPlaybookDefinition,
   readPlaybookRecord,
@@ -104,10 +105,7 @@ export function registerPlaybookEditor(
 
           await playbookResults.runPlaybook(message.name, message.playbook);
         } catch (error) {
-          await panel.webview.postMessage({
-            type: 'playbookEditorError',
-            message: error instanceof Error ? error.message : String(error),
-          } satisfies PlaybookEditorMessage);
+          showOperationError(error);
         }
       });
       return listener;

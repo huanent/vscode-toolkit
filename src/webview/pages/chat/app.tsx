@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ChatData, ChatRequest, ChatUpdate } from '@/features/chat/protocol';
+import type { ChatData, ChatExecutionResult, ChatRequest, ChatUpdate } from '@/features/chat/protocol';
 import { mountWebview } from '@/webview/bootstrap';
 import { CopyButton } from '@/webview/components/copy-button';
 import { Button } from '@/webview/components/ui/button';
@@ -44,17 +44,13 @@ function App() {
       : undefined,
   );
   if (state.status === 'error') return <ErrorMessage message={state.message} />;
-  return (
-    <Chat
-      data={state.status === 'loaded' ? state.data : initialData}
-      error={state.status === 'loaded' ? state.error : undefined}
-    />
-  );
+  return <Chat data={state.status === 'loaded' ? state.data : initialData} />;
 }
 
-function Chat({ data, error }: { data: ChatData; error?: string }) {
+function Chat({ data }: { data: ChatData }) {
   const [selectedModel, setSelectedModel] = useState('');
   const [pending, setPending] = useState(false);
+  const [executionResult, setExecutionResult] = useState<ChatExecutionResult>();
   const [awayFromBottom, setAwayFromBottom] = useState(false);
   const [activeAnchor, setActiveAnchor] = useState<number>();
   const [editing, setEditing] = useState<{ chatId: string; index: number; content: string }>();
@@ -70,8 +66,14 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
   const title = data.chat.title || data.history.find((entry) => entry.id === data.chat.id)?.title || 'New chat';
 
   useEffect(() => {
-    if (data.busy || error) setPending(false);
-  }, [data.busy, error]);
+    const onMessage = (event: MessageEvent<ChatExecutionResult>) => {
+      if (event.data?.type !== 'chatExecutionCompleted') return;
+      setPending(false);
+      setExecutionResult(event.data);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   useEffect(() => {
     setEditing(undefined);
@@ -252,9 +254,9 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
         )}
       </div>
       <div className="mx-auto w-full max-w-3xl px-3 shrink-0 pb-2 pt-1">
-        {(error || data.error) && (
-          <div className="mb-2" role="alert">
-            <ErrorMessage message={error || data.error || ''} />
+        {data.modelStatus && (
+          <div className="mb-2 text-xs text-(--vscode-descriptionForeground)" role="status">
+            {data.modelStatus}
           </div>
         )}
         <ChatInput
@@ -266,7 +268,7 @@ function Chat({ data, error }: { data: ChatData; error?: string }) {
           modelId={modelId}
           busy={busy}
           canStop={data.busy}
-          sendError={!!error || !!data.error}
+          executionResult={executionResult}
           onModelChange={(value) => {
             setSelectedModel(value);
             request({ type: 'selectModel', modelId: value });

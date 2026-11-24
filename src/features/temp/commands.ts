@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import { findStorageRoot, isStorageScope, type StorageScope } from '@/shared/storage-scope';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type { FileClipboard } from '@/host/utils/file-clipboard';
@@ -40,10 +41,10 @@ export function registerTempCommands(
   };
   context.subscriptions.push(
     vscode.commands.registerCommand('toolkit.temp.copy', (target: unknown) =>
-      copyTemp(target, false).catch(showTempCommandError),
+      copyTemp(target, false).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.cut', (target: unknown) =>
-      copyTemp(target, true).catch(showTempCommandError),
+      copyTemp(target, true).catch(showOperationError),
     ),
     registerTempFileSystem(context),
     vscode.workspace.onDidChangeTextDocument(({ document }) => autoSaveScheduler.schedule(document)),
@@ -51,33 +52,33 @@ export function registerTempCommands(
     vscode.workspace.onDidCloseTextDocument(autoSaveScheduler.cancel),
     { dispose: () => autoSaveScheduler.dispose() },
     vscode.commands.registerCommand('toolkit.temp.createFile', (target: unknown) =>
-      beginCreate('file', parseTempTarget(target)).catch(showTempCommandError),
+      beginCreate('file', parseTempTarget(target)).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.createFolder', (target: unknown) =>
-      beginCreate('directory', parseTempTarget(target)).catch(showTempCommandError),
+      beginCreate('directory', parseTempTarget(target)).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.rename', (target: unknown) =>
-      renameTempEntryFromInput(refresh, target).catch(showTempCommandError),
+      renameTempEntryFromInput(refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.delete', (target: unknown) =>
-      deleteTempEntryFromInput(refresh, target).catch(showTempCommandError),
+      deleteTempEntryFromInput(refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.move', (target: unknown) =>
-      moveTempEntryFromInput(context, refresh, target).catch(showTempCommandError),
+      moveTempEntryFromInput(context, refresh, target).catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.moveToWorkspace', (target: unknown) =>
-      moveTempEntryToScope(context, refresh, target, 'workspace').catch(showTempCommandError),
+      moveTempEntryToScope(context, refresh, target, 'workspace').catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.moveBackGlobal', (target: unknown) =>
-      moveTempEntryToScope(context, refresh, target, 'global').catch(showTempCommandError),
+      moveTempEntryToScope(context, refresh, target, 'global').catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.paste', (target: unknown) =>
       resolveTargetDirectory(context, parseTempTarget(target))
         .then((directory) => clipboard.paste(vscode.Uri.file(directory)))
-        .catch(showTempCommandError),
+        .catch(showOperationError),
     ),
     vscode.commands.registerCommand('toolkit.temp.copyPath', (target: unknown) =>
-      copyTempEntryPath(context, target).catch(showTempCommandError),
+      copyTempEntryPath(context, target).catch(showOperationError),
     ),
   );
 }
@@ -292,8 +293,4 @@ function parseTempTarget(value: unknown): TempContextTarget {
     tempEntryType:
       target.tempEntryType === 'file' || target.tempEntryType === 'directory' ? target.tempEntryType : undefined,
   };
-}
-
-function showTempCommandError(error: unknown): void {
-  void vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true });
 }

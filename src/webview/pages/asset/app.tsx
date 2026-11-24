@@ -21,17 +21,13 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   const [values, setValues] = useState(data.values);
   const [credentials, setCredentials] = useState(data.credentials);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string>();
   const [activeTabId, setActiveTabId] = useState('general');
   const update = (changes: Partial<AssetFormValues>) => {
     setValues((previous) => ({ ...previous, ...changes }));
   };
   const onMessage = useEffectEvent((event: MessageEvent<AssetEditorMessage>) => {
-    if (event.data?.type === 'saveError') {
-      setError(event.data.message);
+    if (event.data?.type === 'saveFailed') {
       setSaving(false);
-    } else if (event.data?.type === 'credentialError') {
-      setError(event.data.message);
     } else if (event.data?.type === 'credentialsUpdated') {
       setCredentials(event.data.credentials);
       update({ credentialId: event.data.createdId });
@@ -59,7 +55,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           assets={data.assets}
           onChange={update}
           onCreateCredential={(credential) => {
-            setError(undefined);
             postToHost({ type: 'createCredential', credential } satisfies AssetEditorRequest);
           }}
         />
@@ -92,7 +87,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
         }}
         onFormSubmit={() => {
           if (saving) return;
-          setError(undefined);
           setSaving(true);
           postToHost({
             type: 'save',
@@ -108,7 +102,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
             saveDisabled={saving}
             saving={saving}
           />
-          {error && <ErrorMessage message={error} />}
           <Tabs
             tabs={tabs}
             activeTabId={activeTabId}

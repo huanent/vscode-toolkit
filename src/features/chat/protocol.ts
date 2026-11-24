@@ -35,7 +35,7 @@ export interface ChatData {
   templates: ChatPromptTemplate[];
   systemPrompt: string;
   busy: boolean;
-  error?: string;
+  modelStatus?: string;
 }
 
 export type ChatRequest =
@@ -52,7 +52,9 @@ export type ChatRequest =
   | { type: 'regenerate'; modelId: string }
   | { type: 'stop' };
 
-export interface ChatUpdate {
-  type: 'chatUpdated';
-  data: ChatData;
+export type ChatUpdate = { type: 'chatUpdated'; data: ChatData } | ChatExecutionResult;
+
+export interface ChatExecutionResult {
+  type: 'chatExecutionCompleted';
+  restoreDraft: boolean;
 }

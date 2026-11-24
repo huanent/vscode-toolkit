@@ -24,8 +24,14 @@ function App() {
           <Loading label="Reading table..." />
         ) : (
           <div className="flex w-full max-w-lg flex-col items-center gap-3">
-            <ErrorMessage message={state.message} />
-            <Button shortcut="refresh" title="Retry" variant="secondary" prefix={<Icon name="refresh" />} onClick={() => postToHost({ type: 'ready' })}>
+            <ErrorMessage message="Could not load table data." />
+            <Button
+              shortcut="refresh"
+              title="Retry"
+              variant="secondary"
+              prefix={<Icon name="refresh" />}
+              onClick={() => postToHost({ type: 'ready' })}
+            >
               Retry
             </Button>
           </div>
@@ -41,7 +47,6 @@ function App() {
   const firstRow = displayedPage * databaseTablePageSize + 1;
   const lastRow = displayedPage * databaseTablePageSize + table.rows.length;
   const busy = pending || mutationPending;
-  const error = data.mutationError ?? state.error;
 
   return (
     <main className="flex h-dvh min-w-0 select-text flex-col overflow-hidden bg-(--vscode-editor-background) text-(--vscode-foreground)">
@@ -97,7 +102,6 @@ function App() {
           />
         </div>
       </div>
-      {error && !data.editor && <ErrorMessage message={error} />}
       <section className="flex min-h-0 flex-1 flex-col" aria-label="Table data" aria-busy={pending}>
         {table.columns.length ? (
           <DataTable
@@ -155,7 +159,6 @@ function App() {
           table={table}
           original={data.editor.original}
           pending={mutationPending}
-          error={data.mutationError}
           onClose={data.closeEditor}
           onSave={data.mutate}
         />

@@ -28,7 +28,7 @@ export function PlaybookPanel({
 }: PlaybookPanelProps) {
   return (
     <section className="playbook-panel flex h-full min-h-0 flex-col" data-vscode-context={panelContext}>
-      {error && !entries ? (
+      {error ? (
         <ErrorMessage message={error} />
       ) : loading ? (
         <Loading label="Reading playbook files..." />
@@ -59,8 +59,6 @@ export function PlaybookPanel({
       ) : (
         <Empty title="No playbooks" description="The playbook directory is empty." icon="run-coverage" />
       )}
-
-      {error && entries ? <ErrorMessage message={error} /> : null}
     </section>
   );
 }

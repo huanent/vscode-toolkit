@@ -251,7 +251,6 @@ function App() {
           postToHost({ type: 'setViewMode', mode } satisfies ExplorerWebviewMessage);
         }}
       />
-      {state.error && <ErrorMessage message={state.error} />}
       <section
         className="flex min-h-0 flex-1 flex-col overflow-hidden outline-none"
         aria-label="Files"

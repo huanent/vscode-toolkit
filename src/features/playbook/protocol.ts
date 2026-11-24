@@ -88,9 +88,7 @@ export type PlaybookEditorRequest =
     }
   | { type: 'runPlaybook'; name: string; playbook: PlaybookDefinition };
 
-export type PlaybookEditorMessage =
-  | { type: 'playbookSaved'; name: string }
-  | { type: 'playbookEditorError'; message: string };
+export type PlaybookEditorMessage = { type: 'playbookSaved'; name: string };
 
 export interface PlaybookEditorOpenRequest {
   type: 'openPlaybookEditor';
@@ -111,6 +109,4 @@ export interface PlaybookRecordEntry {
   parentId?: string;
 }
 
-export type PlaybookFilesWebviewMessage =
-  | { type: 'playbookFilesUpdated'; entries: PlaybookRecordEntry[] }
-  | { type: 'playbookFileError'; message: string };
+export type PlaybookFilesWebviewMessage = { type: 'playbookFilesUpdated'; entries: PlaybookRecordEntry[] };

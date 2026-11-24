@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type {
@@ -70,14 +71,27 @@ export function registerMysqlEditor(
   const activeTableNames = new Map<string, string>();
   const activeDatabases = new Map<string, string>();
 
+  async function openSqlEditor(assetId: string, uriKey: string): Promise<void> {
+    try {
+      const asset = await mysqlService.requireAsset(assetId);
+      await openSqlQueryEditor(asset, activeDatabases.get(uriKey), activeTableNames.get(uriKey));
+    } catch (error) {
+      showOperationError(error);
+    }
+  }
+
   const openTableCommand = vscode.commands.registerCommand(
     mysqlOpenTableCommand,
     async (assetId: string, databaseName: string, tableName: string) => {
-      await vscode.commands.executeCommand(
-        'vscode.openWith',
-        createMysqlTableUri(assetId, databaseName, tableName),
-        mysqlTableEditorViewType,
-      );
+      try {
+        await vscode.commands.executeCommand(
+          'vscode.openWith',
+          createMysqlTableUri(assetId, databaseName, tableName),
+          mysqlTableEditorViewType,
+        );
+      } catch (error) {
+        showOperationError(error);
+      }
     },
   );
 
@@ -95,9 +109,7 @@ export function registerMysqlEditor(
 
     const uri = input.uri as vscode.Uri;
     const { assetId } = parseMysqlUri(uri);
-    const asset = await mysqlService.requireAsset(assetId);
-    const uriKey = uri.toString();
-    await openSqlQueryEditor(asset, activeDatabases.get(uriKey), activeTableNames.get(uriKey));
+    await openSqlEditor(assetId, uri.toString());
   });
 
   context.subscriptions.push(openTableCommand, openSqlEditorCommand);
@@ -127,8 +139,7 @@ export function registerMysqlEditor(
 
       const messageListener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'openSqlEditor') {
-          const asset = await mysqlService.requireAsset(assetId);
-          await openSqlQueryEditor(asset, activeDatabases.get(uriKey), activeTableNames.get(uriKey));
+          await openSqlEditor(assetId, uriKey);
         } else if (isActiveTableChangedMessage(message)) {
           if (message.tableName) activeTableNames.set(uriKey, message.tableName);
           else activeTableNames.delete(uriKey);
@@ -139,13 +150,13 @@ export function registerMysqlEditor(
           }
         } else if (isSelectDatabaseMessage(message)) {
           try {
-            activeDatabases.set(uriKey, message.database);
-            activeTableNames.delete(uriKey);
             const data = await mysqlService.readDatabaseDocument(assetId, message.database);
+            if (data.currentDatabase) activeDatabases.set(uriKey, data.currentDatabase);
+            else activeDatabases.delete(uriKey);
+            activeTableNames.delete(uriKey);
             await panel.webview.postMessage({ type: 'loaded', data });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to switch database: ${errorMessage}`, { modal: true });
+            showOperationError(`Failed to switch database: ${error instanceof Error ? error.message : String(error)}`);
           }
         } else if (isCreateDatabaseMessage(message)) {
           try {
@@ -156,9 +167,8 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to create database: ${errorMessage}`, { modal: true });
-            await panel.webview.postMessage({ type: 'databaseOperationResult', success: false, error: errorMessage });
+            showOperationError(`Failed to create database: ${error instanceof Error ? error.message : String(error)}`);
+            await panel.webview.postMessage({ type: 'databaseOperationResult', success: false });
           }
         } else if (isDeleteDatabaseMessage(message)) {
           try {
@@ -172,9 +182,8 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'databaseOperationResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to delete database: ${errorMessage}`, { modal: true });
-            await panel.webview.postMessage({ type: 'databaseOperationResult', success: false, error: errorMessage });
+            showOperationError(`Failed to delete database: ${error instanceof Error ? error.message : String(error)}`);
+            await panel.webview.postMessage({ type: 'databaseOperationResult', success: false });
           }
         } else if (isDeleteTableMessage(message)) {
           const confirmation = await vscode.window.showWarningMessage(
@@ -191,8 +200,7 @@ export function registerMysqlEditor(
             const data = await mysqlService.readDatabaseDocument(assetId, currentDb);
             await panel.webview.postMessage({ type: 'loaded', data });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            void vscode.window.showErrorMessage(`Failed to delete table: ${errorMessage}`, { modal: true });
+            showOperationError(`Failed to delete table: ${error instanceof Error ? error.message : String(error)}`);
           }
         } else if (isCreateTableMessage(message)) {
           try {
@@ -203,8 +211,8 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
+            showOperationError(error);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
           }
         } else if (isUpdateTableSchemaMessage(message)) {
           try {
@@ -218,8 +226,8 @@ export function registerMysqlEditor(
             await panel.webview.postMessage({ type: 'loaded', data });
             await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false, error: errorMessage });
+            showOperationError(error);
+            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
           }
         }
       });
