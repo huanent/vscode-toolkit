@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { showOperationError } from '@/host/utils/show-operation-error';
 import {
+  isDatabaseCopyCellRequest,
   isDatabaseRowMutationRequest,
   isDatabaseTableFilterRequest,
+  type DatabaseCopyCellResult,
   type DatabaseRowMutation,
   type DatabaseRowMutationResult,
   type DatabaseTable,
@@ -22,7 +24,17 @@ export function registerTableDataHandler(
   let pendingFilter: DatabaseTableFilterRequest | undefined;
   let countCache: { key: string; counts: DatabaseTableCounts; expiresAt: number } | undefined;
   const listener = panel.webview.onDidReceiveMessage(async (message: unknown) => {
-    if (isDatabaseTableFilterRequest(message)) {
+    if (isDatabaseCopyCellRequest(message)) {
+      try {
+        await vscode.env.clipboard.writeText(message.text);
+        await panel.webview.postMessage({
+          type: 'cellCopied',
+          requestId: message.requestId,
+        } satisfies DatabaseCopyCellResult);
+      } catch (error) {
+        showOperationError(error);
+      }
+    } else if (isDatabaseTableFilterRequest(message)) {
       pendingFilter = message;
       if (filtering) return;
       filtering = true;

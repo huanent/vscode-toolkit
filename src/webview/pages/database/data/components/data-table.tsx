@@ -1,11 +1,18 @@
 import { cn } from 'cn';
-import type { ReactNode } from 'react';
-import { isDatabaseBooleanColumn, type DatabaseCellValue, type DatabaseTable } from '@/features/database/protocol';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  isDatabaseBooleanColumn,
+  type DatabaseCellValue,
+  type DatabaseCopyCellRequest,
+  type DatabaseCopyCellResult,
+  type DatabaseTable,
+} from '@/features/database/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { Icon } from '@/webview/components/ui/icons';
 import { Empty } from '@/webview/components/ui/empty';
 import { Input } from '@/webview/components/ui/input';
 import { Select } from '@/webview/components/ui/select';
+import { postToHost } from '@/webview/utils/host-data';
 
 type DataColumn = {
   key: string;
@@ -13,7 +20,10 @@ type DataColumn = {
   headerClassName: string;
   className: string;
   cell: (values: DatabaseCellValue[]) => ReactNode;
+  copyText?: (values: DatabaseCellValue[]) => string;
 };
+
+type CopiedCell = { row: DatabaseCellValue[]; columnKey: string };
 
 type DataTableProps = {
   table: DatabaseTable;
@@ -34,6 +44,57 @@ export function DataTable({
   onEdit,
   onDelete,
 }: DataTableProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [actionsOverlap, setActionsOverlap] = useState(false);
+  const copyRequestId = useRef(0);
+  const pendingCopy = useRef<(CopiedCell & { requestId: number }) | undefined>(undefined);
+  const [copiedCell, setCopiedCell] = useState<CopiedCell>();
+
+  useEffect(() => {
+    let timeout: number | undefined;
+    function onCopyResult(event: MessageEvent<DatabaseCopyCellResult>) {
+      const pending = pendingCopy.current;
+      if (!pending || event.data?.type !== 'cellCopied' || event.data.requestId !== pending.requestId) return;
+      pendingCopy.current = undefined;
+      setCopiedCell(pending);
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => setCopiedCell(undefined), 1000);
+    }
+    window.addEventListener('message', onCopyResult);
+    return () => {
+      window.removeEventListener('message', onCopyResult);
+      window.clearTimeout(timeout);
+    };
+  }, []);
+
+  function copyCell(row: DatabaseCellValue[], columnKey: string, text: string) {
+    const requestId = ++copyRequestId.current;
+    pendingCopy.current = { row, columnKey, requestId };
+    postToHost({ type: 'copyCell', requestId, text } satisfies DatabaseCopyCellRequest);
+  }
+
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current;
+    const tableElement = tableRef.current;
+    if (!scroller || !tableElement) return;
+
+    const updateOverlap = () => {
+      setActionsOverlap(scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft > 1);
+    };
+
+    const observer = new ResizeObserver(updateOverlap);
+    observer.observe(scroller);
+    observer.observe(tableElement);
+    scroller.addEventListener('scroll', updateOverlap, { passive: true });
+    updateOverlap();
+
+    return () => {
+      observer.disconnect();
+      scroller.removeEventListener('scroll', updateOverlap);
+    };
+  }, []);
+
   const primaryKeys = table.columns.filter((column) => column.primaryKey);
   const canIdentify =
     table.columnCount === table.columns.length &&
@@ -81,7 +142,8 @@ export function DataTable({
       </div>
     ),
     headerClassName: 'min-w-44 bg-(--vscode-editor-background) px-3!',
-    className: 'h-6 px-3! font-mono hover:bg-(--vscode-list-hoverBackground)',
+    className: 'relative h-6 cursor-default px-3! font-mono hover:bg-(--vscode-list-hoverBackground)',
+    copyText: (values) => String(values[columnIndex] ?? 'NULL'),
     cell: (values) => {
       const value = values[columnIndex] ?? null;
       if (value === null || value === '')
@@ -116,8 +178,11 @@ export function DataTable({
     key: 'actions',
     header: <span className="sr-only">Row actions</span>,
     headerClassName: 'min-w-16! w-16 border-(--vscode-panel-border) bg-(--vscode-editor-background)',
-    className:
+    className: cn(
       'sticky right-0 z-0 min-w-16 w-16 border-(--vscode-panel-border) bg-(--vscode-editor-background) text-center',
+      actionsOverlap &&
+        'before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:border-l before:border-(--vscode-panel-border)',
+    ),
     cell: (values) => {
       const original = Object.fromEntries(table.columns.map((column, index) => [column.name, values[index] ?? null]));
       const canMutate =
@@ -154,8 +219,8 @@ export function DataTable({
     },
   });
   return (
-    <div className="min-h-0 min-w-0 flex-1 overflow-auto -mb-px text-sm">
-      <table className="w-max min-w-full border-separate border-spacing-0" aria-label={`${table.name} data`}>
+    <div ref={scrollRef} className="min-h-0 min-w-0 flex-1 overflow-auto -mb-px text-sm">
+      <table ref={tableRef} className="w-max min-w-full border-separate border-spacing-0" aria-label={`${table.name} data`}>
         <thead className="sticky top-0 z-10">
           <tr>
             {columns.map((column) => (
@@ -186,17 +251,37 @@ export function DataTable({
           )}
           {table.rows.map((values, rowIndex) => (
             <tr key={rowIndex}>
-              {columns.map((column) => (
-                <td
-                  key={column.key}
-                  className={cn(
-                    'max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 py-1 text-left text-ellipsis whitespace-nowrap',
-                    column.className,
-                  )}
-                >
-                  {column.cell(values)}
-                </td>
-              ))}
+              {columns.map(({ key, className, cell, copyText }) => {
+                const copied = copiedCell?.row === values && copiedCell.columnKey === key;
+                return (
+                  <td
+                    key={key}
+                    className={cn(
+                      'max-w-80 overflow-hidden border-r border-b border-(--vscode-panel-border) px-2 py-1 text-left text-ellipsis whitespace-nowrap',
+                      className,
+                    )}
+                    onMouseDown={
+                      copyText
+                        ? (event) => {
+                            if (event.button === 0 && event.detail > 1) event.preventDefault();
+                          }
+                        : undefined
+                    }
+                    onDoubleClick={copyText ? () => copyCell(values, key, copyText(values)) : undefined}
+                  >
+                    {cell(values)}
+                    {copied && (
+                      <span
+                        role="status"
+                        className="pointer-events-none absolute inset-0 flex items-center justify-center gap-1 bg-(--vscode-editor-background) font-sans text-xs text-(--vscode-foreground)"
+                      >
+                        <Icon name="check" size="sm" />
+                        Copied
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

@@ -69,6 +69,31 @@ export interface DatabaseTableFilterResult {
   data?: DatabaseTable;
 }
 
+export interface DatabaseCopyCellRequest {
+  type: 'copyCell';
+  requestId: number;
+  text: string;
+}
+
+export interface DatabaseCopyCellResult {
+  type: 'cellCopied';
+  requestId: number;
+}
+
+export function isDatabaseCopyCellRequest(message: unknown): message is DatabaseCopyCellRequest {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    'type' in message &&
+    message.type === 'copyCell' &&
+    'requestId' in message &&
+    typeof message.requestId === 'number' &&
+    Number.isSafeInteger(message.requestId) &&
+    'text' in message &&
+    typeof message.text === 'string'
+  );
+}
+
 export interface DatabaseRowMutation {
   operation: 'create' | 'update' | 'delete';
   values: Record<string, DatabaseCellValue>;
