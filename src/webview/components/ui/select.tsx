@@ -2,13 +2,7 @@ import { Select as BaseSelect, type SelectRootProps } from '@base-ui/react/selec
 import { cn } from 'cn';
 import type { ReactNode } from 'react';
 import { Icon } from '@/webview/components/ui/icons';
-import {
-  fieldClassName,
-  glassPopupClassName,
-  glassScrimClassName,
-  popupClassName,
-  popupItemClassName,
-} from '@/webview/components/ui/surface-styles';
+import { fieldClassName, popupClassName, popupItemClassName } from '@/webview/components/ui/surface-styles';
 
 export type SelectOption = {
   value: string;
@@ -29,10 +23,7 @@ export type SelectProps = Omit<SelectRootProps<string>, 'children' | 'items' | '
   side?: 'top' | 'bottom';
 };
 
-const scrollArrowClassName = cn(
-  'z-10 flex w-full items-center justify-center text-(--vscode-descriptionForeground)',
-  glassScrimClassName,
-);
+const scrollArrowClassName = 'z-10 flex w-full items-center justify-center bg-inherit text-(--vscode-descriptionForeground)';
 
 export function Select({
   options,
@@ -91,11 +82,7 @@ export function Select({
       <BaseSelect.Portal>
         <BaseSelect.Positioner align="start" alignItemWithTrigger={false} side={side} sideOffset={4} className="z-50">
           <BaseSelect.Popup
-            className={cn(
-              popupClassName,
-              glassPopupClassName,
-              'relative w-max min-w-(--anchor-width) max-w-(--available-width) overflow-hidden',
-            )}
+            className={cn(popupClassName, 'relative w-max min-w-(--anchor-width) max-w-(--available-width) overflow-hidden')}
           >
             <BaseSelect.ScrollUpArrow className={cn('top-0', scrollArrowClassName)}>
               <Icon name="chevron-up" size="sm" />

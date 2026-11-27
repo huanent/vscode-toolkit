@@ -29,6 +29,7 @@ interface TableSchemaDialogProps {
 }
 
 const sqliteDataTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'DATETIME'];
+const columnFieldClassName = 'contents [&>div:last-child:empty]:hidden';
 const mysqlDataTypes = [
   'INT',
   'BIGINT',
@@ -166,7 +167,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       header: 'Name',
       className: 'min-w-36 flex-1',
       cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.name`} className="contents">
+        <FormItem name={`columns.${col.id}.name`} className={columnFieldClassName}>
           <Input
             ref={(input) => {
               if (!input || pendingColumnFocus.current !== col.id) return;
@@ -188,7 +189,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       header: 'Type',
       className: 'min-w-36 flex-1',
       cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.type`} className="contents">
+        <FormItem name={`columns.${col.id}.type`} className={columnFieldClassName}>
           <Autocomplete
             items={dataTypes}
             value={col.type}
@@ -206,8 +207,9 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       align: 'center',
       className: 'w-10 shrink-0',
       cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.primaryKey`} className="contents">
+        <FormItem name={`columns.${col.id}.primaryKey`} className={columnFieldClassName}>
           <Checkbox
+            className="mx-auto"
             disabled={isSubmitting}
             checked={col.primaryKey}
             onCheckedChange={(checked) => handleColumnChange(col.id, { primaryKey: Boolean(checked) })}
@@ -222,8 +224,9 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       align: 'center',
       className: 'w-16 shrink-0 whitespace-nowrap',
       cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.notNull`} className="contents">
+        <FormItem name={`columns.${col.id}.notNull`} className={columnFieldClassName}>
           <Checkbox
+            className="mx-auto"
             disabled={isSubmitting}
             checked={col.notNull}
             onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
@@ -294,7 +297,8 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
               columns={tableColumns}
               entries={columns}
               entryKey={(col) => col.id}
-              className="max-h-64 flex-none"
+              scrollBodyOnly
+              className="max-h-64 flex-none bg-transparent"
             />
           </div>
 

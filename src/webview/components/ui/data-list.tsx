@@ -25,6 +25,7 @@ type DataListProps<T> = {
   onOpen?: (entry: T) => void;
   emptyMessage?: ReactNode;
   className?: string;
+  scrollBodyOnly?: boolean;
   /** Key of the column currently used for sorting. */
   sortColumnKey?: Key;
   sortDirection?: DataListSortDirection;
@@ -82,21 +83,19 @@ export function DataList<T>({
   onOpen,
   emptyMessage = 'No items.',
   className,
+  scrollBodyOnly = false,
   sortColumnKey,
   sortDirection = 'ascending',
   onSortChange,
 }: DataListProps<T>) {
-  return (
-    <div
-      role={onSelect ? 'grid' : 'table'}
-      aria-label={ariaLabel}
-      aria-multiselectable={onSelect ? true : undefined}
-      className={cn(
-        'flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-(--vscode-editor-background) text-sm select-none',
-        className,
-      )}
-    >
-      <div className="sticky top-0 z-10 min-w-max bg-(--vscode-editor-background)" role="rowgroup">
+  const content = (
+    <>
+      <div
+        className={
+          scrollBodyOnly ? 'shrink-0 overflow-hidden scrollbar-gutter-stable' : 'sticky top-0 z-10 min-w-max bg-inherit'
+        }
+        role="rowgroup"
+      >
         <div
           role="row"
           className="flex items-center gap-3 border-b border-(--vscode-panel-border) px-4 py-1.5 font-medium text-(--vscode-descriptionForeground)"
@@ -139,7 +138,13 @@ export function DataList<T>({
           })}
         </div>
       </div>
-      <div role="rowgroup" className="min-w-max py-1">
+      <div
+        role="rowgroup"
+        className={cn(
+          'py-1',
+          scrollBodyOnly ? 'min-h-0 overflow-x-hidden overflow-y-auto scrollbar-gutter-stable' : 'min-w-max',
+        )}
+      >
         {entries.map((entry, entryIndex) => (
           <div
             key={entryKey(entry)}
@@ -203,6 +208,27 @@ export function DataList<T>({
           </div>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div
+      role={onSelect ? 'grid' : 'table'}
+      aria-label={ariaLabel}
+      aria-multiselectable={onSelect ? true : undefined}
+      className={cn(
+        'flex min-h-0 min-w-0 flex-1 bg-(--vscode-editor-background) text-sm select-none',
+        scrollBodyOnly ? 'overflow-x-auto overflow-y-hidden' : 'flex-col overflow-auto',
+        className,
+      )}
+    >
+      {scrollBodyOnly ? (
+        <div role="presentation" className="flex min-w-min flex-1 flex-col">
+          {content}
+        </div>
+      ) : (
+        content
+      )}
     </div>
   );
 }
