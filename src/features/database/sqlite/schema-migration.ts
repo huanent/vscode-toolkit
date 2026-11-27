@@ -155,6 +155,8 @@ export function planSqliteSchemaMigration(
       columns.set(column.name, column);
     }
   }
+  if (options.originalColumns && (options.originalColumns.length !== columns.size ||
+    options.originalColumns.some((column) => !columns.has(column)))) fail('table columns changed; refresh and try again');
   const used = new Set<string>();
   const names = new Set<string>();
   const definitions: string[] = [];

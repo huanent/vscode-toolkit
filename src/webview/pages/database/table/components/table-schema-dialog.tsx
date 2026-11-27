@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import type { DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
+import { useEffect, useState } from 'react';
+import type { DatabaseEngine, DatabaseTable, DatabaseWebviewMessage } from '@/features/database/protocol';
 import { Autocomplete } from '@/webview/components/ui/autocomplete';
 import { Button } from '@/webview/components/ui/button';
 import { Checkbox } from '@/webview/components/ui/checkbox';
@@ -9,7 +9,9 @@ import { ErrorMessage } from '@/webview/components/ui/error-message';
 import { Form, FormItem } from '@/webview/components/ui/form';
 import { Icon } from '@/webview/components/ui/icons';
 import { Input } from '@/webview/components/ui/input';
+import { TabPanel, Tabs } from '@/webview/components/ui/tabs';
 import { postToHost } from '@/webview/utils/host-data';
+import { TableIndexEditor } from './table-index-editor';
 
 interface EditableColumn {
   id: string;
@@ -24,12 +26,11 @@ interface TableSchemaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   table?: DatabaseTable;
-  engine?: 'sqlite' | 'mysql';
+  engine: DatabaseEngine;
   onClose: () => void;
 }
 
 const sqliteDataTypes = ['INTEGER', 'TEXT', 'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'DATETIME'];
-const columnFieldClassName = 'contents [&>div:last-child:empty]:hidden';
 const mysqlDataTypes = [
   'INT',
   'BIGINT',
@@ -44,10 +45,18 @@ const mysqlDataTypes = [
   'BLOB',
 ];
 
+const schemaDefaults = {
+  sqlite: { dataTypes: sqliteDataTypes, defaultIdType: 'INTEGER', defaultColType: 'TEXT' },
+  mysql: { dataTypes: mysqlDataTypes, defaultIdType: 'INT', defaultColType: 'VARCHAR(255)' },
+  postgresql: {
+    dataTypes: ['INTEGER', 'BIGINT', 'TEXT', 'VARCHAR(255)', 'BOOLEAN', 'NUMERIC', 'DATE', 'TIMESTAMP', 'UUID', 'JSONB', 'BYTEA'],
+    defaultIdType: 'INTEGER',
+    defaultColType: 'TEXT',
+  },
+} satisfies Record<DatabaseEngine, { dataTypes: string[]; defaultIdType: string; defaultColType: string }>;
+
 export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }: TableSchemaDialogProps) {
-  const dataTypes = engine === 'mysql' ? mysqlDataTypes : sqliteDataTypes;
-  const defaultIdType = engine === 'mysql' ? 'INT' : 'INTEGER';
-  const defaultColType = engine === 'mysql' ? 'VARCHAR(255)' : 'TEXT';
+  const { dataTypes, defaultIdType, defaultColType } = schemaDefaults[engine];
 
   const [tableName, setTableName] = useState(table?.name ?? '');
   const [columns, setColumns] = useState<EditableColumn[]>(() =>
@@ -64,7 +73,9 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const pendingColumnFocus = useRef<string | null>(null);
+  const [activeTab, setActiveTab] = useState('columns');
+  const [indexBusy, setIndexBusy] = useState(false);
+  const [columnDraft, setColumnDraft] = useState<EditableColumn>();
 
   useEffect(() => {
     const handler = (event: MessageEvent<DatabaseWebviewMessage>) => {
@@ -77,29 +88,35 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     return () => window.removeEventListener('message', handler);
   }, [onClose]);
 
-  const handleColumnChange = (id: string, updates: Partial<EditableColumn>) => {
-    setColumns((prev) => prev.map((col) => (col.id === id ? { ...col, ...updates } : col)));
-    setError(null);
+  const handleAddColumn = () => {
+    const names = new Set(columns.map((column) => column.name.trim().toLowerCase()));
+    let suffix = columns.length + 1;
+    while (names.has(`column_${suffix}`)) suffix += 1;
+    setColumnDraft({
+      id: crypto.randomUUID(),
+      name: `column_${suffix}`,
+      type: defaultColType,
+      primaryKey: false,
+      notNull: false,
+    });
   };
 
-  const handleAddColumn = () => {
-    const id = crypto.randomUUID();
-    pendingColumnFocus.current = id;
-    setColumns((prev) => {
-      const names = new Set(prev.map((column) => column.name.trim().toLowerCase()));
-      let suffix = prev.length + 1;
-      while (names.has(`column_${suffix}`)) suffix += 1;
-      return [
-        ...prev,
-        {
-          id,
-          name: `column_${suffix}`,
-          type: defaultColType,
-          primaryKey: false,
-          notNull: false,
-        },
-      ];
-    });
+  const editingColumn = columns.some((column) => column.id === columnDraft?.id);
+  const validateColumnDraft = (draft: EditableColumn) => {
+    const name = draft.name.trim();
+    if (!name) return 'Column name cannot be empty.';
+    if (!draft.type.trim()) return 'Column type cannot be empty.';
+    if (columns.some((column) => column.id !== draft.id && column.name.trim().toLowerCase() === name.toLowerCase())) {
+      return `Duplicate column name: "${name}".`;
+    }
+  };
+  const columnDraftError = columnDraft && validateColumnDraft(columnDraft);
+
+  const applyColumn = () => {
+    if (!columnDraft || columnDraftError) return;
+    const next = { ...columnDraft, name: columnDraft.name.trim(), type: columnDraft.type.trim() };
+    setColumns((prev) => editingColumn ? prev.map((column) => (column.id === next.id ? next : column)) : [...prev, next]);
+    setColumnDraft(undefined);
     setError(null);
   };
 
@@ -138,7 +155,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
   };
 
   const handleSubmit = () => {
-    if (isSubmitting) return;
+    if (isSubmitting || columnDraft || activeTab !== 'columns') return;
     const validationError = validateSchema();
     if (validationError) {
       setError(validationError);
@@ -150,6 +167,7 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       type: table ? 'updateTableSchema' : 'createTable',
       tableName: table ? table.name : tableName.trim(),
       newTableName: tableName.trim(),
+      originalColumns: table?.columns.map(({ name }) => name),
       columns: columns.map((col) => ({
         name: col.name.trim(),
         type: col.type.trim(),
@@ -166,74 +184,27 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       key: 'name',
       header: 'Name',
       className: 'min-w-36 flex-1',
-      cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.name`} className={columnFieldClassName}>
-          <Input
-            ref={(input) => {
-              if (!input || pendingColumnFocus.current !== col.id) return;
-              pendingColumnFocus.current = null;
-              input.closest('[role="row"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-              input.focus({ preventScroll: true });
-              input.select();
-            }}
-            value={col.name}
-            onChange={(e) => handleColumnChange(col.id, { name: e.target.value })}
-            placeholder="Column name"
-            aria-label={`Column ${index + 1} name`}
-          />
-        </FormItem>
-      ),
+      cell: (col) => col.name,
     },
     {
       key: 'type',
       header: 'Type',
       className: 'min-w-36 flex-1',
-      cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.type`} className={columnFieldClassName}>
-          <Autocomplete
-            items={dataTypes}
-            value={col.type}
-            onValueChange={(type) => handleColumnChange(col.id, { type })}
-            disabled={isSubmitting}
-            placeholder="Data type"
-            aria-label={`Column ${index + 1} type`}
-          />
-        </FormItem>
-      ),
+      cell: (col) => col.type,
     },
     {
       key: 'primaryKey',
       header: 'PK',
       align: 'center',
       className: 'w-10 shrink-0',
-      cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.primaryKey`} className={columnFieldClassName}>
-          <Checkbox
-            className="mx-auto"
-            disabled={isSubmitting}
-            checked={col.primaryKey}
-            onCheckedChange={(checked) => handleColumnChange(col.id, { primaryKey: Boolean(checked) })}
-            ariaLabel={`Column ${col.name || index + 1} primary key`}
-          />
-        </FormItem>
-      ),
+      cell: (col) => col.primaryKey ? 'Yes' : 'No',
     },
     {
       key: 'notNull',
       header: 'Not Null',
       align: 'center',
       className: 'w-16 shrink-0 whitespace-nowrap',
-      cell: (col, index) => (
-        <FormItem name={`columns.${col.id}.notNull`} className={columnFieldClassName}>
-          <Checkbox
-            className="mx-auto"
-            disabled={isSubmitting}
-            checked={col.notNull}
-            onCheckedChange={(checked) => handleColumnChange(col.id, { notNull: Boolean(checked) })}
-            ariaLabel={`Column ${col.name || index + 1} not null`}
-          />
-        </FormItem>
-      ),
+      cell: (col) => col.notNull ? 'Yes' : 'No',
     },
     {
       key: 'action',
@@ -242,6 +213,15 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
       className: 'w-16 shrink-0',
       cell: (col, index) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setColumnDraft(col)}
+            disabled={isSubmitting}
+            prefix={<Icon name="edit" />}
+            title="Edit column"
+            aria-label={`Edit column ${col.name || index + 1}`}
+          />
           <Button
             type="button"
             variant="ghost"
@@ -257,25 +237,50 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
     },
   ];
 
+  const columnFields = (
+    <div className="flex min-w-0 flex-col gap-3 pt-2">
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
+          <Button type="button" variant="secondary" prefix={<Icon name="add" />} onClick={handleAddColumn}>
+            Add Column
+          </Button>
+        </div>
+
+        <DataList
+          ariaLabel="Columns"
+          columns={tableColumns}
+          entries={columns}
+          entryKey={(col) => col.id}
+          scrollBodyOnly
+          className="max-h-64 flex-none bg-transparent"
+        />
+      </div>
+
+      {error && <ErrorMessage message={error} />}
+    </div>
+  );
+
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!isSubmitting) onOpenChange(nextOpen);
+        if (!isSubmitting && !indexBusy && !columnDraft) onOpenChange(nextOpen);
       }}
       title={table ? `Edit Schema: ${table.name}` : 'Create Table'}
       className="w-176 max-w-full max-h-full"
-      form="table-schema-form"
-      pending={isSubmitting}
-      saveDisabled={Boolean(validationError)}
+      form={activeTab === 'columns' ? 'table-schema-form' : undefined}
+      pending={isSubmitting || indexBusy}
+      saveDisabled={Boolean(validationError || columnDraft)}
       saveLabel={table ? 'Save' : 'Create Table'}
     >
       <Form id="table-schema-form" onFormSubmit={handleSubmit}>
-        <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col gap-3 pt-2">
+        <fieldset disabled={isSubmitting} aria-busy={isSubmitting} className="flex min-w-0 flex-col pt-2">
           <FormItem name="tableName" label="Table Name">
             <Input
               id="schema-table-name"
-              value={tableName}
+              value={activeTab === 'indexes' && table ? table.name : tableName}
+              readOnly={activeTab === 'indexes'}
               onChange={(e) => {
                 setTableName(e.target.value);
                 setError(null);
@@ -284,27 +289,51 @@ export function TableSchemaDialog({ open, onOpenChange, table, engine, onClose }
             />
           </FormItem>
 
-          <div className="flex min-w-0 flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-(--vscode-foreground)">Columns ({columns.length})</span>
-              <Button type="button" variant="secondary" prefix={<Icon name="add" />} onClick={handleAddColumn}>
-                Add Column
-              </Button>
-            </div>
-
-            <DataList
-              ariaLabel="Columns"
-              columns={tableColumns}
-              entries={columns}
-              entryKey={(col) => col.id}
-              scrollBodyOnly
-              className="max-h-64 flex-none bg-transparent"
-            />
-          </div>
-
-          {error && <ErrorMessage message={error} />}
+          {table ? (
+            <Tabs
+              tabs={[{ id: 'columns', label: 'Columns' }, { id: 'indexes', label: 'Indexes' }]}
+              activeTabId={activeTab}
+              onChange={(tab) => {
+                if (!isSubmitting && !indexBusy) setActiveTab(tab);
+              }}
+            >
+              <TabPanel tabId="columns">{columnFields}</TabPanel>
+              <TabPanel tabId="indexes"><TableIndexEditor table={table} onBusyChange={setIndexBusy} /></TabPanel>
+            </Tabs>
+          ) : columnFields}
         </fieldset>
       </Form>
+      {columnDraft && (
+        <Dialog
+          open
+          onOpenChange={(nextOpen) => { if (!nextOpen) setColumnDraft(undefined); }}
+          title={editingColumn ? 'Edit Column' : 'Add Column'}
+          className="w-96"
+          form="column-draft-form"
+          saveLabel="Apply Column"
+          saveDisabled={Boolean(columnDraftError)}
+        >
+          <Form id="column-draft-form" onFormSubmit={applyColumn} className="grid gap-2">
+            <FormItem name="name" label="Name">
+              <Input value={columnDraft.name} onChange={(event) => setColumnDraft({ ...columnDraft, name: event.target.value })} />
+            </FormItem>
+            <FormItem name="type" label="Type">
+              <Autocomplete aria-label="Column type" items={dataTypes} value={columnDraft.type} onValueChange={(type) => setColumnDraft({ ...columnDraft, type })} />
+            </FormItem>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2">
+                <Checkbox checked={columnDraft.primaryKey} onCheckedChange={(primaryKey) => setColumnDraft({ ...columnDraft, primaryKey })} />
+                <span>Primary Key</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <Checkbox checked={columnDraft.notNull} onCheckedChange={(notNull) => setColumnDraft({ ...columnDraft, notNull })} />
+                <span>Not Null</span>
+              </label>
+            </div>
+            {columnDraftError && <ErrorMessage message={columnDraftError} />}
+          </Form>
+        </Dialog>
+      )}
     </Dialog>
   );
 }

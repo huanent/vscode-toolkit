@@ -15,13 +15,16 @@ import {
   type SqliteTableColumnDefinition,
   type DatabaseTableFilters,
   type DatabaseTableCounts,
-  type UpdateTableSchemaMessage,
+  type UpdateTableSchemaOptions,
+  type TableIndexChange,
 } from '@/features/database/protocol';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { DatabaseProvider } from '@/features/database/database-provider';
 import { createMysqlUri, mysqlEditorViewType } from '@/features/database/mysql/editor';
 import { buildMysqlCreateTableStatement, isSystemDatabase } from '@/features/database/mysql/schema';
+import { changeMysqlIndex, readMysqlIndexes } from '@/features/database/mysql/table-index';
+import { updateMysqlTableSchema } from '@/features/database/mysql/table-schema';
 import type { CredentialService } from '@/features/credential/service';
 import { buildRowMutation } from '@/features/database/row-mutation';
 import { buildTableFilter } from '@/features/database/table-filter';
@@ -396,13 +399,21 @@ export class MysqlService implements DatabaseProvider {
     });
   }
 
-  async updateTableSchema(assetId: string, databaseName: string, options: UpdateTableSchemaMessage): Promise<void> {
+  async updateTableSchema(assetId: string, databaseName: string, options: UpdateTableSchemaOptions): Promise<void> {
     const asset = await this.requireAsset(assetId);
     await this.withConnection(asset, databaseName, undefined, async (connection) => {
-      if (options.tableName !== options.newTableName) {
-        await connection.query(`RENAME TABLE ${escapeId(options.tableName)} TO ${escapeId(options.newTableName)}`);
-      }
+      await updateMysqlTableSchema(connection, databaseName, options);
     });
+  }
+
+  async readIndexes(assetId: string, database: string, table: string) {
+    const asset = await this.requireAsset(assetId);
+    return this.withConnection(asset, database, undefined, (connection) => readMysqlIndexes(connection, database, table));
+  }
+
+  async changeIndex(assetId: string, database: string, table: string, change: TableIndexChange): Promise<void> {
+    const asset = await this.requireAsset(assetId);
+    await this.withConnection(asset, database, undefined, (connection) => changeMysqlIndex(connection, database, table, change));
   }
 
   async query(

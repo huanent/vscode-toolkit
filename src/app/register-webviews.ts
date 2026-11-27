@@ -5,7 +5,7 @@ import { createAssetsView } from '@/features/assets/view-handler';
 import { AssetService } from '@/features/assets/service';
 import { MysqlService } from '@/features/database/mysql/service';
 import { PostgresqlService } from '@/features/database/postgresql/service';
-import { registerPostgresqlQueryEditor } from '@/features/database/postgresql/query-editor';
+import { registerPostgresqlEditor } from '@/features/database/postgresql/editor';
 import { registerMysqlEditor } from '@/features/database/mysql/editor';
 import { registerTableCommands } from '@/features/database/table-commands';
 import { registerRemoteSqlite } from '@/features/database/sqlite/service';
@@ -58,8 +58,9 @@ export function registerWebviews(
   context.subscriptions.push(registerRemoteSqlite(ssh));
   context.subscriptions.push(registerRemoteArchive(ssh));
   const mysql = new MysqlService(assets, credentials, ssh);
-  const postgresql = new PostgresqlService(assets, credentials, ssh, (asset) => openPostgresqlQuery(asset));
-  const openPostgresqlQuery = registerPostgresqlQueryEditor(context, postgresql, tasks);
+  const postgresql = new PostgresqlService(assets, credentials, ssh,
+    (asset) => postgresqlEditor.openQuery(asset), (asset, folder) => postgresqlEditor.openDatabase(asset, folder));
+  const postgresqlEditor = registerPostgresqlEditor(context, postgresql, tasks);
   const databases = [mysql, postgresql];
   registerSftpEditor(context, ssh, assets);
   const httpClients = new HttpClientService(assets, credentials);

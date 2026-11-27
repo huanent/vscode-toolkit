@@ -207,6 +207,18 @@
         "priority": "default"
       },
       {
+        "viewType": "toolkit.postgresqlEditor",
+        "displayName": "PostgreSQL Database",
+        "selector": [{ "filenamePattern": "*.postgresql" }],
+        "priority": "default"
+      },
+      {
+        "viewType": "toolkit.postgresqlTableEditor",
+        "displayName": "PostgreSQL Table",
+        "selector": [{ "filenamePattern": "*.postgresql-table" }],
+        "priority": "default"
+      },
+      {
         "viewType": "toolkit.playbookEditor",
         "displayName": "Playbook",
         "selector": [
@@ -1560,12 +1572,12 @@
       "webview/context": [
         {
           "command": "toolkit.database.copyTableName",
-          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor') && webviewSection == 'databaseTables' && tableName",
+          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor' || webviewId == 'toolkit.postgresqlEditor') && webviewSection == 'databaseTables' && tableName",
           "group": "1_copy@1"
         },
         {
           "command": "toolkit.database.copyAiReference",
-          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor') && webviewSection == 'databaseTables' && tableName",
+          "when": "(webviewId == 'toolkit.mysqlEditor' || webviewId == 'toolkit.sqliteEditor' || webviewId == 'toolkit.postgresqlEditor') && webviewSection == 'databaseTables' && tableName",
           "group": "1_copy@2"
         },
         {

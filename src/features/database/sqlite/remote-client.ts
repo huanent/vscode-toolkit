@@ -17,11 +17,13 @@ import {
   type DatabaseTable,
   type DatabaseTableCounts,
   type DatabaseTableFilters,
+  type TableIndexChange,
   type UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import { quoteIdentifier } from '@/features/database/sqlite-schema';
 import { buildRowMutation } from '@/features/database/row-mutation';
 import { buildTableFilter } from '@/features/database/table-filter';
+import { parseSqliteIndexes, planSqliteIndexChange, sqliteIndexQuery } from '@/features/database/sqlite/table-index';
 
 type Row = Record<string, DatabaseCellValue>;
 
@@ -206,6 +208,16 @@ export class RemoteSqliteClient {
   async updateSchema(uri: vscode.Uri, options: UpdateSqliteTableSchemaOptions): Promise<void> {
     const [objects] = await this.execute(uri, [sqliteSchemaSnapshotQuery()]);
     await this.execute(uri, planSqliteSchemaMigration(objects as unknown as SqliteSchemaObject[], options), true);
+  }
+
+  async readIndexes(uri: vscode.Uri, table: string) {
+    const [rows] = await this.execute(uri, [sqliteIndexQuery(table)]);
+    return parseSqliteIndexes(rows);
+  }
+
+  async changeIndex(uri: vscode.Uri, table: string, change: TableIndexChange): Promise<void> {
+    const statements = planSqliteIndexChange(table, change, await this.readIndexes(uri, table));
+    if (statements.length) await this.execute(uri, statements, true);
   }
 
   private async columns(uri: vscode.Uri, tableName: string): Promise<DatabaseColumn[]> {

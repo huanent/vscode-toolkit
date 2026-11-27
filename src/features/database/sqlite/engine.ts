@@ -13,14 +13,35 @@ import {
   type DatabaseTable,
   type DatabaseTableFilters,
   type DatabaseTableCounts,
+  type TableIndexChange,
   type UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import { quoteIdentifier } from '@/features/database/sqlite-schema';
 import { buildRowMutation } from '@/features/database/row-mutation';
 import { buildTableFilter } from '@/features/database/table-filter';
+import { parseSqliteIndexes, planSqliteIndexChange, sqliteIndexQuery } from '@/features/database/sqlite/table-index';
 
 const maxPreviewColumns = 50;
 const maxQueryResultRows = 1000;
+
+export function readSqliteIndexes(databasePath: string, table: string) {
+  const database = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    return parseSqliteIndexes(database.prepare(sqliteIndexQuery(table)).all());
+  } finally {
+    database.close();
+  }
+}
+
+export function changeSqliteIndex(databasePath: string, table: string, change: TableIndexChange): void {
+  const database = new DatabaseSync(databasePath);
+  try {
+    const indexes = parseSqliteIndexes(database.prepare(sqliteIndexQuery(table)).all());
+    for (const sql of planSqliteIndexChange(table, change, indexes)) database.exec(sql);
+  } finally {
+    database.close();
+  }
+}
 
 export function mutateSqliteRow(databasePath: string, tableName: string, mutation: DatabaseRowMutation): void {
   const database = new DatabaseSync(databasePath);

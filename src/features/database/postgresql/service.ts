@@ -22,6 +22,7 @@ export class PostgresqlService implements DatabaseProvider {
     private readonly credentials: CredentialService,
     private readonly ssh: SshService,
     private readonly openQuery: (asset: PostgresqlConnectionConfiguration) => Promise<void>,
+    private readonly openDatabase: (asset: PostgresqlConnectionConfiguration, folder?: string) => Promise<void>,
   ) {}
 
   getFormValues(record?: AssetRecord): AssetFormValues {
@@ -77,7 +78,9 @@ export class PostgresqlService implements DatabaseProvider {
   }
 
   async execute(record: AssetRecord, request: AssetRequest): Promise<void> {
-    if (request.action === 'connect' || request.action === 'query') {
+    if (request.action === 'connect') {
+      await this.openDatabase(requirePostgresqlConfiguration(record), record.folder);
+    } else if (request.action === 'query') {
       await this.openQuery(requirePostgresqlConfiguration(record));
     }
   }
@@ -105,7 +108,27 @@ export class PostgresqlService implements DatabaseProvider {
     sql: string,
     signal: AbortSignal,
   ): Promise<DatabaseQueryResult> {
-    if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
+    return this.withConnection(asset, database, async (client) => {
+      const config: QueryArrayConfig & { queryMode: string } = { text: sql, rowMode: 'array', queryMode: 'extended' };
+      const result = await client.query(config);
+      return {
+        hasResultSet: result.fields.length > 0,
+        columns: result.fields.map((field) => field.name),
+        rows: result.rows.slice(0, 1000).map((row: unknown[]) => row.map(normalizePostgresqlCell)),
+        rowCount: result.fields.length ? (result.rowCount ?? result.rows.length) : 0,
+        truncated: result.rows.length > 1000,
+        changes: result.fields.length ? 0 : (result.rowCount ?? 0),
+      };
+    }, signal);
+  }
+
+  async withConnection<T>(
+    asset: PostgresqlConnectionConfiguration,
+    database: string | undefined,
+    run: (client: Client) => Promise<T>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    if (this.disposed || signal?.aborted) throw new Error('PostgreSQL operation was cancelled.');
     const credential = (await this.credentials.list()).find((entry) => entry.id === asset.credentialId);
     if (!credential) throw new Error('Credential not found.');
     if (credential.type !== 'password') throw new Error('PostgreSQL requires a password credential.');
@@ -134,44 +157,18 @@ export class PostgresqlService implements DatabaseProvider {
       };
       client.on('error', close);
       this.connections.add(client);
-      signal.addEventListener('abort', close, { once: true });
+      signal?.addEventListener('abort', close, { once: true });
       try {
-        if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
+        if (this.disposed || signal?.aborted) throw new Error('PostgreSQL operation was cancelled.');
         await client.connect();
-        if (this.disposed || signal.aborted) throw new Error('PostgreSQL operation was cancelled.');
-        const config: QueryArrayConfig & { queryMode: string } = {
-          text: sql,
-          rowMode: 'array',
-          queryMode: 'extended',
-        };
-        const result = await client.query(config);
-        return {
-          hasResultSet: result.fields.length > 0,
-          columns: result.fields.map((field) => field.name),
-          rows: result.rows
-            .slice(0, 1000)
-            .map((row: unknown[]) =>
-              row.map((value) =>
-                value == null
-                  ? null
-                  : typeof value === 'number' || typeof value === 'string'
-                    ? value
-                    : Buffer.isBuffer(value)
-                      ? value.toString('hex')
-                      : value instanceof Date
-                        ? value.toISOString()
-                        : JSON.stringify(value),
-              ),
-            ),
-          rowCount: result.fields.length ? (result.rowCount ?? result.rows.length) : 0,
-          truncated: result.rows.length > 1000,
-          changes: result.fields.length ? 0 : (result.rowCount ?? 0),
-        };
+        if (this.disposed || signal?.aborted) throw new Error('PostgreSQL operation was cancelled.');
+        return await run(client);
       } finally {
-        signal.removeEventListener('abort', close);
+        signal?.removeEventListener('abort', close);
         this.connections.delete(client);
         await client.end().catch(() => undefined);
       }
+
     } finally {
       tunnel?.close();
     }
@@ -186,6 +183,14 @@ export class PostgresqlService implements DatabaseProvider {
     for (const client of this.connections) void client.end().catch(() => undefined);
     this.connections.clear();
   }
+}
+
+export function normalizePostgresqlCell(value: unknown): string | number | null {
+  if (value == null) return null;
+  if (typeof value === 'number' || typeof value === 'string') return value;
+  if (Buffer.isBuffer(value)) return value.toString('hex');
+  if (value instanceof Date) return value.toISOString();
+  return JSON.stringify(value);
 }
 
 function requirePostgresqlConfiguration(value: unknown): PostgresqlConnectionConfiguration {

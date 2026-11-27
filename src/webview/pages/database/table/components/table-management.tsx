@@ -1,4 +1,4 @@
-import type { DatabaseTable } from '@/features/database/protocol';
+import type { DatabaseEngine, DatabaseTable } from '@/features/database/protocol';
 import { Button } from '@/webview/components/ui/button';
 import { DataList, type DataListColumn } from '@/webview/components/ui/data-list';
 import { Icon } from '@/webview/components/ui/icons';
@@ -7,6 +7,8 @@ import { getRootData, postToHost } from '@/webview/utils/host-data';
 interface TableManagementProps {
   tables: readonly DatabaseTable[];
   database?: string;
+  schema?: string;
+  engine: DatabaseEngine;
   onEditSchema: (table: DatabaseTable) => void;
 }
 
@@ -98,7 +100,7 @@ function getTableColumns(onEditSchema: (table: DatabaseTable) => void): readonly
   ];
 }
 
-export function TableManagement({ tables, database, onEditSchema }: TableManagementProps) {
+export function TableManagement({ tables, database, schema, engine, onEditSchema }: TableManagementProps) {
   const columns = getTableColumns(onEditSchema);
 
   return (
@@ -112,6 +114,8 @@ export function TableManagement({ tables, database, onEditSchema }: TableManagem
         preventDefaultContextMenuItems: true,
         tableName: table.name,
         databaseName: database,
+        schemaName: schema,
+        engine,
         assetId: getRootData('assetId'),
         databaseUri: getRootData('databaseUri'),
       })}

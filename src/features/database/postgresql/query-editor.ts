@@ -8,7 +8,7 @@ export function registerPostgresqlQueryEditor(
   context: vscode.ExtensionContext,
   service: PostgresqlService,
   tasks: ResultTaskService,
-): (asset: PostgresqlConnectionConfiguration) => Promise<void> {
+): (asset: PostgresqlConnectionConfiguration, database?: string, relation?: string) => Promise<void> {
   return registerQueryEditor(context, tasks, {
     type: service.type,
     label: service.label,
@@ -16,7 +16,7 @@ export function registerPostgresqlQueryEditor(
     contextKey: 'toolkit.postgresqlQueryEditor',
     requireAsset: (id) => service.requireAsset(id),
     query: (asset, database, sql, signal) => service.query(asset, database, sql, signal),
-    initialQuery: () => 'SELECT current_database();\n',
+    initialQuery: (_database, relation) => relation ? `SELECT * FROM ${relation} LIMIT 100;\n` : 'SELECT current_database();\n',
     databaseName: (asset, database) => database ?? asset.database ?? 'postgres',
   });
 }

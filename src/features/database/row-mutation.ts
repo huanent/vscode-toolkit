@@ -4,7 +4,8 @@ export function buildRowMutation(
   tableName: string,
   columns: DatabaseColumn[],
   mutation: DatabaseRowMutation,
-  dialect: 'sqlite' | 'mysql',
+  dialect: 'sqlite' | 'mysql' | 'postgresql',
+  schema?: string,
 ): { sql: string; parameters: DatabaseCellValue[]; where: string; keys: DatabaseCellValue[] } {
   const quote = (name: string) =>
     dialect === 'mysql' ? `\`${name.replaceAll('`', '``')}\`` : `"${name.replaceAll('"', '""')}"`;
@@ -37,13 +38,15 @@ export function buildRowMutation(
       keys.push(value);
     }
   }
-  const where = primaryKeys.map((column) => `${quote(column.name)} = ?`).join(' AND ');
-  const table = quote(tableName);
+  const placeholder = (index: number) => dialect === 'postgresql' ? `$${index + 1}` : '?';
+  const keyOffset = mutation.operation === 'update' ? entries.length : 0;
+  const where = primaryKeys.map((column, index) => `${quote(column.name)} = ${placeholder(keyOffset + index)}`).join(' AND ');
+  const table = schema === undefined ? quote(tableName) : `${quote(schema)}.${quote(tableName)}`;
   if (mutation.operation === 'create') {
     return {
       sql: entries.length
-        ? `INSERT INTO ${table} (${entries.map(([name]) => quote(name)).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`
-        : dialect === 'sqlite'
+        ? `INSERT INTO ${table} (${entries.map(([name]) => quote(name)).join(', ')}) VALUES (${entries.map((_, index) => placeholder(index)).join(', ')})`
+        : dialect !== 'mysql'
           ? `INSERT INTO ${table} DEFAULT VALUES`
           : `INSERT INTO ${table} () VALUES ()`,
       parameters: entries.map(([, value]) => value),
@@ -55,7 +58,7 @@ export function buildRowMutation(
     return { sql: `DELETE FROM ${table} WHERE ${where}`, parameters: keys, where, keys };
   if (!entries.length) throw new Error('No changes to save.');
   return {
-    sql: `UPDATE ${table} SET ${entries.map(([name]) => `${quote(name)} = ?`).join(', ')} WHERE ${where}`,
+    sql: `UPDATE ${table} SET ${entries.map(([name], index) => `${quote(name)} = ${placeholder(index)}`).join(', ')} WHERE ${where}`,
     parameters: [...entries.map(([, value]) => value), ...keys],
     where,
     keys,

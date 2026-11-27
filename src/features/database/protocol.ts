@@ -123,10 +123,14 @@ export function isDatabaseTableFilterRequest(value: unknown): value is DatabaseT
   );
 }
 
+export type DatabaseEngine = 'sqlite' | 'mysql' | 'postgresql';
+
 export interface DatabaseDocument {
-  engine: 'sqlite' | 'mysql';
+  engine: DatabaseEngine;
   databases?: string[];
   currentDatabase?: string;
+  schemas?: string[];
+  currentSchema?: string;
   tables: DatabaseTable[];
 }
 
@@ -145,7 +149,7 @@ export interface DatabaseQueryResult {
   lastInsertRowId?: number | string;
 }
 
-export interface SqliteTableColumnDefinition {
+export interface DatabaseTableColumnDefinition {
   name: string;
   type: string;
   notNull: boolean;
@@ -153,27 +157,44 @@ export interface SqliteTableColumnDefinition {
   originalName?: string;
 }
 
-export interface CreateSqliteTableOptions {
+export type SqliteTableColumnDefinition = DatabaseTableColumnDefinition;
+
+export interface CreateTableOptions {
   tableName: string;
-  columns: SqliteTableColumnDefinition[];
+  columns: DatabaseTableColumnDefinition[];
 }
 
-export interface CreateTableMessage extends CreateSqliteTableOptions {
+export type CreateSqliteTableOptions = CreateTableOptions;
+
+export interface CreateTableMessage extends CreateTableOptions {
   type: 'createTable';
 }
 
-export interface UpdateSqliteTableSchemaOptions {
-  tableName: string;
+export interface UpdateTableSchemaOptions extends CreateTableOptions {
   newTableName: string;
-  columns: SqliteTableColumnDefinition[];
+  originalColumns?: string[];
 }
 
-export interface UpdateTableSchemaMessage {
+export type UpdateSqliteTableSchemaOptions = UpdateTableSchemaOptions;
+
+export interface UpdateTableSchemaMessage extends UpdateTableSchemaOptions {
   type: 'updateTableSchema';
-  tableName: string;
-  newTableName: string;
-  columns: SqliteTableColumnDefinition[];
 }
+
+export interface TableIndexDefinition {
+  name: string;
+  columns: string[];
+  unique: boolean;
+}
+
+export interface TableIndex extends TableIndexDefinition {
+  readOnly: boolean;
+}
+
+export type TableIndexChange =
+  | { operation: 'create'; index: TableIndexDefinition }
+  | { operation: 'update'; original: TableIndexDefinition; index: TableIndexDefinition }
+  | { operation: 'delete'; original: TableIndexDefinition };
 
 export interface DeleteTableMessage {
   type: 'deleteTable';
@@ -197,4 +218,5 @@ export interface DeleteDatabaseMessage {
 
 export type DatabaseWebviewMessage =
   | { type: 'schemaUpdateResult'; success: boolean }
+  | { type: 'tableIndexesResult'; requestId: string; indexes?: TableIndex[] }
   | { type: 'databaseOperationResult'; success: boolean };

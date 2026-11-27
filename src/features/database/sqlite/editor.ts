@@ -3,20 +3,21 @@ import { showOperationError } from '@/host/utils/show-operation-error';
 import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type {
-  CreateTableMessage,
   DatabaseDocument,
   DeleteTableMessage,
   DatabaseTableFilterResult,
-  UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
 import { isDatabaseTableFilterRequest } from '@/features/database/protocol';
 import { registerTableDataHandler } from '@/features/database/table-data-handler';
+import { handleTableSchemaMessage } from '@/features/database/table-schema-handler';
 import { registerSqliteQueryEditor } from './query-editor';
 import {
   createSqliteTableUri,
+  changeSqliteIndex,
   createSqliteTable,
   deleteSqliteTable,
   readSqliteDatabase,
+  readSqliteIndexes,
   readSqliteTable,
   mutateSqliteTableRow,
   updateSqliteTableSchema,
@@ -108,33 +109,17 @@ export function registerSqliteEditor(context: vscode.ExtensionContext, tasks: Re
           } catch (error) {
             showOperationError(`Failed to delete table: ${error instanceof Error ? error.message : String(error)}`);
           }
-        } else if (isCreateTableMessage(message)) {
-          try {
-            await createSqliteTable(uri, { tableName: message.tableName, columns: message.columns });
-            const data = await readSqliteDatabase(uri);
-            await panel.webview.postMessage({ type: 'loaded', data });
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
-          } catch (error) {
-            showOperationError(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
-          }
-        } else if (isUpdateTableSchemaMessage(message)) {
-          try {
-            await updateSqliteTableSchema(uri, {
-              tableName: message.tableName,
-              newTableName: message.newTableName,
-              columns: message.columns,
-            });
-            if (activeTableNames.get(uriKey) === message.tableName && message.tableName !== message.newTableName) {
-              activeTableNames.set(uriKey, message.newTableName);
-            }
-            const data = await readSqliteDatabase(uri);
-            await panel.webview.postMessage({ type: 'loaded', data });
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
-          } catch (error) {
-            showOperationError(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
-          }
+        } else {
+          await handleTableSchemaMessage(message, panel.webview, {
+            createTable: (options) => createSqliteTable(uri, options),
+            updateTableSchema: async (options) => {
+              await updateSqliteTableSchema(uri, options);
+              if (activeTableNames.get(uriKey) === options.tableName) activeTableNames.set(uriKey, options.newTableName);
+            },
+            readDatabase: () => readSqliteDatabase(uri),
+            readIndexes: (table) => readSqliteIndexes(uri, table),
+            changeIndex: (table, change) => changeSqliteIndex(uri, table, change),
+          });
         }
       });
 
@@ -187,24 +172,5 @@ function isActiveTableChangedMessage(message: unknown): message is { type: 'acti
   return (
     message.type === 'activeTableChanged' &&
     (!('tableName' in message) || message.tableName === undefined || typeof message.tableName === 'string')
-  );
-}
-
-function isCreateTableMessage(message: unknown): message is CreateTableMessage {
-  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
-  const candidate = message as Partial<CreateTableMessage>;
-  return (
-    candidate.type === 'createTable' && typeof candidate.tableName === 'string' && Array.isArray(candidate.columns)
-  );
-}
-
-function isUpdateTableSchemaMessage(message: unknown): message is UpdateTableSchemaMessage {
-  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
-  const candidate = message as Partial<UpdateTableSchemaMessage>;
-  return (
-    candidate.type === 'updateTableSchema' &&
-    typeof candidate.tableName === 'string' &&
-    typeof candidate.newTableName === 'string' &&
-    Array.isArray(candidate.columns)
   );
 }

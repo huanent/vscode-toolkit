@@ -1,5 +1,7 @@
 import { escapeId } from 'mysql2';
-import type { SqliteTableColumnDefinition } from '@/features/database/protocol';
+import type { DatabaseTableColumnDefinition } from '@/features/database/protocol';
+
+export const quoteMysqlIdentifier = (name: string) => escapeId(name, true);
 
 export const systemDatabases = new Set(['information_schema', 'mysql', 'performance_schema', 'sys']);
 
@@ -9,20 +11,23 @@ export function isSystemDatabase(name: string): boolean {
 
 export function buildMysqlCreateTableStatement(
   tableName: string,
-  columns: readonly SqliteTableColumnDefinition[],
+  columns: readonly DatabaseTableColumnDefinition[],
 ): string {
   if (!columns.length) throw new Error('A table must have at least one column.');
-  const columnDefs = columns.map((col) => {
-    const colName = escapeId(col.name);
-    const colType = col.type.trim() || 'VARCHAR(255)';
-    const notNull = col.notNull ? ' NOT NULL' : '';
-    return `${colName} ${colType}${notNull}`;
-  });
+  const columnDefs = columns.map((column) => mysqlColumnDefinition(column));
 
-  const pks = columns.filter((c) => c.primaryKey).map((c) => escapeId(c.name));
+  const pks = columns.filter((c) => c.primaryKey).map((c) => quoteMysqlIdentifier(c.name));
   if (pks.length) {
     columnDefs.push(`PRIMARY KEY (${pks.join(', ')})`);
   }
 
-  return `CREATE TABLE ${escapeId(tableName)} (\n  ${columnDefs.join(',\n  ')}\n)`;
+  return `CREATE TABLE ${quoteMysqlIdentifier(tableName)} (\n  ${columnDefs.join(',\n  ')}\n)`;
+}
+
+export function mysqlColumnDefinition(column: DatabaseTableColumnDefinition, collation?: string): string {
+  const type = column.type.trim();
+  if (!/^(?:(?:tinyint|smallint|mediumint|int(?:eger)?|bigint|decimal|numeric|float|double)(?:\(\d+(?:,\s*\d+)?\))?(?: unsigned)?|(?:var)?char\(\d+\)|(?:datetime|timestamp|time)(?:\(\d+\))?|(?:tiny|medium|long)?(?:text|blob)|date|year|json|boolean|bool|bit(?:\(\d+\))?|(?:var)?binary\(\d+\))$/i.test(type)) {
+    throw new Error(`Unsupported MySQL column type: ${type}`);
+  }
+  return `${quoteMysqlIdentifier(column.name)} ${type}${collation ? ` COLLATE ${quoteMysqlIdentifier(collation)}` : ''}${column.notNull || column.primaryKey ? ' NOT NULL' : ' NULL'}`;
 }

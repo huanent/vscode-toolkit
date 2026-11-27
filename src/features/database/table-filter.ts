@@ -7,10 +7,11 @@ import {
 export function buildTableFilter(
   columns: DatabaseColumn[],
   filters: DatabaseTableFilters | undefined,
-  dialect: 'mysql' | 'sqlite',
+  dialect: 'mysql' | 'sqlite' | 'postgresql',
 ): { where: string[]; parameters: string[]; active: boolean } {
   const where: string[] = [];
   const parameters: string[] = [];
+  const placeholder = () => dialect === 'postgresql' ? `$${parameters.length}` : '?';
   const quote = (name: string) =>
     dialect === 'mysql' ? `\`${name.replaceAll('`', '``')}\`` : `"${name.replaceAll('"', '""')}"`;
   function match(column: DatabaseColumn, value: string, exactNull = false): string {
@@ -19,13 +20,13 @@ export function buildTableFilter(
     if (exactNull && filter === 'null') return `${name} IS NULL`;
     if (isDatabaseBooleanColumn(column) && /^(?:true|false|0|1)$/.test(filter)) {
       parameters.push(filter === 'true' || filter === '1' ? '1' : '0');
-      return `${name} = ?`;
+      return `${name} = ${placeholder()}`;
     }
-    const text = isDatabaseBooleanColumn(column)
+    const text = dialect !== 'postgresql' && isDatabaseBooleanColumn(column)
       ? `CASE WHEN ${name} = 1 THEN 'true' WHEN ${name} = 0 THEN 'false' ELSE CAST(${name} AS ${dialect === 'mysql' ? 'CHAR' : 'TEXT'}) END`
       : `CAST(${name} AS ${dialect === 'mysql' ? 'CHAR' : 'TEXT'})`;
     parameters.push(`%${filter.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`);
-    const like = `LOWER(${text}) LIKE ? ESCAPE ${dialect === 'mysql' ? 'CHAR(92)' : 'char(92)'}`;
+    const like = `LOWER(${text}) LIKE ${placeholder()} ESCAPE ${dialect === 'postgresql' ? 'chr(92)' : 'char(92)'}`;
     return filter === 'null' ? `(${like} OR ${name} IS NULL)` : like;
   }
   const search = filters?.search?.trim();

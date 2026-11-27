@@ -8,6 +8,8 @@ interface TableContext {
   assetId?: string;
   databaseName?: string;
   databaseUri?: string;
+  engine?: 'sqlite' | 'mysql' | 'postgresql';
+  schemaName?: string;
 }
 
 function isTableContext(value: unknown): value is TableContext {
@@ -17,7 +19,9 @@ function isTableContext(value: unknown): value is TableContext {
     typeof target.tableName === 'string' &&
     (target.assetId === undefined || typeof target.assetId === 'string') &&
     (target.databaseName === undefined || typeof target.databaseName === 'string') &&
-    (target.databaseUri === undefined || typeof target.databaseUri === 'string')
+    (target.databaseUri === undefined || typeof target.databaseUri === 'string') &&
+    (target.engine === undefined || ['sqlite', 'mysql', 'postgresql'].includes(target.engine)) &&
+    (target.schemaName === undefined || typeof target.schemaName === 'string')
   );
 }
 
@@ -42,7 +46,8 @@ export function registerTableCommands(context: vscode.ExtensionContext, assets: 
             assetId,
             (await assets.list()).map((asset) => asset.id),
           );
-          reference = `[Table ${JSON.stringify(target.tableName)}, database: ${JSON.stringify(target.databaseName)}, asset id: ${referenceId}, type: mysql]`;
+          const schema = target.schemaName === undefined ? '' : `, schema: ${JSON.stringify(target.schemaName)}`;
+          reference = `[Table ${JSON.stringify(target.tableName)}, database: ${JSON.stringify(target.databaseName)}${schema}, asset id: ${referenceId}, type: ${target.engine ?? 'mysql'}]`;
         } else if (target.databaseUri) {
           reference = `[Table ${JSON.stringify(target.tableName)}, database: ${JSON.stringify(vscode.Uri.parse(target.databaseUri).fsPath)}, type: sqlite]`;
         } else {

@@ -4,14 +4,13 @@ import type { ResultTaskService } from '@/features/result/task-service';
 import { registerWebviewEditor } from '@/host/webview-editor';
 import type {
   CreateDatabaseMessage,
-  CreateTableMessage,
   DatabaseDocument,
   DeleteDatabaseMessage,
   DeleteTableMessage,
   SelectDatabaseMessage,
-  UpdateTableSchemaMessage,
 } from '@/features/database/protocol';
 import { registerTableDataHandler } from '@/features/database/table-data-handler';
+import { handleTableSchemaMessage } from '@/features/database/table-schema-handler';
 import type { MysqlService } from '@/features/database/mysql/service';
 import { formatTabTitle } from '@/shared/tab-title';
 import { registerMysqlQueryEditor } from './query-editor';
@@ -202,33 +201,22 @@ export function registerMysqlEditor(
           } catch (error) {
             showOperationError(`Failed to delete table: ${error instanceof Error ? error.message : String(error)}`);
           }
-        } else if (isCreateTableMessage(message)) {
-          try {
-            const currentDb = activeDatabases.get(uriKey);
-            if (!currentDb) throw new Error('No active database selected.');
-            await mysqlService.createTable(assetId, currentDb, message);
-            const data = await mysqlService.readDatabaseDocument(assetId, currentDb);
-            await panel.webview.postMessage({ type: 'loaded', data });
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
-          } catch (error) {
-            showOperationError(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
-          }
-        } else if (isUpdateTableSchemaMessage(message)) {
-          try {
-            const currentDb = activeDatabases.get(uriKey);
-            if (!currentDb) throw new Error('No active database selected.');
-            await mysqlService.updateTableSchema(assetId, currentDb, message);
-            if (activeTableNames.get(uriKey) === message.tableName && message.tableName !== message.newTableName) {
-              activeTableNames.set(uriKey, message.newTableName);
-            }
-            const data = await mysqlService.readDatabaseDocument(assetId, currentDb);
-            await panel.webview.postMessage({ type: 'loaded', data });
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: true });
-          } catch (error) {
-            showOperationError(error);
-            await panel.webview.postMessage({ type: 'schemaUpdateResult', success: false });
-          }
+        } else {
+          const requireActiveDatabase = () => {
+            const database = activeDatabases.get(uriKey);
+            if (!database) throw new Error('No active database selected.');
+            return database;
+          };
+          await handleTableSchemaMessage(message, panel.webview, {
+            createTable: (options) => mysqlService.createTable(assetId, requireActiveDatabase(), options),
+            updateTableSchema: async (options) => {
+              await mysqlService.updateTableSchema(assetId, requireActiveDatabase(), options);
+              if (activeTableNames.get(uriKey) === options.tableName) activeTableNames.set(uriKey, options.newTableName);
+            },
+            readDatabase: () => mysqlService.readDatabaseDocument(assetId, requireActiveDatabase()),
+            readIndexes: (table) => mysqlService.readIndexes(assetId, requireActiveDatabase(), table),
+            changeIndex: (table, change) => mysqlService.changeIndex(assetId, requireActiveDatabase(), table, change),
+          });
         }
       });
 
@@ -287,25 +275,6 @@ function isActiveTableChangedMessage(message: unknown): message is { type: 'acti
   return (
     message.type === 'activeTableChanged' &&
     (!('tableName' in message) || message.tableName === undefined || typeof message.tableName === 'string')
-  );
-}
-
-function isCreateTableMessage(message: unknown): message is CreateTableMessage {
-  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
-  const candidate = message as Partial<CreateTableMessage>;
-  return (
-    candidate.type === 'createTable' && typeof candidate.tableName === 'string' && Array.isArray(candidate.columns)
-  );
-}
-
-function isUpdateTableSchemaMessage(message: unknown): message is UpdateTableSchemaMessage {
-  if (typeof message !== 'object' || message === null || !('type' in message)) return false;
-  const candidate = message as Partial<UpdateTableSchemaMessage>;
-  return (
-    candidate.type === 'updateTableSchema' &&
-    typeof candidate.tableName === 'string' &&
-    typeof candidate.newTableName === 'string' &&
-    Array.isArray(candidate.columns)
   );
 }
 

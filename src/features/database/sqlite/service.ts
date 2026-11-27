@@ -12,6 +12,8 @@ import type {
   DatabaseTable,
   DatabaseTableFilters,
   DatabaseTableCounts,
+  TableIndex,
+  TableIndexChange,
   UpdateSqliteTableSchemaOptions,
 } from '@/features/database/protocol';
 import { buildSqliteCreateTableStatement } from '@/features/database/sqlite-schema';
@@ -104,6 +106,20 @@ export async function updateSqliteTableSchema(uri: vscode.Uri, options: UpdateSq
   await withSqliteFile(uri, 'write', (databasePath) =>
     runSqliteOperation('applySqliteTableSchema', [databasePath, options]),
   );
+}
+
+export async function readSqliteIndexes(uri: vscode.Uri, table: string): Promise<TableIndex[]> {
+  validateSqliteUri(uri);
+  const client = remote(uri);
+  if (client) return client.readIndexes(uri, table);
+  return withSqliteFile(uri, 'read', (file) => runSqliteOperation('readSqliteIndexes', [file, table]));
+}
+
+export async function changeSqliteIndex(uri: vscode.Uri, table: string, change: TableIndexChange): Promise<void> {
+  validateSqliteUri(uri);
+  const client = remote(uri);
+  if (client) return client.changeIndex(uri, table, change);
+  return withSqliteFile(uri, 'write', (file) => runSqliteOperation('changeSqliteIndex', [file, table, change]));
 }
 
 export async function deleteSqliteTable(uri: vscode.Uri, tableName: string): Promise<void> {
