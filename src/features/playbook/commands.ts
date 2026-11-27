@@ -1,6 +1,7 @@
 import { getShortId } from '@/shared/short-id';
 import * as vscode from 'vscode';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import type { StorageScope } from '@/shared/storage-scope';
 import { showOperationError } from '@/host/utils/show-operation-error';
 import { playbookEditorViewType } from './editor';
 import { showFolderPicker } from '@/host/utils/folder-picker';
@@ -8,9 +9,12 @@ import {
   deletePlaybookEntry,
   duplicatePlaybookRecord,
   movePlaybookEntry,
+  movePlaybookFolderToScope,
+  readPlaybookRecord,
   readPlaybookRecords,
   renamePlaybookEntry,
   savePlaybookFolder,
+  savePlaybookRecord,
 } from './service';
 
 /**
@@ -47,6 +51,12 @@ export function registerPlaybookCommands(
     ),
     vscode.commands.registerCommand('toolkit.playbook.move', (target: unknown) =>
       movePlaybook(context, refresh, target).catch(showOperationError),
+    ),
+    vscode.commands.registerCommand('toolkit.playbook.moveToWorkspace', (target: unknown) =>
+      movePlaybookToScope(context, refresh, target, 'workspace').catch(showOperationError),
+    ),
+    vscode.commands.registerCommand('toolkit.playbook.moveToGlobal', (target: unknown) =>
+      movePlaybookToScope(context, refresh, target, 'global').catch(showOperationError),
     ),
   );
 }
@@ -101,6 +111,37 @@ async function movePlaybook(
   if (!selected) return;
 
   await movePlaybookEntry(roots, id, selected.folderPath);
+  await refresh();
+}
+
+async function movePlaybookToScope(
+  context: vscode.ExtensionContext,
+  refresh: () => Promise<void>,
+  target: unknown,
+  scope: StorageScope,
+): Promise<void> {
+  const roots = resolveStorageRoots(context, 'playbooks');
+  const folderId = parseFolderId(target);
+  if (folderId) {
+    await movePlaybookFolderToScope(roots, folderId, scope);
+    await refresh();
+    return;
+  }
+  const id = parsePlaybookId(target);
+  if (!id) throw new Error('Select a playbook or folder to move.');
+  const record = await readPlaybookRecord(roots, id);
+  if (!record) throw new Error('Playbook no longer exists.');
+  if (record.scope === scope) return;
+  await savePlaybookRecord(
+    roots,
+    record.id,
+    record.name,
+    record.playbook,
+    record.parentId,
+    scope,
+    record.description,
+    record.enableAI,
+  );
   await refresh();
 }
 

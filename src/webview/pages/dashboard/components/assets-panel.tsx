@@ -37,7 +37,7 @@ export function AssetsPanel({
             search={search}
             searchMatches={searchMatches}
             renderIndicator={(item) =>
-              item.context?.assetStorageScope === 'workspace' ? (
+              item.context?.assetStorageScope === 'workspace' || item.context?.assetFolderInWorkspace === true ? (
                 <div
                   className="flex items-center justify-center pr-0.5 opacity-50"
                   title="Stored in workspace"

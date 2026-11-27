@@ -29,6 +29,7 @@ import type { CredentialService } from '@/features/credential/service';
 import { buildRowMutation } from '@/features/database/row-mutation';
 import { buildTableFilter } from '@/features/database/table-filter';
 import type { SshService } from '@/features/ssh/ssh-service';
+import type { StorageScope } from '@/shared/storage-scope';
 
 export class MysqlService implements DatabaseProvider {
   readonly type = 'mysql';
@@ -58,11 +59,15 @@ export class MysqlService implements DatabaseProvider {
       database: previous?.database ?? '',
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
-      storageScope: record?.scope ?? 'global',
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
+  async saveConfiguration(
+    values: AssetFormValues,
+    record?: AssetRecord,
+    folder?: string,
+    scope?: StorageScope,
+  ): Promise<void> {
     const previous = record ? requireMysqlConfiguration(record) : undefined;
     const asset: MysqlConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
@@ -84,7 +89,7 @@ export class MysqlService implements DatabaseProvider {
       description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
-      scope: values.storageScope,
+      scope: record?.scope ?? scope,
     });
   }
 

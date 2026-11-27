@@ -2,12 +2,11 @@ import * as vscode from 'vscode';
 import { serveWebviewData } from '@/host/webview-bridge';
 import { showOperationError } from '@/host/utils/show-operation-error';
 import { getWebviewHtml } from '@/host/webview-html';
-import { isWorkspaceStorageAvailable, resolveStorageDirectory } from '@/host/utils/storage';
+import { resolveStorageDirectory } from '@/host/utils/storage';
 import type { AssetProvider } from './asset-provider';
 import type { AssetEditorData, AssetEditorMessage, AssetFormValues } from './protocol';
 import type { AssetRecord, AssetService } from './service';
 import { isCredential, type CredentialService } from '@/features/credential/service';
-import { isStorageScope } from '@/shared/storage-scope';
 
 export function openAssetEditor(
   context: vscode.ExtensionContext,
@@ -42,7 +41,6 @@ export function openAssetEditor(
       capabilities: provider.capabilities,
       label: provider.label,
       editing: Boolean(previous),
-      workspaceStorageAvailable: isWorkspaceStorageAvailable(),
       values,
       credentials: creds.map(({ id, description, type, username }) => ({ id, description, type, username })),
       assets,
@@ -77,7 +75,7 @@ export function openAssetEditor(
         if (storageDirectory !== resolveStorageDirectory(context, 'assets'))
           throw new Error('Storage location changed. Reopen the asset editor.');
         const current = previous ? await service.get(previous.id) : undefined;
-        await provider.saveConfiguration(message.values, current, folder);
+        await provider.saveConfiguration(values, current, folder, draft?.scope);
         await refresh();
         panel.dispose();
       } else if (message.type === 'createCredential') {
@@ -127,7 +125,6 @@ function isFormValues(value: unknown): value is AssetFormValues {
       (Array.isArray(values.proxyAssetIds) && values.proxyAssetIds.every((id) => typeof id === 'string'))) &&
     typeof values.tls === 'boolean' &&
     typeof values.enableAI === 'boolean' &&
-    isStorageScope(values.storageScope) &&
     typeof values.port === 'number' &&
     Number.isInteger(values.port) &&
     values.port > 0 &&

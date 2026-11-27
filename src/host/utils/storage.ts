@@ -10,10 +10,6 @@ export function resolveStorageDirectory(context: vscode.ExtensionContext, direct
   return path.join(path.resolve(rootPath), directoryName);
 }
 
-export function isWorkspaceStorageAvailable(): boolean {
-  return vscode.workspace.workspaceFolders?.[0] !== undefined;
-}
-
 export function resolveStorageRoots(context: vscode.ExtensionContext, directoryName: string): StorageRoot[] {
   const roots: StorageRoot[] = [{ scope: 'global', directory: resolveStorageDirectory(context, directoryName) }];
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];

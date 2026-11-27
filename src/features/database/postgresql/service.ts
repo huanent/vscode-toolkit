@@ -8,6 +8,7 @@ import type { AssetRecord, AssetService } from '@/features/assets/service';
 import type { CredentialService } from '@/features/credential/service';
 import type { DatabaseQueryResult, PostgresqlConnectionConfiguration } from '@/features/database/protocol';
 import type { SshService } from '@/features/ssh/ssh-service';
+import type { StorageScope } from '@/shared/storage-scope';
 
 export class PostgresqlService implements DatabaseProvider {
   readonly type = 'postgresql';
@@ -38,11 +39,15 @@ export class PostgresqlService implements DatabaseProvider {
       proxyAssetIds: previous?.proxyAssetIds ?? [],
       tls: previous?.tls ?? false,
       enableAI: record?.enableAI !== false,
-      storageScope: record?.scope ?? 'global',
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
+  async saveConfiguration(
+    values: AssetFormValues,
+    record?: AssetRecord,
+    folder?: string,
+    scope?: StorageScope,
+  ): Promise<void> {
     const previous = record ? requirePostgresqlConfiguration(record) : undefined;
     const asset = requirePostgresqlConfiguration({
       id: previous?.id ?? randomUUID(),
@@ -62,7 +67,7 @@ export class PostgresqlService implements DatabaseProvider {
       description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
-      scope: values.storageScope,
+      scope: record?.scope ?? scope,
     });
   }
 

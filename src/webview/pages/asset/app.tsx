@@ -6,14 +6,16 @@ import type {
   AssetFormValues,
 } from '@/features/assets/protocol';
 import { mountWebview } from '@/webview/bootstrap';
+import { Checkbox } from '@/webview/components/ui/checkbox';
 import { ErrorMessage } from '@/webview/components/ui/error-message';
-import { Form } from '@/webview/components/ui/form';
+import { Form, FormItem } from '@/webview/components/ui/form';
+import { Input } from '@/webview/components/ui/input';
 import { Loading } from '@/webview/components/ui/loading';
 import { TabPanel, Tabs } from '@/webview/components/ui/tabs';
-import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
+import { EditorSaveHeader } from '@/webview/components/editor-save-header';
 import { postToHost, useHostData } from '@/webview/utils/host-data';
 import { ConnectionPanel } from '@/webview/pages/asset/components/connection-panel';
-import { GeneralPanel } from '@/webview/pages/asset/components/general-panel';
+import { OtherPanel } from '@/webview/pages/asset/components/other-panel';
 import { ProxyPanel } from '@/webview/pages/asset/components/proxy-panel';
 import '@/webview/styles.css';
 
@@ -21,7 +23,7 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   const [values, setValues] = useState(data.values);
   const [credentials, setCredentials] = useState(data.credentials);
   const [saving, setSaving] = useState(false);
-  const [activeTabId, setActiveTabId] = useState('general');
+  const [activeTabId, setActiveTabId] = useState('connection');
   const update = (changes: Partial<AssetFormValues>) => {
     setValues((previous) => ({ ...previous, ...changes }));
   };
@@ -39,11 +41,6 @@ function AssetForm({ data }: { data: AssetEditorData }) {
   }, []);
 
   const tabs = [
-    {
-      id: 'general',
-      label: 'General',
-      panel: <GeneralPanel values={values} onChange={update} />,
-    },
     {
       id: 'connection',
       label: 'Connection',
@@ -75,6 +72,11 @@ function AssetForm({ data }: { data: AssetEditorData }) {
           },
         ]
       : []),
+    {
+      id: 'other',
+      label: 'Other',
+      panel: <OtherPanel description={values.description} onDescriptionChange={(description) => update({ description })} />,
+    },
   ];
 
   return (
@@ -95,13 +97,28 @@ function AssetForm({ data }: { data: AssetEditorData }) {
         }}
       >
         <fieldset disabled={saving} className="flex min-w-0 flex-1 flex-col border-0 p-0">
-          <StorageEditorHeader
-            storageScope={values.storageScope}
-            onStorageScopeChange={(storageScope) => update({ storageScope })}
-            workspaceStorageAvailable={data.workspaceStorageAvailable}
-            saveDisabled={saving}
-            saving={saving}
-          />
+          <EditorSaveHeader saving={saving}>
+            <FormItem
+              name="name"
+              error="Name is required."
+              match="valueMissing"
+              className="min-w-0 max-w-64 grow basis-48"
+            >
+              <Input
+                aria-label="Name"
+                className="w-full min-w-0"
+                value={values.name}
+                onChange={(event) => update({ name: event.target.value })}
+                placeholder="Connection name"
+                required
+                autoFocus
+              />
+            </FormItem>
+            <label className="flex h-6 shrink-0 items-center gap-2 font-medium">
+              <Checkbox name="enableAI" checked={values.enableAI} onCheckedChange={(enableAI) => update({ enableAI })} />
+              <span>Allow AI access</span>
+            </label>
+          </EditorSaveHeader>
           <Tabs
             tabs={tabs}
             activeTabId={activeTabId}

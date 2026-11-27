@@ -5,6 +5,7 @@ import { Client, type ClientChannel, type ConnectConfig, type SFTPWrapper, type 
 import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import { formatTabTitle } from '@/shared/tab-title';
+import type { StorageScope } from '@/shared/storage-scope';
 import { AssetService, type AssetRecord } from '@/features/assets/service';
 import type { SshConnectionConfiguration } from './protocol';
 import type { CredentialService } from '@/features/credential/service';
@@ -52,7 +53,6 @@ export class SshService implements AssetProvider {
       database: '',
       tls: false,
       enableAI: record?.enableAI !== false,
-      storageScope: record?.scope ?? 'global',
     };
   }
 
@@ -471,7 +471,12 @@ export class SshService implements AssetProvider {
     }
   }
 
-  async saveConfiguration(values: AssetFormValues, record?: AssetRecord, folder?: string): Promise<void> {
+  async saveConfiguration(
+    values: AssetFormValues,
+    record?: AssetRecord,
+    folder?: string,
+    scope?: StorageScope,
+  ): Promise<void> {
     const previous = record ? requireSshConfiguration(record) : undefined;
     const asset: SshConnectionConfiguration = {
       id: previous?.id ?? randomUUID(),
@@ -491,7 +496,7 @@ export class SshService implements AssetProvider {
       description: values.description.trim() || undefined,
       enableAI: values.enableAI,
       folder: record?.folder ?? folder,
-      scope: values.storageScope,
+      scope: record?.scope ?? scope,
     });
     this.invalidate(asset.id);
   }

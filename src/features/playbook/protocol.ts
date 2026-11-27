@@ -73,8 +73,6 @@ export interface PlaybookFolderRecord {
 
 export interface PlaybookEditorData extends PlaybookRecord {
   assets: AssetSummary[];
-  storageScope: StorageScope;
-  workspaceStorageAvailable: boolean;
 }
 
 export type PlaybookEditorRequest =
@@ -83,7 +81,6 @@ export type PlaybookEditorRequest =
       name: string;
       description?: string;
       playbook: PlaybookDefinition;
-      storageScope: StorageScope;
       enableAI: boolean;
     }
   | { type: 'runPlaybook'; name: string; playbook: PlaybookDefinition };
@@ -106,6 +103,7 @@ export interface PlaybookRecordEntry {
   name: string;
   type: 'playbook' | 'folder';
   scope?: StorageScope;
+  folderScopes?: StorageScope[];
   parentId?: string;
 }
 

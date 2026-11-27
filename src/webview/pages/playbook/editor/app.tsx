@@ -6,7 +6,7 @@ import type {
   PlaybookStep,
 } from '@/features/playbook/protocol';
 import { mountWebview } from '@/webview/bootstrap';
-import { StorageEditorHeader } from '@/webview/components/storage-editor-header';
+import { EditorSaveHeader } from '@/webview/components/editor-save-header';
 import { Button } from '@/webview/components/ui/button';
 import { Checkbox } from '@/webview/components/ui/checkbox';
 import { Collapsible } from '@/webview/components/ui/collapsible';
@@ -47,8 +47,7 @@ function PlaybookEditor({ data }: { data: PlaybookEditorData }) {
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? '');
   const [enableAI, setEnableAI] = useState(data.enableAI !== false);
-  const [storageScope, setStorageScope] = useState(data.storageScope);
-  const [activeTabId, setActiveTabId] = useState('general');
+  const [activeTabId, setActiveTabId] = useState('steps');
   const [addStepOpen, setAddStepOpen] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string>();
   const [environment, setEnvironment] = useState(data.playbook.environment ?? []);
@@ -118,23 +117,38 @@ function PlaybookEditor({ data }: { data: PlaybookEditorData }) {
             type: 'savePlaybook',
             name,
             description,
-            storageScope,
             playbook: { steps: steps.map((item) => item.step), environment },
             enableAI,
           } satisfies PlaybookEditorRequest);
         }}
       >
-        <StorageEditorHeader
-          storageScope={storageScope}
-          onStorageScopeChange={setStorageScope}
-          workspaceStorageAvailable={data.workspaceStorageAvailable}
-          saveDisabled={!name.trim() || !steps.length || !validEnvironment || !validConditions}
-        />
+        <EditorSaveHeader saveDisabled={!name.trim() || !steps.length || !validEnvironment || !validConditions}>
+          <FormItem
+            name="name"
+            error="Playbook name is required."
+            match="valueMissing"
+            className="min-w-0 max-w-64 grow basis-48"
+          >
+            <Input
+              aria-label="Playbook name"
+              className="w-full min-w-0"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Playbook name"
+              required
+              autoFocus
+            />
+          </FormItem>
+          <label className="flex h-6 shrink-0 items-center gap-2 font-medium">
+            <Checkbox name="enableAI" checked={enableAI} onCheckedChange={(checked) => setEnableAI(checked === true)} />
+            <span>Allow AI access</span>
+          </label>
+        </EditorSaveHeader>
         <Tabs
           tabs={[
-            { id: 'general', label: 'General' },
             { id: 'steps', label: 'Steps' },
             { id: 'variables', label: 'Variables' },
+            { id: 'other', label: 'Other' },
           ]}
           activeTabId={activeTabId}
           onChange={setActiveTabId}
@@ -142,26 +156,6 @@ function PlaybookEditor({ data }: { data: PlaybookEditorData }) {
           placement="left"
           className="mt-2 min-w-0"
         >
-          <TabPanel tabId="general" keepMounted className="p-4 md:p-6">
-            <div data-playbook-section="general" className="mx-auto grid w-full max-w-3xl">
-              <FormItem name="name" label="Name" error="Playbook name is required." match="valueMissing">
-                <Input
-                  aria-label="Playbook name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Playbook name"
-                  required
-                  autoFocus
-                />
-              </FormItem>
-              <FormItem name="enableAI" label="Allow AI tool access">
-                <Checkbox checked={enableAI} onCheckedChange={(checked) => setEnableAI(checked === true)} />
-              </FormItem>
-              <FormItem name="description" label="Description">
-                <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
-              </FormItem>
-            </div>
-          </TabPanel>
           <TabPanel tabId="steps" keepMounted className="p-4 md:p-6">
             <div data-playbook-section="steps" className="mx-auto grid w-full max-w-3xl gap-5">
               <div className="flex min-w-0 flex-col">
@@ -261,6 +255,13 @@ function PlaybookEditor({ data }: { data: PlaybookEditorData }) {
           <TabPanel tabId="variables" keepMounted className="p-4 md:p-6">
             <div data-playbook-section="variables" className="mx-auto grid w-full max-w-3xl gap-5">
               <PlaybookEnvironmentEditor environment={environment} onChange={setEnvironment} />
+            </div>
+          </TabPanel>
+          <TabPanel tabId="other" keepMounted className="p-4 md:p-6">
+            <div data-playbook-section="other" className="mx-auto grid w-full max-w-3xl">
+              <FormItem name="description" label="Description">
+                <Textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
+              </FormItem>
             </div>
           </TabPanel>
         </Tabs>

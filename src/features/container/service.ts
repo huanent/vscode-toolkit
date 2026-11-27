@@ -6,6 +6,7 @@ import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import type { AssetRecord, AssetService } from '@/features/assets/service';
 import type { SshService } from '@/features/ssh/ssh-service';
+import type { StorageScope } from '@/shared/storage-scope';
 import type { ContainerInfo, ContainerSettings } from './protocol';
 import { containerEditorViewType, createContainerUri } from './editor';
 
@@ -36,13 +37,17 @@ export class ContainerService implements AssetProvider {
       database: '',
       tls: false,
       enableAI: record?.enableAI !== false,
-      storageScope: record?.scope ?? 'global',
       credentialId: '',
       container: { runtime: asset?.runtime ?? 'docker', cliPath: asset?.cliPath, sshAssetId: asset?.sshAssetId },
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, previous?: AssetRecord, folder?: string): Promise<void> {
+  async saveConfiguration(
+    values: AssetFormValues,
+    previous?: AssetRecord,
+    folder?: string,
+    scope?: StorageScope,
+  ): Promise<void> {
     if (!values.container || typeof values.container !== 'object') throw new Error('Container settings are required.');
     const { runtime, cliPath, sshAssetId } = values.container;
     if (cliPath !== undefined && typeof cliPath !== 'string') throw new Error('Invalid CLI path.');
@@ -53,7 +58,7 @@ export class ContainerService implements AssetProvider {
       name: values.name.trim(),
       description: values.description.trim() || undefined,
       folder: previous?.folder ?? folder,
-      scope: values.storageScope,
+      scope: previous?.scope ?? scope,
       enableAI: values.enableAI,
       runtime,
       cliPath: cliPath?.trim() || undefined,

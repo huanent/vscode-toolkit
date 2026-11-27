@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "displayName": "Toolkit",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Databases, SSH, HTTP requests and reusable Playbooks, with Copilot integration. All in VS Code.",
   "categories": [
     "Other"
@@ -748,6 +748,16 @@
         "category": "Assets"
       },
       {
+        "command": "toolkit.assets.moveToWorkspace",
+        "title": "Move to Workspace",
+        "category": "Assets"
+      },
+      {
+        "command": "toolkit.assets.moveToGlobal",
+        "title": "Move to Global",
+        "category": "Assets"
+      },
+      {
         "command": "toolkit.assets.rename",
         "title": "Rename",
         "category": "Assets"
@@ -1114,6 +1124,16 @@
       {
         "command": "toolkit.playbook.move",
         "title": "Move to Folder",
+        "category": "Playbook"
+      },
+      {
+        "command": "toolkit.playbook.moveToWorkspace",
+        "title": "Move to Workspace",
+        "category": "Playbook"
+      },
+      {
+        "command": "toolkit.playbook.moveToGlobal",
+        "title": "Move to Global",
         "category": "Playbook"
       },
       {
@@ -1493,6 +1513,14 @@
           "when": "false"
         },
         {
+          "command": "toolkit.assets.moveToWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.assets.moveToGlobal",
+          "when": "false"
+        },
+        {
           "command": "toolkit.temp.move",
           "when": "false"
         },
@@ -1514,6 +1542,14 @@
         },
         {
           "command": "toolkit.playbook.move",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.playbook.moveToWorkspace",
+          "when": "false"
+        },
+        {
+          "command": "toolkit.playbook.moveToGlobal",
           "when": "false"
         },
         {
@@ -1716,6 +1752,16 @@
           "group": "2_actions@3"
         },
         {
+          "command": "toolkit.assets.moveToWorkspace",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && workspaceFolderCount > 0 && ((assetId && !assetDatabase && assetStorageScope == 'global') || (assetFolderPath && assetFolderInGlobal))",
+          "group": "2_actions@3.1"
+        },
+        {
+          "command": "toolkit.assets.moveToGlobal",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && ((assetId && !assetDatabase && assetStorageScope == 'workspace') || (assetFolderPath && assetFolderInWorkspace))",
+          "group": "2_actions@3.1"
+        },
+        {
           "command": "toolkit.assets.rename",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'assets' && assetFolderPath && !assetId",
           "group": "2_actions@2"
@@ -1834,6 +1880,16 @@
           "command": "toolkit.playbook.move",
           "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && (playbookId || playbookFolderId)",
           "group": "2_actions@3"
+        },
+        {
+          "command": "toolkit.playbook.moveToWorkspace",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && workspaceFolderCount > 0 && ((playbookId && playbookStorageScope == 'global') || (playbookFolderId && playbookFolderInGlobal))",
+          "group": "2_actions@3.1"
+        },
+        {
+          "command": "toolkit.playbook.moveToGlobal",
+          "when": "webviewId == 'toolkit.dashboard' && webviewSection == 'playbook' && ((playbookId && playbookStorageScope == 'workspace') || (playbookFolderId && playbookFolderInWorkspace))",
+          "group": "2_actions@3.1"
         },
         {
           "command": "toolkit.temp.copy",

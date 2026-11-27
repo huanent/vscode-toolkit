@@ -4,6 +4,7 @@ import type { AssetProvider } from '@/features/assets/asset-provider';
 import type { AssetFormValues, AssetRequest, AssetViewEntry } from '@/features/assets/protocol';
 import type { AssetRecord, AssetService } from '@/features/assets/service';
 import type { CredentialService } from '@/features/credential/service';
+import type { StorageScope } from '@/shared/storage-scope';
 import { executeHttpRequest } from './http-client';
 import type { HttpClientRequest, HttpClientSettings } from './protocol';
 
@@ -34,7 +35,6 @@ export class HttpClientService implements AssetProvider {
       database: '',
       tls: true,
       enableAI: record?.enableAI !== false,
-      storageScope: record?.scope ?? 'global',
       credentialId: asset?.credentialId ?? '',
       username: asset?.username ?? '',
       httpClient: {
@@ -48,7 +48,12 @@ export class HttpClientService implements AssetProvider {
     };
   }
 
-  async saveConfiguration(values: AssetFormValues, previous?: AssetRecord, folder?: string): Promise<void> {
+  async saveConfiguration(
+    values: AssetFormValues,
+    previous?: AssetRecord,
+    folder?: string,
+    scope?: StorageScope,
+  ): Promise<void> {
     if (!values.httpClient) throw new Error('HTTP client settings are required.');
     const asset = requireHttpClient({
       ...values.httpClient,
@@ -60,7 +65,7 @@ export class HttpClientService implements AssetProvider {
       credentialId: values.credentialId,
       username: values.username?.trim() || undefined,
       enableAI: values.enableAI,
-      scope: values.storageScope,
+      scope: previous?.scope ?? scope,
       folder: previous?.folder ?? folder,
     });
     if (!asset.name) throw new Error('Name is required.');

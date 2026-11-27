@@ -41,7 +41,8 @@ export function PlaybookPanel({
             search={search}
             searchMatches={searchMatches}
             renderIndicator={(item) =>
-              item.context?.playbookStorageScope === 'workspace' ? (
+              item.context?.playbookStorageScope === 'workspace' ||
+              item.context?.playbookFolderInWorkspace === true ? (
                 <div
                   className="flex items-center justify-center pr-0.5 opacity-50"
                   title="Stored in workspace"
@@ -119,7 +120,12 @@ function toPlaybookTreeItems(entries: readonly PlaybookRecordEntry[]): TreeItem[
           path: itemPath,
           name: entry.name,
           type: 'directory',
-          context: { playbookFolderId: entry.id, playbookName: entry.name },
+          context: {
+            playbookFolderId: entry.id,
+            playbookName: entry.name,
+            playbookFolderInGlobal: entry.folderScopes?.includes('global') ?? false,
+            playbookFolderInWorkspace: entry.folderScopes?.includes('workspace') ?? false,
+          },
           children: buildItems(entry.id, nextAncestors),
         });
       }

@@ -7,6 +7,8 @@ import { isAiEnabled, type AssetService } from './service';
 import { openAssetEditor } from './editor';
 import type { CredentialService } from '@/features/credential/service';
 import { showFolderPicker } from '@/host/utils/folder-picker';
+import { showOperationError } from '@/host/utils/show-operation-error';
+import type { StorageScope } from '@/shared/storage-scope';
 
 export interface AssetsViewHandler extends WebviewViewHandler {
   refresh(): Promise<void>;
@@ -86,6 +88,21 @@ export function createAssetsView(
 
     if (assetId) await service.moveAsset(assetId, selected.folderPath);
     else if (folderPath) await service.moveFolder(folderPath, selected.folderPath);
+    await refresh();
+  };
+  const moveEntryToScope = async (target: unknown, scope: StorageScope) => {
+    const value = target && typeof target === 'object' ? (target as Record<string, unknown>) : {};
+    if (typeof value.assetId === 'string') {
+      const asset = await service.get(value.assetId);
+      if (asset.scope === scope) return;
+      await service.save({ ...asset, scope });
+      providerFor(asset.type).invalidate(asset.id);
+    } else if (typeof value.assetFolderPath === 'string') {
+      const assets = await service.moveFolderToScope(value.assetFolderPath, scope);
+      for (const asset of assets) providers.find((provider) => provider.type === asset.type)?.invalidate(asset.id);
+    } else {
+      throw new Error('Select an asset or folder to move.');
+    }
     await refresh();
   };
   const renameFolder = async (folderPath: string) => {
@@ -226,6 +243,12 @@ export function createAssetsView(
         vscode.window.showErrorMessage(error instanceof Error ? error.message : String(error), { modal: true }),
       ),
     ),
+    vscode.commands.registerCommand('toolkit.assets.moveToWorkspace', (target: unknown) =>
+      moveEntryToScope(target, 'workspace').catch(showOperationError),
+    ),
+    vscode.commands.registerCommand('toolkit.assets.moveToGlobal', (target: unknown) =>
+      moveEntryToScope(target, 'global').catch(showOperationError),
+    ),
     vscode.commands.registerCommand('toolkit.assets.rename', (target?: { assetFolderPath?: unknown }) => {
       if (typeof target?.assetFolderPath !== 'string') return;
       return renameFolder(target.assetFolderPath).catch((error: unknown) =>
@@ -272,7 +295,10 @@ export function createAssetsView(
   };
 }
 
-function buildAssetTree(entries: AssetViewEntry[], folders: string[]): AssetTreeEntry[] {
+function buildAssetTree(
+  entries: AssetViewEntry[],
+  folders: ReadonlyMap<string, ReadonlySet<StorageScope>>,
+): AssetTreeEntry[] {
   const roots: AssetTreeEntry[] = [];
   const directories = new Map<string, Extract<AssetTreeEntry, { type: 'directory' }>>();
 
@@ -289,7 +315,12 @@ function buildAssetTree(entries: AssetViewEntry[], folders: string[]): AssetTree
           name,
           type: 'directory',
           children: [],
-          context: { webviewSection: 'assets', assetFolderPath: directoryPath },
+          context: {
+            webviewSection: 'assets',
+            assetFolderPath: directoryPath,
+            assetFolderInGlobal: folders.get(directoryPath)?.has('global') ?? false,
+            assetFolderInWorkspace: folders.get(directoryPath)?.has('workspace') ?? false,
+          },
         };
         directories.set(directoryPath, directory);
         children.push(directory);
@@ -299,7 +330,7 @@ function buildAssetTree(entries: AssetViewEntry[], folders: string[]): AssetTree
     return children;
   };
 
-  for (const folder of folders) ensureDirectory(folder);
+  for (const folder of folders.keys()) ensureDirectory(folder);
   for (const entry of entries) {
     const segments = entry.path.split('/').filter(Boolean);
     const parentPath = segments.slice(0, -1).join('/');

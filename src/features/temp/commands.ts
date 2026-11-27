@@ -114,15 +114,14 @@ async function moveTempEntryFromInput(
 
   const destinations: Array<vscode.QuickPickItem & { scope: StorageScope; folderPath?: string }> = [];
   for (const root of resolveStorageRoots(context, 'temp').filter((root) => root.scope === sourceScope)) {
-    const label = root.scope === 'global' ? 'Global' : 'Workspace';
-    destinations.push({ label: 'Root', description: label, scope: root.scope });
+    destinations.push({ label: 'Root', scope: root.scope });
     const collectFolders = (entries: readonly TempTreeEntry[], parent = '') => {
       for (const child of entries) {
         if (child.type !== 'directory') continue;
         const folderPath = parent ? `${parent}/${child.name}` : child.name;
         if (root.scope === sourceScope && entry.tempEntryType === 'directory' &&
             (folderPath === sourcePath || folderPath.startsWith(`${sourcePath}/`))) continue;
-        destinations.push({ label: folderPath, description: label, scope: root.scope, folderPath });
+        destinations.push({ label: folderPath, scope: root.scope, folderPath });
         collectFolders(child.children ?? [], folderPath);
       }
     };

@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { PlaybookDefinition, PlaybookFolderRecord, PlaybookRecord, PlaybookRecordEntry } from './protocol';
 import { findStorageRoot, type StorageRoot, type StorageScope } from '@/shared/storage-scope';
+import { moveStorageFolder } from '@/host/utils/move-storage-folder';
 
 const entryNameCollator = new Intl.Collator(undefined, { numeric: true });
 
@@ -21,6 +22,11 @@ interface PlaybookStorageIndex {
   playbooks: Map<string, StoredPlaybookLocation>;
   folders: Map<string, StorageRoot[]>;
   matches?: string[];
+}
+
+function preferredFolderRoot(index: PlaybookStorageIndex, folderId: string): StorageRoot | undefined {
+  const roots = index.folders.get(folderId);
+  return roots?.find((root) => root.scope === 'workspace') ?? roots?.[0];
 }
 
 export function createPlaybookRecord(parentId?: string): PlaybookRecord {
@@ -69,7 +75,7 @@ export async function savePlaybookRecord(
   name: string,
   playbook: PlaybookDefinition,
   parentId: string | undefined,
-  scope: StorageScope,
+  scope: StorageScope | undefined,
   description?: string,
   enableAI?: boolean,
 ): Promise<StoredPlaybookRecord> {
@@ -81,7 +87,8 @@ export async function savePlaybookRecord(
   const existing = index.playbooks.get(id);
   const actualParentId = existing ? existing.parentId : parentId;
   if (actualParentId && !index.folders.has(actualParentId)) throw new Error('The parent folder no longer exists.');
-  const root = findStorageRoot(roots, scope);
+  const parentRoot = actualParentId ? preferredFolderRoot(index, actualParentId) : undefined;
+  const root = findStorageRoot(roots, scope ?? existing?.root.scope ?? parentRoot?.scope ?? 'global');
   const targetDirectory = actualParentId ? playbookFolderPath(root, actualParentId) : root.directory;
   const record: PlaybookRecord = {
     kind: 'playbook',
@@ -93,6 +100,9 @@ export async function savePlaybookRecord(
     playbook,
   };
   const target = path.join(targetDirectory, `${id}.json`);
+  if (existing?.path !== target && (await pathExists(target))) {
+    throw new Error('A playbook file already exists at the destination.');
+  }
   await writeJsonFile(target, record);
   if (existing && existing.path !== target) await rm(existing.path, { force: true });
   return { ...record, scope: root.scope };
@@ -108,7 +118,7 @@ export async function savePlaybookFolder(
     throw new Error('Enter a valid folder name.');
   }
   const index = await readPlaybookStorage(roots);
-  const root = parentId ? index.folders.get(parentId)?.[0] : findStorageRoot(roots, 'global');
+  const root = parentId ? preferredFolderRoot(index, parentId) : findStorageRoot(roots, 'global');
   if (!root) throw new Error('The parent folder no longer exists.');
   if (index.entries.some((record) => record.parentId === parentId && record.name === trimmedName)) {
     throw new Error(`"${trimmedName}" already exists in this folder.`);
@@ -231,6 +241,21 @@ export async function movePlaybookEntry(roots: readonly StorageRoot[], id: strin
   await rename(location.path, target);
 }
 
+export async function movePlaybookFolderToScope(
+  roots: readonly StorageRoot[],
+  id: string,
+  scope: StorageScope,
+): Promise<void> {
+  validatePlaybookFolderId(id);
+  const index = await readPlaybookStorage(roots);
+  const locations = index.folders.get(id);
+  if (!locations?.length) throw new Error('Playbook folder no longer exists.');
+  const source = locations.find((root) => root.scope !== scope);
+  if (!source) return;
+  const destination = findStorageRoot(roots, scope);
+  await moveStorageFolder(playbookFolderPath(source, id), destination.directory, id);
+}
+
 export async function deletePlaybookEntry(roots: readonly StorageRoot[], id: string): Promise<string[]> {
   const index = await readPlaybookStorage(roots);
   const entry = index.entries.find((record) => record.id === id);
@@ -289,7 +314,9 @@ async function readPlaybookStorage(roots: readonly StorageRoot[], query?: string
       if (!child.isDirectory()) continue;
       const id = parentId ? `${parentId}/${child.name}` : child.name;
       index.folders.set(id, [...(index.folders.get(id) ?? []), root]);
-      if (!folderEntries.has(id)) folderEntries.set(id, { id, name: child.name, type: 'folder', parentId });
+      const entry = folderEntries.get(id);
+      if (entry) entry.folderScopes?.push(root.scope);
+      else folderEntries.set(id, { id, name: child.name, type: 'folder', parentId, folderScopes: [root.scope] });
       await visit(root, path.join(currentDirectory, child.name), id);
     }
 

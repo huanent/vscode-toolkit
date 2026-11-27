@@ -4,6 +4,7 @@ import { mkdir, readdir, readFile, rename, rm, unlink, writeFile, lstat } from '
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { resolveStorageRoots } from '@/host/utils/storage';
+import { moveStorageFolder } from '@/host/utils/move-storage-folder';
 import { findStorageRoot, type StorageRoot, type StorageScope } from '@/shared/storage-scope';
 import type { AssetSummary } from './protocol';
 
@@ -35,16 +36,19 @@ export class AssetService {
     return (await this.listWithFolders()).assets;
   }
 
-  async listWithFolders(): Promise<{ assets: AssetRecord[]; folders: string[] }> {
+  async listWithFolders(): Promise<{ assets: AssetRecord[]; folders: Map<string, Set<StorageScope>> }> {
     const entries: AssetRecord[] = [];
-    const folders = new Set<string>();
+    const folders = new Map<string, Set<StorageScope>>();
 
     for (const root of await this.existingRoots()) {
       const traverse = async (dir: string) => {
         const files = await readdir(dir, { withFileTypes: true });
         for (const file of files) {
           if (file.isDirectory()) {
-            folders.add(path.relative(root.directory, path.join(dir, file.name)).split(path.sep).join('/'));
+            const folder = path.relative(root.directory, path.join(dir, file.name)).split(path.sep).join('/');
+            const scopes = folders.get(folder) ?? new Set<StorageScope>();
+            scopes.add(root.scope);
+            folders.set(folder, scopes);
             await traverse(path.join(dir, file.name));
           } else if (file.isFile() && file.name.endsWith('.json')) {
             try {
@@ -69,7 +73,7 @@ export class AssetService {
     }
     return {
       assets: entries.sort((first, second) => first.name.localeCompare(second.name)),
-      folders: [...folders].sort((first, second) => first.localeCompare(second)),
+      folders: new Map([...folders].sort(([first], [second]) => first.localeCompare(second))),
     };
   }
 
@@ -104,9 +108,13 @@ export class AssetService {
   async save(asset: AssetRecord): Promise<void> {
     if (!isAssetRecord(asset)) throw new Error('Invalid asset.');
 
-    const existing = await this.get(asset.id).catch(() => undefined);
+    const existing = (await this.list()).find((record) => record.id === asset.id);
     const folder = asset.folder ?? existing?.folder;
-    const scope = asset.scope ?? existing?.scope ?? 'global';
+    const scope =
+      asset.scope ??
+      existing?.scope ??
+      (folder ? (await this.preferredFolderLocation(folder))?.root.scope : undefined) ??
+      'global';
     const savedAsset: AssetRecord = { ...asset, folder: folder || undefined };
     delete savedAsset.scope;
     const targetDirectory = await this.prepareFolder(scope, folder);
@@ -122,18 +130,22 @@ export class AssetService {
     }
 
     const temporary = `${target}.${randomUUID()}.tmp`;
+    const previousKey =
+      current && current.scope !== scope ? this.secretKey(asset.type, asset.id, current.scope) : undefined;
+    const nextKey = previousKey ? this.secretKey(asset.type, asset.id, scope) : undefined;
     try {
       await writeFile(temporary, JSON.stringify(savedAsset, null, 2), { mode: 0o600 });
+      if (previousKey && nextKey && previousKey !== nextKey) {
+        const secret = await this.context.secrets.get(previousKey);
+        if (secret !== undefined) await this.context.secrets.store(nextKey, secret);
+      }
       await rename(temporary, target);
     } finally {
       await unlink(temporary).catch(() => undefined);
     }
 
     if (current && current.path !== target) await unlink(current.path);
-    if (current && current.scope !== scope) {
-      const previousKey = this.secretKey(asset.type, asset.id, current.scope);
-      const secret = await this.context.secrets.get(previousKey);
-      if (secret !== undefined) await this.context.secrets.store(this.secretKey(asset.type, asset.id, scope), secret);
+    if (previousKey && previousKey !== nextKey) {
       await this.context.secrets.delete(previousKey);
     }
   }
@@ -158,10 +170,15 @@ export class AssetService {
   async createFolder(name: string, parentFolder?: string): Promise<void> {
     const folderName = name.trim();
     if (!isValidFolderName(folderName)) throw new Error('Enter a valid asset folder name.');
-    const [globalRoot] = this.roots();
-    await mkdir(globalRoot.directory, { recursive: true });
-    const parent = parentFolder ? (await this.folderLocations(parentFolder))[0]?.directory : globalRoot.directory;
-    if (!parent) throw new Error('Asset folder no longer exists.');
+    let parent: string;
+    if (parentFolder) {
+      const location = await this.preferredFolderLocation(parentFolder);
+      if (!location) throw new Error('Asset folder no longer exists.');
+      parent = location.directory;
+    } else {
+      parent = findStorageRoot(this.roots(), 'global').directory;
+      await mkdir(parent, { recursive: true });
+    }
     await mkdir(path.join(parent, folderName));
   }
 
@@ -201,6 +218,29 @@ export class AssetService {
       await mkdir(move.destination, { recursive: true });
       await rename(move.source, move.target);
     }
+  }
+
+  async moveFolderToScope(folder: string, scope: StorageScope): Promise<AssetRecord[]> {
+    const locations = await this.folderLocations(folder);
+    if (!locations.length) throw new Error('Asset folder no longer exists.');
+    const source = locations.find(({ root }) => root.scope !== scope);
+    if (!source) return [];
+    const destination = findStorageRoot(this.roots(), scope);
+    const assets = (await this.list()).filter(
+      (asset) => asset.scope === source.root.scope && (asset.folder === folder || asset.folder?.startsWith(`${folder}/`)),
+    );
+    const previousKeys: string[] = [];
+    await moveStorageFolder(source.directory, destination.directory, folder, async () => {
+      for (const asset of assets) {
+        const previousKey = this.secretKey(asset.type, asset.id, source.root.scope);
+        const secret = await this.context.secrets.get(previousKey);
+        if (secret === undefined) continue;
+        await this.context.secrets.store(this.secretKey(asset.type, asset.id, scope), secret);
+        previousKeys.push(previousKey);
+      }
+    });
+    for (const key of previousKeys) await this.context.secrets.delete(key);
+    return assets;
   }
 
   async renameFolder(folder: string, rawName: string): Promise<void> {
@@ -264,6 +304,11 @@ export class AssetService {
       }
     }
     return locations;
+  }
+
+  private async preferredFolderLocation(folder: string) {
+    const locations = await this.folderLocations(folder);
+    return locations.find(({ root }) => root.scope === 'workspace') ?? locations[0];
   }
 
   private async prepareFolder(scope: StorageScope, folder?: string): Promise<string> {

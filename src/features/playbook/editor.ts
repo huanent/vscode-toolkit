@@ -1,17 +1,15 @@
 import * as vscode from 'vscode';
 import { registerWebviewEditor } from '@/host/webview-editor';
-import { isWorkspaceStorageAvailable } from '@/host/utils/storage';
 import { showOperationError } from '@/host/utils/show-operation-error';
 import { formatTabTitle } from '@/shared/tab-title';
-import { isStorageScope, type StorageRoot } from '@/shared/storage-scope';
-import type { PlaybookEditorData, PlaybookEditorRequest } from './protocol';
+import type { StorageRoot } from '@/shared/storage-scope';
+import type { PlaybookEditorData, PlaybookEditorRequest, PlaybookRecord } from './protocol';
 import {
   isPlaybookDefinition,
   readPlaybookRecord,
   savePlaybookRecord,
   validatePlaybookFolderId,
   validatePlaybookId,
-  type StoredPlaybookRecord,
 } from './service';
 import { validatePlaybook } from './runner';
 import type { SshService } from '@/features/ssh/ssh-service';
@@ -48,19 +46,20 @@ export function registerPlaybookEditor(
   playbookResults: PlaybookResultService,
   refresh: () => Promise<void>,
 ): vscode.Disposable {
-  const readEditorRecord = async (uri: vscode.Uri): Promise<StoredPlaybookRecord> => {
+  const readEditorRecord = async (uri: vscode.Uri): Promise<PlaybookRecord> => {
     const id = parsePlaybookEditorUri(uri);
     const record = await readPlaybookRecord(getPlaybookRoots(), id);
-    return (
-      record ?? {
-        kind: 'playbook',
-        id,
-        name: 'New Playbook',
-        parentId: getPlaybookEditorParentId(uri),
-        playbook: { steps: [] },
-        scope: 'global',
-      }
-    );
+    if (record) {
+      const { scope: _scope, ...initial } = record;
+      return initial;
+    }
+    return {
+      kind: 'playbook',
+      id,
+      name: 'New Playbook',
+      parentId: getPlaybookEditorParentId(uri),
+      playbook: { steps: [] },
+    };
   };
   return registerWebviewEditor<PlaybookEditorData>(context, {
     viewType: playbookEditorViewType,
@@ -68,11 +67,8 @@ export function registerPlaybookEditor(
     icon: 'run-coverage',
     validate: parsePlaybookEditorUri,
     load: async (uri) => {
-      const { scope, ...initial } = await readEditorRecord(uri);
       return {
-        ...initial,
-        storageScope: scope,
-        workspaceStorageAvailable: isWorkspaceStorageAvailable(),
+        ...(await readEditorRecord(uri)),
         assets: await assets.listSummaries(),
       };
     },
@@ -94,7 +90,7 @@ export function registerPlaybookEditor(
               message.name,
               message.playbook,
               getPlaybookEditorParentId(_uri),
-              message.storageScope,
+              undefined,
               message.description,
               message.enableAI,
             );
@@ -122,7 +118,6 @@ function getPlaybookEditorParentId(uri: vscode.Uri): string | undefined {
 function isPlaybookEditorRequest(value: unknown): value is PlaybookEditorRequest {
   if (!value || typeof value !== 'object') return false;
   const request = value as Partial<PlaybookEditorRequest> & {
-    storageScope?: unknown;
     description?: unknown;
     enableAI?: unknown;
   };
@@ -131,8 +126,7 @@ function isPlaybookEditorRequest(value: unknown): value is PlaybookEditorRequest
     typeof request.name === 'string' &&
     isPlaybookDefinition(request.playbook) &&
     (request.type === 'runPlaybook' ||
-      (isStorageScope(request.storageScope) &&
-        typeof request.enableAI === 'boolean' &&
+      (typeof request.enableAI === 'boolean' &&
         (request.description === undefined || typeof request.description === 'string')))
   );
 }
